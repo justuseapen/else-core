@@ -24,6 +24,7 @@ export type ChannelDefaultsConfig = {
 };
 
 export type ChannelsConfig = {
+  mode?: "direct" | "platform";
   defaults?: ChannelDefaultsConfig;
   whatsapp?: WhatsAppConfig;
   telegram?: TelegramConfig;

@@ -19,6 +19,7 @@ export { ChannelHeartbeatVisibilitySchema } from "./zod-schema.channels.js";
 
 export const ChannelsSchema = z
   .object({
+    mode: z.enum(["direct", "platform"]).default("direct").optional(),
     defaults: z
       .object({
         groupPolicy: GroupPolicySchema.optional(),
