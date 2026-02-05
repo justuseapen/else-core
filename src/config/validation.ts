@@ -223,7 +223,7 @@ export function validateConfigObjectWithPlugins(raw: unknown):
     });
   }
 
-  const allowedChannels = new Set<string>(["defaults", ...CHANNEL_IDS]);
+  const allowedChannels = new Set<string>(["defaults", "mode", ...CHANNEL_IDS]);
   for (const record of registry.plugins) {
     for (const channelId of record.channels) {
       allowedChannels.add(channelId);
