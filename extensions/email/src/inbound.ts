@@ -1,21 +1,9 @@
-/**
- * Gateway RPC handler for "email.inbound".
- *
- * Called by American Claw when an inbound email arrives via Cloudflare
- * Email Routing. Builds a MsgContext, records the session, and dispatches
- * the message to the agent for processing. The agent's reply is sent
- * back via the outbound adapter (HTTP POST to American Claw).
- */
-
 import type { GatewayRequestHandler, OpenClawConfig } from "openclaw/plugin-sdk";
-import { DEFAULT_ACCOUNT_ID, createReplyPrefixOptions } from "openclaw/plugin-sdk";
+import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk";
 import { getEmailRuntime } from "./runtime.js";
 import { resolveEmailAccount } from "./accounts.js";
 import type { EmailInboundPayload } from "./types.js";
 
-/**
- * Strip HTML tags for a plain-text fallback.
- */
 function stripHtml(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, "\n")
@@ -24,7 +12,7 @@ function stripHtml(html: string): string {
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
+    .replace(/&quot;/g, "\"")
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, " ")
     .trim();
@@ -41,7 +29,7 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
     }
 
     const core = getEmailRuntime();
-    const cfg = context.deps.config as OpenClawConfig;
+    const cfg = core.config.loadConfig() as OpenClawConfig;
 
     const account = resolveEmailAccount({ cfg, accountId: DEFAULT_ACCOUNT_ID });
     if (!account.enabled || !account.address) {
@@ -49,7 +37,6 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
       return;
     }
 
-    // Build plain text body
     const textBody = payload.text?.trim()
       || (payload.html ? stripHtml(payload.html) : "");
 
@@ -61,7 +48,6 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
     const subject = payload.subject ?? "(no subject)";
     const messageId = payload.headers?.messageId;
 
-    // Resolve the agent route for this email sender
     const senderAddress = payload.from.toLowerCase();
     const route = core.channel.routing.resolveAgentRoute({
       cfg,
@@ -73,7 +59,6 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
       },
     });
 
-    // Build the agent-facing message with email envelope context
     const rawBody = `Subject: ${subject}\n\n${textBody}`;
     const body = core.channel.reply.formatAgentEnvelope({
       channel: "Email",
@@ -83,7 +68,6 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
       body: rawBody,
     });
 
-    // Finalize inbound context (sets CommandAuthorized, etc.)
     const ctxPayload = core.channel.reply.finalizeInboundContext({
       Body: body,
       RawBody: rawBody,
@@ -101,7 +85,6 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
       MessageSid: messageId,
       OriginatingChannel: "email",
       OriginatingTo: senderAddress,
-      // Carry email metadata for outbound threading
       UntrustedContext: [
         `[email_message_id: ${messageId ?? "unknown"}]`,
         `[email_subject: ${subject}]`,
@@ -109,7 +92,6 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
       ],
     });
 
-    // Record the inbound session
     const storePath = core.channel.session.resolveStorePath(cfg.session?.store, {
       agentId: route.agentId,
     });
@@ -122,28 +104,12 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
       },
     });
 
-    // Dispatch to agent and deliver reply via outbound
-    const tableMode = core.channel.text.resolveMarkdownTableMode({
-      cfg,
-      channel: "email",
-      accountId: DEFAULT_ACCOUNT_ID,
-    });
-    const { onModelSelected, ...prefixOptions } = createReplyPrefixOptions({
-      cfg,
-      agentId: route.agentId,
-      channel: "email",
-      accountId: DEFAULT_ACCOUNT_ID,
-    });
-
-    // Fire-and-forget: dispatch to agent; reply will be sent via outbound adapter
     void core.channel.reply
       .dispatchReplyWithBufferedBlockDispatcher({
         ctx: ctxPayload,
         cfg,
         dispatcherOptions: {
-          ...prefixOptions,
           deliver: async (replyPayload) => {
-            // Send reply email via American Claw outbound API
             await deliverEmailReply({
               account,
               to: senderAddress,
@@ -153,22 +119,15 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
             });
           },
         },
-        replyOptions: {
-          onModelSelected,
-        },
       })
       .catch((err) => {
         context.logGateway.error(`[email] Dispatch failed: ${String(err)}`);
       });
 
-    // Respond immediately to the gateway caller (American Claw webhook)
     respond(true, { received: true });
   };
 }
 
-/**
- * Send an email reply via American Claw's /api/email/outbound endpoint.
- */
 async function deliverEmailReply(params: {
   account: { outboundUrl: string; outboundToken: string };
   to: string;
