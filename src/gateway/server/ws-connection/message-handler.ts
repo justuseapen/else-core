@@ -29,6 +29,7 @@ import { authorizeGatewayConnect, isLocalDirectRequest } from "../../auth.js";
 import { buildDeviceAuthPayload } from "../../device-auth.js";
 import { isLoopbackAddress, isTrustedProxyAddress, resolveGatewayClientIp } from "../../net.js";
 import { resolveNodeCommandAllowlist } from "../../node-command-policy.js";
+import { checkBrowserOrigin } from "../../origin-check.js";
 import { GATEWAY_CLIENT_IDS } from "../../protocol/client-info.js";
 import {
   type ConnectParams,
@@ -84,7 +85,7 @@ function formatGatewayAuthFailureMessage(params: {
   const isCli = isGatewayCliClient(client);
   const isControlUi = client?.id === GATEWAY_CLIENT_IDS.CONTROL_UI;
   const isWebchat = isWebchatClient(client);
-  const uiHint = "open a tokenized dashboard URL or paste token in Control UI settings";
+  const uiHint = "open the dashboard URL and paste the token in Control UI settings";
   const tokenHint = isCli
     ? "set gateway.remote.token to match gateway.auth.token"
     : isControlUi || isWebchat
@@ -355,22 +356,48 @@ export function attachGatewayWsMessageHandler(params: {
           close(1008, "invalid role");
           return;
         }
-        const requestedScopes = Array.isArray(connectParams.scopes) ? connectParams.scopes : [];
-        const scopes =
-          requestedScopes.length > 0
-            ? requestedScopes
-            : role === "operator"
-              ? ["operator.admin"]
-              : [];
+        // Default-deny: scopes must be explicit. Empty/missing scopes means no permissions.
+        const scopes = Array.isArray(connectParams.scopes) ? connectParams.scopes : [];
         connectParams.role = role;
         connectParams.scopes = scopes;
+
+        const isControlUi = connectParams.client.id === GATEWAY_CLIENT_IDS.CONTROL_UI;
+        const isWebchat = isWebchatConnect(connectParams);
+        if (isControlUi || isWebchat) {
+          const originCheck = checkBrowserOrigin({
+            requestHost,
+            origin: requestOrigin,
+            allowedOrigins: configSnapshot.gateway?.controlUi?.allowedOrigins,
+          });
+          if (!originCheck.ok) {
+            const errorMessage =
+              "origin not allowed (open the Control UI from the gateway host or allow it in gateway.controlUi.allowedOrigins)";
+            setHandshakeState("failed");
+            setCloseCause("origin-mismatch", {
+              origin: requestOrigin ?? "n/a",
+              host: requestHost ?? "n/a",
+              reason: originCheck.reason,
+              client: connectParams.client.id,
+              clientDisplayName: connectParams.client.displayName,
+              mode: connectParams.client.mode,
+              version: connectParams.client.version,
+            });
+            send({
+              type: "res",
+              id: frame.id,
+              ok: false,
+              error: errorShape(ErrorCodes.INVALID_REQUEST, errorMessage),
+            });
+            close(1008, truncateCloseReason(errorMessage));
+            return;
+          }
+        }
 
         const deviceRaw = connectParams.device;
         let devicePublicKey: string | null = null;
         const hasTokenAuth = Boolean(connectParams.auth?.token);
         const hasPasswordAuth = Boolean(connectParams.auth?.password);
         const hasSharedAuth = hasTokenAuth || hasPasswordAuth;
-        const isControlUi = connectParams.client.id === GATEWAY_CLIENT_IDS.CONTROL_UI;
         const allowInsecureControlUi =
           isControlUi && configSnapshot.gateway?.controlUi?.allowInsecureAuth === true;
         const disableControlUiDeviceAuth =
@@ -554,7 +581,7 @@ export function attachGatewayWsMessageHandler(params: {
             clientId: connectParams.client.id,
             clientMode: connectParams.client.mode,
             role,
-            scopes: requestedScopes,
+            scopes,
             signedAtMs: signedAt,
             token: connectParams.auth?.token ?? null,
             nonce: providedNonce || undefined,
@@ -568,7 +595,7 @@ export function attachGatewayWsMessageHandler(params: {
               clientId: connectParams.client.id,
               clientMode: connectParams.client.mode,
               role,
-              scopes: requestedScopes,
+              scopes,
               signedAtMs: signedAt,
               token: connectParams.auth?.token ?? null,
               version: "v1",
@@ -850,6 +877,7 @@ export function attachGatewayWsMessageHandler(params: {
           connect: connectParams,
           connId,
           presenceKey,
+          clientIp: reportedClientIp,
         };
         setClient(nextClient);
         setHandshakeState("connected");
