@@ -301,6 +301,12 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  extensions/email:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/feishu:
     dependencies:
       '@larksuiteoapi/node-sdk':
@@ -464,6 +470,12 @@ importers:
         version: link:../..
 
   extensions/open-prose:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
+  extensions/platform-channel:
     devDependencies:
       openclaw:
         specifier: workspace:*
