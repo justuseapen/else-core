@@ -4,6 +4,9 @@
 
 import type { NormalizedMessage, MessageContentItem } from "../types/chat-types.ts";
 
+// Keep in sync with src/auto-reply/tokens.ts.
+const HEARTBEAT_TOKEN = "HEARTBEAT_OK";
+
 /**
  * Normalize a raw message object into a consistent structure.
  */
@@ -87,4 +90,54 @@ export function isToolResultMessage(message: unknown): boolean {
   const m = message as Record<string, unknown>;
   const role = typeof m.role === "string" ? m.role.toLowerCase() : "";
   return role === "toolresult" || role === "tool_result";
+}
+
+/**
+ * Pattern matching the HEARTBEAT_OK token with optional surrounding
+ * whitespace and short emoji/punctuation (up to 8 extra characters).
+ */
+const HEARTBEAT_PATTERN = new RegExp(
+  `^\\s*${HEARTBEAT_TOKEN}[\\s\\p{Extended_Pictographic}\\uFE0F]{0,8}$`,
+  "u",
+);
+
+/**
+ * Check if a message contains only heartbeat acknowledgment content.
+ * Heartbeat messages are automated health-check responses that contain
+ * "HEARTBEAT_OK" and optionally a small amount of whitespace or emoji.
+ * These are not useful to display to end users in the chat thread.
+ */
+export function isHeartbeatMessage(message: unknown): boolean {
+  const m = message as Record<string, unknown>;
+
+  // Check direct text field
+  if (typeof m.text === "string" && HEARTBEAT_PATTERN.test(m.text)) {
+    return true;
+  }
+
+  // Check string content
+  if (typeof m.content === "string" && HEARTBEAT_PATTERN.test(m.content)) {
+    return true;
+  }
+
+  // Check content array — all text items must be heartbeat-only
+  if (Array.isArray(m.content)) {
+    const textItems = m.content.filter((item: unknown) => {
+      if (item == null || typeof item !== "object") {
+        return false;
+      }
+      const o = item as Record<string, unknown>;
+      return (o.type === "text" || o.type === undefined) && typeof o.text === "string";
+    });
+    if (
+      textItems.length > 0 &&
+      textItems.every((item: Record<string, unknown>) =>
+        HEARTBEAT_PATTERN.test(item.text as string),
+      )
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
