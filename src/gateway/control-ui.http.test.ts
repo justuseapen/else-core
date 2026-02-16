@@ -91,11 +91,13 @@ describe("handleControlUiHttpRequest", () => {
       const payload = String(end.mock.calls[0]?.[0] ?? "");
       const parsed = JSON.parse(payload) as {
         basePath: string;
+        profile: string;
         assistantName: string;
         assistantAvatar: string;
         assistantAgentId: string;
       };
       expect(parsed.basePath).toBe("");
+      expect(parsed.profile).toBe("americanclaw");
       expect(parsed.assistantName).toBe("</script><script>alert(1)//");
       expect(parsed.assistantAvatar).toBe("/avatar/main");
       expect(parsed.assistantAgentId).toBe("main");
@@ -116,6 +118,7 @@ describe("handleControlUiHttpRequest", () => {
           basePath: "/openclaw",
           root: { kind: "resolved", path: tmp },
           config: {
+            gateway: { controlUi: { profile: "openclaw" } },
             agents: { defaults: { workspace: tmp } },
             ui: { assistant: { name: "Ops", avatar: "ops.png" } },
           },
@@ -125,11 +128,13 @@ describe("handleControlUiHttpRequest", () => {
       const payload = String(end.mock.calls[0]?.[0] ?? "");
       const parsed = JSON.parse(payload) as {
         basePath: string;
+        profile: string;
         assistantName: string;
         assistantAvatar: string;
         assistantAgentId: string;
       };
       expect(parsed.basePath).toBe("/openclaw");
+      expect(parsed.profile).toBe("openclaw");
       expect(parsed.assistantName).toBe("Ops");
       expect(parsed.assistantAvatar).toBe("/openclaw/avatar/main");
       expect(parsed.assistantAgentId).toBe("main");

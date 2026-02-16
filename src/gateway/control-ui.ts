@@ -6,6 +6,8 @@ import { resolveControlUiRootSync } from "../infra/control-ui-assets.js";
 import { DEFAULT_ASSISTANT_IDENTITY, resolveAssistantIdentity } from "./assistant-identity.js";
 import {
   CONTROL_UI_BOOTSTRAP_CONFIG_PATH,
+  DEFAULT_CONTROL_UI_PROFILE,
+  isControlUiProfile,
   type ControlUiBootstrapConfig,
 } from "./control-ui-contract.js";
 import { buildControlUiCspHeader } from "./control-ui-csp.js";
@@ -234,6 +236,10 @@ export function handleControlUiHttpRequest(
     : CONTROL_UI_BOOTSTRAP_CONFIG_PATH;
   if (pathname === bootstrapConfigPath) {
     const config = opts?.config;
+    const configuredProfile = config?.gateway?.controlUi?.profile;
+    const profile = isControlUiProfile(configuredProfile)
+      ? configuredProfile
+      : DEFAULT_CONTROL_UI_PROFILE;
     const identity = config
       ? resolveAssistantIdentity({ cfg: config, agentId: opts?.agentId })
       : DEFAULT_ASSISTANT_IDENTITY;
@@ -251,6 +257,7 @@ export function handleControlUiHttpRequest(
     }
     sendJson(res, 200, {
       basePath,
+      profile,
       assistantName: identity.name,
       assistantAvatar: avatarValue ?? identity.avatar,
       assistantAgentId: identity.agentId,

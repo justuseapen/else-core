@@ -1,5 +1,6 @@
 import type { EventLogEntry } from "./app-events.ts";
 import type { CompactionStatus } from "./app-tool-stream.ts";
+import type { ControlUiProfile } from "./control-ui-profile.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
@@ -50,6 +51,7 @@ export type AppViewState = {
   assistantName: string;
   assistantAvatar: string | null;
   assistantAgentId: string | null;
+  controlUiProfile: ControlUiProfile;
   sessionKey: string;
   chatLoading: boolean;
   chatSending: boolean;

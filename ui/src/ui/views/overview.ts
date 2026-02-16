@@ -1,6 +1,8 @@
 import { html } from "lit";
+import type { ControlUiProfile } from "../control-ui-profile.ts";
 import type { GatewayHelloOk } from "../gateway.ts";
 import type { UiSettings } from "../storage.ts";
+import { resolveUiBrand } from "../brand.ts";
 import { formatRelativeTimestamp, formatDurationHuman } from "../format.ts";
 import { formatNextRun } from "../presenter.ts";
 
@@ -15,6 +17,7 @@ export type OverviewProps = {
   cronEnabled: boolean | null;
   cronNext: number | null;
   lastChannelsRefresh: number | null;
+  controlUiProfile?: ControlUiProfile;
   onSettingsChange: (next: UiSettings) => void;
   onPasswordChange: (next: string) => void;
   onSessionKeyChange: (next: string) => void;
@@ -23,6 +26,7 @@ export type OverviewProps = {
 };
 
 export function renderOverview(props: OverviewProps) {
+  const brand = resolveUiBrand(props.controlUiProfile);
   const snapshot = props.hello?.snapshot as
     | {
         uptimeMs?: number;
@@ -50,17 +54,17 @@ export function renderOverview(props: OverviewProps) {
         <div class="muted" style="margin-top: 8px">
           This gateway requires auth. Add a token or password, then click Connect.
           <div style="margin-top: 6px">
-            <span class="mono">openclaw dashboard --no-open</span> → open the Control UI<br />
+            <span class="mono">openclaw dashboard --no-open</span> → open the dashboard<br />
             <span class="mono">openclaw doctor --generate-gateway-token</span> → set token
           </div>
           <div style="margin-top: 6px">
             <a
               class="session-link"
-              href="https://docs.openclaw.ai/web/dashboard"
+              href=${brand.docs.dashboardAuth}
               target="_blank"
               rel="noreferrer"
-              title="Control UI auth docs (opens in new tab)"
-              >Docs: Control UI auth</a
+              title="${brand.productName} dashboard auth docs (opens in new tab)"
+              >Docs: Dashboard auth</a
             >
           </div>
         </div>
@@ -68,15 +72,15 @@ export function renderOverview(props: OverviewProps) {
     }
     return html`
       <div class="muted" style="margin-top: 8px">
-        Auth failed. Update the token or password in Control UI settings, then click Connect.
+        Auth failed. Update the token or password in dashboard settings, then click Connect.
         <div style="margin-top: 6px">
           <a
             class="session-link"
-            href="https://docs.openclaw.ai/web/dashboard"
+            href=${brand.docs.dashboardAuth}
             target="_blank"
             rel="noreferrer"
-            title="Control UI auth docs (opens in new tab)"
-            >Docs: Control UI auth</a
+            title="${brand.productName} dashboard auth docs (opens in new tab)"
+            >Docs: Dashboard auth</a
           >
         </div>
       </div>
@@ -105,7 +109,7 @@ export function renderOverview(props: OverviewProps) {
         <div style="margin-top: 6px">
           <a
             class="session-link"
-            href="https://docs.openclaw.ai/gateway/tailscale"
+            href=${brand.docs.tailscale}
             target="_blank"
             rel="noreferrer"
             title="Tailscale Serve docs (opens in new tab)"
@@ -114,7 +118,7 @@ export function renderOverview(props: OverviewProps) {
           <span class="muted"> · </span>
           <a
             class="session-link"
-            href="https://docs.openclaw.ai/web/control-ui#insecure-http"
+            href=${brand.docs.insecureHttp}
             target="_blank"
             rel="noreferrer"
             title="Insecure HTTP docs (opens in new tab)"
@@ -154,7 +158,7 @@ export function renderOverview(props: OverviewProps) {
                       const v = (e.target as HTMLInputElement).value;
                       props.onSettingsChange({ ...props.settings, token: v });
                     }}
-                    placeholder="OPENCLAW_GATEWAY_TOKEN"
+                    placeholder="gateway token"
                   />
                 </label>
                 <label class="field">
