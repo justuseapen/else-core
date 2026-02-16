@@ -77,6 +77,8 @@ import {
   type CompactionStatus,
 } from "./app-tool-stream.ts";
 import { normalizeAssistantIdentity } from "./assistant-identity.ts";
+import { resolveUiBrand } from "./brand.ts";
+import { DEFAULT_CONTROL_UI_PROFILE, type ControlUiProfile } from "./control-ui-profile.ts";
 import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity.ts";
 import { loadSettings, type UiSettings } from "./storage.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
@@ -121,6 +123,7 @@ export class OpenClawApp extends LitElement {
   @state() assistantName = bootAssistantIdentity.name;
   @state() assistantAvatar = bootAssistantIdentity.avatar;
   @state() assistantAgentId = bootAssistantIdentity.agentId ?? null;
+  @state() controlUiProfile: ControlUiProfile = DEFAULT_CONTROL_UI_PROFILE;
 
   @state() sessionKey = this.settings.sessionKey;
   @state() chatLoading = false;
@@ -385,7 +388,7 @@ export class OpenClawApp extends LitElement {
   }
 
   exportLogs(lines: string[], label: string) {
-    exportLogsInternal(lines, label);
+    exportLogsInternal(lines, label, resolveUiBrand(this.controlUiProfile).exportPrefix);
   }
 
   resetToolStream() {
