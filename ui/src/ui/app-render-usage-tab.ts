@@ -38,6 +38,8 @@ export function renderUsageTab(state: AppViewState) {
     timeSeriesBreakdownMode: state.usageTimeSeriesBreakdownMode,
     timeSeries: state.usageTimeSeries,
     timeSeriesLoading: state.usageTimeSeriesLoading,
+    timeSeriesCursorStart: state.usageTimeSeriesCursorStart,
+    timeSeriesCursorEnd: state.usageTimeSeriesCursorEnd,
     sessionLogs: state.usageSessionLogs,
     sessionLogsLoading: state.usageSessionLogsLoading,
     sessionLogsExpanded: state.usageSessionLogsExpanded,
@@ -197,6 +199,10 @@ export function renderUsageTab(state: AppViewState) {
         }
       }
 
+      // Reset range selection when switching sessions
+      state.usageTimeSeriesCursorStart = null;
+      state.usageTimeSeriesCursorEnd = null;
+
       // Load timeseries/logs only if exactly one session selected
       if (state.usageSelectedSessions.length === 1) {
         void loadSessionTimeSeries(state, state.usageSelectedSessions[0]);
@@ -237,6 +243,10 @@ export function renderUsageTab(state: AppViewState) {
     },
     onTimeSeriesBreakdownChange: (mode) => {
       state.usageTimeSeriesBreakdownMode = mode;
+    },
+    onTimeSeriesCursorRangeChange: (start, end) => {
+      state.usageTimeSeriesCursorStart = start;
+      state.usageTimeSeriesCursorEnd = end;
     },
     onClearDays: () => {
       state.usageSelectedDays = [];
