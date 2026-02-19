@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm build:*)",
+      "Bash(pnpm check:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm install:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(pnpm format:check:*)",
+      "Bash(git merge:*)",
+      "Bash(git branch:*)",
+      "mcp__github__pull_request_read",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git rebase:*)",
+      "Bash(pnpm vitest run:*)",
+      "Bash(pnpm exec playwright install:*)",
+      "Bash(git log:*)",
+      "Bash(git fetch:*)",
+      "Bash(pnpm dprint fmt:*)",
+      "Bash(npx dprint fmt:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm --filter @openclaw/email exec tsc:*)",
+      "Bash(git reset:*)"
+    ]
+  }
+}

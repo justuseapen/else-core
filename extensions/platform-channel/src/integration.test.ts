@@ -12,7 +12,15 @@ const mockRuntime: PluginRuntime = {
   },
   system: {
     enqueueSystemEvent: () => {},
-    runCommandWithTimeout: async () => ({ ok: true, code: 0, stdout: "", stderr: "" }),
+    runCommandWithTimeout: async () => ({
+      pid: undefined,
+      stdout: "",
+      stderr: "",
+      code: 0,
+      signal: null,
+      killed: false,
+      termination: "exit" as const,
+    }),
     formatNativeDependencyHint: () => "",
   },
   media: {
@@ -120,7 +128,7 @@ const mockRuntime: PluginRuntime = {
   state: {
     resolveStateDir: () => "/tmp/test-state",
   },
-} as PluginRuntime;
+} as unknown as PluginRuntime;
 
 describe("platform-channel integration", () => {
   beforeEach(() => {
@@ -144,7 +152,7 @@ describe("platform-channel integration", () => {
 
   it("should have correct plugin metadata", () => {
     expect(platformChannelPlugin.id).toBe("platform-channel");
-    expect(platformChannelPlugin.meta.name).toBe("Platform Channel");
+    expect(platformChannelPlugin.meta.label).toBe("Platform Channel");
     expect(platformChannelPlugin.capabilities.chatTypes).toContain("direct");
   });
 
@@ -157,14 +165,13 @@ describe("platform-channel integration", () => {
     const originalUrl = process.env.ELSE_PLATFORM_WEBHOOK_URL;
     delete process.env.ELSE_PLATFORM_WEBHOOK_URL;
 
-    const result = await platformChannelPlugin.outbound?.sendText?.({
-      cfg: {},
-      to: "test-user",
-      text: "test message",
-    });
-
-    expect(result?.ok).toBe(false);
-    expect(result?.error?.message).toContain("ELSE_PLATFORM_WEBHOOK_URL not configured");
+    await expect(
+      platformChannelPlugin.outbound?.sendText?.({
+        cfg: {},
+        to: "test-user",
+        text: "test message",
+      }),
+    ).rejects.toThrow("ELSE_PLATFORM_WEBHOOK_URL not configured");
 
     // Restore
     if (originalUrl) {
@@ -175,11 +182,10 @@ describe("platform-channel integration", () => {
   it("should start account with gateway adapter", async () => {
     const mockContext = {
       cfg: {},
-      config: {},
       accountId: "default",
       account: { accountId: "default" },
-      runtime: {} as PluginRuntime,
-      signal: new AbortController().signal,
+      runtime: { log: () => {}, error: () => {}, exit: () => {} },
+      abortSignal: new AbortController().signal,
       log: {
         info: () => {},
         warn: () => {},
@@ -189,14 +195,13 @@ describe("platform-channel integration", () => {
         accountId: "default",
         configured: true,
         enabled: true,
-        state: "running" as const,
       }),
       setStatus: () => {},
-      statusSink: () => {},
     };
 
     const result = await platformChannelPlugin.gateway?.startAccount?.(mockContext);
     expect(result).toBeDefined();
-    expect(result?.status).toBe("running");
+    const resultRecord = result as Record<string, unknown>;
+    expect(resultRecord.status).toBe("running");
   });
 });

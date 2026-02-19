@@ -8,11 +8,7 @@
  * - dmPolicy defaults to "open" (email addresses are self-authenticating)
  */
 
-import {
-  DEFAULT_ACCOUNT_ID,
-  getChatChannelMeta,
-  type ChannelPlugin,
-} from "openclaw/plugin-sdk";
+import { DEFAULT_ACCOUNT_ID, getChatChannelMeta, type ChannelPlugin } from "openclaw/plugin-sdk";
 import type { ResolvedEmailAccount } from "./types.js";
 import {
   listEmailAccountIds,
@@ -29,7 +25,6 @@ export const emailPlugin: ChannelPlugin<ResolvedEmailAccount> = {
     // Override meta defaults for email
     id: "email" as never,
     label: "Email",
-    icon: "email",
     showConfigured: false,
     quickstartAllowFrom: false,
     forceAccountBinding: false,
@@ -53,8 +48,8 @@ export const emailPlugin: ChannelPlugin<ResolvedEmailAccount> = {
     defaultAccountId: (cfg) => resolveDefaultEmailAccountId(cfg),
     setAccountEnabled: ({ cfg, accountId, enabled }) => {
       const accountKey = accountId || DEFAULT_ACCOUNT_ID;
-      const channels = cfg.channels as Record<string, unknown> ?? {};
-      const emailSection = channels.email as Record<string, unknown> ?? {};
+      const channels = (cfg.channels as Record<string, unknown>) ?? {};
+      const emailSection = (channels.email as Record<string, unknown>) ?? {};
       const accounts = (emailSection.accounts ?? {}) as Record<string, Record<string, unknown>>;
       const existing = accounts[accountKey] ?? {};
       return {
@@ -76,8 +71,8 @@ export const emailPlugin: ChannelPlugin<ResolvedEmailAccount> = {
     },
     deleteAccount: ({ cfg, accountId }) => {
       const accountKey = accountId || DEFAULT_ACCOUNT_ID;
-      const channels = cfg.channels as Record<string, unknown> ?? {};
-      const emailSection = { ...(channels.email as Record<string, unknown> ?? {}) };
+      const channels = (cfg.channels as Record<string, unknown>) ?? {};
+      const emailSection = { ...((channels.email as Record<string, unknown>) ?? {}) };
       const accounts = { ...((emailSection.accounts ?? {}) as Record<string, unknown>) };
       delete accounts[accountKey];
       return {
@@ -106,9 +101,7 @@ export const emailPlugin: ChannelPlugin<ResolvedEmailAccount> = {
     resolveAllowFrom: ({ cfg, accountId }) =>
       resolveEmailAccount({ cfg, accountId }).allowFrom?.map((e) => String(e)),
     formatAllowFrom: ({ allowFrom }) =>
-      allowFrom
-        .map((entry) => String(entry).trim().toLowerCase())
-        .filter(Boolean),
+      allowFrom.map((entry) => String(entry).trim().toLowerCase()).filter(Boolean),
   },
   security: {
     resolveDmPolicy: ({ account }) => ({
@@ -148,19 +141,15 @@ export const emailPlugin: ChannelPlugin<ResolvedEmailAccount> = {
     sendText: async ({ to, text }) => {
       // This should not normally be called; outbound is handled in the
       // inbound gateway handler's deliver callback.
-      return {
-        channel: "email",
-        ok: false,
-        error: `Direct sendText not supported for email. Target: ${to}, length: ${text.length}`,
-      };
+      throw new Error(
+        `Direct sendText not supported for email. Target: ${to}, length: ${text.length}`,
+      );
     },
   },
   // Email has no persistent connection to start/stop — inbound arrives via RPC.
   gateway: {
     startAccount: async (ctx) => {
-      ctx.log?.info(
-        `[${ctx.accountId}] email channel ready (${ctx.account.address})`,
-      );
+      ctx.log?.info(`[${ctx.accountId}] email channel ready (${ctx.account.address})`);
       // No persistent connection needed.
       // The "email.inbound" gateway method handles all inbound traffic.
     },

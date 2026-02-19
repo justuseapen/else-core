@@ -4,7 +4,6 @@ import type {
   ChannelOutboundAdapter,
   ChannelGatewayAdapter,
   OpenClawConfig,
-  OutboundDeliveryResult,
 } from "openclaw/plugin-sdk";
 import type { PluginRuntime } from "openclaw/plugin-sdk";
 import { getPlatformChannelRuntime } from "./runtime.js";
@@ -230,7 +229,7 @@ async function processInboundMessage(params: {
     channel: CHANNEL_ID,
     accountId: account.accountId,
     peer: {
-      kind: "dm",
+      kind: "direct",
       id: message.from,
     },
   });
@@ -412,47 +411,35 @@ export async function handlePlatformWebhookRequest(
 
 const outbound: ChannelOutboundAdapter = {
   deliveryMode: "gateway",
-  sendText: async (ctx): Promise<OutboundDeliveryResult> => {
+  sendText: async (ctx) => {
     const webhookUrl = process.env.ELSE_PLATFORM_WEBHOOK_URL;
     const secret = process.env.ELSE_PLATFORM_SECRET;
 
     if (!webhookUrl) {
-      return {
-        ok: false,
-        error: new Error("ELSE_PLATFORM_WEBHOOK_URL not configured"),
-      };
+      throw new Error("ELSE_PLATFORM_WEBHOOK_URL not configured");
     }
 
-    try {
-      // Use native fetch (Node 18+)
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(secret ? { "X-Platform-Secret": secret } : {}),
-        },
-        body: JSON.stringify({
-          to: ctx.to,
-          text: ctx.text,
-          replyToId: ctx.replyToId,
-          threadId: ctx.threadId,
-        }),
-      });
+    // Use native fetch (Node 18+)
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { "X-Platform-Secret": secret } : {}),
+      },
+      body: JSON.stringify({
+        to: ctx.to,
+        text: ctx.text,
+        replyToId: ctx.replyToId,
+        threadId: ctx.threadId,
+      }),
+    });
 
-      if (!response.ok) {
-        return {
-          ok: false,
-          error: new Error(`Webhook failed: ${response.status} ${response.statusText}`),
-        };
-      }
-
-      return { ok: true };
-    } catch (error) {
-      return {
-        ok: false,
-        error: error instanceof Error ? error : new Error(String(error)),
-      };
+    if (!response.ok) {
+      throw new Error(`Webhook failed: ${response.status} ${response.statusText}`);
     }
+
+    // oxlint-disable-next-line typescript/no-explicit-any
+    return { channel: CHANNEL_ID as any, messageId: `${Date.now()}` };
   },
 };
 
@@ -498,8 +485,11 @@ const gateway: ChannelGatewayAdapter<ResolvedPlatformAccount> = {
 export const platformChannelPlugin: ChannelPlugin<ResolvedPlatformAccount> = {
   id: "platform-channel",
   meta: {
-    name: "Platform Channel",
-    description: "Receives messages from else-platform via HTTP",
+    id: "platform-channel",
+    label: "Platform Channel",
+    selectionLabel: "Platform Channel",
+    docsPath: "/channels/platform-channel",
+    blurb: "Receives messages from else-platform via HTTP",
     quickstartAllowFrom: false,
   },
   capabilities: {

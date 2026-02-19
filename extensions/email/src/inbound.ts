@@ -7,11 +7,11 @@
  * back via the outbound adapter (HTTP POST to American Claw).
  */
 
-import type { GatewayRequestHandler, OpenClawConfig } from "openclaw/plugin-sdk";
+import type { GatewayRequestHandler } from "openclaw/plugin-sdk";
 import { DEFAULT_ACCOUNT_ID, createReplyPrefixOptions } from "openclaw/plugin-sdk";
-import { getEmailRuntime } from "./runtime.js";
-import { resolveEmailAccount } from "./accounts.js";
 import type { EmailInboundPayload } from "./types.js";
+import { resolveEmailAccount } from "./accounts.js";
+import { getEmailRuntime } from "./runtime.js";
 
 /**
  * Strip HTML tags for a plain-text fallback.
@@ -36,25 +36,24 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
     const payload = params as unknown as EmailInboundPayload;
 
     if (!payload.from || !payload.to) {
-      respond(false, undefined, { code: 400, message: "Missing from or to" });
+      respond(false, undefined, { code: "400", message: "Missing from or to" });
       return;
     }
 
     const core = getEmailRuntime();
-    const cfg = context.deps.config as OpenClawConfig;
+    const cfg = core.config.loadConfig();
 
     const account = resolveEmailAccount({ cfg, accountId: DEFAULT_ACCOUNT_ID });
     if (!account.enabled || !account.address) {
-      respond(false, undefined, { code: 503, message: "Email channel not configured" });
+      respond(false, undefined, { code: "503", message: "Email channel not configured" });
       return;
     }
 
     // Build plain text body
-    const textBody = payload.text?.trim()
-      || (payload.html ? stripHtml(payload.html) : "");
+    const textBody = payload.text?.trim() || (payload.html ? stripHtml(payload.html) : "");
 
     if (!textBody) {
-      respond(false, undefined, { code: 400, message: "Empty email body" });
+      respond(false, undefined, { code: "400", message: "Empty email body" });
       return;
     }
 
@@ -202,8 +201,6 @@ async function deliverEmailReply(params: {
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "unknown");
-    throw new Error(
-      `Email outbound failed (${response.status}): ${errorText}`,
-    );
+    throw new Error(`Email outbound failed (${response.status}): ${errorText}`);
   }
 }
