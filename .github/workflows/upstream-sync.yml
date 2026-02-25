@@ -8,7 +8,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  workflows: write
 
 jobs:
   sync:
@@ -19,6 +18,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: main
+          token: ${{ secrets.SYNC_PAT }}
 
       - name: Configure git
         run: |
@@ -79,7 +79,7 @@ jobs:
       - name: Create PR (clean merge)
         if: steps.check.outputs.has_changes == 'true' && steps.merge.outputs.merge_clean == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.SYNC_PAT }}
         run: |
           gh pr create \
             --title "sync: merge ${{ steps.check.outputs.commit_count }} upstream commits ($(date +%Y-%m-%d))" \
@@ -99,7 +99,7 @@ jobs:
       - name: Create draft PR (conflicts)
         if: steps.check.outputs.has_changes == 'true' && steps.merge.outputs.merge_clean == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.SYNC_PAT }}
         run: |
           gh pr create \
             --title "sync: merge ${{ steps.check.outputs.commit_count }} upstream commits ($(date +%Y-%m-%d)) — CONFLICTS" \
