@@ -4,7 +4,6 @@ export const FIELD_LABELS: Record<string, string> = {
   meta: "Metadata",
   "meta.lastTouchedVersion": "Config Last Touched Version",
   "meta.lastTouchedAt": "Config Last Touched At",
-  env: "Environment",
   "env.shellEnv": "Shell Environment Import",
   "env.shellEnv.enabled": "Shell Environment Import Enabled",
   "env.shellEnv.timeoutMs": "Shell Environment Import Timeout (ms)",
@@ -228,9 +227,6 @@ export const FIELD_LABELS: Record<string, string> = {
   "tools.web.fetch.cacheTtlMinutes": "Web Fetch Cache TTL (min)",
   "tools.web.fetch.maxRedirects": "Web Fetch Max Redirects",
   "tools.web.fetch.userAgent": "Web Fetch User-Agent",
-<<<<<<< HEAD
-  "gateway.controlUi.profile": "Control UI Profile",
-=======
   "tools.web.fetch.readability": "Web Fetch Readability Extraction",
   "tools.web.fetch.firecrawl.enabled": "Enable Firecrawl Fallback",
   "tools.web.fetch.firecrawl.apiKey": "Firecrawl API Key",
@@ -238,7 +234,7 @@ export const FIELD_LABELS: Record<string, string> = {
   "tools.web.fetch.firecrawl.onlyMainContent": "Firecrawl Main Content Only",
   "tools.web.fetch.firecrawl.maxAgeMs": "Firecrawl Cache Max Age (ms)",
   "tools.web.fetch.firecrawl.timeoutSeconds": "Firecrawl Timeout (sec)",
->>>>>>> upstream/main
+  "gateway.controlUi.profile": "Control UI Profile",
   "gateway.controlUi.basePath": "Control UI Base Path",
   "gateway.controlUi.root": "Control UI Assets Root",
   "gateway.controlUi.allowedOrigins": "Control UI Allowed Origins",
