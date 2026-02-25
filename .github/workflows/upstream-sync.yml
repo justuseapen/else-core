@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: main
-          token: ${{ secrets.SYNC_PAT }}
+          token: ${{ secrets.AMERICAN_CLAW_DISPATCH_TOKEN }}
 
       - name: Configure git
         run: |
@@ -79,7 +79,7 @@ jobs:
       - name: Create PR (clean merge)
         if: steps.check.outputs.has_changes == 'true' && steps.merge.outputs.merge_clean == 'true'
         env:
-          GH_TOKEN: ${{ secrets.SYNC_PAT }}
+          GH_TOKEN: ${{ secrets.AMERICAN_CLAW_DISPATCH_TOKEN }}
         run: |
           gh pr create \
             --title "sync: merge ${{ steps.check.outputs.commit_count }} upstream commits ($(date +%Y-%m-%d))" \
@@ -99,7 +99,7 @@ jobs:
       - name: Create draft PR (conflicts)
         if: steps.check.outputs.has_changes == 'true' && steps.merge.outputs.merge_clean == 'false'
         env:
-          GH_TOKEN: ${{ secrets.SYNC_PAT }}
+          GH_TOKEN: ${{ secrets.AMERICAN_CLAW_DISPATCH_TOKEN }}
         run: |
           gh pr create \
             --title "sync: merge ${{ steps.check.outputs.commit_count }} upstream commits ($(date +%Y-%m-%d)) — CONFLICTS" \
