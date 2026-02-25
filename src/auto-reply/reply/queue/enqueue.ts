@@ -1,6 +1,11 @@
 import type { FollowupRun, QueueDedupeMode, QueueSettings } from "./types.js";
 import { applyQueueDropPolicy, shouldSkipQueueItem } from "../../../utils/queue-helpers.js";
+<<<<<<< HEAD
 import { FOLLOWUP_QUEUES, getFollowupQueue } from "./state.js";
+=======
+import { getExistingFollowupQueue, getFollowupQueue } from "./state.js";
+import type { FollowupRun, QueueDedupeMode, QueueSettings } from "./types.js";
+>>>>>>> upstream/main
 
 function isRunAlreadyQueued(
   run: FollowupRun,
@@ -57,11 +62,7 @@ export function enqueueFollowupRun(
 }
 
 export function getFollowupQueueDepth(key: string): number {
-  const cleaned = key.trim();
-  if (!cleaned) {
-    return 0;
-  }
-  const queue = FOLLOWUP_QUEUES.get(cleaned);
+  const queue = getExistingFollowupQueue(key);
   if (!queue) {
     return 0;
   }

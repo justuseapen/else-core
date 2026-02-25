@@ -76,13 +76,49 @@ import {
   resetToolStream as resetToolStreamInternal,
   type ToolStreamEntry,
   type CompactionStatus,
+  type FallbackStatus,
 } from "./app-tool-stream.ts";
 import { normalizeAssistantIdentity } from "./assistant-identity.ts";
 import { resolveUiBrand } from "./brand.ts";
 import { DEFAULT_CONTROL_UI_PROFILE, type ControlUiProfile } from "./control-ui-profile.ts";
 import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity.ts";
+<<<<<<< HEAD
 import { loadSettings, type UiSettings } from "./storage.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
+=======
+import type { CronFieldErrors } from "./controllers/cron.ts";
+import type { DevicePairingList } from "./controllers/devices.ts";
+import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
+import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
+import type { SkillMessage } from "./controllers/skills.ts";
+import type { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
+import type { Tab } from "./navigation.ts";
+import { loadSettings, type UiSettings } from "./storage.ts";
+import type { ResolvedTheme, ThemeMode } from "./theme.ts";
+import type {
+  AgentsListResult,
+  AgentsFilesListResult,
+  AgentIdentityResult,
+  ConfigSnapshot,
+  ConfigUiHints,
+  CronJob,
+  CronRunLogEntry,
+  CronStatus,
+  HealthSnapshot,
+  LogEntry,
+  LogLevel,
+  PresenceEntry,
+  ChannelsStatusSnapshot,
+  SessionsListResult,
+  SkillStatusReport,
+  ToolsCatalogResult,
+  StatusSummary,
+  NostrProfile,
+} from "./types.ts";
+import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
+import { generateUUID } from "./uuid.ts";
+import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
+>>>>>>> upstream/main
 
 declare global {
   interface Window {
@@ -108,6 +144,7 @@ function resolveOnboardingMode(): boolean {
 @customElement("openclaw-app")
 export class OpenClawApp extends LitElement {
   private i18nController = new I18nController(this);
+  clientInstanceId = generateUUID();
   @state() settings: UiSettings = loadSettings();
   constructor() {
     super();
@@ -123,6 +160,7 @@ export class OpenClawApp extends LitElement {
   @state() themeResolved: ResolvedTheme = "dark";
   @state() hello: GatewayHelloOk | null = null;
   @state() lastError: string | null = null;
+  @state() lastErrorCode: string | null = null;
   @state() eventLog: EventLogEntry[] = [];
   private eventLogBuffer: EventLogEntry[] = [];
   private toolStreamSyncTimer: number | null = null;
@@ -143,6 +181,7 @@ export class OpenClawApp extends LitElement {
   @state() chatStreamStartedAt: number | null = null;
   @state() chatRunId: string | null = null;
   @state() compactionStatus: CompactionStatus | null = null;
+  @state() fallbackStatus: FallbackStatus | null = null;
   @state() chatAvatarUrl: string | null = null;
   @state() chatThinkingLevel: string | null = null;
   @state() chatQueue: ChatQueueItem[] = [];
@@ -214,6 +253,9 @@ export class OpenClawApp extends LitElement {
   @state() agentsList: AgentsListResult | null = null;
   @state() agentsError: string | null = null;
   @state() agentsSelectedId: string | null = null;
+  @state() toolsCatalogLoading = false;
+  @state() toolsCatalogError: string | null = null;
+  @state() toolsCatalogResult: ToolsCatalogResult | null = null;
   @state() agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron" =
     "overview";
   @state() agentFilesLoading = false;
@@ -295,13 +337,38 @@ export class OpenClawApp extends LitElement {
   usageQueryDebounceTimer: number | null = null;
 
   @state() cronLoading = false;
+  @state() cronJobsLoadingMore = false;
   @state() cronJobs: CronJob[] = [];
+  @state() cronJobsTotal = 0;
+  @state() cronJobsHasMore = false;
+  @state() cronJobsNextOffset: number | null = null;
+  @state() cronJobsLimit = 50;
+  @state() cronJobsQuery = "";
+  @state() cronJobsEnabledFilter: import("./types.js").CronJobsEnabledFilter = "all";
+  @state() cronJobsSortBy: import("./types.js").CronJobsSortBy = "nextRunAtMs";
+  @state() cronJobsSortDir: import("./types.js").CronSortDir = "asc";
   @state() cronStatus: CronStatus | null = null;
   @state() cronError: string | null = null;
   @state() cronForm: CronFormState = { ...DEFAULT_CRON_FORM };
+  @state() cronFieldErrors: CronFieldErrors = {};
+  @state() cronEditingJobId: string | null = null;
   @state() cronRunsJobId: string | null = null;
+  @state() cronRunsLoadingMore = false;
   @state() cronRuns: CronRunLogEntry[] = [];
+  @state() cronRunsTotal = 0;
+  @state() cronRunsHasMore = false;
+  @state() cronRunsNextOffset: number | null = null;
+  @state() cronRunsLimit = 50;
+  @state() cronRunsScope: import("./types.js").CronRunScope = "all";
+  @state() cronRunsStatuses: import("./types.js").CronRunsStatusValue[] = [];
+  @state() cronRunsDeliveryStatuses: import("./types.js").CronDeliveryStatus[] = [];
+  @state() cronRunsStatusFilter: import("./types.js").CronRunsStatusFilter = "all";
+  @state() cronRunsQuery = "";
+  @state() cronRunsSortDir: import("./types.js").CronSortDir = "desc";
+  @state() cronModelSuggestions: string[] = [];
   @state() cronBusy = false;
+
+  @state() updateAvailable: import("./types.js").UpdateAvailable | null = null;
 
   @state() skillsLoading = false;
   @state() skillsReport: SkillStatusReport | null = null;

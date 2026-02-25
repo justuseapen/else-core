@@ -1,4 +1,9 @@
 import type { SkillCommandSpec } from "../../agents/skills.js";
+<<<<<<< HEAD
+=======
+import { applyOwnerOnlyToolPolicy } from "../../agents/tool-policy.js";
+import { getChannelDock } from "../../channels/dock.js";
+>>>>>>> upstream/main
 import type { OpenClawConfig } from "../../config/config.js";
 import type { SessionEntry } from "../../config/sessions.js";
 import type { MsgContext, TemplateContext } from "../templating.js";
@@ -11,6 +16,7 @@ import { collectTextContentBlocks } from "../../agents/content-blocks.js";
 import { createOpenClawTools } from "../../agents/openclaw-tools.js";
 import { getChannelDock } from "../../channels/dock.js";
 import { logVerbose } from "../../globals.js";
+import { generateSecureToken } from "../../infra/secure-random.js";
 import { resolveGatewayMessageChannel } from "../../utils/message-channel.js";
 import {
   listReservedChatSlashCommandNames,
@@ -201,14 +207,15 @@ export async function handleInlineActions(params: {
         workspaceDir,
         config: cfg,
       });
+      const authorizedTools = applyOwnerOnlyToolPolicy(tools, command.senderIsOwner);
 
-      const tool = tools.find((candidate) => candidate.name === dispatch.toolName);
+      const tool = authorizedTools.find((candidate) => candidate.name === dispatch.toolName);
       if (!tool) {
         typing.cleanup();
         return { kind: "reply", reply: { text: `❌ Tool not available: ${dispatch.toolName}` } };
       }
 
-      const toolCallId = `cmd_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      const toolCallId = `cmd_${generateSecureToken(8)}`;
       try {
         const result = await tool.execute(toolCallId, {
           command: rawArgs,
@@ -275,6 +282,7 @@ export async function handleInlineActions(params: {
       command,
       sessionEntry,
       sessionKey,
+      parentSessionKey: ctx.ParentSessionKey,
       sessionScope,
       provider,
       model,
@@ -298,6 +306,7 @@ export async function handleInlineActions(params: {
       cfg,
       command: commandInput,
       agentId,
+      agentDir,
       directives,
       elevated: {
         enabled: elevatedEnabled,

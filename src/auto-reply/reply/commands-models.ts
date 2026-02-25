@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../../config/config.js";
 import type { ReplyPayload } from "../types.js";
 import type { CommandHandler } from "./commands-types.js";
+=======
+import { resolveAgentDir, resolveSessionAgentId } from "../../agents/agent-scope.js";
+>>>>>>> upstream/main
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../../agents/defaults.js";
+import { resolveModelAuthLabel } from "../../agents/model-auth-label.js";
 import { loadModelCatalog } from "../../agents/model-catalog.js";
 import {
   buildAllowedModelSet,
@@ -10,6 +15,11 @@ import {
   resolveConfiguredModelRef,
   resolveModelRefFromString,
 } from "../../agents/model-selection.js";
+<<<<<<< HEAD
+=======
+import type { OpenClawConfig } from "../../config/config.js";
+import type { SessionEntry } from "../../config/sessions.js";
+>>>>>>> upstream/main
 import {
   buildModelsKeyboard,
   buildProviderKeyboard,
@@ -177,11 +187,47 @@ function parseModelsArgs(raw: string): {
   };
 }
 
+function resolveProviderLabel(params: {
+  provider: string;
+  cfg: OpenClawConfig;
+  agentDir?: string;
+  sessionEntry?: SessionEntry;
+}): string {
+  const authLabel = resolveModelAuthLabel({
+    provider: params.provider,
+    cfg: params.cfg,
+    sessionEntry: params.sessionEntry,
+    agentDir: params.agentDir,
+  });
+  if (!authLabel || authLabel === "unknown") {
+    return params.provider;
+  }
+  return `${params.provider} · 🔑 ${authLabel}`;
+}
+
+export function formatModelsAvailableHeader(params: {
+  provider: string;
+  total: number;
+  cfg: OpenClawConfig;
+  agentDir?: string;
+  sessionEntry?: SessionEntry;
+}): string {
+  const providerLabel = resolveProviderLabel({
+    provider: params.provider,
+    cfg: params.cfg,
+    agentDir: params.agentDir,
+    sessionEntry: params.sessionEntry,
+  });
+  return `Models (${providerLabel}) — ${params.total} available`;
+}
+
 export async function resolveModelsCommandReply(params: {
   cfg: OpenClawConfig;
   commandBodyNormalized: string;
   surface?: string;
   currentModel?: string;
+  agentDir?: string;
+  sessionEntry?: SessionEntry;
 }): Promise<ReplyPayload | null> {
   const body = params.commandBodyNormalized.trim();
   if (!body.startsWith("/models")) {
@@ -237,10 +283,16 @@ export async function resolveModelsCommandReply(params: {
 
   const models = [...(byProvider.get(provider) ?? new Set<string>())].toSorted();
   const total = models.length;
+  const providerLabel = resolveProviderLabel({
+    provider,
+    cfg: params.cfg,
+    agentDir: params.agentDir,
+    sessionEntry: params.sessionEntry,
+  });
 
   if (total === 0) {
     const lines: string[] = [
-      `Models (${provider}) — none`,
+      `Models (${providerLabel}) — none`,
       "",
       "Browse: /models",
       "Switch: /model <provider/model>",
@@ -263,7 +315,13 @@ export async function resolveModelsCommandReply(params: {
       pageSize: telegramPageSize,
     });
 
-    const text = `Models (${provider}) — ${total} available`;
+    const text = formatModelsAvailableHeader({
+      provider,
+      total,
+      cfg: params.cfg,
+      agentDir: params.agentDir,
+      sessionEntry: params.sessionEntry,
+    });
     return {
       text,
       channelData: { telegram: { buttons } },
@@ -289,7 +347,7 @@ export async function resolveModelsCommandReply(params: {
   const endIndexExclusive = Math.min(total, startIndex + effectivePageSize);
   const pageModels = models.slice(startIndex, endIndexExclusive);
 
-  const header = `Models (${provider}) — showing ${startIndex + 1}-${endIndexExclusive} of ${total} (page ${safePage}/${pageCount})`;
+  const header = `Models (${providerLabel}) — showing ${startIndex + 1}-${endIndexExclusive} of ${total} (page ${safePage}/${pageCount})`;
 
   const lines: string[] = [header];
   for (const id of pageModels) {
@@ -313,11 +371,21 @@ export const handleModelsCommand: CommandHandler = async (params, allowTextComma
     return null;
   }
 
+  const modelsAgentId =
+    params.agentId ??
+    resolveSessionAgentId({
+      sessionKey: params.sessionKey,
+      config: params.cfg,
+    });
+  const modelsAgentDir = resolveAgentDir(params.cfg, modelsAgentId);
+
   const reply = await resolveModelsCommandReply({
     cfg: params.cfg,
     commandBodyNormalized: params.command.commandBodyNormalized,
     surface: params.ctx.Surface,
     currentModel: params.model ? `${params.provider}/${params.model}` : undefined,
+    agentDir: modelsAgentDir,
+    sessionEntry: params.sessionEntry,
   });
   if (!reply) {
     return null;

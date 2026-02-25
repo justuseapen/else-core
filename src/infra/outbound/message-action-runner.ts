@@ -15,6 +15,16 @@ import {
 } from "../../agents/tools/common.js";
 import { parseReplyDirectives } from "../../auto-reply/reply/reply-directives.js";
 import { dispatchChannelMessageAction } from "../../channels/plugins/message-actions.js";
+<<<<<<< HEAD
+=======
+import type {
+  ChannelId,
+  ChannelMessageActionName,
+  ChannelThreadingToolContext,
+} from "../../channels/plugins/types.js";
+import type { OpenClawConfig } from "../../config/config.js";
+import { getAgentScopedMediaLocalRoots } from "../../media/local-roots.js";
+>>>>>>> upstream/main
 import {
   isDeliverableMessageChannel,
   normalizeMessageChannel,
@@ -28,14 +38,14 @@ import {
 } from "./channel-selection.js";
 import { applyTargetToParams } from "./channel-target.js";
 import {
-  hydrateSendAttachmentParams,
-  hydrateSetGroupIconParams,
+  hydrateAttachmentParamsForAction,
   normalizeSandboxMediaList,
   normalizeSandboxMediaParams,
   parseButtonsParam,
   parseCardParam,
   parseComponentsParam,
   readBooleanParam,
+  resolveAttachmentMediaPolicy,
   resolveSlackAutoThreadId,
   resolveTelegramAutoThreadId,
 } from "./message-action-params.js";
@@ -93,6 +103,7 @@ export type RunMessageActionParams = {
   action: ChannelMessageActionName;
   params: Record<string, unknown>;
   defaultAccountId?: string;
+  requesterSenderId?: string | null;
   toolContext?: ChannelThreadingToolContext;
   gateway?: MessageActionRunnerGateway;
   deps?: OutboundSendDeps;
@@ -668,6 +679,7 @@ async function handlePluginAction(ctx: ResolvedActionContext): Promise<MessageAc
     cfg,
     params,
     accountId: accountId ?? undefined,
+    requesterSenderId: input.requesterSenderId ?? undefined,
     gateway,
     toolContext: input.toolContext,
     dryRun,
@@ -755,28 +767,25 @@ export async function runMessageAction(
     params.accountId = accountId;
   }
   const dryRun = Boolean(input.dryRun ?? readBooleanParam(params, "dryRun"));
+  const mediaLocalRoots = getAgentScopedMediaLocalRoots(cfg, resolvedAgentId);
+  const mediaPolicy = resolveAttachmentMediaPolicy({
+    sandboxRoot: input.sandboxRoot,
+    mediaLocalRoots,
+  });
 
   await normalizeSandboxMediaParams({
     args: params,
-    sandboxRoot: input.sandboxRoot,
+    mediaPolicy,
   });
 
-  await hydrateSendAttachmentParams({
+  await hydrateAttachmentParamsForAction({
     cfg,
     channel,
     accountId,
     args: params,
     action,
     dryRun,
-  });
-
-  await hydrateSetGroupIconParams({
-    cfg,
-    channel,
-    accountId,
-    args: params,
-    action,
-    dryRun,
+    mediaPolicy,
   });
 
   const resolvedTarget = await resolveActionTarget({

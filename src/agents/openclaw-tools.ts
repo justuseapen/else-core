@@ -1,9 +1,13 @@
 import type { OpenClawConfig } from "../config/config.js";
 import type { GatewayMessageChannel } from "../utils/message-channel.js";
 import type { SandboxFsBridge } from "./sandbox/fs-bridge.js";
+<<<<<<< HEAD
 import type { AnyAgentTool } from "./tools/common.js";
 import { resolvePluginTools } from "../plugins/tools.js";
 import { resolveSessionAgentId } from "./agent-scope.js";
+=======
+import type { ToolFsPolicy } from "./tool-fs-policy.js";
+>>>>>>> upstream/main
 import { createAgentsListTool } from "./tools/agents-list-tool.js";
 import { createBrowserTool } from "./tools/browser-tool.js";
 import { createCanvasTool } from "./tools/canvas-tool.js";
@@ -41,6 +45,7 @@ export function createOpenClawTools(options?: {
   agentDir?: string;
   sandboxRoot?: string;
   sandboxFsBridge?: SandboxFsBridge;
+  fsPolicy?: ToolFsPolicy;
   workspaceDir?: string;
   sandboxed?: boolean;
   config?: OpenClawConfig;
@@ -49,6 +54,8 @@ export function createOpenClawTools(options?: {
   currentChannelId?: string;
   /** Current thread timestamp for auto-threading (Slack). */
   currentThreadTs?: string;
+  /** Current inbound message id for action fallbacks (e.g. Telegram react). */
+  currentMessageId?: string | number;
   /** Reply-to mode for Slack auto-threading. */
   replyToMode?: "off" | "first" | "all";
   /** Mutable ref to track if a reply was sent (for "first" mode). */
@@ -61,6 +68,10 @@ export function createOpenClawTools(options?: {
   requireExplicitMessageTarget?: boolean;
   /** If true, omit the message tool from the tool list. */
   disableMessageTool?: boolean;
+  /** Trusted sender id from inbound context (not tool args). */
+  requesterSenderId?: string | null;
+  /** Whether the requesting sender is an owner. */
+  senderIsOwner?: boolean;
 }): AnyAgentTool[] {
   const workspaceDir = resolveWorkspaceRoot(options?.workspaceDir);
   const imageTool = options?.agentDir?.trim()
@@ -72,6 +83,7 @@ export function createOpenClawTools(options?: {
           options?.sandboxRoot && options?.sandboxFsBridge
             ? { root: options.sandboxRoot, bridge: options.sandboxFsBridge }
             : undefined,
+        fsPolicy: options?.fsPolicy,
         modelHasVision: options?.modelHasVision,
       })
     : null;
@@ -92,10 +104,12 @@ export function createOpenClawTools(options?: {
         currentChannelId: options?.currentChannelId,
         currentChannelProvider: options?.agentChannel,
         currentThreadTs: options?.currentThreadTs,
+        currentMessageId: options?.currentMessageId,
         replyToMode: options?.replyToMode,
         hasRepliedRef: options?.hasRepliedRef,
         sandboxRoot: options?.sandboxRoot,
         requireExplicitTarget: options?.requireExplicitMessageTarget,
+        requesterSenderId: options?.requesterSenderId ?? undefined,
       });
   const tools: AnyAgentTool[] = [
     createBrowserTool({

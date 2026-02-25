@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import { Chalk } from "chalk";
+>>>>>>> upstream/main
 import type { Logger as TsLogger } from "tslog";
 import { Chalk } from "chalk";
 import { inspect } from "node:util";
@@ -35,6 +39,39 @@ function shouldLogToConsole(level: LogLevel, settings: { level: LogLevel }): boo
 }
 
 type ChalkInstance = InstanceType<typeof Chalk>;
+
+const inspectValue: ((value: unknown) => string) | null = (() => {
+  const getBuiltinModule = (
+    process as NodeJS.Process & {
+      getBuiltinModule?: (id: string) => unknown;
+    }
+  ).getBuiltinModule;
+  if (typeof getBuiltinModule !== "function") {
+    return null;
+  }
+  try {
+    const utilNamespace = getBuiltinModule("util") as {
+      inspect?: (value: unknown) => string;
+    };
+    return typeof utilNamespace.inspect === "function" ? utilNamespace.inspect : null;
+  } catch {
+    return null;
+  }
+})();
+
+function formatRuntimeArg(arg: unknown): string {
+  if (typeof arg === "string") {
+    return arg;
+  }
+  if (inspectValue) {
+    return inspectValue(arg);
+  }
+  try {
+    return JSON.stringify(arg);
+  } catch {
+    return String(arg);
+  }
+}
 
 function isRichConsoleEnv(): boolean {
   const term = (process.env.TERM ?? "").toLowerCase();
@@ -323,7 +360,7 @@ export function runtimeForLogger(
 ): RuntimeEnv {
   const formatArgs = (...args: unknown[]) =>
     args
-      .map((arg) => (typeof arg === "string" ? arg : inspect(arg)))
+      .map((arg) => formatRuntimeArg(arg))
       .join(" ")
       .trim();
   return {

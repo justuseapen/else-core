@@ -15,6 +15,12 @@ import {
   resolveInternalSessionKey,
   resolveMainSessionAlias,
 } from "../../agents/tools/sessions-helpers.js";
+<<<<<<< HEAD
+=======
+import type { OpenClawConfig } from "../../config/config.js";
+import { toAgentModelListLike } from "../../config/model-input.js";
+import type { SessionEntry, SessionScope } from "../../config/sessions.js";
+>>>>>>> upstream/main
 import { logVerbose } from "../../globals.js";
 import {
   formatUsageWindowSummary,
@@ -22,6 +28,7 @@ import {
   resolveUsageProviderId,
 } from "../../infra/provider-usage.js";
 import { normalizeGroupActivation } from "../group-activation.js";
+import { resolveSelectedAndActiveModel } from "../model-runtime.js";
 import { buildStatusMessage } from "../status.js";
 import { getFollowupQueueDepth, resolveQueueSettings } from "./queue.js";
 import { resolveSubagentLabel } from "./subagents-utils.js";
@@ -31,6 +38,7 @@ export async function buildStatusReply(params: {
   command: CommandContext;
   sessionEntry?: SessionEntry;
   sessionKey: string;
+  parentSessionKey?: string;
   sessionScope?: SessionScope;
   storePath?: string;
   provider: string;
@@ -50,6 +58,7 @@ export async function buildStatusReply(params: {
     command,
     sessionEntry,
     sessionKey,
+    parentSessionKey,
     sessionScope,
     storePath,
     provider,
@@ -136,13 +145,32 @@ export async function buildStatusReply(params: {
   const groupActivation = isGroup
     ? (normalizeGroupActivation(sessionEntry?.groupActivation) ?? defaultGroupActivation())
     : undefined;
+  const modelRefs = resolveSelectedAndActiveModel({
+    selectedProvider: provider,
+    selectedModel: model,
+    sessionEntry,
+  });
+  const selectedModelAuth = resolveModelAuthLabel({
+    provider,
+    cfg,
+    sessionEntry,
+    agentDir: statusAgentDir,
+  });
+  const activeModelAuth = modelRefs.activeDiffers
+    ? resolveModelAuthLabel({
+        provider: modelRefs.active.provider,
+        cfg,
+        sessionEntry,
+        agentDir: statusAgentDir,
+      })
+    : selectedModelAuth;
   const agentDefaults = cfg.agents?.defaults ?? {};
   const statusText = buildStatusMessage({
     config: cfg,
     agent: {
       ...agentDefaults,
       model: {
-        ...agentDefaults.model,
+        ...toAgentModelListLike(agentDefaults.model),
         primary: `${provider}/${model}`,
       },
       contextTokens,
@@ -153,6 +181,7 @@ export async function buildStatusReply(params: {
     agentId: statusAgentId,
     sessionEntry,
     sessionKey,
+    parentSessionKey,
     sessionScope,
     sessionStorePath: storePath,
     groupActivation,
@@ -160,12 +189,8 @@ export async function buildStatusReply(params: {
     resolvedVerbose: resolvedVerboseLevel,
     resolvedReasoning: resolvedReasoningLevel,
     resolvedElevated: resolvedElevatedLevel,
-    modelAuth: resolveModelAuthLabel({
-      provider,
-      cfg,
-      sessionEntry,
-      agentDir: statusAgentDir,
-    }),
+    modelAuth: selectedModelAuth,
+    activeModelAuth,
     usageLine: usageLine ?? undefined,
     queue: {
       mode: queueSettings.mode,

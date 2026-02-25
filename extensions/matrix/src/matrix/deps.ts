@@ -3,7 +3,11 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+<<<<<<< HEAD
 import { getMatrixRuntime } from "../runtime.js";
+=======
+import { runPluginCommandWithTimeout, type RuntimeEnv } from "openclaw/plugin-sdk";
+>>>>>>> upstream/main
 
 const MATRIX_SDK_PACKAGE = "@vector-im/matrix-bot-sdk";
 
@@ -42,7 +46,8 @@ export async function ensureMatrixSdkInstalled(params: {
     ? ["pnpm", "install"]
     : ["npm", "install", "--omit=dev", "--silent"];
   params.runtime.log?.(`matrix: installing dependencies via ${command[0]} (${root})…`);
-  const result = await getMatrixRuntime().system.runCommandWithTimeout(command, {
+  const result = await runPluginCommandWithTimeout({
+    argv: command,
     cwd: root,
     timeoutMs: 300_000,
     env: { COREPACK_ENABLE_DOWNLOAD_PROMPT: "0" },

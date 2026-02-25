@@ -1,7 +1,11 @@
 import type { OpenClawConfig } from "../config/config.js";
 import type { DiscordAccountConfig, DiscordActionConfig } from "../config/types.js";
+<<<<<<< HEAD
 import { createAccountActionGate } from "../channels/plugins/account-action-gate.js";
 import { createAccountListHelpers } from "../channels/plugins/account-helpers.js";
+=======
+import { resolveAccountEntry } from "../routing/account-lookup.js";
+>>>>>>> upstream/main
 import { normalizeAccountId } from "../routing/session-key.js";
 import { resolveDiscordToken } from "./token.js";
 
@@ -22,11 +26,7 @@ function resolveAccountConfig(
   cfg: OpenClawConfig,
   accountId: string,
 ): DiscordAccountConfig | undefined {
-  const accounts = cfg.channels?.discord?.accounts;
-  if (!accounts || typeof accounts !== "object") {
-    return undefined;
-  }
-  return accounts[accountId] as DiscordAccountConfig | undefined;
+  return resolveAccountEntry(cfg.channels?.discord?.accounts, accountId);
 }
 
 function mergeDiscordAccountConfig(cfg: OpenClawConfig, accountId: string): DiscordAccountConfig {

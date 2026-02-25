@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import type { ProviderUsageSnapshot, UsageWindow } from "./provider-usage.types.js";
 import { fetchJson } from "./provider-usage.fetch.shared.js";
+=======
+import { buildUsageHttpErrorSnapshot, fetchJson } from "./provider-usage.fetch.shared.js";
+>>>>>>> upstream/main
 import { clampPercent, PROVIDER_LABELS } from "./provider-usage.shared.js";
 
 type ClaudeUsageResponse = {
@@ -57,8 +61,8 @@ function resolveClaudeWebSessionKey(): string | undefined {
   if (!cookieHeader) {
     return undefined;
   }
-  const stripped = cookieHeader.replace(/^cookie:\\s*/i, "");
-  const match = stripped.match(/(?:^|;\\s*)sessionKey=([^;\\s]+)/i);
+  const stripped = cookieHeader.replace(/^cookie:\s*/i, "");
+  const match = stripped.match(/(?:^|;\s*)sessionKey=([^;\s]+)/i);
   const value = match?.[1]?.trim();
   return value?.startsWith("sk-ant-") ? value : undefined;
 }
@@ -159,13 +163,11 @@ export async function fetchClaudeUsage(
       }
     }
 
-    const suffix = message ? `: ${message}` : "";
-    return {
+    return buildUsageHttpErrorSnapshot({
       provider: "anthropic",
-      displayName: PROVIDER_LABELS.anthropic,
-      windows: [],
-      error: `HTTP ${res.status}${suffix}`,
-    };
+      status: res.status,
+      message,
+    });
   }
 
   const data = (await res.json()) as ClaudeUsageResponse;

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { describe, expect, it, vi } from "vitest";
 import type { MsgContext } from "../../auto-reply/templating.js";
 import { buildDispatchInboundContextCapture } from "../../../test/helpers/inbound-contract-capture.js";
@@ -9,6 +10,11 @@ vi.mock("../../auto-reply/dispatch.js", async (importOriginal) => {
   return await buildDispatchInboundContextCapture(importOriginal, capture);
 });
 
+=======
+import { describe, expect, it } from "vitest";
+import { inboundCtxCapture as capture } from "../../../test/helpers/inbound-contract-dispatch-mock.js";
+import { expectInboundContextContract } from "../../../test/helpers/inbound-contract.js";
+>>>>>>> upstream/main
 import type { DiscordMessagePreflightContext } from "./message-handler.preflight.js";
 import { processDiscordMessage } from "./message-handler.process.js";
 import { createBaseDiscordMessageContext } from "./message-handler.test-harness.js";

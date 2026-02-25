@@ -2,6 +2,7 @@
  * Message normalization utilities for chat rendering.
  */
 
+import { stripInboundMetadata } from "../../../../src/auto-reply/reply/strip-inbound-meta.js";
 import type { NormalizedMessage, MessageContentItem } from "../types/chat-types.ts";
 
 // Keep in sync with src/auto-reply/tokens.ts.
@@ -52,6 +53,16 @@ export function normalizeMessage(message: unknown): NormalizedMessage {
 
   const timestamp = typeof m.timestamp === "number" ? m.timestamp : Date.now();
   const id = typeof m.id === "string" ? m.id : undefined;
+
+  // Strip AI-injected metadata prefix blocks from user messages before display.
+  if (role === "user" || role === "User") {
+    content = content.map((item) => {
+      if (item.type === "text" && typeof item.text === "string") {
+        return { ...item, text: stripInboundMetadata(item.text) };
+      }
+      return item;
+    });
+  }
 
   return { role, content, timestamp, id };
 }
