@@ -120,11 +120,15 @@ export { isDangerousNameMatchingEnabled } from "../config/dangerous-name-matchin
 
 export type { FileLockHandle, FileLockOptions } from "./file-lock.js";
 export { acquireFileLock, withFileLock } from "./file-lock.js";
+export type { KeyedAsyncQueueHooks } from "./keyed-async-queue.js";
+export { enqueueKeyedTask, KeyedAsyncQueue } from "./keyed-async-queue.js";
 export { normalizeWebhookPath, resolveWebhookPath } from "./webhook-path.js";
 export {
   registerWebhookTarget,
   registerWebhookTargetWithPluginRoute,
   rejectNonPostWebhookRequest,
+  resolveWebhookTargetWithAuthOrReject,
+  resolveWebhookTargetWithAuthOrRejectSync,
   resolveSingleWebhookTarget,
   resolveSingleWebhookTargetAsync,
   resolveWebhookTargets,
@@ -145,6 +149,7 @@ export {
   WEBHOOK_IN_FLIGHT_DEFAULTS,
 } from "./webhook-request-guards.js";
 export type { WebhookBodyReadProfile, WebhookInFlightLimiter } from "./webhook-request-guards.js";
+export { keepHttpServerTaskAlive, waitUntilAbort } from "./channel-lifecycle.js";
 export type { AgentMediaPayload } from "./agent-media-payload.js";
 export { buildAgentMediaPayload } from "./agent-media-payload.js";
 export {
@@ -155,6 +160,10 @@ export {
   collectStatusIssuesFromLastError,
   createDefaultChannelRuntimeState,
 } from "./status-helpers.js";
+export {
+  promptSingleChannelSecretInput,
+  type SingleChannelSecretInputPromptResult,
+} from "../channels/plugins/onboarding/helpers.js";
 export { buildOauthProviderAuthResult } from "./provider-auth-result.js";
 export { formatResolvedUnresolvedNote } from "./resolution-notes.js";
 export type { ChannelDock } from "../channels/dock.js";
@@ -212,17 +221,27 @@ export {
   normalizeAllowFrom,
   ReplyRuntimeConfigSchemaShape,
   requireOpenAllowFrom,
+  SecretInputSchema,
   TtsAutoSchema,
   TtsConfigSchema,
   TtsModeSchema,
   TtsProviderSchema,
 } from "../config/zod-schema.core.js";
+export {
+  assertSecretInputResolved,
+  hasConfiguredSecretInput,
+  isSecretRef,
+  normalizeResolvedSecretInputString,
+  normalizeSecretInputString,
+} from "../config/types.secrets.js";
+export type { SecretInput, SecretRef } from "../config/types.secrets.js";
 export { ToolPolicySchema } from "../config/zod-schema.agent-runtime.js";
 export type { RuntimeEnv } from "../runtime.js";
 export type { WizardPrompter } from "../wizard/prompts.js";
 export {
   DEFAULT_ACCOUNT_ID,
   normalizeAccountId,
+  normalizeAgentId,
   resolveThreadSessionKeys,
 } from "../routing/session-key.js";
 export {
