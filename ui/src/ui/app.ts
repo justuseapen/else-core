@@ -113,6 +113,7 @@ function resolveOnboardingMode(): boolean {
 export class OpenClawApp extends LitElement {
   private i18nController = new I18nController(this);
   clientInstanceId = generateUUID();
+  connectGeneration = 0;
   @state() settings: UiSettings = loadSettings();
   constructor() {
     super();
@@ -137,7 +138,11 @@ export class OpenClawApp extends LitElement {
   @state() assistantName = bootAssistantIdentity.name;
   @state() assistantAvatar = bootAssistantIdentity.avatar;
   @state() assistantAgentId = bootAssistantIdentity.agentId ?? null;
+<<<<<<< HEAD
   @state() controlUiProfile: ControlUiProfile = DEFAULT_CONTROL_UI_PROFILE;
+=======
+  @state() serverVersion: string | null = null;
+>>>>>>> upstream/main
 
   @state() sessionKey = this.settings.sessionKey;
   @state() chatLoading = false;
