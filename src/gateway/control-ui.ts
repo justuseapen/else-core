@@ -7,6 +7,7 @@ import { resolveControlUiRootSync } from "../infra/control-ui-assets.js";
 import { isWithinDir } from "../infra/path-safety.js";
 import { openVerifiedFileSync } from "../infra/safe-open-sync.js";
 import { AVATAR_MAX_BYTES } from "../shared/avatar-policy.js";
+import { resolveRuntimeServiceVersion } from "../version.js";
 import { DEFAULT_ASSISTANT_IDENTITY, resolveAssistantIdentity } from "./assistant-identity.js";
 import {
   CONTROL_UI_BOOTSTRAP_CONFIG_PATH,
@@ -17,7 +18,6 @@ import {
 import { buildControlUiCspHeader } from "./control-ui-csp.js";
 import {
   isReadHttpMethod,
-  respondMethodNotAllowed,
   respondNotFound as respondControlUiNotFound,
   respondPlainText,
 } from "./control-ui-http-utils.js";
@@ -30,6 +30,8 @@ import {
 } from "./control-ui-shared.js";
 
 const ROOT_PREFIX = "/";
+const CONTROL_UI_ASSETS_MISSING_MESSAGE =
+  "Control UI assets not found. Build them with `pnpm ui:build` (auto-installs UI deps), or run `pnpm ui:dev` during development.";
 
 export type ControlUiRequestOptions = {
   basePath?: string;
@@ -120,6 +122,31 @@ function sendJson(res: ServerResponse, status: number, body: unknown) {
   res.end(JSON.stringify(body));
 }
 
+function respondControlUiAssetsUnavailable(
+  res: ServerResponse,
+  options?: { configuredRootPath?: string },
+) {
+  if (options?.configuredRootPath) {
+    respondPlainText(
+      res,
+      503,
+      `Control UI assets not found at ${options.configuredRootPath}. Build them with \`pnpm ui:build\` (auto-installs UI deps), or update gateway.controlUi.root.`,
+    );
+    return;
+  }
+  respondPlainText(res, 503, CONTROL_UI_ASSETS_MISSING_MESSAGE);
+}
+
+function respondHeadForFile(req: IncomingMessage, res: ServerResponse, filePath: string): boolean {
+  if (req.method !== "HEAD") {
+    return false;
+  }
+  res.statusCode = 200;
+  setStaticFileHeaders(res, filePath);
+  res.end();
+  return true;
+}
+
 function isValidAgentId(agentId: string): boolean {
   return /^[a-z0-9][a-z0-9_-]{0,63}$/i.test(agentId);
 }
@@ -180,11 +207,7 @@ export function handleControlUiAvatarRequest(
     return true;
   }
   try {
-    if (req.method === "HEAD") {
-      res.statusCode = 200;
-      res.setHeader("Content-Type", contentTypeForExt(path.extname(safeAvatar.path).toLowerCase()));
-      res.setHeader("Cache-Control", "no-cache");
-      res.end();
+    if (respondHeadForFile(req, res, safeAvatar.path)) {
       return true;
     }
 
@@ -295,10 +318,6 @@ export function handleControlUiHttpRequest(
     respondControlUiNotFound(res);
     return true;
   }
-  if (route.kind === "method-not-allowed") {
-    respondMethodNotAllowed(res);
-    return true;
-  }
   if (route.kind === "redirect") {
     applyControlUiSecurityHeaders(res);
     res.statusCode = 302;
@@ -339,25 +358,18 @@ export function handleControlUiHttpRequest(
       assistantName: identity.name,
       assistantAvatar: avatarValue ?? identity.avatar,
       assistantAgentId: identity.agentId,
+      serverVersion: resolveRuntimeServiceVersion(process.env),
     } satisfies ControlUiBootstrapConfig);
     return true;
   }
 
   const rootState = opts?.root;
   if (rootState?.kind === "invalid") {
-    respondPlainText(
-      res,
-      503,
-      `Control UI assets not found at ${rootState.path}. Build them with \`pnpm ui:build\` (auto-installs UI deps), or update gateway.controlUi.root.`,
-    );
+    respondControlUiAssetsUnavailable(res, { configuredRootPath: rootState.path });
     return true;
   }
   if (rootState?.kind === "missing") {
-    respondPlainText(
-      res,
-      503,
-      "Control UI assets not found. Build them with `pnpm ui:build` (auto-installs UI deps), or run `pnpm ui:dev` during development.",
-    );
+    respondControlUiAssetsUnavailable(res);
     return true;
   }
 
@@ -370,11 +382,7 @@ export function handleControlUiHttpRequest(
           cwd: process.cwd(),
         });
   if (!root) {
-    respondPlainText(
-      res,
-      503,
-      "Control UI assets not found. Build them with `pnpm ui:build` (auto-installs UI deps), or run `pnpm ui:dev` during development.",
-    );
+    respondControlUiAssetsUnavailable(res);
     return true;
   }
 
@@ -389,11 +397,7 @@ export function handleControlUiHttpRequest(
     }
   })();
   if (!rootReal) {
-    respondPlainText(
-      res,
-      503,
-      "Control UI assets not found. Build them with `pnpm ui:build` (auto-installs UI deps), or run `pnpm ui:dev` during development.",
-    );
+    respondControlUiAssetsUnavailable(res);
     return true;
   }
 
@@ -425,10 +429,7 @@ export function handleControlUiHttpRequest(
   const safeFile = resolveSafeControlUiFile(rootReal, filePath);
   if (safeFile) {
     try {
-      if (req.method === "HEAD") {
-        res.statusCode = 200;
-        setStaticFileHeaders(res, safeFile.path);
-        res.end();
+      if (respondHeadForFile(req, res, safeFile.path)) {
         return true;
       }
       if (path.basename(safeFile.path) === "index.html") {
@@ -457,10 +458,7 @@ export function handleControlUiHttpRequest(
   const safeIndex = resolveSafeControlUiFile(rootReal, indexPath);
   if (safeIndex) {
     try {
-      if (req.method === "HEAD") {
-        res.statusCode = 200;
-        setStaticFileHeaders(res, safeIndex.path);
-        res.end();
+      if (respondHeadForFile(req, res, safeIndex.path)) {
         return true;
       }
       serveResolvedIndexHtml(res, fs.readFileSync(safeIndex.fd, "utf8"));
