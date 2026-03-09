@@ -37,11 +37,8 @@ describe("loadControlUiBootstrapConfig", () => {
     expect(state.assistantName).toBe("Ops");
     expect(state.assistantAvatar).toBe("O");
     expect(state.assistantAgentId).toBe("main");
-<<<<<<< HEAD
     expect(state.controlUiProfile).toBe("americanclaw");
-=======
     expect(state.serverVersion).toBe("2026.3.7");
->>>>>>> upstream/main
 
     vi.unstubAllGlobals();
   });
