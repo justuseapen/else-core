@@ -465,6 +465,20 @@
     font-size: 12px;
   }
 
+  /* Mobile: hide "New session" text and show "+" icon to save horizontal space */
+  .chat-compose .chat-btn-new-session {
+    font-size: 0; /* Hide text */
+    padding: 0 10px;
+    min-width: 40px;
+    position: relative;
+  }
+
+  .chat-compose .chat-btn-new-session::after {
+    content: "+";
+    font-size: 18px;
+    line-height: 1;
+  }
+
   /* Hide keyboard shortcut hint on mobile */
   .chat-compose .btn-kbd {
     display: none;

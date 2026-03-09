@@ -6,7 +6,11 @@ import {
   renderReadingIndicatorGroup,
   renderStreamingGroup,
 } from "../chat/grouped-render.ts";
-import { normalizeMessage, normalizeRoleForGrouping, isHeartbeatMessage } from "../chat/message-normalizer.ts";
+import {
+  normalizeMessage,
+  normalizeRoleForGrouping,
+  isHeartbeatMessage,
+} from "../chat/message-normalizer.ts";
 import { icons } from "../icons.ts";
 import { detectTextDirection } from "../text-direction.ts";
 import type { SessionsListResult } from "../types.ts";
@@ -459,7 +463,7 @@ export function renderChat(props: ChatProps) {
           </label>
           <div class="chat-compose__actions">
             <button
-              class="btn"
+              class="btn ${canAbort ? "chat-btn-stop" : "chat-btn-new-session"}"
               ?disabled=${!props.connected || (!canAbort && props.sending)}
               @click=${canAbort ? props.onAbort : props.onNewSession}
             >
