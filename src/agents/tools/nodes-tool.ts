@@ -175,6 +175,7 @@ export function createNodesTool(options?: {
   return {
     label: "Nodes",
     name: "nodes",
+    ownerOnly: true,
     description:
       "Discover and control paired nodes (status/describe/pairing/notify/camera/photos/screen/location/notifications/run/invoke).",
     parameters: NodesToolSchema,
@@ -326,7 +327,17 @@ export function createNodesTool(options?: {
               });
             }
 
-            const result: AgentToolResult<unknown> = { content, details };
+            const result: AgentToolResult<unknown> = {
+              content,
+              details: {
+                snaps: details,
+                media: {
+                  mediaUrls: details
+                    .map((entry) => entry.path)
+                    .filter((path): path is string => typeof path === "string"),
+                },
+              },
+            };
             return await sanitizeToolResultImages(result, "nodes:camera_snap", imageSanitization);
           }
           case "photos_latest": {
@@ -400,7 +411,6 @@ export function createNodesTool(options?: {
                 invalidPayloadMessage: "invalid photos.latest payload",
               });
 
-              content.push({ type: "text", text: `MEDIA:${filePath}` });
               if (options?.modelHasVision && photo.base64) {
                 content.push({
                   type: "image",
@@ -423,7 +433,17 @@ export function createNodesTool(options?: {
               });
             }
 
-            const result: AgentToolResult<unknown> = { content, details };
+            const result: AgentToolResult<unknown> = {
+              content,
+              details: {
+                photos: details,
+                media: {
+                  mediaUrls: details
+                    .map((entry) => entry.path)
+                    .filter((path): path is string => typeof path === "string"),
+                },
+              },
+            };
             return await sanitizeToolResultImages(result, "nodes:photos_latest", imageSanitization);
           }
           case "camera_list":
@@ -664,7 +684,7 @@ export function createNodesTool(options?: {
             }
             const runParams = {
               command: prepared.plan.argv,
-              rawCommand: prepared.plan.rawCommand ?? prepared.cmdText,
+              rawCommand: prepared.plan.commandText,
               cwd: prepared.plan.cwd ?? cwd,
               env,
               timeoutMs: commandTimeoutMs,
@@ -699,8 +719,6 @@ export function createNodesTool(options?: {
               { ...gatewayOpts, timeoutMs: APPROVAL_TIMEOUT_MS + 5_000 },
               {
                 id: approvalId,
-                command: prepared.cmdText,
-                commandArgv: prepared.plan.argv,
                 systemRunPlan: prepared.plan,
                 cwd: prepared.plan.cwd ?? cwd,
                 nodeId,
