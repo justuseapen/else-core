@@ -1,5 +1,5 @@
 ---
-summary: "Use ACP runtime sessions for Pi, Claude Code, Codex, OpenCode, Gemini CLI, and other harness agents"
+summary: "Use ACP runtime sessions for Codex, Claude Code, Cursor, Gemini CLI, OpenClaw ACP, and other harness agents"
 read_when:
   - Running coding harnesses through ACP
   - Setting up thread-bound ACP sessions on thread-capable channels
@@ -11,7 +11,7 @@ title: "ACP Agents"
 
 # ACP agents
 
-[Agent Client Protocol (ACP)](https://agentclientprotocol.com/) sessions let OpenClaw run external coding harnesses (for example Pi, Claude Code, Codex, OpenCode, and Gemini CLI) through an ACP backend plugin.
+[Agent Client Protocol (ACP)](https://agentclientprotocol.com/) sessions let OpenClaw run external coding harnesses (for example Pi, Claude Code, Codex, Cursor, Copilot, OpenClaw ACP, OpenCode, Gemini CLI, and other supported ACPX harnesses) through an ACP backend plugin.
 
 If you ask OpenClaw in plain language to "run this in Codex" or "start Claude Code in a thread", OpenClaw should route that request to the ACP runtime (not the native sub-agent runtime).
 
@@ -243,8 +243,75 @@ Interface details:
   - `mode: "session"` requires `thread: true`
 - `cwd` (optional): requested runtime working directory (validated by backend/runtime policy).
 - `label` (optional): operator-facing label used in session/banner text.
+- `resumeSessionId` (optional): resume an existing ACP session instead of creating a new one. The agent replays its conversation history via `session/load`. Requires `runtime: "acp"`.
 - `streamTo` (optional): `"parent"` streams initial ACP run progress summaries back to the requester session as system events.
   - When available, accepted responses include `streamLogPath` pointing to a session-scoped JSONL log (`<sessionId>.acp-stream.jsonl`) you can tail for full relay history.
+
+### Resume an existing session
+
+Use `resumeSessionId` to continue a previous ACP session instead of starting fresh. The agent replays its conversation history via `session/load`, so it picks up with full context of what came before.
+
+```json
+{
+  "task": "Continue where we left off — fix the remaining test failures",
+  "runtime": "acp",
+  "agentId": "codex",
+  "resumeSessionId": "<previous-session-id>"
+}
+```
+
+Common use cases:
+
+- Hand off a Codex session from your laptop to your phone — tell your agent to pick up where you left off
+- Continue a coding session you started interactively in the CLI, now headlessly through your agent
+- Pick up work that was interrupted by a gateway restart or idle timeout
+
+Notes:
+
+- `resumeSessionId` requires `runtime: "acp"` — returns an error if used with the sub-agent runtime.
+- `resumeSessionId` restores the upstream ACP conversation history; `thread` and `mode` still apply normally to the new OpenClaw session you are creating, so `mode: "session"` still requires `thread: true`.
+- The target agent must support `session/load` (Codex and Claude Code do).
+- If the session ID isn't found, the spawn fails with a clear error — no silent fallback to a new session.
+
+### Operator smoke test
+
+Use this after a gateway deploy when you want a quick live check that ACP spawn
+is actually working end-to-end, not just passing unit tests.
+
+Recommended gate:
+
+1. Verify the deployed gateway version/commit on the target host.
+2. Confirm the deployed source includes the ACP lineage acceptance in
+   `src/gateway/sessions-patch.ts` (`subagent:* or acp:* sessions`).
+3. Open a temporary ACPX bridge session to a live agent (for example
+   `razor(main)` on `jpclawhq`).
+4. Ask that agent to call `sessions_spawn` with:
+   - `runtime: "acp"`
+   - `agentId: "codex"`
+   - `mode: "run"`
+   - task: `Reply with exactly LIVE-ACP-SPAWN-OK`
+5. Verify the agent reports:
+   - `accepted=yes`
+   - a real `childSessionKey`
+   - no validator error
+6. Clean up the temporary ACPX bridge session.
+
+Example prompt to the live agent:
+
+```text
+Use the sessions_spawn tool now with runtime: "acp", agentId: "codex", and mode: "run".
+Set the task to: "Reply with exactly LIVE-ACP-SPAWN-OK".
+Then report only: accepted=<yes/no>; childSessionKey=<value or none>; error=<exact text or none>.
+```
+
+Notes:
+
+- Keep this smoke test on `mode: "run"` unless you are intentionally testing
+  thread-bound persistent ACP sessions.
+- Do not require `streamTo: "parent"` for the basic gate. That path depends on
+  requester/session capabilities and is a separate integration check.
+- Treat thread-bound `mode: "session"` testing as a second, richer integration
+  pass from a real Discord thread or Telegram topic.
 
 ## Sandbox compatibility
 
@@ -348,11 +415,13 @@ Some controls depend on backend capabilities. If a backend does not support a co
 | `/acp cwd`           | Set runtime working directory override.                   | `/acp cwd /Users/user/Projects/repo`                           |
 | `/acp permissions`   | Set approval policy profile.                              | `/acp permissions strict`                                      |
 | `/acp timeout`       | Set runtime timeout (seconds).                            | `/acp timeout 120`                                             |
-| `/acp model`         | Set runtime model override.                               | `/acp model anthropic/claude-opus-4-5`                         |
+| `/acp model`         | Set runtime model override.                               | `/acp model anthropic/claude-opus-4-6`                         |
 | `/acp reset-options` | Remove session runtime option overrides.                  | `/acp reset-options`                                           |
 | `/acp sessions`      | List recent ACP sessions from store.                      | `/acp sessions`                                                |
 | `/acp doctor`        | Backend health, capabilities, actionable fixes.           | `/acp doctor`                                                  |
 | `/acp install`       | Print deterministic install and enable steps.             | `/acp install`                                                 |
+
+`/acp sessions` reads the store for the current bound or requester session. Commands that accept `session-key`, `session-id`, or `session-label` tokens resolve targets through gateway session discovery, including custom per-agent `session.store` roots.
 
 ## Runtime options mapping
 
@@ -372,14 +441,23 @@ Equivalent operations:
 
 Current acpx built-in harness aliases:
 
-- `pi`
 - `claude`
 - `codex`
-- `opencode`
+- `copilot`
+- `cursor` (Cursor CLI: `cursor-agent acp`)
+- `droid`
 - `gemini`
+- `iflow`
+- `kilocode`
 - `kimi`
+- `kiro`
+- `openclaw`
+- `opencode`
+- `pi`
+- `qwen`
 
 When OpenClaw uses the acpx backend, prefer these values for `agentId` unless your acpx config defines custom agent aliases.
+If your local Cursor install still exposes ACP as `agent acp`, override the `cursor` agent command in your acpx config instead of changing the built-in default.
 
 Direct acpx CLI usage can also target arbitrary adapters via `--agent <command>`, but that raw escape hatch is an acpx CLI feature (not the normal OpenClaw `agentId` path).
 
@@ -395,7 +473,22 @@ Core ACP baseline:
     dispatch: { enabled: true },
     backend: "acpx",
     defaultAgent: "codex",
-    allowedAgents: ["pi", "claude", "codex", "opencode", "gemini", "kimi"],
+    allowedAgents: [
+      "claude",
+      "codex",
+      "copilot",
+      "cursor",
+      "droid",
+      "gemini",
+      "iflow",
+      "kilocode",
+      "kimi",
+      "kiro",
+      "openclaw",
+      "opencode",
+      "pi",
+      "qwen",
+    ],
     maxConcurrentSessions: 8,
     stream: {
       coalesceIdleMs: 300,
@@ -459,7 +552,7 @@ Then verify backend health:
 
 ### acpx command and version configuration
 
-By default, the acpx plugin (published as `@openclaw/acpx`) uses the plugin-local pinned binary:
+By default, the bundled acpx backend plugin (`acpx`) uses the plugin-local pinned binary:
 
 1. Command defaults to `extensions/acpx/node_modules/.bin/acpx`.
 2. Expected version defaults to the extension pin.

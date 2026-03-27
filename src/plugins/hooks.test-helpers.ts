@@ -1,10 +1,19 @@
 import type { PluginRegistry } from "./registry.js";
+import { createPluginRecord } from "./status.test-helpers.js";
 import type { PluginHookAgentContext, PluginHookRegistration } from "./types.js";
 
 export function createMockPluginRegistry(
   hooks: Array<{ hookName: string; handler: (...args: unknown[]) => unknown }>,
 ): PluginRegistry {
   return {
+    plugins: [
+      createPluginRecord({
+        id: "test-plugin",
+        name: "Test Plugin",
+        source: "test",
+        hookCount: hooks.length,
+      }),
+    ],
     hooks: hooks as never[],
     typedHooks: hooks.map((h) => ({
       pluginId: "test-plugin",
@@ -14,13 +23,19 @@ export function createMockPluginRegistry(
       source: "test",
     })),
     tools: [],
+    channels: [],
+    channelSetups: [],
+    providers: [],
+    speechProviders: [],
+    mediaUnderstandingProviders: [],
+    imageGenerationProviders: [],
+    webSearchProviders: [],
     httpRoutes: [],
-    channelRegistrations: [],
     gatewayHandlers: {},
     cliRegistrars: [],
     services: [],
-    providers: [],
     commands: [],
+    diagnostics: [],
   } as unknown as PluginRegistry;
 }
 
