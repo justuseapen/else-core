@@ -9,8 +9,8 @@
 
 import type { GatewayRequestHandler, OpenClawConfig } from "openclaw/plugin-sdk";
 import { DEFAULT_ACCOUNT_ID, createReplyPrefixOptions } from "openclaw/plugin-sdk";
-import { getEmailRuntime } from "./runtime.js";
 import { resolveEmailAccount } from "./accounts.js";
+import { getEmailRuntime } from "./runtime.js";
 import type { EmailInboundPayload } from "./types.js";
 
 /**
@@ -50,8 +50,7 @@ export function createEmailInboundHandler(): GatewayRequestHandler {
     }
 
     // Build plain text body
-    const textBody = payload.text?.trim()
-      || (payload.html ? stripHtml(payload.html) : "");
+    const textBody = payload.text?.trim() || (payload.html ? stripHtml(payload.html) : "");
 
     if (!textBody) {
       respond(false, undefined, { code: 400, message: "Empty email body" });
@@ -202,8 +201,6 @@ async function deliverEmailReply(params: {
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "unknown");
-    throw new Error(
-      `Email outbound failed (${response.status}): ${errorText}`,
-    );
+    throw new Error(`Email outbound failed (${response.status}): ${errorText}`);
   }
 }

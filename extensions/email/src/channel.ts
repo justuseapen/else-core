@@ -8,17 +8,13 @@
  * - dmPolicy defaults to "open" (email addresses are self-authenticating)
  */
 
-import {
-  DEFAULT_ACCOUNT_ID,
-  getChatChannelMeta,
-  type ChannelPlugin,
-} from "openclaw/plugin-sdk";
-import type { ResolvedEmailAccount } from "./types.js";
+import { DEFAULT_ACCOUNT_ID, getChatChannelMeta, type ChannelPlugin } from "openclaw/plugin-sdk";
 import {
   listEmailAccountIds,
   resolveDefaultEmailAccountId,
   resolveEmailAccount,
 } from "./accounts.js";
+import type { ResolvedEmailAccount } from "./types.js";
 
 const meta = getChatChannelMeta("email" as never);
 
@@ -53,8 +49,8 @@ export const emailPlugin: ChannelPlugin<ResolvedEmailAccount> = {
     defaultAccountId: (cfg) => resolveDefaultEmailAccountId(cfg),
     setAccountEnabled: ({ cfg, accountId, enabled }) => {
       const accountKey = accountId || DEFAULT_ACCOUNT_ID;
-      const channels = cfg.channels as Record<string, unknown> ?? {};
-      const emailSection = channels.email as Record<string, unknown> ?? {};
+      const channels = (cfg.channels as Record<string, unknown>) ?? {};
+      const emailSection = (channels.email as Record<string, unknown>) ?? {};
       const accounts = (emailSection.accounts ?? {}) as Record<string, Record<string, unknown>>;
       const existing = accounts[accountKey] ?? {};
       return {
@@ -76,8 +72,8 @@ export const emailPlugin: ChannelPlugin<ResolvedEmailAccount> = {
     },
     deleteAccount: ({ cfg, accountId }) => {
       const accountKey = accountId || DEFAULT_ACCOUNT_ID;
-      const channels = cfg.channels as Record<string, unknown> ?? {};
-      const emailSection = { ...(channels.email as Record<string, unknown> ?? {}) };
+      const channels = (cfg.channels as Record<string, unknown>) ?? {};
+      const emailSection = { ...((channels.email as Record<string, unknown>) ?? {}) };
       const accounts = { ...((emailSection.accounts ?? {}) as Record<string, unknown>) };
       delete accounts[accountKey];
       return {
@@ -106,9 +102,7 @@ export const emailPlugin: ChannelPlugin<ResolvedEmailAccount> = {
     resolveAllowFrom: ({ cfg, accountId }) =>
       resolveEmailAccount({ cfg, accountId }).allowFrom?.map((e) => String(e)),
     formatAllowFrom: ({ allowFrom }) =>
-      allowFrom
-        .map((entry) => String(entry).trim().toLowerCase())
-        .filter(Boolean),
+      allowFrom.map((entry) => String(entry).trim().toLowerCase()).filter(Boolean),
   },
   security: {
     resolveDmPolicy: ({ account }) => ({
@@ -158,9 +152,7 @@ export const emailPlugin: ChannelPlugin<ResolvedEmailAccount> = {
   // Email has no persistent connection to start/stop — inbound arrives via RPC.
   gateway: {
     startAccount: async (ctx) => {
-      ctx.log?.info(
-        `[${ctx.accountId}] email channel ready (${ctx.account.address})`,
-      );
+      ctx.log?.info(`[${ctx.accountId}] email channel ready (${ctx.account.address})`);
       // No persistent connection needed.
       // The "email.inbound" gateway method handles all inbound traffic.
     },
