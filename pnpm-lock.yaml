@@ -345,15 +345,15 @@ importers:
 
   extensions/elevenlabs: {}
 
-  extensions/exa: {}
-
-  extensions/fal: {}
-
   extensions/email:
     devDependencies:
       openclaw:
         specifier: workspace:*
         version: link:../..
+
+  extensions/exa: {}
+
+  extensions/fal: {}
 
   extensions/feishu:
     dependencies:
@@ -527,13 +527,6 @@ importers:
 
   extensions/open-prose: {}
 
-<<<<<<< HEAD
-  extensions/platform-channel:
-    devDependencies:
-      openclaw:
-        specifier: workspace:*
-        version: link:../..
-=======
   extensions/openai: {}
 
   extensions/opencode: {}
@@ -546,10 +539,15 @@ importers:
 
   extensions/perplexity: {}
 
+  extensions/platform-channel:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/qianfan: {}
 
   extensions/sglang: {}
->>>>>>> upstream/main
 
   extensions/signal: {}
 

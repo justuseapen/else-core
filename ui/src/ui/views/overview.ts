@@ -1,14 +1,6 @@
-<<<<<<< HEAD
-import { html } from "lit";
-import { ConnectErrorDetailCodes } from "../../../../src/gateway/protocol/connect-error-details.js";
-import { t, i18n, SUPPORTED_LOCALES, type Locale } from "../../i18n/index.ts";
-import { resolveUiBrand } from "../brand.ts";
-import type { ControlUiProfile } from "../control-ui-profile.ts";
-=======
 import { html, nothing } from "lit";
 import { t, i18n, SUPPORTED_LOCALES, type Locale, isSupportedLocale } from "../../i18n/index.ts";
 import type { EventLogEntry } from "../app-events.ts";
->>>>>>> upstream/main
 import { buildExternalLinkRel, EXTERNAL_LINK_TARGET } from "../external-link.ts";
 import { formatRelativeTimestamp, formatDurationHuman } from "../format.ts";
 import type { GatewayHelloOk } from "../gateway.ts";
@@ -44,9 +36,6 @@ export type OverviewProps = {
   cronEnabled: boolean | null;
   cronNext: number | null;
   lastChannelsRefresh: number | null;
-<<<<<<< HEAD
-  controlUiProfile?: ControlUiProfile;
-=======
   // New dashboard data
   usageResult: SessionsUsageResult | null;
   sessionsResult: SessionsListResult | null;
@@ -58,7 +47,6 @@ export type OverviewProps = {
   overviewLogLines: string[];
   showGatewayToken: boolean;
   showGatewayPassword: boolean;
->>>>>>> upstream/main
   onSettingsChange: (next: UiSettings) => void;
   onPasswordChange: (next: string) => void;
   onSessionKeyChange: (next: string) => void;
@@ -71,7 +59,6 @@ export type OverviewProps = {
 };
 
 export function renderOverview(props: OverviewProps) {
-  const brand = resolveUiBrand(props.controlUiProfile);
   const snapshot = props.hello?.snapshot as
     | {
         uptimeMs?: number;
@@ -134,11 +121,11 @@ export function renderOverview(props: OverviewProps) {
           <div style="margin-top: 6px">
             <a
               class="session-link"
-              href=${brand.docs.dashboardAuth}
+              href="https://docs.openclaw.ai/web/dashboard"
               target=${EXTERNAL_LINK_TARGET}
               rel=${buildExternalLinkRel()}
-              title="${brand.productName} dashboard auth docs (opens in new tab)"
-              >Docs: Dashboard auth</a
+              title="Control UI auth docs (opens in new tab)"
+              >Docs: Control UI auth</a
             >
           </div>
         </div>
@@ -150,11 +137,11 @@ export function renderOverview(props: OverviewProps) {
         <div style="margin-top: 6px">
           <a
             class="session-link"
-            href=${brand.docs.dashboardAuth}
+            href="https://docs.openclaw.ai/web/dashboard"
             target=${EXTERNAL_LINK_TARGET}
             rel=${buildExternalLinkRel()}
-            title="${brand.productName} dashboard auth docs (opens in new tab)"
-            >Docs: Dashboard auth</a
+            title="Control UI auth docs (opens in new tab)"
+            >Docs: Control UI auth</a
           >
         </div>
       </div>
@@ -183,7 +170,7 @@ export function renderOverview(props: OverviewProps) {
         <div style="margin-top: 6px">
           <a
             class="session-link"
-            href=${brand.docs.tailscale}
+            href="https://docs.openclaw.ai/gateway/tailscale"
             target=${EXTERNAL_LINK_TARGET}
             rel=${buildExternalLinkRel()}
             title="Tailscale Serve docs (opens in new tab)"
@@ -192,7 +179,7 @@ export function renderOverview(props: OverviewProps) {
           <span class="muted"> · </span>
           <a
             class="session-link"
-            href=${brand.docs.insecureHttp}
+            href="https://docs.openclaw.ai/web/control-ui#insecure-http"
             target=${EXTERNAL_LINK_TARGET}
             rel=${buildExternalLinkRel()}
             title="Insecure HTTP docs (opens in new tab)"
@@ -233,16 +220,6 @@ export function renderOverview(props: OverviewProps) {
             : html`
                 <label class="field">
                   <span>${t("overview.access.token")}</span>
-<<<<<<< HEAD
-                  <input
-                    .value=${props.settings.token}
-                    @input=${(e: Event) => {
-                      const v = (e.target as HTMLInputElement).value;
-                      props.onSettingsChange({ ...props.settings, token: v });
-                    }}
-                    placeholder="gateway token"
-                  />
-=======
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <input
                       type=${props.showGatewayToken ? "text" : "password"}
@@ -267,7 +244,6 @@ export function renderOverview(props: OverviewProps) {
                       ${props.showGatewayToken ? icons.eye : icons.eyeOff}
                     </button>
                   </div>
->>>>>>> upstream/main
                 </label>
                 <label class="field">
                   <span>${t("overview.access.password")}</span>

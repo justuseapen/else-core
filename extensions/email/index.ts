@@ -1,8 +1,8 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { emptyPluginConfigSchema } from "openclaw/plugin-sdk";
 import { emailPlugin } from "./src/channel.js";
-import { setEmailRuntime } from "./src/runtime.js";
 import { createEmailInboundHandler } from "./src/inbound.js";
+import { setEmailRuntime } from "./src/runtime.js";
 
 const plugin = {
   id: "email",
@@ -16,10 +16,7 @@ const plugin = {
 
     // Register the gateway RPC method that American Claw calls
     // when an inbound email arrives via Cloudflare Email Routing.
-    api.registerGatewayMethod(
-      "email.inbound",
-      createEmailInboundHandler(),
-    );
+    api.registerGatewayMethod("email.inbound", createEmailInboundHandler());
   },
 };
 

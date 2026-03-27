@@ -54,16 +54,13 @@ import {
 } from "./app-tool-stream.ts";
 import type { AppViewState } from "./app-view-state.ts";
 import { normalizeAssistantIdentity } from "./assistant-identity.ts";
-<<<<<<< HEAD
 import { resolveUiBrand } from "./brand.ts";
-import { DEFAULT_CONTROL_UI_PROFILE, type ControlUiProfile } from "./control-ui-profile.ts";
-=======
 import { exportChatMarkdown } from "./chat/export.ts";
+import { DEFAULT_CONTROL_UI_PROFILE, type ControlUiProfile } from "./control-ui-profile.ts";
 import {
   loadToolsEffective as loadToolsEffectiveInternal,
   refreshVisibleToolsEffectiveForCurrentSession as refreshVisibleToolsEffectiveForCurrentSessionInternal,
 } from "./controllers/agents.ts";
->>>>>>> upstream/main
 import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";

@@ -832,30 +832,21 @@
     min-width: 140px;
   }
 
-<<<<<<< HEAD
-  /* Mobile: keep compose row horizontal - matches WhatsApp/iMessage/Signal */
-=======
   .chat-compose {
     grid-template-columns: 1fr;
   }
 
->>>>>>> upstream/main
+  /* Mobile: keep compose row horizontal - matches WhatsApp/iMessage/Signal */
   .chat-compose__row {
     gap: 8px;
   }
 
-<<<<<<< HEAD
   /* Mobile: compact inline action buttons */
-=======
->>>>>>> upstream/main
   .chat-compose__actions {
     gap: 4px;
   }
 
-<<<<<<< HEAD
   /* Mobile: compact button sizing */
-=======
->>>>>>> upstream/main
   .chat-compose .chat-compose__actions .btn {
     padding: 0 12px;
     font-size: 12px;

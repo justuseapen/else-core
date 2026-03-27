@@ -911,12 +911,7 @@
   /* Gradient fade hint when nav overflows */
   .nav {
     position: relative;
-    mask-image: linear-gradient(
-      to right,
-      black 0%,
-      black calc(100% - 32px),
-      transparent 100%
-    );
+    mask-image: linear-gradient(to right, black 0%, black calc(100% - 32px), transparent 100%);
     -webkit-mask-image: linear-gradient(
       to right,
       black 0%,

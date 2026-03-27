@@ -12,13 +12,6 @@ import {
   renderReadingIndicatorGroup,
   renderStreamingGroup,
 } from "../chat/grouped-render.ts";
-<<<<<<< HEAD
-import {
-  normalizeMessage,
-  normalizeRoleForGrouping,
-  isHeartbeatMessage,
-} from "../chat/message-normalizer.ts";
-=======
 import { InputHistory } from "../chat/input-history.ts";
 import { normalizeMessage, normalizeRoleForGrouping } from "../chat/message-normalizer.ts";
 import { PinnedMessages } from "../chat/pinned-messages.ts";
@@ -33,7 +26,6 @@ import {
   type SlashCommandDef,
 } from "../chat/slash-commands.ts";
 import { isSttSupported, startStt, stopStt } from "../chat/speech.ts";
->>>>>>> upstream/main
 import { icons } from "../icons.ts";
 import { detectTextDirection } from "../text-direction.ts";
 import type { GatewaySessionRow, SessionsListResult } from "../types.ts";
@@ -1287,23 +1279,12 @@ export function renderChat(props: ChatProps) {
         <div class="agent-chat__toolbar">
           <div class="agent-chat__toolbar-left">
             <button
-<<<<<<< HEAD
-              class="btn ${canAbort ? "chat-btn-stop" : "chat-btn-new-session"}"
-              ?disabled=${!props.connected || (!canAbort && props.sending)}
-              @click=${canAbort ? props.onAbort : props.onNewSession}
-            >
-              ${canAbort ? "Stop" : "New session"}
-            </button>
-            <button
-              class="btn primary"
-=======
               class="agent-chat__input-btn"
               @click=${() => {
                 document.querySelector<HTMLInputElement>(".agent-chat__file-input")?.click();
               }}
               title="Attach file"
               aria-label="Attach file"
->>>>>>> upstream/main
               ?disabled=${!props.connected}
             >
               ${icons.paperclip}
@@ -1512,12 +1493,6 @@ function buildChatItems(props: ChatProps): Array<ChatItem | MessageGroup> {
 
     // Apply search filter if active
     if (vs.searchOpen && vs.searchQuery.trim() && !messageMatchesSearchQuery(msg, vs.searchQuery)) {
-      continue;
-    }
-
-    // Hide heartbeat-only messages (automated health checks) from the chat.
-    // These contain just "HEARTBEAT_OK" and are not useful to end users.
-    if (isHeartbeatMessage(msg)) {
       continue;
     }
 

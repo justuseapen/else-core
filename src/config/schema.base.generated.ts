@@ -9848,6 +9848,22 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
               enabled: {
                 type: "boolean",
               },
+              profile: {
+                anyOf: [
+                  {
+                    type: "string",
+                    const: "openclaw",
+                  },
+                  {
+                    type: "string",
+                    const: "americanclaw",
+                  },
+                  {
+                    type: "string",
+                    const: "elsehelp",
+                  },
+                ],
+              },
               basePath: {
                 type: "string",
               },
@@ -12720,6 +12736,12 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
       label: "Firecrawl Timeout (sec)",
       help: "Timeout in seconds for Firecrawl requests.",
       tags: ["performance", "tools"],
+    },
+    "gateway.controlUi.profile": {
+      label: "Control UI Profile",
+      help: 'Brand profile for the Control UI ("americanclaw" default, "openclaw", or "elsehelp").',
+      placeholder: "americanclaw",
+      tags: ["network", "storage"],
     },
     "gateway.controlUi.basePath": {
       label: "Control UI Base Path",

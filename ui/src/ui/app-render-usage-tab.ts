@@ -19,52 +19,6 @@ export function renderUsageTab(state: AppViewState) {
   }
 
   return renderUsage({
-<<<<<<< HEAD
-    loading: state.usageLoading,
-    error: state.usageError,
-    startDate: state.usageStartDate,
-    endDate: state.usageEndDate,
-    sessions: state.usageResult?.sessions ?? [],
-    sessionsLimitReached: (state.usageResult?.sessions?.length ?? 0) >= 1000,
-    totals: state.usageResult?.totals ?? null,
-    aggregates: state.usageResult?.aggregates ?? null,
-    costDaily: state.usageCostSummary?.daily ?? [],
-    selectedSessions: state.usageSelectedSessions,
-    selectedDays: state.usageSelectedDays,
-    selectedHours: state.usageSelectedHours,
-    controlUiProfile: state.controlUiProfile,
-    chartMode: state.usageChartMode,
-    dailyChartMode: state.usageDailyChartMode,
-    timeSeriesMode: state.usageTimeSeriesMode,
-    timeSeriesBreakdownMode: state.usageTimeSeriesBreakdownMode,
-    timeSeries: state.usageTimeSeries,
-    timeSeriesLoading: state.usageTimeSeriesLoading,
-    timeSeriesCursorStart: state.usageTimeSeriesCursorStart,
-    timeSeriesCursorEnd: state.usageTimeSeriesCursorEnd,
-    sessionLogs: state.usageSessionLogs,
-    sessionLogsLoading: state.usageSessionLogsLoading,
-    sessionLogsExpanded: state.usageSessionLogsExpanded,
-    logFilterRoles: state.usageLogFilterRoles,
-    logFilterTools: state.usageLogFilterTools,
-    logFilterHasTools: state.usageLogFilterHasTools,
-    logFilterQuery: state.usageLogFilterQuery,
-    query: state.usageQuery,
-    queryDraft: state.usageQueryDraft,
-    sessionSort: state.usageSessionSort,
-    sessionSortDir: state.usageSessionSortDir,
-    recentSessions: state.usageRecentSessions,
-    sessionsTab: state.usageSessionsTab,
-    visibleColumns: state.usageVisibleColumns as import("./views/usage.ts").UsageColumnId[],
-    timeZone: state.usageTimeZone,
-    contextExpanded: state.usageContextExpanded,
-    headerPinned: state.usageHeaderPinned,
-    onStartDateChange: (date) => {
-      state.usageStartDate = date;
-      state.usageSelectedDays = [];
-      state.usageSelectedHours = [];
-      state.usageSelectedSessions = [];
-      debouncedLoadUsage(state);
-=======
     data: {
       loading: state.usageLoading,
       error: state.usageError,
@@ -73,7 +27,6 @@ export function renderUsageTab(state: AppViewState) {
       totals: state.usageResult?.totals ?? null,
       aggregates: state.usageResult?.aggregates ?? null,
       costDaily: state.usageCostSummary?.daily ?? [],
->>>>>>> upstream/main
     },
     filters: {
       startDate: state.usageStartDate,

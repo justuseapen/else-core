@@ -1,4 +1,3 @@
-import type { ControlUiProfile } from "../control-ui-profile.ts";
 import type {
   CostUsageDailyEntry,
   SessionsUsageEntry,
@@ -40,16 +39,12 @@ export type UsageFilterState = {
   selectedSessions: string[]; // Support multiple session selection
   selectedDays: string[]; // Support multiple day selection
   selectedHours: number[]; // Support multiple hour selection
-<<<<<<< HEAD
-  controlUiProfile?: ControlUiProfile;
-=======
   query: string;
   queryDraft: string;
   timeZone: "local" | "utc";
 };
 
 export type UsageDisplayState = {
->>>>>>> upstream/main
   chartMode: "tokens" | "cost";
   dailyChartMode: "total" | "by-type";
   sessionSort: "tokens" | "cost" | "recent" | "messages" | "errors";

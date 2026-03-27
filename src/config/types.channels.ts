@@ -43,12 +43,7 @@ export type ExtensionChannelConfig = {
   [key: string]: unknown;
 };
 
-<<<<<<< HEAD
-export type ChannelsConfig = {
-  mode?: "direct" | "platform";
-=======
 export interface ChannelsConfig {
->>>>>>> upstream/main
   defaults?: ChannelDefaultsConfig;
   /** Map provider -> channel id -> model override. */
   modelByChannel?: ChannelModelByChannelConfig;

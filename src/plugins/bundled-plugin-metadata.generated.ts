@@ -11505,6 +11505,29 @@ export const GENERATED_BUNDLED_PLUGIN_METADATA = [
     },
   },
   {
+    dirName: "platform-channel",
+    idHint: "platform-channel",
+    source: {
+      source: "./index.ts",
+      built: "index.js",
+    },
+    packageName: "@openclaw/platform-channel",
+    packageVersion: "0.1.0",
+    packageDescription: "OpenClaw platform-channel plugin for else-platform integration",
+    packageManifest: {
+      extensions: ["./index.ts"],
+    },
+    manifest: {
+      id: "platform-channel",
+      configSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {},
+      },
+      channels: ["platform-channel"],
+    },
+  },
+  {
     dirName: "qianfan",
     idHint: "qianfan",
     source: {

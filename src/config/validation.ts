@@ -597,9 +597,6 @@ function validateConfigObjectWithPluginsBase(
     return info.normalizedPlugins;
   };
 
-<<<<<<< HEAD
-  const allowedChannels = new Set<string>(["defaults", "mode", "modelByChannel", ...CHANNEL_IDS]);
-=======
   const ensureChannelSchemas = (): Map<
     string,
     {
@@ -662,7 +659,6 @@ function validateConfigObjectWithPluginsBase(
   };
 
   const allowedChannels = new Set<string>(["defaults", "modelByChannel", ...CHANNEL_IDS]);
->>>>>>> upstream/main
 
   if (config.channels && isRecord(config.channels)) {
     for (const key of Object.keys(config.channels)) {

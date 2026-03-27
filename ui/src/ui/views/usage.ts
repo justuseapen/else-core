@@ -1,9 +1,5 @@
 import { html, nothing } from "lit";
-<<<<<<< HEAD
-import { resolveUiBrand } from "../brand.ts";
-=======
 import { t } from "../../i18n/index.ts";
->>>>>>> upstream/main
 import { extractQueryTerms, filterSessionsByQuery } from "../usage-helpers.ts";
 import {
   buildAggregatesFromSessions,
@@ -93,56 +89,6 @@ function addUsageTotals(
   return acc;
 }
 
-<<<<<<< HEAD
-export function renderUsage(props: UsageProps) {
-  const brand = resolveUiBrand(props.controlUiProfile);
-  // Show loading skeleton if loading and no data yet
-  if (props.loading && !props.totals) {
-    // Use inline styles since main stylesheet hasn't loaded yet on initial render
-    return html`
-      <style>
-        @keyframes initial-spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes initial-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-      </style>
-      <section class="card">
-        <div class="row" style="justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-          <div style="flex: 1; min-width: 250px;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
-              <div class="card-title" style="margin: 0;">Token Usage</div>
-              <span style="
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                padding: 4px 10px;
-                background: rgba(255, 77, 77, 0.1);
-                border-radius: 4px;
-                font-size: 12px;
-                color: #ff4d4d;
-              ">
-                <span style="
-                  width: 10px;
-                  height: 10px;
-                  border: 2px solid #ff4d4d;
-                  border-top-color: transparent;
-                  border-radius: 50%;
-                  animation: initial-spin 0.6s linear infinite;
-                "></span>
-                Loading
-              </span>
-            </div>
-          </div>
-          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <input type="date" .value=${props.startDate} disabled style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 13px; opacity: 0.6;" />
-              <span style="color: var(--muted);">to</span>
-              <input type="date" .value=${props.endDate} disabled style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 13px; opacity: 0.6;" />
-            </div>
-=======
 function renderUsageLoadingState(filters: UsageFilterState) {
   return html`
     <section class="card usage-loading-card">
@@ -159,7 +105,6 @@ function renderUsageLoadingState(filters: UsageFilterState) {
             <input class="usage-date-input" type="date" .value=${filters.startDate} disabled />
             <span class="usage-separator">${t("usage.filters.to")}</span>
             <input class="usage-date-input" type="date" .value=${filters.endDate} disabled />
->>>>>>> upstream/main
           </div>
         </div>
       </div>
@@ -542,60 +487,6 @@ export function renderUsage(props: UsageProps) {
                 if (!el.open) {
                   return;
                 }
-<<<<<<< HEAD
-              };
-              window.addEventListener("click", onClick, true);
-            }}
-          >
-            <summary class="usage-export-button">Export ▾</summary>
-            <div class="usage-export-popover">
-              <div class="usage-export-list">
-                <button
-                  class="usage-export-item"
-                  @click=${() =>
-                    downloadTextFile(
-                      `${brand.exportPrefix}-usage-sessions-${exportStamp}.csv`,
-                      buildSessionsCsv(filteredSessions),
-                      "text/csv",
-                    )}
-                  ?disabled=${filteredSessions.length === 0}
-                >
-                  Sessions CSV
-                </button>
-                <button
-                  class="usage-export-item"
-                  @click=${() =>
-                    downloadTextFile(
-                      `${brand.exportPrefix}-usage-daily-${exportStamp}.csv`,
-                      buildDailyCsv(filteredDaily),
-                      "text/csv",
-                    )}
-                  ?disabled=${filteredDaily.length === 0}
-                >
-                  Daily CSV
-                </button>
-                <button
-                  class="usage-export-item"
-                  @click=${() =>
-                    downloadTextFile(
-                      `${brand.exportPrefix}-usage-${exportStamp}.json`,
-                      JSON.stringify(
-                        {
-                          totals: displayTotals,
-                          sessions: filteredSessions,
-                          daily: filteredDaily,
-                          aggregates: activeAggregates,
-                        },
-                        null,
-                        2,
-                      ),
-                      "application/json",
-                    )}
-                  ?disabled=${filteredSessions.length === 0 && filteredDaily.length === 0}
-                >
-                  JSON
-                </button>
-=======
                 const onClick = (ev: MouseEvent) => {
                   const path = ev.composedPath();
                   if (!path.includes(el)) {
@@ -655,7 +546,6 @@ export function renderUsage(props: UsageProps) {
                     ${t("usage.export.json")}
                   </button>
                 </div>
->>>>>>> upstream/main
               </div>
             </details>
           </div>

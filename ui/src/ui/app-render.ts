@@ -18,7 +18,6 @@ import {
   switchChatSession,
 } from "./app-render.helpers.ts";
 import type { AppViewState } from "./app-view-state.ts";
-import { resolveUiBrand } from "./brand.ts";
 import { loadAgentFileContent, loadAgentFiles, saveAgentFile } from "./controllers/agent-files.ts";
 import { loadAgentIdentities, loadAgentIdentity } from "./controllers/agent-identity.ts";
 import { loadAgentSkills } from "./controllers/agent-skills.ts";
@@ -90,13 +89,9 @@ import {
 import "./components/dashboard-header.ts";
 import { buildExternalLinkRel, EXTERNAL_LINK_TARGET } from "./external-link.ts";
 import { icons } from "./icons.ts";
-<<<<<<< HEAD
-import { TAB_GROUPS, subtitleForTab, titleForTab } from "./navigation.ts";
-=======
 import { normalizeBasePath, TAB_GROUPS, subtitleForTab, titleForTab } from "./navigation.ts";
-import { agentLogoUrl } from "./views/agents-utils.ts";
->>>>>>> upstream/main
 import {
+  agentLogoUrl,
   resolveAgentConfig,
   resolveConfiguredCronModelSuggestions,
   resolveEffectiveModelFallbacks,
@@ -327,6 +322,7 @@ export function renderApp(state: AppViewState) {
   const chatAvatarUrl = state.chatAvatarUrl ?? assistantAvatarUrl ?? null;
   const configValue =
     state.configForm ?? (state.configSnapshot?.config as Record<string, unknown> | null);
+  const basePath = normalizeBasePath(state.basePath ?? "");
   const resolvedAgentId =
     state.agentsSelectedId ??
     state.agentsList?.defaultId ??
@@ -394,7 +390,6 @@ export function renderApp(state: AppViewState) {
     state.cronForm.deliveryMode === "webhook"
       ? rawDeliveryToSuggestions.filter((value) => isHttpUrl(value))
       : rawDeliveryToSuggestions;
-  const brand = resolveUiBrand(state.controlUiProfile);
 
   return html`
     ${renderCommandPalette({
@@ -447,15 +442,6 @@ export function renderApp(state: AppViewState) {
           >
             <span class="nav-collapse-toggle__icon" aria-hidden="true">${icons.menu}</span>
           </button>
-<<<<<<< HEAD
-          <div class="brand">
-            <div class="brand-logo">
-              <span class="brand-logo-mark" aria-label=${brand.productName}>${brand.logoMark}</span>
-            </div>
-            <div class="brand-text">
-              <div class="brand-title">${brand.wordmark}</div>
-              <div class="brand-sub">${brand.dashboardName}</div>
-=======
           <div class="topnav-shell__content">
             <dashboard-header .tab=${state.tab}></dashboard-header>
           </div>
@@ -474,7 +460,6 @@ export function renderApp(state: AppViewState) {
             <div class="topbar-status">
               ${isChat ? renderChatMobileToggle(state) : nothing}
               ${renderTopbarThemeModeToggle(state)}
->>>>>>> upstream/main
             </div>
           </div>
         </div>
@@ -591,25 +576,8 @@ export function renderApp(state: AppViewState) {
               </div>
             </div>
           </div>
-<<<<<<< HEAD
-          <div class="nav-group__items">
-            <a
-              class="nav-item nav-item--external"
-              href=${brand.docs.home}
-              target=${EXTERNAL_LINK_TARGET}
-              rel=${buildExternalLinkRel()}
-              title="${t("common.docs")} (opens in new tab)"
-            >
-              <span class="nav-item__icon" aria-hidden="true">${icons.book}</span>
-              <span class="nav-item__text">${t("common.docs")}</span>
-            </a>
-          </div>
-        </div>
-      </aside>
-=======
         </aside>
       </div>
->>>>>>> upstream/main
       <main class="content ${isChat ? "content--chat" : ""}">
         ${state.updateAvailable &&
         state.updateAvailable.latestVersion !== state.updateAvailable.currentVersion &&
@@ -637,58 +605,6 @@ export function renderApp(state: AppViewState) {
                 ${icons.x}
               </button>
             </div>`
-<<<<<<< HEAD
-            : nothing
-        }
-        <section class="content-header">
-          <div>
-            ${state.tab === "usage" ? nothing : html`<div class="page-title">${titleForTab(state.tab)}</div>`}
-            ${state.tab === "usage" ? nothing : html`<div class="page-sub">${subtitleForTab(state.tab)}</div>`}
-          </div>
-          <div class="page-meta">
-            ${state.lastError ? html`<div class="pill danger">${state.lastError}</div>` : nothing}
-            ${isChat ? renderChatControls(state) : nothing}
-          </div>
-        </section>
-
-        ${
-          state.tab === "overview"
-            ? renderOverview({
-                connected: state.connected,
-                hello: state.hello,
-                settings: state.settings,
-                password: state.password,
-                lastError: state.lastError,
-                lastErrorCode: state.lastErrorCode,
-                presenceCount,
-                sessionsCount,
-                cronEnabled: state.cronStatus?.enabled ?? null,
-                cronNext,
-                lastChannelsRefresh: state.channelsLastSuccess,
-                controlUiProfile: state.controlUiProfile,
-                onSettingsChange: (next) => state.applySettings(next),
-                onPasswordChange: (next) => (state.password = next),
-                onSessionKeyChange: (next) => {
-                  state.sessionKey = next;
-                  state.chatMessage = "";
-                  state.resetToolStream();
-                  state.applySettings({
-                    ...state.settings,
-                    sessionKey: next,
-                    lastActiveSessionKey: next,
-                  });
-                  void state.loadAssistantIdentity();
-                },
-                onConnect: () => state.connect(),
-                onRefresh: () => state.loadOverview(),
-              })
-            : nothing
-        }
-
-        ${
-          state.tab === "channels"
-            ? renderChannels({
-=======
           : nothing}
         ${state.tab === "config"
           ? nothing
@@ -757,7 +673,6 @@ export function renderApp(state: AppViewState) {
         ${state.tab === "channels"
           ? lazyRender(lazyChannels, (m) =>
               m.renderChannels({
->>>>>>> upstream/main
                 connected: state.connected,
                 loading: state.channelsLoading,
                 snapshot: state.channelsSnapshot,
