@@ -77,7 +77,6 @@ function normalizeBundledChannelConfigs(
 
 export const ChannelsSchema: z.ZodType<ChannelsConfig | undefined> = z
   .object({
-    mode: z.enum(["direct", "platform"]).default("direct").optional(),
     defaults: z
       .object({
         groupPolicy: GroupPolicySchema.optional(),
