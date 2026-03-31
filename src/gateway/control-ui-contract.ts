@@ -15,6 +15,4 @@ export type ControlUiBootstrapConfig = {
   profile: ControlUiProfile;
   assistantName: string;
   assistantAvatar: string;
-  assistantAgentId: string;
-  serverVersion?: string;
 };
