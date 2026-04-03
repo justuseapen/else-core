@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from "vitest";
 
 // Mock http and https modules before importing the client
 vi.mock("node:https", () => {
@@ -14,11 +14,12 @@ vi.mock("node:http", () => {
   return { default: { request: mockRequest, get: mockGet }, request: mockRequest, get: mockGet };
 });
 
-// Import after mocks are set up
-const { sendMessage, sendFileUrl, fetchChatUsers, resolveLegacyWebhookNameToChatUserId } =
-  await import("./client.js");
 const https = await import("node:https");
 let fakeNowMs = 1_700_000_000_000;
+let sendMessage: typeof import("./client.js").sendMessage;
+let sendFileUrl: typeof import("./client.js").sendFileUrl;
+let fetchChatUsers: typeof import("./client.js").fetchChatUsers;
+let resolveLegacyWebhookNameToChatUserId: typeof import("./client.js").resolveLegacyWebhookNameToChatUserId;
 
 async function settleTimers<T>(promise: Promise<T>): Promise<T> {
   await Promise.resolve();
@@ -53,6 +54,11 @@ function mockFailureResponse(statusCode = 500) {
 }
 
 function installFakeTimerHarness() {
+  beforeAll(async () => {
+    ({ sendMessage, sendFileUrl, fetchChatUsers, resolveLegacyWebhookNameToChatUserId } =
+      await import("./client.js"));
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();

@@ -45,10 +45,11 @@ export type PluginManifestRecord = {
   description?: string;
   version?: string;
   enabledByDefault?: boolean;
+  autoEnableWhenConfiguredProviders?: string[];
   format?: PluginFormat;
   bundleFormat?: PluginBundleFormat;
   bundleCapabilities?: string[];
-  kind?: PluginKind;
+  kind?: PluginKind | PluginKind[];
   channels: string[];
   providers: string[];
   cliBackends: string[];
@@ -73,7 +74,7 @@ export type PluginManifestRecord = {
     id: string;
     label?: string;
     blurb?: string;
-    preferOver?: string[];
+    preferOver?: readonly string[];
   };
 };
 
@@ -186,22 +187,6 @@ function mergePackageChannelMetaIntoChannelConfigs(params: {
   };
 }
 
-function isCompatiblePluginIdHint(idHint: string | undefined, manifestId: string): boolean {
-  const normalizedHint = idHint?.trim();
-  if (!normalizedHint) {
-    return true;
-  }
-  if (normalizedHint === manifestId) {
-    return true;
-  }
-  return (
-    normalizedHint === `${manifestId}-provider` ||
-    normalizedHint === `${manifestId}-plugin` ||
-    normalizedHint === `${manifestId}-sandbox` ||
-    normalizedHint === `${manifestId}-media-understanding`
-  );
-}
-
 function buildRecord(params: {
   manifest: PluginManifest;
   candidate: PluginCandidate;
@@ -220,6 +205,7 @@ function buildRecord(params: {
       normalizeManifestLabel(params.manifest.description) ?? params.candidate.packageDescription,
     version: normalizeManifestLabel(params.manifest.version) ?? params.candidate.packageVersion,
     enabledByDefault: params.manifest.enabledByDefault === true ? true : undefined,
+    autoEnableWhenConfiguredProviders: params.manifest.autoEnableWhenConfiguredProviders,
     format: params.candidate.format ?? "openclaw",
     bundleFormat: params.candidate.bundleFormat,
     kind: params.manifest.kind,
@@ -449,15 +435,6 @@ export function loadPluginManifestRegistry(
               : `plugin requires OpenClaw >=${minHostVersionCheck.requirement.minimumLabel}, but this host is ${minHostVersionCheck.currentVersion}; skipping load`,
       });
       continue;
-    }
-
-    if (!isCompatiblePluginIdHint(candidate.idHint, manifest.id)) {
-      diagnostics.push({
-        level: "warn",
-        pluginId: manifest.id,
-        source: candidate.source,
-        message: `plugin id mismatch (manifest uses "${manifest.id}", entry hints "${candidate.idHint}")`,
-      });
     }
 
     const configSchema = "configSchema" in manifest ? manifest.configSchema : undefined;
