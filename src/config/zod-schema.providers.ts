@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getBundledChannelRuntimeMap } from "./bundled-channel-config-runtime.js";
 import type { ChannelsConfig } from "./types.channels.js";
 import { ChannelHeartbeatVisibilitySchema } from "./zod-schema.channels.js";
-import { GroupPolicySchema } from "./zod-schema.core.js";
+import { ContextVisibilityModeSchema, GroupPolicySchema } from "./zod-schema.core.js";
 
 export * from "./zod-schema.providers-core.js";
 export * from "./zod-schema.providers-whatsapp.js";
@@ -11,6 +11,8 @@ export { ChannelHeartbeatVisibilitySchema } from "./zod-schema.channels.js";
 const ChannelModelByChannelSchema = z
   .record(z.string(), z.record(z.string(), z.string()))
   .optional();
+
+const directChannelRuntimeSchemas = getBundledChannelRuntimeMap();
 
 function addLegacyChannelAcpBindingIssues(
   value: unknown,
@@ -53,7 +55,7 @@ function normalizeBundledChannelConfigs(
   }
 
   let next: ChannelsConfig | undefined;
-  for (const [channelId, runtimeSchema] of getBundledChannelRuntimeMap()) {
+  for (const [channelId, runtimeSchema] of directChannelRuntimeSchemas) {
     if (!Object.prototype.hasOwnProperty.call(value, channelId)) {
       continue;
     }
@@ -80,6 +82,7 @@ export const ChannelsSchema: z.ZodType<ChannelsConfig | undefined> = z
     defaults: z
       .object({
         groupPolicy: GroupPolicySchema.optional(),
+        contextVisibility: ContextVisibilityModeSchema.optional(),
         heartbeat: ChannelHeartbeatVisibilitySchema,
       })
       .strict()

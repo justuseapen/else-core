@@ -6,6 +6,13 @@ import {
   type ProviderAuthResult,
   type ProviderDiscoveryContext,
 } from "openclaw/plugin-sdk/plugin-entry";
+import { buildOpenAICompatibleReplayPolicy } from "openclaw/plugin-sdk/provider-model-shared";
+import {
+  buildOllamaProvider,
+  configureOllamaNonInteractive,
+  ensureOllamaModelPulled,
+  promptAndConfigureOllama,
+} from "./api.js";
 import { OLLAMA_DEFAULT_BASE_URL } from "./src/defaults.js";
 import {
   DEFAULT_OLLAMA_EMBEDDING_MODEL,
@@ -13,15 +20,16 @@ import {
 } from "./src/embedding-provider.js";
 import { resolveOllamaApiBase } from "./src/provider-models.js";
 import {
-  createConfiguredOllamaCompatNumCtxWrapper,
+  createConfiguredOllamaCompatStreamWrapper,
   createConfiguredOllamaStreamFn,
 } from "./src/stream.js";
+import { createOllamaWebSearchProvider } from "./src/web-search-provider.js";
 
 const PROVIDER_ID = "ollama";
 const DEFAULT_API_KEY = "ollama-local";
 
-async function loadProviderSetup() {
-  return await import("openclaw/plugin-sdk/provider-setup");
+function shouldSkipAmbientOllamaDiscovery(env: NodeJS.ProcessEnv): boolean {
+  return Boolean(env.VITEST) || env.NODE_ENV === "test";
 }
 
 export default definePluginEntry({
@@ -29,6 +37,7 @@ export default definePluginEntry({
   name: "Ollama Provider",
   description: "Bundled Ollama provider plugin",
   register(api: OpenClawPluginApi) {
+    api.registerWebSearchProvider(createOllamaWebSearchProvider());
     api.registerProvider({
       id: PROVIDER_ID,
       label: "Ollama",
@@ -41,8 +50,7 @@ export default definePluginEntry({
           hint: "Cloud and local open models",
           kind: "custom",
           run: async (ctx: ProviderAuthContext): Promise<ProviderAuthResult> => {
-            const providerSetup = await loadProviderSetup();
-            const result = await providerSetup.promptAndConfigureOllama({
+            const result = await promptAndConfigureOllama({
               cfg: ctx.config,
               prompter: ctx.prompter,
               isRemote: ctx.isRemote,
@@ -63,8 +71,7 @@ export default definePluginEntry({
             };
           },
           runNonInteractive: async (ctx: ProviderAuthMethodNonInteractiveContext) => {
-            const providerSetup = await loadProviderSetup();
-            return await providerSetup.configureOllamaNonInteractive({
+            return await configureOllamaNonInteractive({
               nextConfig: ctx.config,
               opts: {
                 customBaseUrl: ctx.opts.customBaseUrl as string | undefined,
@@ -95,9 +102,11 @@ export default definePluginEntry({
               },
             };
           }
+          if (!ollamaKey && !explicit && shouldSkipAmbientOllamaDiscovery(ctx.env)) {
+            return null;
+          }
 
-          const providerSetup = await loadProviderSetup();
-          const provider = await providerSetup.buildOllamaProvider(explicit?.baseUrl, {
+          const provider = await buildOllamaProvider(explicit?.baseUrl, {
             quiet: !ollamaKey && !explicit,
           });
           if (provider.models.length === 0 && !ollamaKey && !explicit?.apiKey) {
@@ -135,8 +144,7 @@ export default definePluginEntry({
         if (!model.startsWith("ollama/")) {
           return;
         }
-        const providerSetup = await loadProviderSetup();
-        await providerSetup.ensureOllamaModelPulled({ config, model, prompter });
+        await ensureOllamaModelPulled({ config, model, prompter });
       },
       createStreamFn: ({ config, model }) => {
         return createConfiguredOllamaStreamFn({
@@ -144,8 +152,10 @@ export default definePluginEntry({
           providerBaseUrl: config?.models?.providers?.ollama?.baseUrl,
         });
       },
+      buildReplayPolicy: (ctx) => buildOpenAICompatibleReplayPolicy(ctx.modelApi),
+      resolveReasoningOutputMode: () => "native",
       wrapStreamFn: (ctx) => {
-        return createConfiguredOllamaCompatNumCtxWrapper(ctx);
+        return createConfiguredOllamaCompatStreamWrapper(ctx);
       },
       createEmbeddingProvider: async ({ config, model, remote }) => {
         const { provider, client } = await createOllamaEmbeddingProvider({
@@ -172,6 +182,8 @@ export default definePluginEntry({
           mode: "api-key",
         };
       },
+      shouldDeferSyntheticProfileAuth: ({ resolvedApiKey }) =>
+        resolvedApiKey?.trim() === DEFAULT_API_KEY,
       buildUnknownModelHint: () =>
         "Ollama requires authentication to be registered as a provider. " +
         'Set OLLAMA_API_KEY="ollama-local" (any value works) or run "openclaw configure". ' +

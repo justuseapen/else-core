@@ -7,14 +7,17 @@ import {
   type ProviderFetchUsageSnapshotContext,
 } from "openclaw/plugin-sdk/plugin-entry";
 import { createProviderApiKeyAuthMethod } from "openclaw/plugin-sdk/provider-auth-api-key";
+import type { ProviderPlugin } from "openclaw/plugin-sdk/provider-model-shared";
 import {
   GOOGLE_GEMINI_DEFAULT_MODEL,
   applyGoogleGeminiModelDefault,
-  createGoogleThinkingPayloadWrapper,
-} from "openclaw/plugin-sdk/provider-google";
-import type { ProviderPlugin } from "openclaw/plugin-sdk/provider-models";
+  normalizeGoogleProviderConfig,
+  resolveGoogleGenerativeAiTransport,
+  normalizeGoogleModelId,
+} from "./api.js";
 import { buildGoogleGeminiCliBackend } from "./cli-backend.js";
 import { isModernGoogleModel, resolveGoogle31ForwardCompatModel } from "./provider-models.js";
+import { buildGoogleGeminiProviderHooks } from "./replay-policy.js";
 import { createGeminiWebSearchProvider } from "./src/gemini-web-search-provider.js";
 
 const GOOGLE_GEMINI_CLI_PROVIDER_ID = "google-gemini-cli";
@@ -43,6 +46,11 @@ type GoogleMediaUnderstandingProvider = MediaUnderstandingProvider & {
   transcribeAudio: NonNullable<MediaUnderstandingProvider["transcribeAudio"]>;
   describeVideo: NonNullable<MediaUnderstandingProvider["describeVideo"]>;
 };
+
+const GOOGLE_GEMINI_PROVIDER_HOOKS = buildGoogleGeminiProviderHooks();
+const GOOGLE_GEMINI_PROVIDER_HOOKS_WITH_TOOL_COMPAT = buildGoogleGeminiProviderHooks({
+  includeToolSchemaCompat: true,
+});
 
 function formatGoogleOauthApiKey(cred: GoogleOauthApiKeyCredential): string {
   if (cred.type !== "oauth" || typeof cred.access !== "string" || !cred.access.trim()) {
@@ -134,8 +142,10 @@ function createLazyGoogleGeminiCliProvider(): ProviderPlugin {
         methodId: "oauth",
       },
     },
+    normalizeModelId: ({ modelId }) => normalizeGoogleModelId(modelId),
     resolveDynamicModel: (ctx) =>
       resolveGoogle31ForwardCompatModel({ providerId: GOOGLE_GEMINI_CLI_PROVIDER_ID, ctx }),
+    ...GOOGLE_GEMINI_PROVIDER_HOOKS_WITH_TOOL_COMPAT,
     isModernModelRef: ({ modelId }) => isModernGoogleModel(modelId),
     formatApiKey: (cred) => formatGoogleOauthApiKey(cred as GoogleOauthApiKeyCredential),
     resolveUsageAuth: async (ctx) => {
@@ -207,6 +217,7 @@ export default definePluginEntry({
       id: "google",
       label: "Google AI Studio",
       docsPath: "/providers/models",
+      hookAliases: ["google-antigravity", "google-vertex"],
       envVars: ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
       auth: [
         createProviderApiKeyAuthMethod({
@@ -230,9 +241,18 @@ export default definePluginEntry({
           },
         }),
       ],
+      normalizeTransport: ({ api, baseUrl }) =>
+        resolveGoogleGenerativeAiTransport({ api, baseUrl }),
+      normalizeConfig: ({ provider, providerConfig }) =>
+        normalizeGoogleProviderConfig(provider, providerConfig),
+      normalizeModelId: ({ modelId }) => normalizeGoogleModelId(modelId),
       resolveDynamicModel: (ctx) =>
-        resolveGoogle31ForwardCompatModel({ providerId: "google", ctx }),
-      wrapStreamFn: (ctx) => createGoogleThinkingPayloadWrapper(ctx.streamFn, ctx.thinkingLevel),
+        resolveGoogle31ForwardCompatModel({
+          providerId: ctx.provider,
+          templateProviderId: GOOGLE_GEMINI_CLI_PROVIDER_ID,
+          ctx,
+        }),
+      ...GOOGLE_GEMINI_PROVIDER_HOOKS,
       isModernModelRef: ({ modelId }) => isModernGoogleModel(modelId),
     });
     api.registerCliBackend(buildGoogleGeminiCliBackend());

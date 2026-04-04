@@ -25,7 +25,8 @@ const DEFAULT_MODEL_ALIASES: Readonly<Record<string, string>> = {
 
   // OpenAI
   gpt: "openai/gpt-5.4",
-  "gpt-mini": "openai/gpt-5-mini",
+  "gpt-mini": "openai/gpt-5.4-mini",
+  "gpt-nano": "openai/gpt-5.4-nano",
 
   // Google Gemini (3.x are preview ids in the catalog)
   gemini: "google/gemini-3.1-pro-preview",
@@ -209,8 +210,7 @@ export function applyTalkApiKey(config: OpenClawConfig): OpenClawConfig {
   }
 
   const existingProviderApiKeyConfigured = hasConfiguredSecretInput(active?.config?.apiKey);
-  const existingLegacyApiKeyConfigured = hasConfiguredSecretInput(talk?.apiKey);
-  if (existingProviderApiKeyConfigured || existingLegacyApiKeyConfigured) {
+  if (existingProviderApiKeyConfigured) {
     return normalized;
   }
 
@@ -221,7 +221,6 @@ export function applyTalkApiKey(config: OpenClawConfig): OpenClawConfig {
 
   const nextTalk = {
     ...talk,
-    apiKey: resolved,
     providers,
   };
 

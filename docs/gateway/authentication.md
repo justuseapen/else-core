@@ -6,7 +6,11 @@ read_when:
 title: "Authentication"
 ---
 
-# Authentication
+# Authentication (Model Providers)
+
+<Note>
+This page covers **model provider** authentication (API keys, OAuth, setup tokens). For **gateway connection** authentication (token, password, trusted-proxy), see [Configuration](/gateway/configuration) and [Trusted Proxy Auth](/gateway/trusted-proxy-auth).
+</Note>
 
 OpenClaw supports OAuth and API keys for model providers. For always-on gateway
 hosts, API keys are usually the most predictable option. Subscription/OAuth
@@ -85,9 +89,17 @@ This credential is only authorized for use with Claude Code and cannot be used f
 …use an Anthropic API key instead.
 
 <Warning>
-Anthropic setup-token support is technical compatibility only. Anthropic has blocked
-some subscription usage outside Claude Code in the past. Use it only if you decide
-the policy risk is acceptable, and verify Anthropic's current terms yourself.
+Anthropic changed third-party harness billing on **April 4, 2026 at 12:00 PM
+PT / 8:00 PM BST**. Anthropic says Claude subscription limits no longer cover
+OpenClaw or other third-party harnesses. Setup-token auth still works in
+OpenClaw, but Anthropic now requires **Extra Usage** (pay-as-you-go billed
+separately from the subscription) for that traffic.
+
+If you want the clearest path for always-on or team gateways, prefer an
+Anthropic API key. OpenClaw also supports other subscription-style options,
+including [OpenAI Codex](/providers/openai), [Alibaba Cloud Model Studio Coding
+Plan](/providers/qwen_modelstudio), [MiniMax Coding Plan](/providers/minimax),
+and [Z.AI / GLM Coding Plan](/providers/glm).
 </Warning>
 
 Manual token entry (any provider; writes `auth-profiles.json` + updates config):
@@ -101,6 +113,7 @@ Auth profile refs are also supported for static credentials:
 
 - `api_key` credentials can use `keyRef: { source, provider, id }`
 - `token` credentials can use `tokenRef: { source, provider, id }`
+- OAuth-mode profiles do not support SecretRef credentials; if `auth.profiles.<id>.mode` is set to `"oauth"`, SecretRef-backed `keyRef`/`tokenRef` input for that profile is rejected.
 
 Automation-friendly check (exit `1` when expired/missing, `2` when expiring):
 
@@ -109,7 +122,7 @@ openclaw models status --check
 ```
 
 Optional ops scripts (systemd/Termux) are documented here:
-[/automation/auth-monitoring](/automation/auth-monitoring)
+[Auth monitoring scripts](/help/scripts#auth-monitoring-scripts)
 
 > `claude setup-token` requires an interactive TTY.
 
@@ -117,7 +130,13 @@ Optional ops scripts (systemd/Termux) are documented here:
 
 If Claude CLI is already installed and signed in on the gateway host, you can
 switch an existing Anthropic setup over to the CLI backend instead of pasting a
-setup-token:
+setup-token. This is a supported OpenClaw migration path for reusing a local
+Claude CLI login on that host.
+
+Prerequisites:
+
+- `claude` installed on the gateway host
+- Claude CLI already signed in there with `claude auth login`
 
 ```bash
 openclaw models auth login --provider anthropic --method cli --set-default
@@ -127,11 +146,21 @@ This keeps your existing Anthropic auth profiles for rollback, but changes the
 default model selection to `claude-cli/...` and adds matching Claude CLI
 allowlist entries under `agents.defaults.models`.
 
+Verify:
+
+```bash
+openclaw models status
+```
+
 Onboarding shortcut:
 
 ```bash
 openclaw onboard --auth-choice anthropic-cli
 ```
+
+Interactive `openclaw onboard` and `openclaw configure` prefer Claude CLI for
+Anthropic and do not show setup-token in the assistant picker. Setup-token
+remains supported through the manual commands above.
 
 ## Checking model auth status
 
