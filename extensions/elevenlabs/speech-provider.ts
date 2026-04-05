@@ -5,13 +5,13 @@ import type {
   SpeechProviderOverrides,
   SpeechProviderPlugin,
   SpeechVoiceOption,
-} from "openclaw/plugin-sdk/speech-core";
+} from "openclaw/plugin-sdk/speech";
 import {
   normalizeApplyTextNormalization,
   normalizeLanguageCode,
   normalizeSeed,
   requireInRange,
-} from "openclaw/plugin-sdk/speech-core";
+} from "openclaw/plugin-sdk/speech";
 import { elevenLabsTTS } from "./tts.js";
 
 const DEFAULT_ELEVENLABS_BASE_URL = "https://api.elevenlabs.io";
@@ -407,6 +407,7 @@ export function buildElevenLabsSpeechProvider(): SpeechProviderPlugin {
     resolveTalkOverrides: ({ params }) => {
       const normalize = trimToUndefined(params.normalize);
       const language = trimToUndefined(params.language)?.toLowerCase();
+      const latencyTier = asNumber(params.latencyTier);
       const voiceSettings = {
         ...(asNumber(params.speed) == null ? {} : { speed: asNumber(params.speed) }),
         ...(asNumber(params.stability) == null ? {} : { stability: asNumber(params.stability) }),
@@ -433,6 +434,7 @@ export function buildElevenLabsSpeechProvider(): SpeechProviderPlugin {
           ? {}
           : { applyTextNormalization: normalizeApplyTextNormalization(normalize) }),
         ...(language == null ? {} : { languageCode: normalizeLanguageCode(language) }),
+        ...(latencyTier == null ? {} : { latencyTier }),
         ...(Object.keys(voiceSettings).length === 0 ? {} : { voiceSettings }),
       };
     },
@@ -467,6 +469,7 @@ export function buildElevenLabsSpeechProvider(): SpeechProviderPlugin {
         trimToUndefined(overrides.outputFormat) ??
         (req.target === "voice-note" ? "opus_48000_64" : "mp3_44100_128");
       const overrideVoiceSettings = asObject(overrides.voiceSettings);
+      const latencyTier = asNumber(overrides.latencyTier);
       const audioBuffer = await elevenLabsTTS({
         text: req.text,
         apiKey,
@@ -482,6 +485,7 @@ export function buildElevenLabsSpeechProvider(): SpeechProviderPlugin {
             | "off"
             | undefined) ?? config.applyTextNormalization,
         languageCode: trimToUndefined(overrides.languageCode) ?? config.languageCode,
+        latencyTier,
         voiceSettings: {
           ...config.voiceSettings,
           ...(asNumber(overrideVoiceSettings?.stability) == null
