@@ -95,15 +95,11 @@ import { buildExternalLinkRel, EXTERNAL_LINK_TARGET } from "./external-link.ts";
 import "./components/dashboard-header.ts";
 import { icons } from "./icons.ts";
 import { normalizeBasePath, TAB_GROUPS, subtitleForTab, titleForTab } from "./navigation.ts";
-<<<<<<< HEAD
-=======
 import {
   buildAgentMainSessionKey,
   parseAgentSessionKey,
   resolveAgentIdFromSessionKey,
 } from "./session-key.ts";
-import { agentLogoUrl } from "./views/agents-utils.ts";
->>>>>>> upstream/main
 import {
   agentLogoUrl,
   resolveAgentConfig,

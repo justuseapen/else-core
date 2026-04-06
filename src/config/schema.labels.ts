@@ -254,7 +254,6 @@ export const FIELD_LABELS: Record<string, string> = {
   "tools.web.fetch.maxRedirects": "Web Fetch Max Redirects",
   "tools.web.fetch.userAgent": "Web Fetch User-Agent",
   "tools.web.fetch.readability": "Web Fetch Readability Extraction",
-<<<<<<< HEAD
   "tools.web.fetch.firecrawl.enabled": "Enable Firecrawl Fallback",
   "tools.web.fetch.firecrawl.apiKey": "Firecrawl API Key", // pragma: allowlist secret
   "tools.web.fetch.firecrawl.baseUrl": "Firecrawl Base URL",
@@ -262,8 +261,6 @@ export const FIELD_LABELS: Record<string, string> = {
   "tools.web.fetch.firecrawl.maxAgeMs": "Firecrawl Cache Max Age (ms)",
   "tools.web.fetch.firecrawl.timeoutSeconds": "Firecrawl Timeout (sec)",
   "gateway.controlUi.profile": "Control UI Profile",
-=======
->>>>>>> upstream/main
   "gateway.controlUi.basePath": "Control UI Base Path",
   "gateway.controlUi.root": "Control UI Assets Root",
   "gateway.controlUi.allowedOrigins": "Control UI Allowed Origins",

@@ -51,14 +51,11 @@ export async function loadControlUiBootstrapConfig(state: ControlUiBootstrapStat
     state.controlUiProfile = profile;
     state.assistantName = normalized.name;
     state.assistantAvatar = normalized.avatar;
-<<<<<<< HEAD
     state.assistantAgentId = normalized.agentId ?? null;
     state.serverVersion = parsed.serverVersion ?? null;
     if (typeof document !== "undefined") {
       document.title = `${resolveUiBrand(profile).productName} Gateway`;
     }
-=======
->>>>>>> upstream/main
   } catch {
     // Ignore bootstrap failures; UI will update identity after connecting.
   }

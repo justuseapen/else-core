@@ -34,14 +34,9 @@ describe("loadControlUiBootstrapConfig", () => {
     );
     expect(state.assistantName).toBe("Ops");
     expect(state.assistantAvatar).toBe("O");
-<<<<<<< HEAD
     expect(state.assistantAgentId).toBe("main");
     expect(state.controlUiProfile).toBe("americanclaw");
     expect(state.serverVersion).toBe("2026.3.7");
-=======
-    expect(state.assistantAgentId).toBeNull();
-    expect(state.serverVersion).toBeNull();
->>>>>>> upstream/main
 
     vi.unstubAllGlobals();
   });
@@ -66,12 +61,9 @@ describe("loadControlUiBootstrapConfig", () => {
       expect.objectContaining({ method: "GET" }),
     );
     expect(state.assistantName).toBe("Assistant");
-<<<<<<< HEAD
     expect(state.controlUiProfile).toBe("openclaw");
-=======
     expect(state.assistantAgentId).toBeNull();
     expect(state.serverVersion).toBeNull();
->>>>>>> upstream/main
 
     vi.unstubAllGlobals();
   });

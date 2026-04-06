@@ -610,9 +610,12 @@ importers:
 
   extensions/perplexity: {}
 
-<<<<<<< HEAD
   extensions/platform-channel:
-=======
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/qa-channel:
     devDependencies:
       openclaw:
@@ -620,7 +623,6 @@ importers:
         version: link:../..
 
   extensions/qa-lab:
->>>>>>> upstream/main
     devDependencies:
       openclaw:
         specifier: workspace:*

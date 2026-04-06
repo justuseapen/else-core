@@ -23600,7 +23600,6 @@ export const GENERATED_BASE_CONFIG_SCHEMA: BaseConfigSchemaResponse = {
       help: "Use Readability to extract main content from HTML (fallbacks to basic HTML cleanup).",
       tags: ["tools"],
     },
-<<<<<<< HEAD
     "tools.web.fetch.firecrawl.enabled": {
       label: "Enable Firecrawl Fallback",
       help: "Enable Firecrawl fallback for web_fetch (if configured).",
@@ -23638,8 +23637,6 @@ export const GENERATED_BASE_CONFIG_SCHEMA: BaseConfigSchemaResponse = {
       placeholder: "americanclaw",
       tags: ["network", "storage"],
     },
-=======
->>>>>>> upstream/main
     "gateway.controlUi.basePath": {
       label: "Control UI Base Path",
       help: "Optional URL prefix where the Control UI is served (e.g. /openclaw).",
