@@ -8,6 +8,10 @@ import {
 } from "../../config/sessions.js";
 import { callGateway } from "../../gateway/call.js";
 import { resolveAgentIdFromSessionKey } from "../../routing/session-key.js";
+import {
+  describeSessionsListTool,
+  SESSIONS_LIST_TOOL_DISPLAY_SUMMARY,
+} from "../tool-description-presets.js";
 import type { AnyAgentTool } from "./common.js";
 import { jsonResult, readStringArrayParam } from "./common.js";
 import {
@@ -41,7 +45,8 @@ export function createSessionsListTool(opts?: {
   return {
     label: "Sessions",
     name: "sessions_list",
-    description: "List sessions with optional filters and last messages.",
+    displaySummary: SESSIONS_LIST_TOOL_DISPLAY_SUMMARY,
+    description: describeSessionsListTool(),
     parameters: SessionsListToolSchema,
     execute: async (_toolCallId, args) => {
       const params = args as Record<string, unknown>;
@@ -153,7 +158,11 @@ export function createSessionsListTool(opts?: {
         const deliveryAccountId =
           typeof deliveryContext?.accountId === "string" ? deliveryContext.accountId : undefined;
         const deliveryThreadId =
-          typeof deliveryContext?.threadId === "string" ? deliveryContext.threadId : undefined;
+          typeof deliveryContext?.threadId === "string" ||
+          (typeof deliveryContext?.threadId === "number" &&
+            Number.isFinite(deliveryContext.threadId))
+            ? deliveryContext.threadId
+            : undefined;
         const lastChannel =
           deliveryChannel ??
           (typeof entry.lastChannel === "string" ? entry.lastChannel : undefined);
@@ -201,6 +210,15 @@ export function createSessionsListTool(opts?: {
           key: displayKey,
           kind,
           channel: derivedChannel,
+          origin:
+            originChannel ||
+            (typeof entryOrigin?.accountId === "string" ? entryOrigin.accountId : undefined)
+              ? {
+                  provider: originChannel,
+                  accountId:
+                    typeof entryOrigin?.accountId === "string" ? entryOrigin.accountId : undefined,
+                }
+              : undefined,
           spawnedBy:
             typeof entry.spawnedBy === "string"
               ? resolveDisplaySessionKey({

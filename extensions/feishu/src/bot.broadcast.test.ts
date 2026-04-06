@@ -1,6 +1,5 @@
+import type { EnvelopeFormatOptions } from "openclaw/plugin-sdk/channel-inbound";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createPluginRuntimeMock } from "../../../test/helpers/extensions/plugin-runtime-mock.js";
-import { createRuntimeEnv } from "../../../test/helpers/extensions/runtime-env.js";
 import type { ClawdbotConfig, PluginRuntime } from "../runtime-api.js";
 import type { FeishuMessageEvent } from "./bot.js";
 import { handleFeishuMessage } from "./bot.js";
@@ -15,6 +14,7 @@ const { mockCreateFeishuReplyDispatcher, mockCreateFeishuClient, mockResolveAgen
         sendFinalReply: vi.fn(),
         waitForIdle: vi.fn(),
         getQueuedCounts: vi.fn(() => ({ tool: 0, block: 0, final: 0 })),
+        getFailedCounts: vi.fn(() => ({ tool: 0, block: 0, final: 0 })),
         markComplete: vi.fn(),
       },
       replyOptions: {},
@@ -32,34 +32,92 @@ vi.mock("./client.js", () => ({
   createFeishuClient: mockCreateFeishuClient,
 }));
 
+function createRuntimeEnv() {
+  return {
+    log: vi.fn(),
+    error: vi.fn(),
+    writeStdout: vi.fn(),
+    writeJson: vi.fn(),
+    exit: vi.fn((code: number): never => {
+      throw new Error(`exit ${code}`);
+    }),
+  };
+}
+
 describe("broadcast dispatch", () => {
-  const mockFinalizeInboundContext = vi.fn((ctx: unknown) => ctx);
+  const finalizeInboundContextCalls: Array<Record<string, unknown>> = [];
+  const mockFinalizeInboundContext: PluginRuntime["channel"]["reply"]["finalizeInboundContext"] = (
+    ctx,
+  ) => {
+    finalizeInboundContextCalls.push(ctx);
+    return {
+      ...ctx,
+      CommandAuthorized: typeof ctx.CommandAuthorized === "boolean" ? ctx.CommandAuthorized : false,
+    };
+  };
   const mockDispatchReplyFromConfig = vi
     .fn()
     .mockResolvedValue({ queuedFinal: false, counts: { final: 1 } });
-  const mockWithReplyDispatcher = vi.fn(
-    async ({
-      dispatcher,
-      run,
-      onSettled,
-    }: Parameters<PluginRuntime["channel"]["reply"]["withReplyDispatcher"]>[0]) => {
+  const mockWithReplyDispatcher: PluginRuntime["channel"]["reply"]["withReplyDispatcher"] = async ({
+    dispatcher,
+    run,
+    onSettled,
+  }) => {
+    try {
+      return await run();
+    } finally {
+      dispatcher.markComplete();
       try {
-        return await run();
+        await dispatcher.waitForIdle();
       } finally {
-        dispatcher.markComplete();
-        try {
-          await dispatcher.waitForIdle();
-        } finally {
-          await onSettled?.();
-        }
+        await onSettled?.();
       }
-    },
-  );
+    }
+  };
+  const resolveEnvelopeFormatOptionsMock: PluginRuntime["channel"]["reply"]["resolveEnvelopeFormatOptions"] =
+    () => ({}) satisfies EnvelopeFormatOptions;
   const mockShouldComputeCommandAuthorized = vi.fn(() => false);
   const mockSaveMediaBuffer = vi.fn().mockResolvedValue({
     path: "/tmp/inbound-clip.mp4",
     contentType: "video/mp4",
   });
+  const runtimeStub = {
+    system: {
+      enqueueSystemEvent: vi.fn(),
+    },
+    channel: {
+      routing: {
+        resolveAgentRoute: (params: unknown) => mockResolveAgentRoute(params),
+      },
+      session: {
+        resolveStorePath: vi.fn(() => "/tmp/feishu-session-store.json"),
+      },
+      reply: {
+        resolveEnvelopeFormatOptions: resolveEnvelopeFormatOptionsMock,
+        formatAgentEnvelope: vi.fn((params: { body: string }) => params.body),
+        finalizeInboundContext:
+          mockFinalizeInboundContext as unknown as PluginRuntime["channel"]["reply"]["finalizeInboundContext"],
+        dispatchReplyFromConfig: mockDispatchReplyFromConfig,
+        withReplyDispatcher:
+          mockWithReplyDispatcher as unknown as PluginRuntime["channel"]["reply"]["withReplyDispatcher"],
+      },
+      commands: {
+        shouldComputeCommandAuthorized: mockShouldComputeCommandAuthorized,
+        resolveCommandAuthorizedFromAuthorizers: vi.fn(() => false),
+      },
+      media: {
+        saveMediaBuffer: mockSaveMediaBuffer,
+      },
+      pairing: {
+        readAllowFromStore: vi.fn().mockResolvedValue([]),
+        upsertPairingRequest: vi.fn().mockResolvedValue({ code: "ABCDEFGH", created: false }),
+        buildPairingReply: vi.fn(() => "Pairing response"),
+      },
+    },
+    media: {
+      detectMime: vi.fn(async () => "application/octet-stream"),
+    },
+  } as unknown as PluginRuntime;
 
   function createBroadcastConfig(): ClawdbotConfig {
     return {
@@ -108,12 +166,14 @@ describe("broadcast dispatch", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    finalizeInboundContextCalls.length = 0;
     mockResolveAgentRoute.mockReturnValue({
       agentId: "main",
       channel: "feishu",
       accountId: "default",
       sessionKey: "agent:main:feishu:group:oc-broadcast-group",
       mainSessionKey: "agent:main:main",
+      lastRoutePolicy: "session",
       matchedBy: "default",
     });
     mockCreateFeishuClient.mockReturnValue({
@@ -123,40 +183,7 @@ describe("broadcast dispatch", () => {
         },
       },
     });
-    setFeishuRuntime(
-      createPluginRuntimeMock({
-        system: {
-          enqueueSystemEvent: vi.fn(),
-        },
-        channel: {
-          routing: {
-            resolveAgentRoute: (params) => mockResolveAgentRoute(params),
-          },
-          reply: {
-            resolveEnvelopeFormatOptions: vi.fn(() => ({ template: "channel+name+time" })),
-            formatAgentEnvelope: vi.fn((params: { body: string }) => params.body),
-            finalizeInboundContext: mockFinalizeInboundContext,
-            dispatchReplyFromConfig: mockDispatchReplyFromConfig,
-            withReplyDispatcher: mockWithReplyDispatcher,
-          },
-          commands: {
-            shouldComputeCommandAuthorized: mockShouldComputeCommandAuthorized,
-            resolveCommandAuthorizedFromAuthorizers: vi.fn(() => false),
-          },
-          media: {
-            saveMediaBuffer: mockSaveMediaBuffer,
-          },
-          pairing: {
-            readAllowFromStore: vi.fn().mockResolvedValue([]),
-            upsertPairingRequest: vi.fn().mockResolvedValue({ code: "ABCDEFGH", created: false }),
-            buildPairingReply: vi.fn(() => "Pairing response"),
-          },
-        },
-        media: {
-          detectMime: vi.fn(async () => "application/octet-stream"),
-        },
-      }),
-    );
+    setFeishuRuntime(runtimeStub);
   });
 
   it("dispatches to all broadcast agents when bot is mentioned", async () => {
@@ -175,9 +202,7 @@ describe("broadcast dispatch", () => {
     });
 
     expect(mockDispatchReplyFromConfig).toHaveBeenCalledTimes(2);
-    const sessionKeys = mockFinalizeInboundContext.mock.calls.map(
-      (call: unknown[]) => (call[0] as { SessionKey: string }).SessionKey,
-    );
+    const sessionKeys = finalizeInboundContextCalls.map((call) => call.SessionKey);
     expect(sessionKeys).toContain("agent:susan:feishu:group:oc-broadcast-group");
     expect(sessionKeys).toContain("agent:main:feishu:group:oc-broadcast-group");
     expect(mockCreateFeishuReplyDispatcher).toHaveBeenCalledTimes(1);
@@ -253,7 +278,7 @@ describe("broadcast dispatch", () => {
 
     expect(mockDispatchReplyFromConfig).toHaveBeenCalledTimes(1);
     expect(mockCreateFeishuReplyDispatcher).toHaveBeenCalledTimes(1);
-    expect(mockFinalizeInboundContext).toHaveBeenCalledWith(
+    expect(finalizeInboundContextCalls).toContainEqual(
       expect.objectContaining({
         SessionKey: "agent:main:feishu:group:oc-broadcast-group",
       }),
@@ -295,7 +320,7 @@ describe("broadcast dispatch", () => {
     expect(mockDispatchReplyFromConfig).toHaveBeenCalledTimes(2);
 
     mockDispatchReplyFromConfig.mockClear();
-    mockFinalizeInboundContext.mockClear();
+    finalizeInboundContextCalls.length = 0;
 
     await handleFeishuMessage({
       cfg,
@@ -339,8 +364,7 @@ describe("broadcast dispatch", () => {
     });
 
     expect(mockDispatchReplyFromConfig).toHaveBeenCalledTimes(1);
-    const sessionKey = (mockFinalizeInboundContext.mock.calls[0]?.[0] as { SessionKey: string })
-      .SessionKey;
+    const sessionKey = String(finalizeInboundContextCalls[0]?.SessionKey ?? "");
     expect(sessionKey).toBe("agent:susan:feishu:group:oc-broadcast-group");
   });
 });

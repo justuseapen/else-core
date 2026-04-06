@@ -13,8 +13,6 @@ describe("loadControlUiBootstrapConfig", () => {
         profile: "americanclaw",
         assistantName: "Ops",
         assistantAvatar: "O",
-        assistantAgentId: "main",
-        serverVersion: "2026.3.7",
       }),
     });
     vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
@@ -64,6 +62,8 @@ describe("loadControlUiBootstrapConfig", () => {
     );
     expect(state.assistantName).toBe("Assistant");
     expect(state.controlUiProfile).toBe("openclaw");
+    expect(state.assistantAgentId).toBeNull();
+    expect(state.serverVersion).toBeNull();
 
     vi.unstubAllGlobals();
   });
@@ -87,6 +87,8 @@ describe("loadControlUiBootstrapConfig", () => {
       `/openclaw${CONTROL_UI_BOOTSTRAP_CONFIG_PATH}`,
       expect.objectContaining({ method: "GET" }),
     );
+    expect(state.assistantAgentId).toBeNull();
+    expect(state.serverVersion).toBeNull();
 
     vi.unstubAllGlobals();
   });

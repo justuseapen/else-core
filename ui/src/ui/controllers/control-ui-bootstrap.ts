@@ -42,7 +42,6 @@ export async function loadControlUiBootstrapConfig(state: ControlUiBootstrapStat
     }
     const parsed = (await res.json()) as ControlUiBootstrapConfig;
     const normalized = normalizeAssistantIdentity({
-      agentId: parsed.assistantAgentId ?? null,
       name: parsed.assistantName,
       avatar: parsed.assistantAvatar ?? null,
     });

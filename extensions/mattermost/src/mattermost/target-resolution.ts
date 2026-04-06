@@ -1,10 +1,11 @@
-import type { OpenClawConfig } from "../runtime-api.js";
+import { isPrivateNetworkOptInEnabled } from "openclaw/plugin-sdk/ssrf-runtime";
 import { resolveMattermostAccount } from "./accounts.js";
 import {
   createMattermostClient,
   fetchMattermostUser,
   normalizeMattermostBaseUrl,
 } from "./client.js";
+import type { OpenClawConfig } from "./runtime-api.js";
 
 export type MattermostOpaqueTargetResolution = {
   kind: "user" | "channel";
@@ -82,7 +83,7 @@ export async function resolveMattermostOpaqueTarget(params: {
   const client = createMattermostClient({
     baseUrl,
     botToken: token,
-    allowPrivateNetwork: account?.config?.allowPrivateNetwork === true,
+    allowPrivateNetwork: isPrivateNetworkOptInEnabled(account?.config),
   });
   try {
     await fetchMattermostUser(client, input);
