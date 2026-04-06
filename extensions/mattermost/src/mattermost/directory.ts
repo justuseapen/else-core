@@ -1,4 +1,4 @@
-import type { ChannelDirectoryEntry, OpenClawConfig, RuntimeEnv } from "../runtime-api.js";
+import { isPrivateNetworkOptInEnabled } from "openclaw/plugin-sdk/ssrf-runtime";
 import { listMattermostAccountIds, resolveMattermostAccount } from "./accounts.js";
 import {
   createMattermostClient,
@@ -7,6 +7,7 @@ import {
   type MattermostClient,
   type MattermostUser,
 } from "./client.js";
+import type { ChannelDirectoryEntry, OpenClawConfig, RuntimeEnv } from "./runtime-api.js";
 
 export type MattermostDirectoryParams = {
   cfg: OpenClawConfig;
@@ -27,7 +28,7 @@ function buildClient(params: {
   return createMattermostClient({
     baseUrl: account.baseUrl,
     botToken: account.botToken,
-    allowPrivateNetwork: account.config?.allowPrivateNetwork === true,
+    allowPrivateNetwork: isPrivateNetworkOptInEnabled(account.config),
   });
 }
 

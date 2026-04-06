@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/memory-core-host-engine-foundation";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_OLLAMA_EMBEDDING_MODEL } from "./embeddings-ollama.js";
+import { DEFAULT_OLLAMA_EMBEDDING_MODEL } from "./embeddings.js";
 import type {
   EmbeddingProvider,
   EmbeddingProviderRuntime,
@@ -16,8 +16,8 @@ const { createEmbeddingProviderMock } = vi.hoisted(() => ({
   createEmbeddingProviderMock: vi.fn(),
 }));
 
-vi.mock("./embeddings.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./embeddings.js")>();
+vi.mock("./embeddings.js", async () => {
+  const actual = await vi.importActual<typeof import("./embeddings.js")>("./embeddings.js");
   return {
     ...actual,
     createEmbeddingProvider: createEmbeddingProviderMock,

@@ -14,6 +14,7 @@ import type {
   SessionsUsageResult,
   SkillStatusReport,
 } from "../types.ts";
+import { renderConnectCommand } from "./connect-command.ts";
 import { renderOverviewAttention } from "./overview-attention.ts";
 import { renderOverviewCards } from "./overview-cards.ts";
 import { renderOverviewEventLog } from "./overview-event-log.ts";
@@ -220,11 +221,11 @@ export function renderOverview(props: OverviewProps) {
             : html`
                 <label class="field">
                   <span>${t("overview.access.token")}</span>
-                  <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
                     <input
                       type=${props.showGatewayToken ? "text" : "password"}
                       autocomplete="off"
-                      style="flex: 1;"
+                      style="flex: 1 1 0%; min-width: 0; box-sizing: border-box;"
                       .value=${props.settings.token}
                       @input=${(e: Event) => {
                         const v = (e.target as HTMLInputElement).value;
@@ -235,7 +236,7 @@ export function renderOverview(props: OverviewProps) {
                     <button
                       type="button"
                       class="btn btn--icon ${props.showGatewayToken ? "active" : ""}"
-                      style="width: 36px; height: 36px;"
+                      style="flex-shrink: 0; width: 36px; height: 36px; box-sizing: border-box;"
                       title=${props.showGatewayToken ? "Hide token" : "Show token"}
                       aria-label="Toggle token visibility"
                       aria-pressed=${props.showGatewayToken}
@@ -247,11 +248,11 @@ export function renderOverview(props: OverviewProps) {
                 </label>
                 <label class="field">
                   <span>${t("overview.access.password")}</span>
-                  <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
                     <input
                       type=${props.showGatewayPassword ? "text" : "password"}
                       autocomplete="off"
-                      style="flex: 1;"
+                      style="flex: 1 1 0%; min-width: 0; width: 100%; box-sizing: border-box;"
                       .value=${props.password}
                       @input=${(e: Event) => {
                         const v = (e.target as HTMLInputElement).value;
@@ -262,7 +263,7 @@ export function renderOverview(props: OverviewProps) {
                     <button
                       type="button"
                       class="btn btn--icon ${props.showGatewayPassword ? "active" : ""}"
-                      style="width: 36px; height: 36px;"
+                      style="flex-shrink: 0; width: 36px; height: 36px; box-sizing: border-box;"
                       title=${props.showGatewayPassword ? "Hide password" : "Show password"}
                       aria-label="Toggle password visibility"
                       aria-pressed=${props.showGatewayPassword}
@@ -316,9 +317,12 @@ export function renderOverview(props: OverviewProps) {
               <div class="login-gate__help" style="margin-top: 16px;">
                 <div class="login-gate__help-title">${t("overview.connection.title")}</div>
                 <ol class="login-gate__steps">
-                  <li>${t("overview.connection.step1")}<code>openclaw gateway run</code></li>
                   <li>
-                    ${t("overview.connection.step2")}<code>openclaw dashboard --no-open</code>
+                    ${t("overview.connection.step1")}
+                    ${renderConnectCommand("openclaw gateway run")}
+                  </li>
+                  <li>
+                    ${t("overview.connection.step2")} ${renderConnectCommand("openclaw dashboard")}
                   </li>
                   <li>${t("overview.connection.step3")}</li>
                   <li>

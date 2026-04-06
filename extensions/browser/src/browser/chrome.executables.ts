@@ -9,7 +9,7 @@ export type BrowserExecutable = {
   path: string;
 };
 
-const CHROME_VERSION_RE = /(\d+)(?:\.\d+){0,3}/;
+const CHROME_VERSION_RE = /\b(\d+)(?:\.\d+){1,3}\b/g;
 
 const CHROMIUM_BUNDLE_IDS = new Set([
   "com.google.Chrome",
@@ -464,9 +464,13 @@ function findFirstExecutable(candidates: Array<BrowserExecutable>): BrowserExecu
 function findFirstChromeExecutable(candidates: string[]): BrowserExecutable | null {
   for (const candidate of candidates) {
     if (exists(candidate)) {
+      const normalizedPath = candidate.toLowerCase();
       return {
         kind:
-          candidate.toLowerCase().includes("sxs") || candidate.toLowerCase().includes("canary")
+          normalizedPath.includes("beta") ||
+          normalizedPath.includes("canary") ||
+          normalizedPath.includes("sxs") ||
+          normalizedPath.includes("unstable")
             ? "canary"
             : "chrome",
         path: candidate,
@@ -574,9 +578,8 @@ export function findGoogleChromeExecutableLinux(): BrowserExecutable | null {
 export function findChromeExecutableWindows(): BrowserExecutable | null {
   const localAppData = process.env.LOCALAPPDATA ?? "";
   const programFiles = process.env.ProgramFiles ?? "C:\\Program Files";
-  // Must use bracket notation: variable name contains parentheses
+  // Must use bracket notation: variable name contains parentheses.
   const programFilesX86 = process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)";
-
   const joinWin = path.win32.join;
   const candidates: Array<BrowserExecutable> = [];
 
@@ -684,7 +687,8 @@ export function readBrowserVersion(executablePath: string): string | null {
 }
 
 export function parseBrowserMajorVersion(rawVersion: string | null | undefined): number | null {
-  const match = String(rawVersion ?? "").match(CHROME_VERSION_RE);
+  const matches = [...String(rawVersion ?? "").matchAll(CHROME_VERSION_RE)];
+  const match = matches.at(-1);
   if (!match?.[1]) {
     return null;
   }

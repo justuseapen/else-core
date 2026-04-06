@@ -204,9 +204,10 @@ export const ModelCompatSchema = z
     requiresToolResultName: z.boolean().optional(),
     requiresAssistantAfterToolResult: z.boolean().optional(),
     requiresThinkingAsText: z.boolean().optional(),
-    toolSchemaProfile: z.literal("xai").optional(),
+    toolSchemaProfile: z.string().optional(),
+    unsupportedToolSchemaKeywords: z.array(z.string().min(1)).optional(),
     nativeWebSearchTool: z.boolean().optional(),
-    toolCallArgumentsEncoding: z.literal("html-entities").optional(),
+    toolCallArgumentsEncoding: z.string().optional(),
     requiresMistralToolIds: z.boolean().optional(),
     requiresOpenAiAnthropicToolPayload: z.boolean().optional(),
   })
@@ -222,6 +223,72 @@ type _ModelCompatTypeAssignableToSchema = AssertAssignable<
   ModelCompatConfig | undefined,
   z.infer<typeof ModelCompatSchema>
 >;
+
+const ConfiguredProviderRequestTlsSchema = z
+  .object({
+    ca: SecretInputSchema.optional().register(sensitive),
+    cert: SecretInputSchema.optional().register(sensitive),
+    key: SecretInputSchema.optional().register(sensitive),
+    passphrase: SecretInputSchema.optional().register(sensitive),
+    serverName: z.string().optional(),
+    insecureSkipVerify: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
+const ConfiguredProviderRequestAuthSchema = z
+  .union([
+    z
+      .object({
+        mode: z.literal("provider-default"),
+      })
+      .strict(),
+    z
+      .object({
+        mode: z.literal("authorization-bearer"),
+        token: SecretInputSchema.register(sensitive),
+      })
+      .strict(),
+    z
+      .object({
+        mode: z.literal("header"),
+        headerName: z.string().min(1),
+        value: SecretInputSchema.register(sensitive),
+        prefix: z.string().optional(),
+      })
+      .strict(),
+  ])
+  .optional();
+
+const ConfiguredProviderRequestProxySchema = z
+  .union([
+    z
+      .object({
+        mode: z.literal("env-proxy"),
+        tls: ConfiguredProviderRequestTlsSchema,
+      })
+      .strict(),
+    z
+      .object({
+        mode: z.literal("explicit-proxy"),
+        url: z.string().min(1),
+        tls: ConfiguredProviderRequestTlsSchema,
+      })
+      .strict(),
+  ])
+  .optional();
+
+const ConfiguredProviderRequestSchema = z
+  .object({
+    headers: z.record(z.string(), SecretInputSchema.register(sensitive)).optional(),
+    auth: ConfiguredProviderRequestAuthSchema,
+    proxy: ConfiguredProviderRequestProxySchema,
+    tls: ConfiguredProviderRequestTlsSchema,
+  })
+  .strict()
+  .optional();
+
+const ConfiguredModelProviderRequestSchema = ConfiguredProviderRequestSchema;
 
 export const ModelDefinitionSchema = z
   .object({
@@ -240,6 +307,7 @@ export const ModelDefinitionSchema = z
       .strict()
       .optional(),
     contextWindow: z.number().positive().optional(),
+    contextTokens: z.number().int().positive().optional(),
     maxTokens: z.number().positive().optional(),
     headers: z.record(z.string(), z.string()).optional(),
     compat: ModelCompatSchema,
@@ -257,6 +325,7 @@ export const ModelProviderSchema = z
     injectNumCtxForOpenAICompat: z.boolean().optional(),
     headers: z.record(z.string(), SecretInputSchema.register(sensitive)).optional(),
     authHeader: z.boolean().optional(),
+    request: ConfiguredModelProviderRequestSchema,
     models: z.array(ModelDefinitionSchema),
   })
   .strict();
@@ -277,7 +346,6 @@ export const ModelsConfigSchema = z
   .object({
     mode: z.union([z.literal("merge"), z.literal("replace")]).optional(),
     providers: z.record(z.string(), ModelProviderSchema).optional(),
-    bedrockDiscovery: BedrockDiscoverySchema,
   })
   .strict()
   .optional();
@@ -320,7 +388,12 @@ export const QueueDropSchema = z.union([
   z.literal("new"),
   z.literal("summarize"),
 ]);
-export const ReplyToModeSchema = z.union([z.literal("off"), z.literal("first"), z.literal("all")]);
+export const ReplyToModeSchema = z.union([
+  z.literal("off"),
+  z.literal("first"),
+  z.literal("all"),
+  z.literal("batched"),
+]);
 export const TypingModeSchema = z.union([
   z.literal("never"),
   z.literal("instant"),
@@ -335,6 +408,7 @@ export const TypingModeSchema = z.union([
 export const GroupPolicySchema = z.enum(["open", "disabled", "allowlist"]);
 
 export const DmPolicySchema = z.enum(["pairing", "allowlist", "open", "disabled"]);
+export const ContextVisibilityModeSchema = z.enum(["all", "allowlist", "allowlist_quote"]);
 
 export const BlockStreamingCoalesceSchema = z
   .object({
@@ -347,6 +421,7 @@ export const BlockStreamingCoalesceSchema = z
 export const ReplyRuntimeConfigSchemaShape = {
   historyLimit: z.number().int().min(0).optional(),
   dmHistoryLimit: z.number().int().min(0).optional(),
+  contextVisibility: ContextVisibilityModeSchema.optional(),
   dms: z.record(z.string(), DmConfigSchema.optional()).optional(),
   textChunkLimit: z.number().int().positive().optional(),
   chunkMode: z.enum(["length", "newline"]).optional(),
@@ -366,7 +441,7 @@ export const BlockStreamingChunkSchema = z
   })
   .strict();
 
-export const MarkdownTableModeSchema = z.enum(["off", "bullets", "code"]);
+export const MarkdownTableModeSchema = z.enum(["off", "bullets", "code", "block"]);
 
 export const MarkdownConfigSchema = z
   .object({
@@ -644,6 +719,7 @@ const MediaUnderstandingRuntimeFields = {
   deepgram: DeepgramAudioSchema,
   baseUrl: z.string().optional(),
   headers: z.record(z.string(), z.string()).optional(),
+  request: ConfiguredProviderRequestSchema,
 };
 
 export const MediaUnderstandingModelSchema = z
