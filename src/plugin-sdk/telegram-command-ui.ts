@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+=======
+/**
+ * Telegram command UI helpers exposed for plugin command pagination.
+ */
+/** Builds an inline keyboard row for paginated Telegram command listings. */
+>>>>>>> upstream/main
 export function buildCommandsPaginationKeyboard(
   currentPage: number,
   totalPages: number,

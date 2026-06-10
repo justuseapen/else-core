@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export type { RuntimeEnv } from "../runtime-api.js";
 export { safeEqualSecret } from "openclaw/plugin-sdk/browser-security-runtime";
 export {
@@ -7,3 +8,16 @@ export {
   requestBodyErrorToText,
 } from "openclaw/plugin-sdk/webhook-ingress";
 export { installRequestBodyLimitGuard } from "openclaw/plugin-sdk/webhook-request-guards";
+=======
+// Feishu API module exposes the plugin public contract.
+export type { RuntimeEnv } from "../runtime-api.js";
+export { safeEqualSecret } from "openclaw/plugin-sdk/security-runtime";
+export {
+  applyBasicWebhookRequestGuards,
+  resolveRequestClientIp,
+} from "openclaw/plugin-sdk/webhook-ingress";
+export {
+  installRequestBodyLimitGuard,
+  readWebhookBodyOrReject,
+} from "openclaw/plugin-sdk/webhook-request-guards";
+>>>>>>> upstream/main

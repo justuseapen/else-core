@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
@@ -155,3 +156,15 @@ export async function transcribeAudioFile(params: {
   const result = await runMediaUnderstandingFile({ ...params, capability: "audio" });
   return { text: result.text };
 }
+=======
+// Media Understanding Core plugin module implements runtime behavior.
+export {
+  describeImageFile,
+  describeImageFileWithModel,
+  describeVideoFile,
+  runMediaUnderstandingFile,
+  transcribeAudioFile,
+  type RunMediaUnderstandingFileParams,
+  type RunMediaUnderstandingFileResult,
+} from "openclaw/plugin-sdk/media-understanding-runtime";
+>>>>>>> upstream/main

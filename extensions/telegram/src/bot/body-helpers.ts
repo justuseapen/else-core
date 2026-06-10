@@ -1,5 +1,15 @@
+<<<<<<< HEAD
 import type { Chat, Message, MessageOrigin, User } from "@grammyjs/types";
 import type { NormalizedLocation } from "openclaw/plugin-sdk/channel-inbound";
+=======
+// Telegram helper module supports body helpers behavior.
+import type { Chat, Message, MessageOrigin, User } from "grammy/types";
+import type { NormalizedLocation } from "openclaw/plugin-sdk/channel-inbound";
+import {
+  normalizeLowercaseStringOrEmpty,
+  normalizeOptionalString,
+} from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 
 type TelegramMediaMessage = Pick<
   Message,
@@ -15,7 +25,11 @@ type TelegramMediaFileRef =
   | NonNullable<Message["document"]>
   | NonNullable<Message["sticker"]>;
 
+<<<<<<< HEAD
 export type TelegramPrimaryMedia = {
+=======
+type TelegramPrimaryMedia = {
+>>>>>>> upstream/main
   placeholder: string;
   fileRef: TelegramMediaFileRef;
 };
@@ -74,7 +88,11 @@ export function buildSenderLabel(msg: Message, senderId?: number | string) {
     label = username;
   }
   const normalizedSenderId =
+<<<<<<< HEAD
     senderId != null && `${senderId}`.trim() ? `${senderId}`.trim() : undefined;
+=======
+    senderId != null ? normalizeOptionalString(String(senderId)) : undefined;
+>>>>>>> upstream/main
   const fallbackId = normalizedSenderId ?? (msg.from?.id != null ? String(msg.from.id) : undefined);
   const idPart = fallbackId ? `id:${fallbackId}` : undefined;
   if (label && idPart) {
@@ -88,14 +106,37 @@ export function buildSenderLabel(msg: Message, senderId?: number | string) {
 
 export type TelegramTextEntity = NonNullable<Message["entities"]>[number];
 
+<<<<<<< HEAD
+=======
+export function isBinaryContent(text: string): boolean {
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    if (code <= 0x1f && code !== 0x09 && code !== 0x0a && code !== 0x0d) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function resolveTelegramTextContent(text: unknown, caption?: unknown): string {
+  const raw = typeof text === "string" ? text : typeof caption === "string" ? caption : "";
+  return isBinaryContent(raw) ? "" : raw;
+}
+
+>>>>>>> upstream/main
 export function getTelegramTextParts(
   msg: Pick<Message, "text" | "caption" | "entities" | "caption_entities">,
 ): {
   text: string;
   entities: TelegramTextEntity[];
 } {
+<<<<<<< HEAD
   const text = msg.text ?? msg.caption ?? "";
   const entities = msg.entities ?? msg.caption_entities ?? [];
+=======
+  const text = resolveTelegramTextContent(msg.text, msg.caption);
+  const entities = text ? (msg.entities ?? msg.caption_entities ?? []) : [];
+>>>>>>> upstream/main
   return { text, entities };
 }
 
@@ -120,6 +161,7 @@ function hasStandaloneTelegramMention(text: string, mention: string): boolean {
   return false;
 }
 
+<<<<<<< HEAD
 export function hasBotMention(msg: Message, botUsername: string) {
   const { text, entities } = getTelegramTextParts(msg);
   const mention = `@${botUsername}`.toLowerCase();
@@ -132,24 +174,139 @@ export function hasBotMention(msg: Message, botUsername: string) {
     }
     const slice = text.slice(ent.offset, ent.offset + ent.length);
     if (slice.toLowerCase() === mention) {
+=======
+function isBotCommandAddressedToMention(command: string, mention: string): boolean {
+  const normalized = normalizeLowercaseStringOrEmpty(command);
+  if (!normalized.startsWith("/") || !normalized.endsWith(mention)) {
+    return false;
+  }
+  const atIndex = normalized.lastIndexOf(mention);
+  return atIndex > 1;
+}
+
+export function hasBotMention(msg: Message, botUsername: string) {
+  const { text, entities } = getTelegramTextParts(msg);
+  const mention = normalizeLowercaseStringOrEmpty(`@${botUsername}`);
+  if (hasStandaloneTelegramMention(normalizeLowercaseStringOrEmpty(text), mention)) {
+    return true;
+  }
+  for (const ent of entities) {
+    const slice = text.slice(ent.offset, ent.offset + ent.length);
+    if (ent.type === "mention" && normalizeLowercaseStringOrEmpty(slice) === mention) {
+      return true;
+    }
+    if (ent.type === "bot_command" && isBotCommandAddressedToMention(slice, mention)) {
+>>>>>>> upstream/main
       return true;
     }
   }
   return false;
 }
 
+<<<<<<< HEAD
 type TelegramTextLinkEntity = {
+=======
+type TelegramMarkdownEntity = {
+>>>>>>> upstream/main
   type: string;
   offset: number;
   length: number;
   url?: string;
+<<<<<<< HEAD
 };
 
 export function expandTextLinks(text: string, entities?: TelegramTextLinkEntity[] | null): string {
+=======
+  language?: string;
+};
+
+type TelegramMarkdownBoundary = {
+  open: string;
+  close: string;
+  start: number;
+  end: number;
+  length: number;
+  priority: number;
+  index: number;
+};
+
+const TELEGRAM_ENTITY_MARKDOWN_PRIORITY: Record<string, number> = {
+  bold: 10,
+  italic: 20,
+  underline: 30,
+  strikethrough: 40,
+  spoiler: 50,
+  text_link: 60,
+  code: 70,
+  pre: 80,
+};
+
+function longestBacktickRun(text: string): number {
+  let longest = 0;
+  let current = 0;
+  for (const char of text) {
+    if (char === "`") {
+      current += 1;
+      longest = Math.max(longest, current);
+    } else {
+      current = 0;
+    }
+  }
+  return longest;
+}
+
+function markdownInlineCodeDelimiters(content: string): [string, string] {
+  const delimiter = "`".repeat(longestBacktickRun(content) + 1);
+  if (content.startsWith(" ") || content.endsWith(" ")) {
+    return [`${delimiter} `, ` ${delimiter}`];
+  }
+  return [delimiter, delimiter];
+}
+
+function markdownPreAffixes(entity: TelegramMarkdownEntity, content: string): [string, string] {
+  const language = entity.language?.replace(/[\s`]+/g, "").trim();
+  const fence = "`".repeat(Math.max(3, longestBacktickRun(content) + 1));
+  const opener = language ? `${fence}${language}\n` : `${fence}\n`;
+  const closer = content.endsWith("\n") ? fence : `\n${fence}`;
+  return [opener, closer];
+}
+
+function markdownAffixesForTelegramEntity(
+  entity: TelegramMarkdownEntity,
+  content: string,
+): [string, string] | null {
+  switch (entity.type) {
+    case "bold":
+      return ["**", "**"];
+    case "italic":
+      return ["_", "_"];
+    case "underline":
+      return ["__", "__"];
+    case "strikethrough":
+      return ["~~", "~~"];
+    case "spoiler":
+      return ["||", "||"];
+    case "code":
+      return markdownInlineCodeDelimiters(content);
+    case "pre":
+      return markdownPreAffixes(entity, content);
+    case "text_link":
+      return entity.url ? ["[", `](${entity.url})`] : null;
+    default:
+      return null;
+  }
+}
+
+export function renderTelegramTextEntities(
+  text: string,
+  entities?: TelegramMarkdownEntity[] | null,
+): string {
+>>>>>>> upstream/main
   if (!text || !entities?.length) {
     return text;
   }
 
+<<<<<<< HEAD
   const textLinks = entities
     .filter(
       (entity): entity is TelegramTextLinkEntity & { url: string } =>
@@ -167,6 +324,64 @@ export function expandTextLinks(text: string, entities?: TelegramTextLinkEntity[
     const markdown = `[${linkText}](${entity.url})`;
     result =
       result.slice(0, entity.offset) + markdown + result.slice(entity.offset + entity.length);
+=======
+  const boundaries = new Map<number, TelegramMarkdownBoundary[]>();
+  const addBoundary = (offset: number, boundary: TelegramMarkdownBoundary) => {
+    boundaries.set(offset, [...(boundaries.get(offset) ?? []), boundary]);
+  };
+  entities.forEach((entity, index) => {
+    if (
+      !Number.isInteger(entity.offset) ||
+      !Number.isInteger(entity.length) ||
+      entity.offset < 0 ||
+      entity.length <= 0 ||
+      entity.offset + entity.length > text.length
+    ) {
+      return;
+    }
+    const content = text.slice(entity.offset, entity.offset + entity.length);
+    const affixes = markdownAffixesForTelegramEntity(entity, content);
+    if (!affixes) {
+      return;
+    }
+    const boundary: TelegramMarkdownBoundary = {
+      open: affixes[0],
+      close: affixes[1],
+      start: entity.offset,
+      end: entity.offset + entity.length,
+      length: entity.length,
+      priority: TELEGRAM_ENTITY_MARKDOWN_PRIORITY[entity.type] ?? 100,
+      index,
+    };
+    addBoundary(boundary.start, boundary);
+    addBoundary(boundary.end, boundary);
+  });
+
+  if (boundaries.size === 0) {
+    return text;
+  }
+
+  let result = "";
+  for (let offset = 0; offset <= text.length; offset += 1) {
+    const boundary = boundaries.get(offset);
+    if (boundary) {
+      boundary
+        .filter((entity) => entity.end === offset)
+        .toSorted((a, b) => a.length - b.length || b.priority - a.priority || b.index - a.index)
+        .forEach((entity) => {
+          result += entity.close;
+        });
+      boundary
+        .filter((entity) => entity.start === offset)
+        .toSorted((a, b) => b.length - a.length || a.priority - b.priority || a.index - b.index)
+        .forEach((entity) => {
+          result += entity.open;
+        });
+    }
+    if (offset < text.length) {
+      result += text[offset];
+    }
+>>>>>>> upstream/main
   }
   return result;
 }
@@ -185,7 +400,11 @@ export type TelegramForwardedContext = {
 
 function normalizeForwardedUserLabel(user: User) {
   const name = [user.first_name, user.last_name].filter(Boolean).join(" ").trim();
+<<<<<<< HEAD
   const username = user.username?.trim() || undefined;
+=======
+  const username = normalizeOptionalString(user.username);
+>>>>>>> upstream/main
   const id = String(user.id);
   const display =
     (name && username
@@ -195,8 +414,13 @@ function normalizeForwardedUserLabel(user: User) {
 }
 
 function normalizeForwardedChatLabel(chat: Chat, fallbackKind: "chat" | "channel") {
+<<<<<<< HEAD
   const title = chat.title?.trim() || undefined;
   const username = chat.username?.trim() || undefined;
+=======
+  const title = normalizeOptionalString(chat.title);
+  const username = normalizeOptionalString(chat.username);
+>>>>>>> upstream/main
   const id = String(chat.id);
   const display = title || (username ? `@${username}` : undefined) || `${fallbackKind}:${id}`;
   return { display, title, username, id };
@@ -250,9 +474,15 @@ function buildForwardedContextFromChat(params: {
   if (!display) {
     return null;
   }
+<<<<<<< HEAD
   const signature = params.signature?.trim() || undefined;
   const from = signature ? `${display} (${signature})` : display;
   const chatType = (params.chat.type?.trim() || undefined) as Chat["type"] | undefined;
+=======
+  const signature = normalizeOptionalString(params.signature);
+  const from = signature ? `${display} (${signature})` : display;
+  const chatType = normalizeOptionalString(params.chat.type) as Chat["type"] | undefined;
+>>>>>>> upstream/main
   return {
     from,
     date: params.date,

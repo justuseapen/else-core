@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildStatusJsonPayload, resolveStatusUpdateChannelInfo } from "./status-json-payload.ts";
+=======
+// Status JSON payload tests cover update metadata, overview rows, and structured status output.
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { VERSION } from "../version.js";
+import { resolveStatusUpdateChannelInfo } from "./status-all/format.js";
+import { buildStatusJsonPayload } from "./status-json-payload.ts";
+>>>>>>> upstream/main
 
 const mocks = vi.hoisted(() => ({
   normalizeUpdateChannel: vi.fn((value?: string | null) => value ?? null),
@@ -25,8 +33,16 @@ describe("status-json-payload", () => {
       resolveStatusUpdateChannelInfo({
         updateConfigChannel: "beta",
         update: {
+<<<<<<< HEAD
           installKind: "npm",
           git: { tag: "v1.2.3", branch: "main" },
+=======
+          installKind: "package",
+          git: {
+            tag: "v1.2.3",
+            branch: "main",
+          },
+>>>>>>> upstream/main
         },
       }),
     ).toEqual({
@@ -37,7 +53,12 @@ describe("status-json-payload", () => {
     expect(mocks.normalizeUpdateChannel).toHaveBeenCalledWith("beta");
     expect(mocks.resolveUpdateChannelDisplay).toHaveBeenCalledWith({
       configChannel: "beta",
+<<<<<<< HEAD
       installKind: "npm",
+=======
+      currentVersion: VERSION,
+      installKind: "package",
+>>>>>>> upstream/main
       gitTag: "v1.2.3",
       gitBranch: "main",
     });
@@ -47,6 +68,7 @@ describe("status-json-payload", () => {
     expect(
       buildStatusJsonPayload({
         summary: { ok: true },
+<<<<<<< HEAD
         updateConfigChannel: "stable",
         update: { installKind: "npm", git: null, version: "1.2.3" },
         osSummary: { platform: "linux" },
@@ -61,18 +83,63 @@ describe("status-json-payload", () => {
         gatewayProbeAuthWarning: "warn",
         gatewayService: { label: "LaunchAgent" },
         nodeService: { label: "node" },
+=======
+        surface: {
+          cfg: { update: { channel: "stable" }, gateway: {} },
+          update: {
+            root: "/tmp/openclaw",
+            installKind: "package",
+            packageManager: "npm",
+            registry: { latestVersion: "1.2.3" },
+          } as never,
+          tailscaleMode: "serve",
+          gatewayMode: "remote",
+          remoteUrlMissing: false,
+          gatewayConnection: { url: "wss://gateway.example.com", urlSource: "config" },
+          gatewayReachable: true,
+          gatewayProbe: { connectLatencyMs: 42, error: null },
+          gatewayProbeAuth: { token: "tok" },
+          gatewaySelf: { host: "gateway" },
+          gatewayProbeAuthWarning: "warn",
+          gatewayService: { label: "LaunchAgent", installed: true, loadedText: "loaded" },
+          nodeService: { label: "node", installed: true, loadedText: "loaded" },
+        },
+        osSummary: { platform: "linux" },
+        memory: null,
+        memoryPlugin: { enabled: true },
+>>>>>>> upstream/main
         agents: [{ id: "main" }],
         secretDiagnostics: ["diag"],
         securityAudit: { summary: { critical: 1 } },
         health: { ok: true },
         usage: { providers: [] },
         lastHeartbeat: { status: "ok" },
+<<<<<<< HEAD
         pluginCompatibility: [{ pluginId: "legacy", message: "warn" }],
+=======
+        pluginCompatibility: [
+          {
+            pluginId: "legacy",
+            code: "legacy-before-agent-start",
+            severity: "warn",
+            message: "warn",
+          },
+        ],
+>>>>>>> upstream/main
       }),
     ).toEqual({
       ok: true,
       os: { platform: "linux" },
+<<<<<<< HEAD
       update: { installKind: "npm", git: null, version: "1.2.3" },
+=======
+      update: {
+        root: "/tmp/openclaw",
+        installKind: "package",
+        packageManager: "npm",
+        registry: { latestVersion: "1.2.3" },
+      },
+>>>>>>> upstream/main
       updateChannel: "stable",
       updateChannelSource: "config",
       memory: null,
@@ -88,8 +155,13 @@ describe("status-json-payload", () => {
         error: null,
         authWarning: "warn",
       },
+<<<<<<< HEAD
       gatewayService: { label: "LaunchAgent" },
       nodeService: { label: "node" },
+=======
+      gatewayService: { label: "LaunchAgent", installed: true, loadedText: "loaded" },
+      nodeService: { label: "node", installed: true, loadedText: "loaded" },
+>>>>>>> upstream/main
       agents: [{ id: "main" }],
       secretDiagnostics: ["diag"],
       securityAudit: { summary: { critical: 1 } },
@@ -98,7 +170,18 @@ describe("status-json-payload", () => {
       lastHeartbeat: { status: "ok" },
       pluginCompatibility: {
         count: 1,
+<<<<<<< HEAD
         warnings: [{ pluginId: "legacy", message: "warn" }],
+=======
+        warnings: [
+          {
+            pluginId: "legacy",
+            code: "legacy-before-agent-start",
+            severity: "warn",
+            message: "warn",
+          },
+        ],
+>>>>>>> upstream/main
       },
     });
   });
@@ -107,6 +190,7 @@ describe("status-json-payload", () => {
     expect(
       buildStatusJsonPayload({
         summary: { ok: true },
+<<<<<<< HEAD
         updateConfigChannel: null,
         update: { installKind: "npm", git: null },
         osSummary: { platform: "linux" },
@@ -121,9 +205,83 @@ describe("status-json-payload", () => {
         gatewayProbeAuthWarning: null,
         gatewayService: null,
         nodeService: null,
+=======
+        surface: {
+          cfg: { gateway: {} },
+          update: {
+            root: "/tmp/openclaw",
+            installKind: "package",
+            packageManager: "npm",
+          } as never,
+          tailscaleMode: "off",
+          gatewayMode: "local",
+          remoteUrlMissing: false,
+          gatewayConnection: { url: "ws://127.0.0.1:18789" },
+          gatewayReachable: false,
+          gatewayProbe: null,
+          gatewayProbeAuth: null,
+          gatewaySelf: null,
+          gatewayProbeAuthWarning: null,
+          gatewayService: { label: "LaunchAgent", installed: false, loadedText: "not installed" },
+          nodeService: { label: "node", installed: false, loadedText: "not installed" },
+        },
+        osSummary: { platform: "linux" },
+        memory: null,
+        memoryPlugin: null,
+>>>>>>> upstream/main
         agents: [],
         secretDiagnostics: [],
       }),
     ).not.toHaveProperty("securityAudit");
   });
+<<<<<<< HEAD
+=======
+
+  it("includes model-pricing health from the gateway probe", () => {
+    const payload = buildStatusJsonPayload({
+      summary: { ok: true },
+      surface: {
+        cfg: { gateway: {} },
+        update: {
+          root: "/tmp/openclaw",
+          installKind: "package",
+          packageManager: "npm",
+        } as never,
+        tailscaleMode: "off",
+        gatewayMode: "local",
+        remoteUrlMissing: false,
+        gatewayConnection: { url: "ws://127.0.0.1:18789" },
+        gatewayReachable: true,
+        gatewayProbe: {
+          connectLatencyMs: 42,
+          error: null,
+          health: {
+            ok: true,
+            modelPricing: {
+              state: "degraded",
+              detail: "OpenRouter pricing fetch failed: TypeError: fetch failed",
+              sources: [{ source: "openrouter", state: "degraded" }],
+            },
+          },
+        },
+        gatewayProbeAuth: null,
+        gatewaySelf: null,
+        gatewayProbeAuthWarning: null,
+        gatewayService: { label: "LaunchAgent", installed: false, loadedText: "not installed" },
+        nodeService: { label: "node", installed: false, loadedText: "not installed" },
+      },
+      osSummary: { platform: "linux" },
+      memory: null,
+      memoryPlugin: null,
+      agents: [],
+      secretDiagnostics: [],
+    });
+
+    const modelPricing = payload.gateway.modelPricing as
+      | { state?: string; detail?: string }
+      | undefined;
+    expect(modelPricing?.state).toBe("degraded");
+    expect(modelPricing?.detail).toBe("OpenRouter pricing fetch failed: TypeError: fetch failed");
+  });
+>>>>>>> upstream/main
 });

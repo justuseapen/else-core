@@ -1,6 +1,37 @@
+<<<<<<< HEAD
 import type { InlineKeyboardButton, InlineKeyboardMarkup } from "@grammyjs/types";
 import type { TelegramInlineButtons } from "./button-types.js";
 
+=======
+// Telegram plugin module implements inline keyboard behavior.
+import type { InlineKeyboardButton, InlineKeyboardMarkup } from "grammy/types";
+import type { TelegramInlineButtons } from "./button-types.js";
+
+function toInlineKeyboardButton(
+  button: TelegramInlineButtons[number][number] | undefined,
+): InlineKeyboardButton | undefined {
+  if (!button?.text) {
+    return undefined;
+  }
+  if (button.url) {
+    return button.style
+      ? { text: button.text, url: button.url, style: button.style }
+      : { text: button.text, url: button.url };
+  }
+  if (button.callback_data) {
+    return button.style
+      ? { text: button.text, callback_data: button.callback_data, style: button.style }
+      : { text: button.text, callback_data: button.callback_data };
+  }
+  if (button.web_app?.url) {
+    return button.style
+      ? { text: button.text, web_app: { url: button.web_app.url }, style: button.style }
+      : { text: button.text, web_app: { url: button.web_app.url } };
+  }
+  return undefined;
+}
+
+>>>>>>> upstream/main
 export function buildInlineKeyboard(
   buttons?: TelegramInlineButtons,
 ): InlineKeyboardMarkup | undefined {
@@ -10,6 +41,7 @@ export function buildInlineKeyboard(
   const rows = buttons
     .map((row) =>
       row
+<<<<<<< HEAD
         .filter((button) => button?.text && button?.callback_data)
         .map(
           (button): InlineKeyboardButton => ({
@@ -18,6 +50,10 @@ export function buildInlineKeyboard(
             ...(button.style ? { style: button.style } : {}),
           }),
         ),
+=======
+        .map(toInlineKeyboardButton)
+        .filter((button): button is InlineKeyboardButton => Boolean(button)),
+>>>>>>> upstream/main
     )
     .filter((row) => row.length > 0);
   if (rows.length === 0) {

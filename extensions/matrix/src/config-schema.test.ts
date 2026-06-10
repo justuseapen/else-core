@@ -1,3 +1,4 @@
+// Matrix tests cover config schema plugin behavior.
 import { describe, expect, it } from "vitest";
 import { MatrixConfigSchema } from "./config-schema.js";
 
@@ -26,6 +27,103 @@ describe("MatrixConfigSchema SecretInput", () => {
       dm: {
         policy: "pairing",
         threadReplies: "off",
+<<<<<<< HEAD
+=======
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts dm sessionScope overrides", () => {
+    const result = MatrixConfigSchema.safeParse({
+      homeserver: "https://matrix.example.org",
+      accessToken: "token",
+      dm: {
+        policy: "pairing",
+        sessionScope: "per-room",
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts the Matrix name matching compatibility flag", () => {
+    const result = MatrixConfigSchema.safeParse({
+      homeserver: "https://matrix.example.org",
+      accessToken: "token",
+      dangerouslyAllowNameMatching: true,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts room-level account assignments", () => {
+    const result = MatrixConfigSchema.safeParse({
+      homeserver: "https://matrix.example.org",
+      accessToken: "token",
+      groups: {
+        "!room:example.org": {
+          enabled: true,
+          account: "axis",
+        },
+      },
+    });
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      throw new Error("expected schema parse to succeed");
+    }
+    expect(result.data.groups?.["!room:example.org"]?.account).toBe("axis");
+  });
+
+  it("accepts legacy room-level account assignments", () => {
+    const result = MatrixConfigSchema.safeParse({
+      homeserver: "https://matrix.example.org",
+      accessToken: "token",
+      rooms: {
+        "!room:example.org": {
+          enabled: true,
+          account: "axis",
+        },
+      },
+    });
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      throw new Error("expected schema parse to succeed");
+    }
+    expect(result.data.rooms?.["!room:example.org"]?.account).toBe("axis");
+  });
+
+  it("accepts quiet Matrix streaming mode", () => {
+    const result = MatrixConfigSchema.safeParse({
+      homeserver: "https://matrix.example.org",
+      accessToken: "token",
+      streaming: "quiet",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts scalar progress Matrix streaming mode", () => {
+    const result = MatrixConfigSchema.safeParse({
+      homeserver: "https://matrix.example.org",
+      accessToken: "token",
+      streaming: "progress",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts Matrix streaming preview tool progress config", () => {
+    const result = MatrixConfigSchema.safeParse({
+      homeserver: "https://matrix.example.org",
+      accessToken: "token",
+      streaming: {
+        mode: "progress",
+        progress: {
+          label: "Shelling",
+          maxLines: 4,
+          toolProgress: false,
+        },
+        preview: {
+          toolProgress: true,
+        },
+>>>>>>> upstream/main
       },
     });
     expect(result.success).toBe(true);

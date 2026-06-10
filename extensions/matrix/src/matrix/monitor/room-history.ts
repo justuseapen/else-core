@@ -11,6 +11,12 @@
  * Race-condition safety: the watermark only advances to the snapshot index taken at
  * dispatch time, NOT to the queue's end at reply time.  Messages that land in the queue
  * while the agent is processing stay visible to the next trigger for that agent.
+<<<<<<< HEAD
+=======
+ *
+ * Thread-scoped history uses a separate sub-queue per Matrix thread root. Main-room
+ * history and thread history must not share watermarks or pending context.
+>>>>>>> upstream/main
  */
 
 import type { HistoryEntry } from "openclaw/plugin-sdk/reply-history";
@@ -23,24 +29,75 @@ const DEFAULT_MAX_ROOM_QUEUES = 1000;
 const MAX_WATERMARK_ENTRIES = 5000;
 /** Maximum prepared trigger snapshots retained per room for retry reuse. */
 const MAX_PREPARED_TRIGGER_ENTRIES = 500;
+<<<<<<< HEAD
 
 export type { HistoryEntry };
 
 export type HistorySnapshotToken = {
+=======
+/** Maximum thread queues retained per room (FIFO eviction beyond this). */
+const MAX_THREAD_QUEUES_PER_ROOM = 200;
+
+export type { HistoryEntry };
+
+type HistorySnapshotToken = {
+>>>>>>> upstream/main
   snapshotIdx: number;
   queueGeneration: number;
 };
 
+<<<<<<< HEAD
 export type PreparedTriggerResult = {
   history: HistoryEntry[];
 } & HistorySnapshotToken;
 
 export type RoomHistoryTracker = {
+=======
+export type ReservedHistorySlot = HistorySnapshotToken & {
+  slotIdx: number;
+  watermarkIdx?: number;
+};
+
+type QueuedHistoryEntry = HistoryEntry & {
+  discarded?: true;
+  reserved?: true;
+  consumedBy?: Set<string>;
+};
+
+type PreparedTriggerResult = {
+  history: HistoryEntry[];
+} & HistorySnapshotToken;
+
+type RoomHistoryTracker = {
+>>>>>>> upstream/main
   /**
    * Record a non-trigger message for future context.
    * Call this when a room message arrives but does not mention the bot.
    */
+<<<<<<< HEAD
   recordPending: (roomId: string, entry: HistoryEntry) => void;
+=======
+  recordPending: (roomId: string, entry: HistoryEntry, threadRootId?: string) => void;
+
+  /** Reserve an arrival-order slot for slow preflight work that finishes later. */
+  reservePending: (
+    agentId: string,
+    roomId: string,
+    entry: HistoryEntry,
+    threadRootId?: string,
+  ) => ReservedHistorySlot;
+
+  /** Replace a reserved slot with its final non-trigger history entry. */
+  finalizePending: (
+    roomId: string,
+    slot: ReservedHistorySlot,
+    entry: HistoryEntry,
+    threadRootId?: string,
+  ) => void;
+
+  /** Remove a reserved slot without changing later absolute indexes. */
+  discardPending: (roomId: string, slot: ReservedHistorySlot, threadRootId?: string) => void;
+>>>>>>> upstream/main
 
   /**
    * Capture pending history and append the trigger as one idempotent operation.
@@ -51,6 +108,20 @@ export type RoomHistoryTracker = {
     roomId: string,
     limit: number,
     entry: HistoryEntry,
+<<<<<<< HEAD
+=======
+    threadRootId?: string,
+  ) => PreparedTriggerResult;
+
+  /** Prepare a trigger using a previously reserved arrival-order slot. */
+  prepareReservedTrigger: (
+    agentId: string,
+    roomId: string,
+    limit: number,
+    slot: ReservedHistorySlot,
+    entry: HistoryEntry,
+    threadRootId?: string,
+>>>>>>> upstream/main
   ) => PreparedTriggerResult;
 
   /**
@@ -63,6 +134,7 @@ export type RoomHistoryTracker = {
     roomId: string,
     snapshot: HistorySnapshotToken,
     messageId?: string,
+<<<<<<< HEAD
   ) => void;
 };
 
@@ -71,21 +143,56 @@ export type RoomHistoryTrackerTestApi = RoomHistoryTracker & {
    * Test-only helper for inspecting pending room history directly.
    */
   getPendingHistory: (agentId: string, roomId: string, limit: number) => HistoryEntry[];
+=======
+    threadRootId?: string,
+  ) => void;
+};
+
+type RoomHistoryTrackerTestApi = RoomHistoryTracker & {
+  /**
+   * Test-only helper for inspecting pending room history directly.
+   */
+  getPendingHistory: (
+    agentId: string,
+    roomId: string,
+    limit: number,
+    threadRootId?: string,
+  ) => HistoryEntry[];
+>>>>>>> upstream/main
 
   /**
    * Test-only helper for manually appending a trigger entry and snapshot index.
    */
+<<<<<<< HEAD
   recordTrigger: (roomId: string, entry: HistoryEntry) => HistorySnapshotToken;
 };
 
 type RoomQueue = {
   entries: HistoryEntry[];
+=======
+  recordTrigger: (
+    roomId: string,
+    entry: HistoryEntry,
+    threadRootId?: string,
+  ) => HistorySnapshotToken;
+};
+
+type HistoryQueue = {
+  entries: QueuedHistoryEntry[];
+>>>>>>> upstream/main
   /** Absolute index of entries[0] — increases as old entries are trimmed. */
   baseIndex: number;
   generation: number;
   preparedTriggers: Map<string, PreparedTriggerResult>;
 };
 
+<<<<<<< HEAD
+=======
+type RoomQueue = HistoryQueue & {
+  threadQueues: Map<string, HistoryQueue>;
+};
+
+>>>>>>> upstream/main
 function createRoomHistoryTrackerInternal(
   maxQueueSize = DEFAULT_MAX_QUEUE_SIZE,
   maxRoomQueues = DEFAULT_MAX_ROOM_QUEUES,
@@ -93,27 +200,63 @@ function createRoomHistoryTrackerInternal(
   maxPreparedTriggerEntries = MAX_PREPARED_TRIGGER_ENTRIES,
 ): RoomHistoryTrackerTestApi {
   const roomQueues = new Map<string, RoomQueue>();
+<<<<<<< HEAD
   /** Maps `${agentId}:${roomId}` → absolute consumed-up-to index */
+=======
+  /** Maps `{agentId, roomId, scope}` → absolute consumed-up-to index */
+>>>>>>> upstream/main
   const agentWatermarks = new Map<string, number>();
   let nextQueueGeneration = 1;
 
   function clearRoomWatermarks(roomId: string): void {
+<<<<<<< HEAD
     const roomSuffix = `:${roomId}`;
     for (const key of agentWatermarks.keys()) {
       if (key.endsWith(roomSuffix)) {
+=======
+    for (const key of agentWatermarks.keys()) {
+      const parsed = JSON.parse(key) as { roomId?: string } | null;
+      if (parsed?.roomId === roomId) {
+>>>>>>> upstream/main
         agentWatermarks.delete(key);
       }
     }
   }
 
+<<<<<<< HEAD
+=======
+  function clearThreadWatermarks(roomId: string, threadRootId: string): void {
+    for (const key of agentWatermarks.keys()) {
+      const parsed = JSON.parse(key) as { roomId?: string; scope?: string } | null;
+      if (parsed?.roomId === roomId && parsed.scope === threadRootId) {
+        agentWatermarks.delete(key);
+      }
+    }
+  }
+
+  function createHistoryQueue(): HistoryQueue {
+    return {
+      entries: [],
+      baseIndex: 0,
+      generation: nextQueueGeneration++,
+      preparedTriggers: new Map(),
+    };
+  }
+
+>>>>>>> upstream/main
   function getOrCreateQueue(roomId: string): RoomQueue {
     let queue = roomQueues.get(roomId);
     if (!queue) {
       queue = {
+<<<<<<< HEAD
         entries: [],
         baseIndex: 0,
         generation: nextQueueGeneration++,
         preparedTriggers: new Map(),
+=======
+        ...createHistoryQueue(),
+        threadQueues: new Map(),
+>>>>>>> upstream/main
       };
       roomQueues.set(roomId, queue);
       // FIFO eviction to prevent unbounded growth across many rooms
@@ -128,7 +271,44 @@ function createRoomHistoryTrackerInternal(
     return queue;
   }
 
+<<<<<<< HEAD
   function appendToQueue(queue: RoomQueue, entry: HistoryEntry): HistorySnapshotToken {
+=======
+  function getOrCreateThreadQueue(
+    roomId: string,
+    roomQueue: RoomQueue,
+    threadRootId: string,
+  ): HistoryQueue {
+    let queue = roomQueue.threadQueues.get(threadRootId);
+    if (!queue) {
+      queue = createHistoryQueue();
+      roomQueue.threadQueues.set(threadRootId, queue);
+      if (roomQueue.threadQueues.size > MAX_THREAD_QUEUES_PER_ROOM) {
+        const oldest = roomQueue.threadQueues.keys().next().value;
+        if (oldest !== undefined) {
+          roomQueue.threadQueues.delete(oldest);
+          clearThreadWatermarks(roomId, oldest);
+        }
+      }
+    }
+    return queue;
+  }
+
+  function getScopedQueue(roomId: string, threadRootId?: string): HistoryQueue {
+    const roomQueue = getOrCreateQueue(roomId);
+    return threadRootId ? getOrCreateThreadQueue(roomId, roomQueue, threadRootId) : roomQueue;
+  }
+
+  function findScopedQueue(roomId: string, threadRootId?: string): HistoryQueue | undefined {
+    const roomQueue = roomQueues.get(roomId);
+    if (!roomQueue) {
+      return undefined;
+    }
+    return threadRootId ? roomQueue.threadQueues.get(threadRootId) : roomQueue;
+  }
+
+  function appendToQueue(queue: HistoryQueue, entry: QueuedHistoryEntry): HistorySnapshotToken {
+>>>>>>> upstream/main
     queue.entries.push(entry);
     if (queue.entries.length > maxQueueSize) {
       const overflow = queue.entries.length - maxQueueSize;
@@ -141,8 +321,17 @@ function createRoomHistoryTrackerInternal(
     };
   }
 
+<<<<<<< HEAD
   function wmKey(agentId: string, roomId: string): string {
     return `${agentId}:${roomId}`;
+=======
+  function wmKey(agentId: string, roomId: string, threadRootId?: string): string {
+    return JSON.stringify({
+      agentId,
+      roomId,
+      scope: threadRootId ?? "main",
+    });
+>>>>>>> upstream/main
   }
 
   function preparedTriggerKey(agentId: string, messageId?: string): string | null {
@@ -167,8 +356,30 @@ function createRoomHistoryTrackerInternal(
     }
   }
 
+<<<<<<< HEAD
   function rememberPreparedTrigger(
     queue: RoomQueue,
+=======
+  function markConsumedAfterReservedGap(
+    queue: HistoryQueue,
+    key: string,
+    firstReservedRel: number,
+    snapshotIdx: number,
+  ): void {
+    const endRel = Math.min(snapshotIdx - queue.baseIndex, queue.entries.length);
+    for (let rel = firstReservedRel + 1; rel < endRel; rel += 1) {
+      const entry = queue.entries[rel];
+      if (!entry || entry.reserved || entry.discarded) {
+        continue;
+      }
+      entry.consumedBy ??= new Set<string>();
+      entry.consumedBy.add(key);
+    }
+  }
+
+  function rememberPreparedTrigger(
+    queue: HistoryQueue,
+>>>>>>> upstream/main
     retryKey: string,
     prepared: PreparedTriggerResult,
   ): PreparedTriggerResult {
@@ -187,14 +398,25 @@ function createRoomHistoryTrackerInternal(
   }
 
   function computePendingHistory(
+<<<<<<< HEAD
     queue: RoomQueue,
     agentId: string,
     roomId: string,
     limit: number,
+=======
+    queue: HistoryQueue,
+    agentId: string,
+    roomId: string,
+    limit: number,
+    endAbsExclusive = queue.baseIndex + queue.entries.length,
+    startAbsOverride?: number,
+    threadRootId?: string,
+>>>>>>> upstream/main
   ): HistoryEntry[] {
     if (limit <= 0 || queue.entries.length === 0) {
       return [];
     }
+<<<<<<< HEAD
     const wm = agentWatermarks.get(wmKey(agentId, roomId)) ?? 0;
     // startAbs: the first absolute index the agent hasn't seen yet
     const startAbs = Math.max(wm, queue.baseIndex);
@@ -222,16 +444,174 @@ function createRoomHistoryTrackerInternal(
 
     prepareTrigger(agentId, roomId, limit, entry) {
       const queue = getOrCreateQueue(roomId);
+=======
+    const wm = startAbsOverride ?? agentWatermarks.get(wmKey(agentId, roomId, threadRootId)) ?? 0;
+    // startAbs: the first absolute index the agent hasn't seen yet
+    const startAbs = Math.max(wm, queue.baseIndex);
+    const startRel = startAbs - queue.baseIndex;
+    const endRel = Math.max(
+      startRel,
+      Math.min(endAbsExclusive - queue.baseIndex, queue.entries.length),
+    );
+    const available = queue.entries
+      .slice(startRel, endRel)
+      .filter(
+        (entry) =>
+          !entry.discarded &&
+          !entry.reserved &&
+          !entry.consumedBy?.has(wmKey(agentId, roomId, threadRootId)),
+      );
+    return available.length > limit ? available.slice(-limit) : available;
+  }
+
+  function prepareTriggerInternal(
+    agentId: string,
+    roomId: string,
+    limit: number,
+    entry: HistoryEntry,
+    threadRootId?: string,
+  ): PreparedTriggerResult {
+    const queue = getScopedQueue(roomId, threadRootId);
+    const retryKey = preparedTriggerKey(agentId, entry.messageId);
+    if (retryKey) {
+      const prepared = queue.preparedTriggers.get(retryKey);
+      if (prepared) {
+        return rememberPreparedTrigger(queue, retryKey, prepared);
+      }
+    }
+    const prepared = {
+      history: computePendingHistory(
+        queue,
+        agentId,
+        roomId,
+        limit,
+        undefined,
+        undefined,
+        threadRootId,
+      ),
+      ...appendToQueue(queue, entry),
+    };
+    if (retryKey) {
+      return rememberPreparedTrigger(queue, retryKey, prepared);
+    }
+    return prepared;
+  }
+
+  return {
+    recordPending(roomId, entry, threadRootId) {
+      const queue = getScopedQueue(roomId, threadRootId);
+      appendToQueue(queue, entry);
+    },
+
+    reservePending(agentId, roomId, entry, threadRootId) {
+      const queue = getScopedQueue(roomId, threadRootId);
+      const snapshot = appendToQueue(queue, { ...entry, reserved: true });
+      return {
+        ...snapshot,
+        slotIdx: snapshot.snapshotIdx - 1,
+        watermarkIdx: agentWatermarks.get(wmKey(agentId, roomId, threadRootId)) ?? 0,
+      };
+    },
+
+    finalizePending(roomId, slot, entry, threadRootId) {
+      const queue = findScopedQueue(roomId, threadRootId);
+      if (!queue || queue.generation !== slot.queueGeneration) {
+        return;
+      }
+      const rel = slot.slotIdx - queue.baseIndex;
+      if (rel < 0 || rel >= queue.entries.length) {
+        return;
+      }
+      queue.entries[rel] = entry;
+    },
+
+    discardPending(roomId, slot, threadRootId) {
+      const queue = findScopedQueue(roomId, threadRootId);
+      if (!queue || queue.generation !== slot.queueGeneration) {
+        return;
+      }
+      const rel = slot.slotIdx - queue.baseIndex;
+      if (rel < 0 || rel >= queue.entries.length) {
+        return;
+      }
+      queue.entries[rel] = {
+        sender: "",
+        body: "",
+        messageId: undefined,
+        discarded: true,
+      };
+    },
+
+    getPendingHistory(agentId, roomId, limit, threadRootId) {
+      const queue = findScopedQueue(roomId, threadRootId);
+      if (!queue) {
+        return [];
+      }
+      return computePendingHistory(
+        queue,
+        agentId,
+        roomId,
+        limit,
+        undefined,
+        undefined,
+        threadRootId,
+      );
+    },
+
+    recordTrigger(roomId, entry, threadRootId) {
+      const queue = getScopedQueue(roomId, threadRootId);
+      return appendToQueue(queue, entry);
+    },
+
+    prepareTrigger(agentId, roomId, limit, entry, threadRootId) {
+      return prepareTriggerInternal(agentId, roomId, limit, entry, threadRootId);
+    },
+
+    prepareReservedTrigger(agentId, roomId, limit, slot, entry, threadRootId) {
+      const queue = findScopedQueue(roomId, threadRootId);
+      if (!queue || queue.generation !== slot.queueGeneration) {
+        return prepareTriggerInternal(agentId, roomId, limit, entry, threadRootId);
+      }
+      const rel = slot.slotIdx - queue.baseIndex;
+      if (rel < 0 || rel >= queue.entries.length) {
+        return prepareTriggerInternal(agentId, roomId, limit, entry, threadRootId);
+      }
+>>>>>>> upstream/main
       const retryKey = preparedTriggerKey(agentId, entry.messageId);
       if (retryKey) {
         const prepared = queue.preparedTriggers.get(retryKey);
         if (prepared) {
+<<<<<<< HEAD
           return rememberPreparedTrigger(queue, retryKey, prepared);
         }
       }
       const prepared = {
         history: computePendingHistory(queue, agentId, roomId, limit),
         ...appendToQueue(queue, entry),
+=======
+          queue.entries[rel] = {
+            sender: "",
+            body: "",
+            messageId: undefined,
+            discarded: true,
+          };
+          return rememberPreparedTrigger(queue, retryKey, prepared);
+        }
+      }
+      queue.entries[rel] = entry;
+      const prepared = {
+        history: computePendingHistory(
+          queue,
+          agentId,
+          roomId,
+          limit,
+          slot.slotIdx,
+          slot.watermarkIdx,
+          threadRootId,
+        ),
+        snapshotIdx: slot.slotIdx + 1,
+        queueGeneration: queue.generation,
+>>>>>>> upstream/main
       };
       if (retryKey) {
         return rememberPreparedTrigger(queue, retryKey, prepared);
@@ -239,12 +619,21 @@ function createRoomHistoryTrackerInternal(
       return prepared;
     },
 
+<<<<<<< HEAD
     consumeHistory(agentId, roomId, snapshot, messageId) {
       const key = wmKey(agentId, roomId);
       const queue = roomQueues.get(roomId);
       if (!queue) {
         // The room was evicted while this trigger was in flight. Keep eviction authoritative
         // so a late completion cannot recreate a stale watermark against a fresh queue.
+=======
+    consumeHistory(agentId, roomId, snapshot, messageId, threadRootId) {
+      const key = wmKey(agentId, roomId, threadRootId);
+      const queue = findScopedQueue(roomId, threadRootId);
+      if (!queue) {
+        // The room or thread was evicted while this trigger was in flight. Keep eviction
+        // authoritative so a late completion cannot recreate a stale watermark.
+>>>>>>> upstream/main
         agentWatermarks.delete(key);
         return;
       }
@@ -253,12 +642,29 @@ function createRoomHistoryTrackerInternal(
         // snapshot so it cannot advance or erase state for the new queue generation.
         return;
       }
+<<<<<<< HEAD
       // Monotone write: never regress an already-advanced watermark.
       // Guards against out-of-order completion when two triggers for the same
       // (agentId, roomId) are in-flight concurrently.
       rememberWatermark(key, snapshot.snapshotIdx);
       const retryKey = preparedTriggerKey(agentId, messageId);
       if (queue && retryKey) {
+=======
+      const firstReservedRel = queue.entries.findIndex(
+        (entry, index) => entry.reserved === true && queue.baseIndex + index < snapshot.snapshotIdx,
+      );
+      if (firstReservedRel >= 0) {
+        markConsumedAfterReservedGap(queue, key, firstReservedRel, snapshot.snapshotIdx);
+      }
+      const consumableSnapshotIdx =
+        firstReservedRel >= 0 ? queue.baseIndex + firstReservedRel : snapshot.snapshotIdx;
+      // Monotone write: never regress an already-advanced watermark.
+      // Guards against out-of-order completion when two triggers for the same
+      // (agentId, roomId) are in-flight concurrently.
+      rememberWatermark(key, consumableSnapshotIdx);
+      const retryKey = preparedTriggerKey(agentId, messageId);
+      if (retryKey) {
+>>>>>>> upstream/main
         queue.preparedTriggers.delete(retryKey);
       }
     },
@@ -279,7 +685,15 @@ export function createRoomHistoryTracker(
   );
   return {
     recordPending: tracker.recordPending,
+<<<<<<< HEAD
     prepareTrigger: tracker.prepareTrigger,
+=======
+    reservePending: tracker.reservePending,
+    finalizePending: tracker.finalizePending,
+    discardPending: tracker.discardPending,
+    prepareTrigger: tracker.prepareTrigger,
+    prepareReservedTrigger: tracker.prepareReservedTrigger,
+>>>>>>> upstream/main
     consumeHistory: tracker.consumeHistory,
   };
 }

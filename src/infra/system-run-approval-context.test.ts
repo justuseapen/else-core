@@ -1,3 +1,4 @@
+// Tests system-run approval context construction.
 import { describe, expect, test } from "vitest";
 import {
   parsePreparedSystemRunPayload,
@@ -22,6 +23,7 @@ describe("resolveSystemRunApprovalRequestContext", () => {
         },
       },
       expected: {
+<<<<<<< HEAD
         commandText: './env sh -c "jq --version"',
         commandPreview: "jq --version",
         commandArgv: ["./env", "sh", "-c", "jq --version"],
@@ -47,6 +49,56 @@ describe("resolveSystemRunApprovalRequestContext", () => {
     },
   ])("$name", ({ params, expected }) => {
     expect(resolveSystemRunApprovalRequestContext(params)).toMatchObject(expected);
+=======
+        plan: {
+          argv: ["./env", "sh", "-c", "jq --version"],
+          cwd: "/tmp",
+          commandText: './env sh -c "jq --version"',
+          commandPreview: "jq --version",
+          agentId: "main",
+          sessionKey: "agent:main:main",
+        },
+        commandText: './env sh -c "jq --version"',
+        commandPreview: "jq --version",
+        commandArgv: ["./env", "sh", "-c", "jq --version"],
+        cwd: "/tmp",
+        agentId: "main",
+        sessionKey: "agent:main:main",
+      },
+    },
+    {
+      name: "derives preview from fallback command for older node plans",
+      params: {
+        host: "node",
+        command: "jq --version",
+        systemRunPlan: {
+          argv: ["./env", "sh", "-c", "jq --version"],
+          cwd: "/tmp",
+          rawCommand: './env sh -c "jq --version"',
+          agentId: "main",
+          sessionKey: "agent:main:main",
+        },
+      },
+      expected: {
+        plan: {
+          argv: ["./env", "sh", "-c", "jq --version"],
+          cwd: "/tmp",
+          commandText: './env sh -c "jq --version"',
+          commandPreview: "jq --version",
+          agentId: "main",
+          sessionKey: "agent:main:main",
+        },
+        commandText: './env sh -c "jq --version"',
+        commandPreview: "jq --version",
+        commandArgv: ["./env", "sh", "-c", "jq --version"],
+        cwd: "/tmp",
+        agentId: "main",
+        sessionKey: "agent:main:main",
+      },
+    },
+  ])("$name", ({ params, expected }) => {
+    expect(resolveSystemRunApprovalRequestContext(params)).toEqual(expected);
+>>>>>>> upstream/main
   });
 
   test("falls back to explicit request params for non-node hosts", () => {
@@ -94,6 +146,29 @@ describe("parsePreparedSystemRunPayload", () => {
         agentId: "main",
         sessionKey: "agent:main:main",
       },
+    });
+  });
+
+  test("parses prepared exec policy metadata", () => {
+    expect(
+      parsePreparedSystemRunPayload({
+        plan: {
+          argv: ["jq", "--version"],
+          cwd: "/tmp",
+          commandText: "jq --version",
+        },
+        execPolicy: { security: "allowlist", ask: "always" },
+      }),
+    ).toEqual({
+      plan: {
+        argv: ["jq", "--version"],
+        cwd: "/tmp",
+        commandText: "jq --version",
+        commandPreview: null,
+        agentId: null,
+        sessionKey: null,
+      },
+      execPolicy: { security: "allowlist", ask: "always" },
     });
   });
 

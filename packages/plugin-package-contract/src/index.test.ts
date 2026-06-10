@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Plugin Package Contract tests cover index behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   EXTERNAL_CODE_PLUGIN_REQUIRED_FIELD_PATHS,
@@ -72,6 +76,7 @@ describe("@openclaw/plugin-package-contract", () => {
     expect(validateExternalCodePluginPackageJson(packageJson).issues).toEqual([
       {
         fieldPath: "openclaw.compat.pluginApi",
+<<<<<<< HEAD
         message:
           "openclaw.compat.pluginApi is required for external code plugins published to ClawHub.",
       },
@@ -79,6 +84,13 @@ describe("@openclaw/plugin-package-contract", () => {
         fieldPath: "openclaw.build.openclawVersion",
         message:
           "openclaw.build.openclawVersion is required for external code plugins published to ClawHub.",
+=======
+        message: "openclaw.compat.pluginApi is required for external code plugin packages.",
+      },
+      {
+        fieldPath: "openclaw.build.openclawVersion",
+        message: "openclaw.build.openclawVersion is required for external code plugin packages.",
+>>>>>>> upstream/main
       },
     ]);
   });

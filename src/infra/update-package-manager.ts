@@ -1,12 +1,24 @@
+<<<<<<< HEAD
+=======
+// Resolves package managers for update build steps.
+>>>>>>> upstream/main
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { detectPackageManager as detectPackageManagerImpl } from "./detect-package-manager.js";
 import { applyPathPrepend } from "./path-prepend.js";
 
+<<<<<<< HEAD
 export type BuildManager = "pnpm" | "bun" | "npm";
 
 export type UpdatePackageManagerRequirement = "allow-fallback" | "require-preferred";
+=======
+// Update package-manager resolution chooses the package manager for update
+// builds and can bootstrap pnpm when a managed checkout requires it.
+type BuildManager = "pnpm" | "bun" | "npm";
+
+type UpdatePackageManagerRequirement = "allow-fallback" | "require-preferred";
+>>>>>>> upstream/main
 
 export type UpdatePackageManagerFailureReason =
   | "preferred-manager-unavailable"
@@ -19,7 +31,11 @@ export type PackageManagerCommandRunner = (
   options: { timeoutMs: number; env?: NodeJS.ProcessEnv },
 ) => Promise<{ stdout: string; stderr: string; code: number | null }>;
 
+<<<<<<< HEAD
 export type ResolvedBuildManager =
+=======
+type ResolvedBuildManager =
+>>>>>>> upstream/main
   | {
       kind: "resolved";
       manager: BuildManager;
@@ -34,7 +50,13 @@ export type ResolvedBuildManager =
       reason: UpdatePackageManagerFailureReason;
     };
 
+<<<<<<< HEAD
 export async function detectBuildManager(root: string): Promise<BuildManager> {
+=======
+const PNPM_NPM_FALLBACK_SPEC = "pnpm@11";
+
+async function detectBuildManager(root: string): Promise<BuildManager> {
+>>>>>>> upstream/main
   return (await detectPackageManagerImpl(root)) ?? "npm";
 }
 
@@ -124,7 +146,11 @@ async function bootstrapPnpmViaNpm(params: {
   };
   try {
     const installResult = await params.runCommand(
+<<<<<<< HEAD
       ["npm", "install", "--prefix", tempRoot, "pnpm@10"],
+=======
+      ["npm", "install", "--prefix", tempRoot, PNPM_NPM_FALLBACK_SPEC],
+>>>>>>> upstream/main
       {
         timeoutMs: params.timeoutMs,
         env: params.baseEnv,
@@ -147,6 +173,10 @@ async function bootstrapPnpmViaNpm(params: {
   }
 }
 
+<<<<<<< HEAD
+=======
+/** Resolve the package manager and environment to use for an update build. */
+>>>>>>> upstream/main
 export async function resolveUpdateBuildManager(
   runCommand: PackageManagerCommandRunner,
   root: string,
@@ -211,6 +241,10 @@ export async function resolveUpdateBuildManager(
   return { kind: "resolved", manager: "npm", preferred, fallback: preferred !== "npm" };
 }
 
+<<<<<<< HEAD
+=======
+/** Build argv for running a package-manager script. */
+>>>>>>> upstream/main
 export function managerScriptArgs(manager: BuildManager, script: string, args: string[] = []) {
   if (manager === "pnpm") {
     return ["pnpm", script, ...args];
@@ -224,6 +258,10 @@ export function managerScriptArgs(manager: BuildManager, script: string, args: s
   return ["npm", "run", script];
 }
 
+<<<<<<< HEAD
+=======
+/** Build argv for installing dependencies with a package manager. */
+>>>>>>> upstream/main
 export function managerInstallArgs(manager: BuildManager, opts?: { compatFallback?: boolean }) {
   if (manager === "pnpm") {
     return ["pnpm", "install"];
@@ -236,3 +274,17 @@ export function managerInstallArgs(manager: BuildManager, opts?: { compatFallbac
   }
   return ["npm", "install"];
 }
+<<<<<<< HEAD
+=======
+
+/** Build argv for installing dependencies while skipping lifecycle scripts. */
+export function managerInstallIgnoreScriptsArgs(manager: BuildManager): string[] | null {
+  if (manager === "pnpm") {
+    return ["pnpm", "install", "--ignore-scripts"];
+  }
+  if (manager === "bun") {
+    return ["bun", "install", "--ignore-scripts"];
+  }
+  return ["npm", "install", "--ignore-scripts"];
+}
+>>>>>>> upstream/main

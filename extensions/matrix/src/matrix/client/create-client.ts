@@ -1,6 +1,16 @@
+// Matrix plugin module implements create client behavior.
 import fs from "node:fs";
+<<<<<<< HEAD
 import type { PinnedDispatcherPolicy } from "openclaw/plugin-sdk/infra-runtime";
 import type { SsrFPolicy } from "../../runtime-api.js";
+=======
+import type { PinnedDispatcherPolicy } from "openclaw/plugin-sdk/ssrf-dispatcher";
+import {
+  ssrfPolicyFromDangerouslyAllowPrivateNetwork,
+  type SsrFPolicy,
+} from "openclaw/plugin-sdk/ssrf-runtime";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import type { MatrixClient } from "../sdk.js";
 import { resolveValidatedMatrixHomeserverUrl } from "./config.js";
 import {
@@ -49,8 +59,13 @@ export async function createMatrixClient(params: {
   const homeserver = await resolveValidatedMatrixHomeserverUrl(params.homeserver, {
     dangerouslyAllowPrivateNetwork: params.allowPrivateNetwork,
   });
+<<<<<<< HEAD
   const userId = params.userId?.trim() || "unknown";
   const matrixClientUserId = params.userId?.trim() || undefined;
+=======
+  const matrixClientUserId = normalizeOptionalString(params.userId);
+  const userId = matrixClientUserId ?? "unknown";
+>>>>>>> upstream/main
   const persistStorage = params.persistStorage !== false;
   const storagePaths = persistStorage
     ? resolveMatrixStoragePaths({
@@ -89,12 +104,21 @@ export async function createMatrixClient(params: {
     encryption: params.encryption,
     localTimeoutMs: params.localTimeoutMs,
     initialSyncLimit: params.initialSyncLimit,
+<<<<<<< HEAD
     storagePath: storagePaths?.storagePath,
+=======
+    storageRootDir: storagePaths?.rootDir,
+>>>>>>> upstream/main
     recoveryKeyPath: storagePaths?.recoveryKeyPath,
     idbSnapshotPath: storagePaths?.idbSnapshotPath,
     cryptoDatabasePrefix,
     autoBootstrapCrypto: params.autoBootstrapCrypto,
+<<<<<<< HEAD
     ssrfPolicy: params.ssrfPolicy,
+=======
+    ssrfPolicy:
+      params.ssrfPolicy ?? ssrfPolicyFromDangerouslyAllowPrivateNetwork(params.allowPrivateNetwork),
+>>>>>>> upstream/main
     dispatcherPolicy: params.dispatcherPolicy,
   });
 }

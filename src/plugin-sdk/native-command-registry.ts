@@ -1,7 +1,19 @@
+<<<<<<< HEAD
 export {
   buildCommandTextFromArgs,
   findCommandByNativeName,
   listChatCommands,
+=======
+/**
+ * Public SDK subpath for chat/native command definitions and argument helpers.
+ */
+export {
+  buildCommandTextFromArgs,
+  findCommandByNativeName,
+  formatCommandArgMenuTitle,
+  listChatCommands,
+  listNativeCommandSpecs,
+>>>>>>> upstream/main
   listNativeCommandSpecsForConfig,
   parseCommandArgs,
   resolveCommandArgChoices,

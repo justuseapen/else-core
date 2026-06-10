@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 import path from "node:path";
 
 export const MAX_CONCEPT_TAGS = 8;
 
 export type ConceptTagScriptFamily = "latin" | "cjk" | "mixed" | "other";
+=======
+// Memory Core plugin module implements concept vocabulary behavior.
+import path from "node:path";
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+
+export const MAX_CONCEPT_TAGS = 8;
+
+type ConceptTagScriptFamily = "latin" | "cjk" | "mixed" | "other";
+>>>>>>> upstream/main
 
 export type ConceptTagScriptCoverage = {
   latinEntryCount: number;
@@ -18,6 +28,10 @@ const LANGUAGE_STOP_WORDS = {
     "agent",
     "again",
     "also",
+<<<<<<< HEAD
+=======
+    "assistant",
+>>>>>>> upstream/main
     "because",
     "before",
     "being",
@@ -63,6 +77,11 @@ const LANGUAGE_STOP_WORDS = {
     "should",
     "since",
     "some",
+<<<<<<< HEAD
+=======
+    "subagent",
+    "system",
+>>>>>>> upstream/main
     "than",
     "that",
     "their",
@@ -72,13 +91,21 @@ const LANGUAGE_STOP_WORDS = {
     "this",
     "through",
     "today",
+<<<<<<< HEAD
+=======
+    "user",
+>>>>>>> upstream/main
     "using",
     "with",
     "work",
     "workspace",
     "year",
   ],
+<<<<<<< HEAD
   english: ["and", "are", "for", "into", "its", "our", "then", "were"],
+=======
+  english: ["and", "are", "for", "into", "its", "our", "the", "then", "were", "you", "your"],
+>>>>>>> upstream/main
   spanish: [
     "al",
     "con",
@@ -226,8 +253,13 @@ const LANGUAGE_STOP_WORDS = {
 
 const CONCEPT_STOP_WORDS = new Set(
   Object.values(LANGUAGE_STOP_WORDS)
+<<<<<<< HEAD
     .flatMap((words) => words)
     .map((word) => word.toLowerCase()),
+=======
+    .flat()
+    .map((word) => normalizeLowercaseStringOrEmpty(word)),
+>>>>>>> upstream/main
 );
 
 const PROTECTED_GLOSSARY = [
@@ -273,7 +305,11 @@ const PROTECTED_GLOSSARY = [
   "네트워크",
   "게이트웨이",
   "장애대응",
+<<<<<<< HEAD
 ].map((word) => word.normalize("NFKC").toLowerCase());
+=======
+].map((word) => normalizeLowercaseStringOrEmpty(word.normalize("NFKC")));
+>>>>>>> upstream/main
 
 const COMPOUND_TOKEN_RE = /[\p{L}\p{N}]+(?:[._/-][\p{L}\p{N}]+)+/gu;
 const LETTER_OR_NUMBER_RE = /[\p{L}\p{N}]/u;
@@ -326,11 +362,20 @@ function isKanaOnlyToken(value: string): boolean {
 }
 
 function normalizeConceptToken(rawToken: string): string | null {
+<<<<<<< HEAD
   const normalized = rawToken
     .normalize("NFKC")
     .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
     .replaceAll("_", "-")
     .toLowerCase();
+=======
+  const normalized = normalizeLowercaseStringOrEmpty(
+    rawToken
+      .normalize("NFKC")
+      .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
+      .replaceAll("_", "-"),
+  );
+>>>>>>> upstream/main
   if (!normalized || !containsLetterOrNumber(normalized) || normalized.length > 32) {
     return null;
   }
@@ -355,7 +400,11 @@ function normalizeConceptToken(rawToken: string): string | null {
 }
 
 function collectGlossaryMatches(source: string): string[] {
+<<<<<<< HEAD
   const normalizedSource = source.normalize("NFKC").toLowerCase();
+=======
+  const normalizedSource = normalizeLowercaseStringOrEmpty(source.normalize("NFKC"));
+>>>>>>> upstream/main
   const matches: string[] = [];
   for (const entry of PROTECTED_GLOSSARY) {
     if (!normalizedSource.includes(entry)) {
@@ -462,6 +511,7 @@ export function summarizeConceptTagScriptCoverage(
 
   return coverage;
 }
+<<<<<<< HEAD
 
 export const __testing = {
   normalizeConceptToken,
@@ -469,3 +519,5 @@ export const __testing = {
   collectCompoundTokens,
   collectSegmentTokens,
 };
+=======
+>>>>>>> upstream/main

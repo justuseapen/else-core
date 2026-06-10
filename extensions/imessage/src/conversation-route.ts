@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import {
   getSessionBindingService,
@@ -9,6 +10,15 @@ import {
   resolveAgentIdFromSessionKey,
   resolveAgentRoute,
 } from "openclaw/plugin-sdk/routing";
+=======
+// Imessage plugin module implements conversation route behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import {
+  resolveConfiguredBindingRoute,
+  resolveRuntimeConversationBindingRoute,
+} from "openclaw/plugin-sdk/conversation-runtime";
+import { resolveAgentRoute } from "openclaw/plugin-sdk/routing";
+>>>>>>> upstream/main
 import { logVerbose } from "openclaw/plugin-sdk/runtime-env";
 import { resolveIMessageInboundConversationId } from "./conversation-id.js";
 
@@ -49,6 +59,7 @@ export function resolveIMessageConversationRoute(params: {
     },
   }).route;
 
+<<<<<<< HEAD
   const runtimeBinding = getSessionBindingService().resolveByConversation({
     channel: "imessage",
     accountId: params.accountId,
@@ -76,4 +87,23 @@ export function resolveIMessageConversationRoute(params: {
     }),
     matchedBy: "binding.channel",
   };
+=======
+  const runtimeRoute = resolveRuntimeConversationBindingRoute({
+    route,
+    conversation: {
+      channel: "imessage",
+      accountId: params.accountId,
+      conversationId,
+    },
+  });
+  route = runtimeRoute.route;
+  if (runtimeRoute.bindingRecord && !runtimeRoute.boundSessionKey) {
+    logVerbose(`imessage: plugin-bound conversation ${conversationId}`);
+  } else if (runtimeRoute.boundSessionKey) {
+    logVerbose(
+      `imessage: routed via bound conversation ${conversationId} -> ${runtimeRoute.boundSessionKey}`,
+    );
+  }
+  return route;
+>>>>>>> upstream/main
 }

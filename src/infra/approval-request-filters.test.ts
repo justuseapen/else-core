@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Covers approval request agent and session filters.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   matchesApprovalRequestFilters,

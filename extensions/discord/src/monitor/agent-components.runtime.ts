@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Discord plugin module implements agent components behavior.
+>>>>>>> upstream/main
 export {
   buildPluginBindingResolvedText,
   parsePluginBindingApprovalCustomId,

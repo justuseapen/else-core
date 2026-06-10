@@ -1,13 +1,20 @@
+// Resolves or installs channel plugins needed by setup/onboarding flows.
+import { normalizeOptionalLowercaseString } from "@openclaw/normalization-core/string-coerce";
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../../agents/agent-scope.js";
 import {
-  getChannelPluginCatalogEntry,
-  listChannelPluginCatalogEntries,
+  listRawChannelPluginCatalogEntries,
   type ChannelPluginCatalogEntry,
 } from "../../channels/plugins/catalog.js";
 import { getChannelPlugin, normalizeChannelId } from "../../channels/plugins/index.js";
+<<<<<<< HEAD
 import type { ChannelId, ChannelPlugin } from "../../channels/plugins/types.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import { normalizePluginsConfig, resolveEnableState } from "../../plugins/config-state.js";
+=======
+import type { ChannelPlugin } from "../../channels/plugins/types.plugin.js";
+import type { ChannelId } from "../../channels/plugins/types.public.js";
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
+>>>>>>> upstream/main
 import type { RuntimeEnv } from "../../runtime.js";
 import { createClackPrompter } from "../../wizard/clack-prompter.js";
 import type { WizardPrompter } from "../../wizard/prompts.js";
@@ -15,6 +22,10 @@ import {
   ensureChannelSetupPluginInstalled,
   loadChannelSetupPluginRegistrySnapshotForChannel,
 } from "./plugin-install.js";
+import {
+  getTrustedChannelPluginCatalogEntry,
+  listTrustedChannelPluginCatalogEntries,
+} from "./trusted-catalog.js";
 
 type ChannelPluginSnapshot = {
   channels: Array<{ plugin: ChannelPlugin }>;
@@ -27,6 +38,8 @@ type ResolveInstallableChannelPluginResult = {
   plugin?: ChannelPlugin;
   catalogEntry?: ChannelPluginCatalogEntry;
   configChanged: boolean;
+  pluginInstalled: boolean;
+  supportsRequestedCapability?: boolean;
 };
 
 function resolveWorkspaceDir(cfg: OpenClawConfig) {
@@ -47,28 +60,38 @@ function resolveResolvedChannelId(params: {
   return normalizeChannelId(params.catalogEntry.id) ?? (params.catalogEntry.id as ChannelId);
 }
 
-export function resolveCatalogChannelEntry(raw: string, cfg: OpenClawConfig | null) {
-  const trimmed = raw.trim().toLowerCase();
+function resolveCatalogChannelEntry(raw: string, cfg: OpenClawConfig | null) {
+  const trimmed = normalizeOptionalLowercaseString(raw);
   if (!trimmed) {
     return undefined;
   }
-  const workspaceDir = cfg ? resolveWorkspaceDir(cfg) : undefined;
-  return listChannelPluginCatalogEntries({ workspaceDir }).find((entry) => {
-    if (entry.id.toLowerCase() === trimmed) {
+  const entries = cfg
+    ? listTrustedChannelPluginCatalogEntries({
+        cfg,
+        workspaceDir: resolveWorkspaceDir(cfg),
+      })
+    : listRawChannelPluginCatalogEntries({ excludeWorkspace: true });
+  return entries.find((entry) => {
+    if (normalizeOptionalLowercaseString(entry.id) === trimmed) {
       return true;
     }
-    return (entry.meta.aliases ?? []).some((alias) => alias.trim().toLowerCase() === trimmed);
+    return (entry.meta.aliases ?? []).some(
+      (alias) => normalizeOptionalLowercaseString(alias) === trimmed,
+    );
   });
 }
 
 function findScopedChannelPlugin(
   snapshot: ChannelPluginSnapshot,
   channelId: ChannelId,
+  supports: (plugin: ChannelPlugin) => boolean,
 ): ChannelPlugin | undefined {
-  return (
-    snapshot.channels.find((entry) => entry.plugin.id === channelId)?.plugin ??
-    snapshot.channelSetups.find((entry) => entry.plugin.id === channelId)?.plugin
-  );
+  const runtimePlugin = snapshot.channels.find((entry) => entry.plugin.id === channelId)?.plugin;
+  if (runtimePlugin) {
+    return runtimePlugin;
+  }
+  const setupPlugin = snapshot.channelSetups.find((entry) => entry.plugin.id === channelId)?.plugin;
+  return setupPlugin && supports(setupPlugin) ? setupPlugin : undefined;
 }
 
 function isTrustedWorkspaceChannelCatalogEntry(
@@ -120,6 +143,7 @@ function loadScopedChannelPlugin(params: {
   cfg: OpenClawConfig;
   runtime: RuntimeEnv;
   channelId: ChannelId;
+  supports: (plugin: ChannelPlugin) => boolean;
   pluginId?: string;
   workspaceDir?: string;
 }): ChannelPlugin | undefined {
@@ -130,9 +154,10 @@ function loadScopedChannelPlugin(params: {
     ...(params.pluginId ? { pluginId: params.pluginId } : {}),
     workspaceDir: params.workspaceDir,
   });
-  return findScopedChannelPlugin(snapshot, params.channelId);
+  return findScopedChannelPlugin(snapshot, params.channelId, params.supports);
 }
 
+/** Resolve an existing channel plugin, scoped setup plugin, or installable catalog entry. */
 export async function resolveInstallableChannelPlugin(params: {
   cfg: OpenClawConfig;
   runtime: RuntimeEnv;
@@ -148,7 +173,8 @@ export async function resolveInstallableChannelPlugin(params: {
   const unresolvedCatalogEntry =
     (params.rawChannel ? resolveCatalogChannelEntry(params.rawChannel, nextCfg) : undefined) ??
     (params.channelId
-      ? getChannelPluginCatalogEntry(params.channelId, {
+      ? getTrustedChannelPluginCatalogEntry(params.channelId, {
+          cfg: nextCfg,
           workspaceDir,
         })
       : undefined);
@@ -170,17 +196,20 @@ export async function resolveInstallableChannelPlugin(params: {
       cfg: nextCfg,
       catalogEntry,
       configChanged: false,
+      pluginInstalled: false,
     };
   }
 
   const existing = getChannelPlugin(channelId);
-  if (existing && supports(existing)) {
+  if (existing) {
     return {
       cfg: nextCfg,
       channelId,
       plugin: existing,
       catalogEntry,
       configChanged: false,
+      pluginInstalled: false,
+      supportsRequestedCapability: supports(existing),
     };
   }
 
@@ -190,16 +219,19 @@ export async function resolveInstallableChannelPlugin(params: {
       cfg: nextCfg,
       runtime: params.runtime,
       channelId,
+      supports,
       pluginId: resolvedPluginId,
       workspaceDir,
     });
-    if (scoped && supports(scoped)) {
+    if (scoped) {
       return {
         cfg: nextCfg,
         channelId,
         plugin: scoped,
         catalogEntry,
         configChanged: false,
+        pluginInstalled: false,
+        supportsRequestedCapability: supports(scoped),
       };
     }
 
@@ -218,6 +250,7 @@ export async function resolveInstallableChannelPlugin(params: {
             cfg: nextCfg,
             runtime: params.runtime,
             channelId,
+            supports,
             pluginId: installedPluginId,
             workspaceDir: resolveWorkspaceDir(nextCfg),
           })
@@ -231,6 +264,8 @@ export async function resolveInstallableChannelPlugin(params: {
             ? { ...catalogEntry, pluginId: installedPluginId }
             : catalogEntry,
         configChanged: nextCfg !== params.cfg,
+        pluginInstalled: installResult.installed,
+        supportsRequestedCapability: installedPlugin ? supports(installedPlugin) : undefined,
       };
     }
   }
@@ -241,5 +276,6 @@ export async function resolveInstallableChannelPlugin(params: {
     plugin: existing,
     catalogEntry,
     configChanged: false,
+    pluginInstalled: false,
   };
 }

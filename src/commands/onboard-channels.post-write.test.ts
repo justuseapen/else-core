@@ -1,15 +1,20 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+// Onboard channel post-write tests cover plugin post-write hooks after channel setup.
+import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
+<<<<<<< HEAD
 import { setActivePluginRegistry } from "../plugins/runtime.js";
 import { createChannelTestPluginBase, createTestRegistry } from "../test-utils/channel-plugins.js";
 import type { WizardPrompter } from "../wizard/prompts.js";
 import { getChannelSetupWizardAdapter } from "./channel-setup/registry.js";
 import type { ChannelSetupWizardAdapter } from "./channel-setup/types.js";
+=======
+>>>>>>> upstream/main
 import {
+  createChannelOnboardingPostWriteHook,
   createChannelOnboardingPostWriteHookCollector,
   runCollectedChannelOnboardingPostWriteHooks,
-  setupChannels,
 } from "./onboard-channels.js";
+<<<<<<< HEAD
 import { createExitThrowingRuntime, createWizardPrompter } from "./test-wizard-helpers.js";
 
 function setMinimalTelegramOnboardingRegistryForTests(): void {
@@ -146,9 +151,14 @@ describe("setupChannels post-write hooks", () => {
     setMinimalTelegramOnboardingRegistryForTests();
   });
 
+=======
+import { createExitThrowingRuntime } from "./test-wizard-helpers.js";
+
+describe("setupChannels post-write hooks", () => {
+>>>>>>> upstream/main
   it("collects onboarding post-write hooks and runs them against the final config", async () => {
-    const select = createQuickstartTelegramSelect();
     const afterConfigWritten = vi.fn(async () => {});
+<<<<<<< HEAD
     const configureInteractive = vi.fn(async ({ cfg }: { cfg: OpenClawConfig }) => ({
       cfg: {
         ...cfg,
@@ -161,45 +171,45 @@ describe("setupChannels post-write hooks", () => {
     }));
     const restore = patchChannelOnboardingAdapterForTest({
       configureInteractive,
+=======
+    const previousCfg = {} as OpenClawConfig;
+    const cfg = {
+      channels: {
+        telegram: { botToken: "new-token" },
+      },
+    } as OpenClawConfig;
+    const adapter = {
+>>>>>>> upstream/main
       afterConfigWritten,
-      getStatus: vi.fn(async ({ cfg }: { cfg: OpenClawConfig }) => ({
-        channel: "telegram",
-        configured: Boolean(cfg.channels?.telegram?.botToken),
-        statusLines: [],
-      })),
-    });
-    const prompter = createUnexpectedQuickstartPrompter(
-      select as unknown as WizardPrompter["select"],
-    );
+    };
     const collector = createChannelOnboardingPostWriteHookCollector();
     const runtime = createExitThrowingRuntime();
+    const hook = createChannelOnboardingPostWriteHook({
+      accountId: "acct-1",
+      adapter,
+      channel: "telegram",
+      previousCfg,
+    });
 
-    try {
-      const cfg = await setupChannels({} as OpenClawConfig, runtime, prompter, {
-        quickstartDefaults: true,
-        skipConfirm: true,
-        onPostWriteHook: (hook) => {
-          collector.collect(hook);
-        },
-      });
-
-      expect(afterConfigWritten).not.toHaveBeenCalled();
-
-      await runCollectedChannelOnboardingPostWriteHooks({
-        hooks: collector.drain(),
-        cfg,
-        runtime,
-      });
-
-      expect(afterConfigWritten).toHaveBeenCalledWith({
-        previousCfg: {} as OpenClawConfig,
-        cfg,
-        accountId: "acct-1",
-        runtime,
-      });
-    } finally {
-      restore();
+    if (!hook) {
+      throw new Error("expected post-write hook");
     }
+    collector.collect(hook);
+
+    expect(afterConfigWritten).not.toHaveBeenCalled();
+
+    await runCollectedChannelOnboardingPostWriteHooks({
+      hooks: collector.drain(),
+      cfg,
+      runtime,
+    });
+
+    expect(afterConfigWritten).toHaveBeenCalledWith({
+      previousCfg,
+      cfg,
+      accountId: "acct-1",
+      runtime,
+    });
   });
 
   it("logs onboarding post-write hook failures without aborting", async () => {

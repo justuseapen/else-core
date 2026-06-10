@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Ollama API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   OLLAMA_DEFAULT_BASE_URL,
   OLLAMA_DEFAULT_CONTEXT_WINDOW,
@@ -11,7 +15,13 @@ export {
   fetchOllamaModels,
   isReasoningModelHeuristic,
   queryOllamaContextWindow,
+<<<<<<< HEAD
   resolveOllamaApiBase,
+=======
+  queryOllamaModelShowInfo,
+  resolveOllamaApiBase,
+  type OllamaModelShowInfo,
+>>>>>>> upstream/main
   type OllamaModelWithContext,
   type OllamaTagModel,
   type OllamaTagsResponse,

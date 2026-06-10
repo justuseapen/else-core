@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   buildNoCapabilityModelConfiguredMessage,
   resolveCapabilityModelCandidates,
@@ -129,3 +130,12 @@ export async function generateImage(
     lastError,
   });
 }
+=======
+// Image Generation Core plugin module implements runtime behavior.
+export {
+  generateImage,
+  listRuntimeImageGenerationProviders,
+  type GenerateImageParams,
+  type GenerateImageRuntimeResult,
+} from "openclaw/plugin-sdk/image-generation-runtime";
+>>>>>>> upstream/main

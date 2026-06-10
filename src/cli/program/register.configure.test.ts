@@ -1,3 +1,4 @@
+// Register configure tests cover configure command registration and option wiring.
 import { Command } from "commander";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { registerConfigureCommand } from "./register.configure.js";
@@ -10,11 +11,22 @@ const mocks = vi.hoisted(() => ({
     exit: vi.fn(),
   },
 }));
+<<<<<<< HEAD
+
+const { configureCommandFromSectionsArgMock, runtime } = mocks;
+=======
+>>>>>>> upstream/main
 
 const { configureCommandFromSectionsArgMock, runtime } = mocks;
 
-vi.mock("../../commands/configure.js", () => ({
+vi.mock("../../commands/configure.shared.js", () => ({
   CONFIGURE_WIZARD_SECTIONS: ["auth", "channels", "gateway", "agent"],
+<<<<<<< HEAD
+=======
+}));
+
+vi.mock("../../commands/configure.commands.js", () => ({
+>>>>>>> upstream/main
   configureCommandFromSectionsArg: mocks.configureCommandFromSectionsArgMock,
 }));
 

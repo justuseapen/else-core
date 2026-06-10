@@ -1,3 +1,4 @@
+/** Tests phase-scoped plugin hooks and hook registration ordering. */
 import { beforeEach, describe, expect, it } from "vitest";
 import { createHookRunner } from "./hooks.js";
 import { addStaticTestHooks } from "./hooks.test-helpers.js";
@@ -40,10 +41,17 @@ describe("phase hooks merger", () => {
       result: PluginHookBeforeModelResolveResult | PluginHookBeforePromptBuildResult;
       priority?: number;
     }>;
+<<<<<<< HEAD
     expected: Record<string, unknown>;
   }) {
     const result = await runPhaseHook(params);
     expect(result).toEqual(expect.objectContaining(params.expected));
+=======
+    expected: PluginHookBeforeModelResolveResult | PluginHookBeforePromptBuildResult;
+  }) {
+    const result = await runPhaseHook(params);
+    expect(result).toStrictEqual(params.expected);
+>>>>>>> upstream/main
   }
 
   it.each([
@@ -83,6 +91,12 @@ describe("phase hooks merger", () => {
       ],
       expected: {
         prependContext: "context A\n\ncontext B",
+<<<<<<< HEAD
+=======
+        appendContext: undefined,
+        prependSystemContext: undefined,
+        appendSystemContext: undefined,
+>>>>>>> upstream/main
         systemPrompt: "system A",
       },
     },
@@ -108,6 +122,12 @@ describe("phase hooks merger", () => {
         },
       ],
       expected: {
+<<<<<<< HEAD
+=======
+        systemPrompt: undefined,
+        prependContext: undefined,
+        appendContext: undefined,
+>>>>>>> upstream/main
         prependSystemContext: "prepend A\n\nprepend B",
         appendSystemContext: "append A\n\nappend B",
       },

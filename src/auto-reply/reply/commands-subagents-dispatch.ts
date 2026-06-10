@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { SubagentRunRecord } from "../../agents/subagent-registry.types.js";
 import {
   resolveInternalSessionKey,
@@ -39,6 +40,19 @@ export type SubagentsAction =
   | "unfocus"
   | "agents"
   | "help";
+=======
+// Dispatches subagent command actions after parsing the subcommand target.
+import type { SubagentRunRecord } from "../../agents/subagent-registry.types.js";
+import type { HandleCommandsParams } from "./commands-types.js";
+
+export {
+  COMMAND,
+  resolveHandledPrefix,
+  resolveRequesterSessionKey,
+  resolveSubagentsAction,
+  stopWithText,
+} from "./commands-subagents/shared.js";
+>>>>>>> upstream/main
 
 export type SubagentsCommandContext = {
   params: HandleCommandsParams;
@@ -47,6 +61,7 @@ export type SubagentsCommandContext = {
   runs: SubagentRunRecord[];
   restTokens: string[];
 };
+<<<<<<< HEAD
 
 export function stopWithText(text: string): CommandHandlerResult {
   return { shouldContinue: false, reply: { text } };
@@ -115,3 +130,5 @@ export function resolveSubagentsAction(params: {
   }
   return "steer";
 }
+=======
+>>>>>>> upstream/main

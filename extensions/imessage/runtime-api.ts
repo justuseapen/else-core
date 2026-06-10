@@ -1,10 +1,18 @@
+<<<<<<< HEAD
 import type { OpenClawConfig as RuntimeApiOpenClawConfig } from "openclaw/plugin-sdk/core";
+=======
+// Imessage API module exposes the plugin public contract.
+import type { OpenClawConfig as RuntimeApiOpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 
 export {
   DEFAULT_ACCOUNT_ID,
   getChatChannelMeta,
   type ChannelPlugin,
+<<<<<<< HEAD
   type OpenClawConfig,
+=======
+>>>>>>> upstream/main
 } from "openclaw/plugin-sdk/core";
 export { buildChannelConfigSchema, IMessageConfigSchema } from "./config-api.js";
 export { PAIRING_APPROVED_MESSAGE } from "openclaw/plugin-sdk/channel-status";
@@ -29,9 +37,15 @@ export type { MonitorIMessageOpts } from "./src/monitor.js";
 export { probeIMessage } from "./src/probe.js";
 export type { IMessageProbe } from "./src/probe.js";
 export { sendMessageIMessage } from "./src/send.js";
+<<<<<<< HEAD
 export { setIMessageRuntime } from "./src/runtime.js";
 export { chunkTextForOutbound } from "./src/channel-api.js";
 
+=======
+export { imessageMessageActions } from "./src/actions.js";
+export { setIMessageRuntime } from "./src/runtime.js";
+export { chunkTextForOutbound } from "./src/channel-api.js";
+>>>>>>> upstream/main
 export type IMessageAccountConfig = Omit<
   NonNullable<NonNullable<RuntimeApiOpenClawConfig["channels"]>["imessage"]>,
   "accounts" | "defaultAccount"

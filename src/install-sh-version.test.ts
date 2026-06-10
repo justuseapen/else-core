@@ -1,8 +1,10 @@
+// Tests install shell script version references stay aligned with package metadata.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanupTempDirs, makeTempDir } from "../test/helpers/temp-dir.js";
+<<<<<<< HEAD
 
 const tempRoots: string[] = [];
 
@@ -19,48 +21,53 @@ printf '%s\n' '${escapedOutput}'
   );
   fs.chmodSync(cliPath, 0o755);
   return { root, cliPath };
+=======
+
+const tempRoots: string[] = [];
+const installerPath = path.join(process.cwd(), "scripts", "install.sh");
+const installerSource = fs.readFileSync(installerPath, "utf-8");
+const versionHelperStart = installerSource.indexOf("load_install_version_helpers() {");
+const versionHelperEnd = installerSource.indexOf("\nis_gateway_daemon_loaded() {");
+
+if (versionHelperStart < 0 || versionHelperEnd < 0) {
+  throw new Error("install.sh version helper block not found");
+>>>>>>> upstream/main
 }
 
-function resolveVersionFromInstaller(cliPath: string): string {
-  const installerPath = path.join(process.cwd(), "scripts", "install.sh");
+const versionHelperSource = installerSource.slice(versionHelperStart, versionHelperEnd);
+
+function resolveInstallerVersionCases(params: { stdinCwd: string }): string[] {
   const output = execFileSync(
     "bash",
     [
-      "-lc",
-      `source "${installerPath}" >/dev/null 2>&1
-OPENCLAW_BIN="$FAKE_OPENCLAW_BIN"
-resolve_openclaw_version`,
+      "-c",
+      `${versionHelperSource}
+fake_openclaw_decorated() { printf '%s\\n' 'OpenClaw 2026.3.10 (abcdef0)'; }
+fake_openclaw_raw() { printf '%s\\n' "OpenClaw dev's build"; }
+OPENCLAW_BIN=fake_openclaw_decorated resolve_openclaw_version
+OPENCLAW_BIN=fake_openclaw_raw resolve_openclaw_version
+(
+  cd "$1"
+  source /dev/stdin <<'OPENCLAW_STDIN_INSTALLER'
+${versionHelperSource}
+fake_openclaw_stdin() { printf '%s\\n' 'OpenClaw 2026.3.10 (abcdef0)'; }
+OPENCLAW_BIN=fake_openclaw_stdin
+resolve_openclaw_version
+OPENCLAW_STDIN_INSTALLER
+)`,
+      "openclaw-version-test",
+      params.stdinCwd,
     ],
     {
       cwd: process.cwd(),
       encoding: "utf-8",
       env: {
         ...process.env,
-        FAKE_OPENCLAW_BIN: cliPath,
         OPENCLAW_INSTALL_SH_NO_RUN: "1",
       },
     },
   );
-  return output.trim();
-}
-
-function resolveVersionFromInstallerViaStdin(cliPath: string, cwd: string): string {
-  const installerPath = path.join(process.cwd(), "scripts", "install.sh");
-  const installerSource = fs.readFileSync(installerPath, "utf-8");
-  const output = execFileSync("bash", [], {
-    cwd,
-    encoding: "utf-8",
-    input: `${installerSource}
-OPENCLAW_BIN="$FAKE_OPENCLAW_BIN"
-resolve_openclaw_version
-`,
-    env: {
-      ...process.env,
-      FAKE_OPENCLAW_BIN: cliPath,
-      OPENCLAW_INSTALL_SH_NO_RUN: "1",
-    },
-  });
-  return output.trim();
+  return output.trimEnd().split("\n");
 }
 
 describe("install.sh version resolution", () => {
@@ -69,8 +76,9 @@ describe("install.sh version resolution", () => {
   });
 
   it.runIf(process.platform !== "win32")(
-    "extracts the semantic version from decorated CLI output",
+    "parses CLI versions and keeps stdin helpers isolated from cwd",
     () => {
+<<<<<<< HEAD
       const fixture = withFakeCli("OpenClaw 2026.3.10 (abcdef0)");
 
       expect(resolveVersionFromInstaller(fixture.cliPath)).toBe("2026.3.10");
@@ -91,6 +99,8 @@ describe("install.sh version resolution", () => {
     () => {
       const fixture = withFakeCli("OpenClaw 2026.3.10 (abcdef0)");
 
+=======
+>>>>>>> upstream/main
       const hostileCwd = makeTempDir(tempRoots, "openclaw-install-stdin-");
       const hostileHelper = path.join(
         hostileCwd,
@@ -109,7 +119,11 @@ extract_openclaw_semver() {
         "utf-8",
       );
 
-      expect(resolveVersionFromInstallerViaStdin(fixture.cliPath, hostileCwd)).toBe("2026.3.10");
+      expect(
+        resolveInstallerVersionCases({
+          stdinCwd: hostileCwd,
+        }),
+      ).toEqual(["2026.3.10", "OpenClaw dev's build", "2026.3.10"]);
     },
   );
 });

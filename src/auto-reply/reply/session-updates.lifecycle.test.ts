@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tests session update lifecycle ordering and active-session state transitions.
+>>>>>>> upstream/main
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -19,7 +23,11 @@ async function createFixture() {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-session-updates-"));
   tempDirs.push(root);
   const storePath = path.join(root, "sessions.json");
+<<<<<<< HEAD
   const sessionKey = "agent:main:telegram:direct:compaction";
+=======
+  const sessionKey = "agent:main:forum:direct:compaction";
+>>>>>>> upstream/main
   const transcriptPath = path.join(root, "s1.jsonl");
   await fs.writeFile(transcriptPath, '{"type":"message"}\n', "utf-8");
   const entry = {
@@ -35,6 +43,17 @@ async function createFixture() {
   return { storePath, sessionKey, sessionStore, entry, transcriptPath };
 }
 
+<<<<<<< HEAD
+=======
+function firstSessionEndCall() {
+  return hookRunnerMocks.runSessionEnd.mock.calls[0] ?? [];
+}
+
+function firstSessionStartCall() {
+  return hookRunnerMocks.runSessionStart.mock.calls[0] ?? [];
+}
+
+>>>>>>> upstream/main
 describe("session-updates lifecycle hooks", () => {
   beforeEach(async () => {
     vi.resetModules();
@@ -80,6 +99,7 @@ describe("session-updates lifecycle hooks", () => {
     expect(hookRunnerMocks.runSessionEnd).toHaveBeenCalledTimes(1);
     expect(hookRunnerMocks.runSessionStart).toHaveBeenCalledTimes(1);
 
+<<<<<<< HEAD
     const [endEvent, endContext] = hookRunnerMocks.runSessionEnd.mock.calls[0] ?? [];
     const [startEvent, startContext] = hookRunnerMocks.runSessionStart.mock.calls[0] ?? [];
 
@@ -106,5 +126,25 @@ describe("session-updates lifecycle hooks", () => {
       sessionKey,
       agentId: "main",
     });
+=======
+    const [endEvent, endContext] = firstSessionEndCall();
+    const [startEvent, startContext] = firstSessionStartCall();
+
+    expect(endEvent?.sessionId).toBe("s1");
+    expect(endEvent?.sessionKey).toBe(sessionKey);
+    expect(endEvent?.reason).toBe("compaction");
+    expect(endEvent?.transcriptArchived).toBe(false);
+    expect(endEvent?.sessionFile).toBe(await fs.realpath(transcriptPath));
+    expect(endContext?.sessionId).toBe("s1");
+    expect(endContext?.sessionKey).toBe(sessionKey);
+    expect(endContext?.agentId).toBe("main");
+    expect(endEvent?.nextSessionId).toBe(startEvent?.sessionId);
+    expect(startEvent?.sessionId).toBe("s2");
+    expect(startEvent?.sessionKey).toBe(sessionKey);
+    expect(startEvent?.resumedFrom).toBe("s1");
+    expect(startContext?.sessionId).toBe("s2");
+    expect(startContext?.sessionKey).toBe(sessionKey);
+    expect(startContext?.agentId).toBe("main");
+>>>>>>> upstream/main
   });
 });

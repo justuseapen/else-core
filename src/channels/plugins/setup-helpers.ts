@@ -1,7 +1,19 @@
+/**
+ * Channel setup config mutation helpers.
+ *
+ * Applies account names and validates setup results for channel onboarding adapters.
+ */
 import { z, type ZodType } from "zod";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "../../routing/session-key.js";
+<<<<<<< HEAD
 import { getChannelPlugin } from "./registry.js";
+=======
+import {
+  collectSingleAccountPromotionEntries,
+  isSetupSingleAccountPromotionKey,
+} from "./setup-promotion-keys.js";
+>>>>>>> upstream/main
 import type { ChannelSetupAdapter } from "./types.adapters.js";
 import type { ChannelSetupInput } from "./types.core.js";
 
@@ -9,6 +21,22 @@ type ChannelSectionBase = {
   name?: string;
   defaultAccount?: string;
   accounts?: Record<string, Record<string, unknown>>;
+};
+
+const NAMED_ACCOUNT_PROMOTION_KEYS_BY_CHANNEL: Record<string, readonly string[]> = {
+  matrix: [
+    "name",
+    "homeserver",
+    "userId",
+    "accessToken",
+    "password",
+    "deviceId",
+    "deviceName",
+    "avatarUrl",
+    "initialSyncLimit",
+    "encryption",
+  ],
+  telegram: ["botToken", "tokenFile"],
 };
 
 function channelHasAccounts(cfg: OpenClawConfig, channelKey: string): boolean {
@@ -91,6 +119,7 @@ export function applyAccountNameToChannelSection(params: {
   } as OpenClawConfig;
 }
 
+/** Moves a root-level channel name into `accounts.default` before adding named accounts. */
 export function migrateBaseNameToDefaultAccount(params: {
   cfg: OpenClawConfig;
   channelKey: string;
@@ -125,6 +154,7 @@ export function migrateBaseNameToDefaultAccount(params: {
   } as OpenClawConfig;
 }
 
+/** Applies setup-time account naming and optional root-name migration in one step. */
 export function prepareScopedSetupConfig(params: {
   cfg: OpenClawConfig;
   channelKey: string;
@@ -150,8 +180,12 @@ export function prepareScopedSetupConfig(params: {
   });
 }
 
+<<<<<<< HEAD
 export function clearSetupPromotionRuntimeModuleCache(): void {}
 
+=======
+/** Applies a setup patch using account-scoped config semantics. */
+>>>>>>> upstream/main
 export function applySetupAccountConfigPatch(params: {
   cfg: OpenClawConfig;
   channelKey: string;
@@ -166,6 +200,7 @@ export function applySetupAccountConfigPatch(params: {
   });
 }
 
+/** Creates a setup adapter that turns validated setup input into an account config patch. */
 export function createPatchedAccountSetupAdapter(params: {
   channelKey: string;
   alwaysUseAccounts?: boolean;
@@ -209,6 +244,7 @@ export function createPatchedAccountSetupAdapter(params: {
   };
 }
 
+/** Creates a Zod-backed setup input validator with an optional typed semantic check. */
 export function createZodSetupInputValidator<T extends ChannelSetupInput>(params: {
   schema: ZodType<T>;
   validate?: (params: { cfg: OpenClawConfig; accountId: string; input: T }) => string | null;
@@ -278,6 +314,7 @@ export function createSetupInputPresenceValidator(params: {
   });
 }
 
+/** Creates a setup adapter that supports env-backed default account auth and patched credentials. */
 export function createEnvPatchedAccountSetupAdapter(params: {
   channelKey: string;
   alwaysUseAccounts?: boolean;
@@ -307,6 +344,7 @@ export function createEnvPatchedAccountSetupAdapter(params: {
   });
 }
 
+/** Patches channel config at root for default accounts or under `accounts.<id>` for named accounts. */
 export function patchScopedAccountConfig(params: {
   cfg: OpenClawConfig;
   channelKey: string;
@@ -331,6 +369,7 @@ export function patchScopedAccountConfig(params: {
   const patch = params.patch;
   const accountPatch = params.accountPatch ?? patch;
   if (accountId === DEFAULT_ACCOUNT_ID && !params.scopeDefaultToAccounts) {
+    // Default accounts historically live at channel root unless the channel opts into accounts.default.
     return {
       ...params.cfg,
       channels: {
@@ -346,6 +385,7 @@ export function patchScopedAccountConfig(params: {
 
   const accounts = base?.accounts ?? {};
   const existingAccount = accounts[accountId] ?? {};
+  // Preserve an explicit disabled account while enabling newly created accounts by default.
   return {
     ...params.cfg,
     channels: {
@@ -375,6 +415,7 @@ type ChannelSectionRecord = Record<string, unknown> & {
   accounts?: Record<string, Record<string, unknown>>;
 };
 
+<<<<<<< HEAD
 const COMMON_SINGLE_ACCOUNT_KEYS_TO_MOVE = new Set([
   "name",
   "token",
@@ -491,6 +532,8 @@ export function resolveSingleAccountPromotionTarget(params: {
   return resolveExistingAccountId(DEFAULT_ACCOUNT_ID);
 }
 
+=======
+>>>>>>> upstream/main
 function cloneIfObject<T>(value: T): T {
   if (value && typeof value === "object") {
     return structuredClone(value);
@@ -542,9 +585,47 @@ function resolveExistingAccountKey(
   return targetAccountId;
 }
 
+<<<<<<< HEAD
 // When promoting a single-account channel config to multi-account,
 // move top-level account settings into accounts.default so the original
 // account keeps working without duplicate account values at channel root.
+=======
+function resolveSingleAccountKeysToMove(params: {
+  channelKey: string;
+  channel: Record<string, unknown>;
+}): string[] {
+  const { entries, hasNamedAccounts } = collectSingleAccountPromotionEntries(params.channel);
+  const keysToMove = entries.filter(isSetupSingleAccountPromotionKey);
+  if (!hasNamedAccounts || keysToMove.length === 0) {
+    return keysToMove;
+  }
+  const namedAccountPromotionKeys = NAMED_ACCOUNT_PROMOTION_KEYS_BY_CHANNEL[params.channelKey];
+  return namedAccountPromotionKeys
+    ? keysToMove.filter((key) => namedAccountPromotionKeys.includes(key))
+    : keysToMove;
+}
+
+function resolveSingleAccountPromotionTarget(params: { channel: ChannelSectionBase }): string {
+  const accounts = params.channel.accounts ?? {};
+  const normalizedDefaultAccount =
+    typeof params.channel.defaultAccount === "string" && params.channel.defaultAccount.trim()
+      ? normalizeAccountId(params.channel.defaultAccount)
+      : undefined;
+  if (normalizedDefaultAccount) {
+    return (
+      Object.keys(accounts).find(
+        (accountId) => normalizeAccountId(accountId) === normalizedDefaultAccount,
+      ) ?? DEFAULT_ACCOUNT_ID
+    );
+  }
+  const namedAccounts = Object.keys(accounts).filter(Boolean);
+  return namedAccounts.length === 1 ? namedAccounts[0] : DEFAULT_ACCOUNT_ID;
+}
+
+/**
+ * Promotes legacy single-account channel fields into the account map for multi-account setup.
+ */
+>>>>>>> upstream/main
 export function moveSingleAccountChannelSectionToDefaultAccount(params: {
   cfg: OpenClawConfig;
   channelKey: string;
@@ -568,9 +649,12 @@ export function moveSingleAccountChannelSectionToDefaultAccount(params: {
     }
 
     const targetAccountId = resolveSingleAccountPromotionTarget({
-      channelKey: params.channelKey,
       channel: base,
     });
+<<<<<<< HEAD
+=======
+    // Reuse the existing account key spelling so configs like `accounts.Ops` keep their shape.
+>>>>>>> upstream/main
     const resolvedTargetAccountKey = resolveExistingAccountKey(accounts, targetAccountId);
     return moveSingleAccountKeysIntoAccount({
       cfg: params.cfg,

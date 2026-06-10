@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tests subagent status command output and active run summaries.
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it } from "vitest";
 import { subagentRuns } from "../../agents/subagent-registry-memory.js";
 import {
@@ -25,7 +29,11 @@ describe("subagents status", () => {
       unexpectedText: ["Subagents:"],
     },
     {
+<<<<<<< HEAD
       name: "includes subagent count in /status when active",
+=======
+      name: "includes subagent count and active detail in /status when active",
+>>>>>>> upstream/main
       seedRuns: () => {
         addSubagentRunForTests({
           runId: "run-1",
@@ -39,7 +47,11 @@ describe("subagents status", () => {
         });
       },
       verboseLevel: "off" as const,
+<<<<<<< HEAD
       expectedText: ["🤖 Subagents: 1 active"],
+=======
+      expectedText: ["🤖 Subagents: 1 active", "  • do thing · 4s"],
+>>>>>>> upstream/main
       unexpectedText: [] as string[],
     },
     {
@@ -69,9 +81,35 @@ describe("subagents status", () => {
         });
       },
       verboseLevel: "on" as const,
+<<<<<<< HEAD
       expectedText: ["🤖 Subagents: 1 active", "· 1 done"],
       unexpectedText: [] as string[],
     },
+=======
+      expectedText: ["🤖 Subagents: 1 active", "· 1 done", "  • do thing · 4s"],
+      unexpectedText: [] as string[],
+    },
+    {
+      name: "preserves verbose done-only summary",
+      seedRuns: () => {
+        addSubagentRunForTests({
+          runId: "run-1",
+          childSessionKey: "agent:main:subagent:done-a",
+          requesterSessionKey: "agent:main:main",
+          requesterDisplayKey: "main",
+          task: "finished task",
+          cleanup: "keep",
+          createdAt: 1000,
+          startedAt: 1000,
+          endedAt: 2000,
+          outcome: { status: "ok" },
+        });
+      },
+      verboseLevel: "on" as const,
+      expectedText: ["🤖 Subagents: 0 active · 1 done"],
+      unexpectedText: ["  • finished task"],
+    },
+>>>>>>> upstream/main
   ])("$name", ({ seedRuns, verboseLevel, expectedText, unexpectedText }) => {
     seedRuns();
     const runsSnapshot = getSubagentRunsSnapshotForRead(subagentRuns);
@@ -82,6 +120,10 @@ describe("subagents status", () => {
         verboseEnabled: verboseLevel === "on",
         pendingDescendantsForRun: (entry) =>
           countPendingDescendantRunsFromRuns(runsSnapshot, entry.childSessionKey),
+<<<<<<< HEAD
+=======
+        now: 5000,
+>>>>>>> upstream/main
       }) ?? "";
     for (const expected of expectedText) {
       expect(text).toContain(expected);

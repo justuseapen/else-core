@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import { createDraftStreamLoop } from "openclaw/plugin-sdk/channel-lifecycle";
+=======
+// Matrix plugin module implements draft stream behavior.
+import { createDraftStreamLoop } from "openclaw/plugin-sdk/channel-outbound";
+>>>>>>> upstream/main
 import type { CoreConfig } from "../types.js";
 import type { MatrixClient } from "./sdk.js";
 import { editMessageMatrix, prepareMatrixSingleText, sendSingleTextMessageMatrix } from "./send.js";
@@ -17,8 +22,16 @@ function resolveDraftPreviewOptions(mode: MatrixDraftPreviewMode): {
       includeMentions: false,
     };
   }
+<<<<<<< HEAD
   return {
     msgtype: MsgType.Text,
+=======
+  // Drafts can contain partial model text and raw tool-progress paths; keep
+  // Matrix mentions inert until callers send a normal final message.
+  return {
+    msgtype: MsgType.Text,
+    includeMentions: false,
+>>>>>>> upstream/main
   };
 }
 
@@ -29,6 +42,13 @@ export type MatrixDraftStream = {
   flush: () => Promise<void>;
   /** Flush and mark this block as done. Returns the event ID if a message was sent. */
   stop: () => Promise<string | undefined>;
+<<<<<<< HEAD
+=======
+  /** Cancel pending draft updates without creating a new preview event. */
+  discardPending: () => Promise<void>;
+  /** Clear the MSC4357 live marker in place when the draft is kept as final text. */
+  finalizeLive: () => Promise<boolean>;
+>>>>>>> upstream/main
   /** Reset state for the next text block (after tool calls). */
   reset: () => void;
   /** The event ID of the current draft message, if any. */
@@ -53,12 +73,23 @@ export function createMatrixDraftStream(params: {
 }): MatrixDraftStream {
   const { roomId, client, cfg, threadId, accountId, log } = params;
   const preview = resolveDraftPreviewOptions(params.mode ?? "partial");
+<<<<<<< HEAD
+=======
+  // MSC4357 live markers are only useful for "partial" mode where users see
+  // the draft evolve. "quiet" mode uses m.notice for background previews
+  // where a streaming animation would be unexpected.
+  const useLive = params.mode !== "quiet";
+>>>>>>> upstream/main
 
   let currentEventId: string | undefined;
   let lastSentText = "";
   let stopped = false;
   let sendFailed = false;
   let finalizeInPlaceBlocked = false;
+<<<<<<< HEAD
+=======
+  let liveFinalized = false;
+>>>>>>> upstream/main
   let replyToId = params.replyToId;
 
   const sendOrEdit = async (text: string): Promise<boolean> => {
@@ -94,10 +125,18 @@ export function createMatrixDraftStream(params: {
           accountId,
           msgtype: preview.msgtype,
           includeMentions: preview.includeMentions,
+<<<<<<< HEAD
         });
         currentEventId = result.messageId;
         lastSentText = preparedText.trimmedText;
         log?.(`draft-stream: created message ${currentEventId}`);
+=======
+          live: useLive,
+        });
+        currentEventId = result.messageId;
+        lastSentText = preparedText.trimmedText;
+        log?.(`draft-stream: created message ${currentEventId}${useLive ? " (MSC4357 live)" : ""}`);
+>>>>>>> upstream/main
       } else {
         await editMessageMatrix(roomId, currentEventId, preparedText.trimmedText, {
           client,
@@ -106,6 +145,10 @@ export function createMatrixDraftStream(params: {
           accountId,
           msgtype: preview.msgtype,
           includeMentions: preview.includeMentions,
+<<<<<<< HEAD
+=======
+          live: useLive,
+>>>>>>> upstream/main
         });
         lastSentText = preparedText.trimmedText;
       }
@@ -133,6 +176,40 @@ export function createMatrixDraftStream(params: {
 
   log?.(`draft-stream: ready (throttleMs=${DEFAULT_THROTTLE_MS})`);
 
+<<<<<<< HEAD
+=======
+  const finalizeLive = async (): Promise<boolean> => {
+    // Send a final edit without the MSC4357 live marker to signal that
+    // the stream is complete. Supporting clients will stop the streaming
+    // animation and display the final content.
+    if (useLive && !liveFinalized && currentEventId && lastSentText) {
+      liveFinalized = true;
+      try {
+        await editMessageMatrix(roomId, currentEventId, lastSentText, {
+          client,
+          cfg,
+          threadId,
+          accountId,
+          msgtype: preview.msgtype,
+          includeMentions: preview.includeMentions,
+          live: false,
+        });
+        log?.(`draft-stream: finalized ${currentEventId} (MSC4357 stream ended)`);
+        return true;
+      } catch (err) {
+        log?.(`draft-stream: finalize edit failed: ${String(err)}`);
+        // If the finalize edit fails, the live marker remains on the last
+        // successful edit. Flag the stream so callers can fall back to
+        // normal final delivery or redaction instead of leaving the message
+        // stuck in a "still streaming" state for MSC4357 clients.
+        finalizeInPlaceBlocked = true;
+        return false;
+      }
+    }
+    return true;
+  };
+
+>>>>>>> upstream/main
   const stop = async (): Promise<string | undefined> => {
     // Flush before marking stopped so the loop can drain pending text.
     await loop.flush();
@@ -140,6 +217,15 @@ export function createMatrixDraftStream(params: {
     return currentEventId;
   };
 
+<<<<<<< HEAD
+=======
+  const discardPending = async (): Promise<void> => {
+    stopped = true;
+    loop.stop();
+    await loop.waitForInFlight();
+  };
+
+>>>>>>> upstream/main
   const reset = (): void => {
     // Clear reply context unless preserveReplyId is set (replyToMode "all"),
     // in which case subsequent blocks should keep replying to the original.
@@ -149,6 +235,10 @@ export function createMatrixDraftStream(params: {
     stopped = false;
     sendFailed = false;
     finalizeInPlaceBlocked = false;
+<<<<<<< HEAD
+=======
+    liveFinalized = false;
+>>>>>>> upstream/main
     loop.resetPending();
     loop.resetThrottleWindow();
   };
@@ -162,6 +252,11 @@ export function createMatrixDraftStream(params: {
     },
     flush: loop.flush,
     stop,
+<<<<<<< HEAD
+=======
+    discardPending,
+    finalizeLive,
+>>>>>>> upstream/main
     reset,
     eventId: () => currentEventId,
     matchesPreparedText: (text: string) =>

@@ -1,10 +1,20 @@
+// Vitest unit path tests validate unit test include and exclude paths.
+import { bundledPluginFile } from "openclaw/plugin-sdk/test-fixtures";
 import { describe, expect, it } from "vitest";
+<<<<<<< HEAD
 import { isUnitConfigTestFile } from "../vitest.unit-paths.mjs";
 import { bundledPluginFile } from "./helpers/bundled-plugin-paths.js";
 
 describe("isUnitConfigTestFile", () => {
   it("accepts unit-config src tests", () => {
     expect(isUnitConfigTestFile("ui/src/ui/views/channels.test.ts")).toBe(true);
+=======
+import { isUnitConfigTestFile } from "./vitest/vitest.unit-paths.mjs";
+
+describe("isUnitConfigTestFile", () => {
+  it("accepts unit-config package tests", () => {
+    expect(isUnitConfigTestFile("packages/plugin-package-contract/src/index.test.ts")).toBe(true);
+>>>>>>> upstream/main
   });
 
   it("rejects files excluded from the unit config", () => {
@@ -29,10 +39,17 @@ describe("isUnitConfigTestFile", () => {
     expect(isUnitConfigTestFile("src/infra/stable-node-path.test.ts")).toBe(false);
     expect(isUnitConfigTestFile("test/format-error.test.ts")).toBe(false);
     expect(isUnitConfigTestFile("test/extension-test-boundary.test.ts")).toBe(false);
+<<<<<<< HEAD
     expect(isUnitConfigTestFile("src/agents/pi-embedded-runner.test.ts")).toBe(false);
     expect(isUnitConfigTestFile("src/commands/onboard.test.ts")).toBe(false);
     expect(isUnitConfigTestFile("ui/src/ui/views/channels.test.ts")).toBe(true);
     expect(isUnitConfigTestFile("ui/src/ui/views/chat.test.ts")).toBe(true);
+=======
+    expect(isUnitConfigTestFile("src/agents/embedded-agent-runner.test.ts")).toBe(false);
+    expect(isUnitConfigTestFile("src/commands/onboard.test.ts")).toBe(false);
+    expect(isUnitConfigTestFile("ui/src/ui/views/channels.test.ts")).toBe(false);
+    expect(isUnitConfigTestFile("ui/src/ui/views/chat.test.ts")).toBe(false);
+>>>>>>> upstream/main
     expect(isUnitConfigTestFile("ui/src/ui/views/other.test.ts")).toBe(false);
     expect(isUnitConfigTestFile("src/infra/git-commit.live.test.ts")).toBe(false);
     expect(isUnitConfigTestFile("src/infra/git-commit.e2e.test.ts")).toBe(false);

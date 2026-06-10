@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { ChannelDoctorLegacyConfigRule } from "openclaw/plugin-sdk/channel-contract";
 import { resolveDiscordPreviewStreamMode } from "./preview-streaming.js";
 
@@ -45,3 +46,11 @@ export const DISCORD_LEGACY_CONFIG_RULES: ChannelDoctorLegacyConfigRule[] = [
     match: hasLegacyDiscordAccountStreamingAliases,
   },
 ];
+=======
+// Discord plugin module implements doctor shared behavior.
+import type { ChannelDoctorLegacyConfigRule } from "openclaw/plugin-sdk/channel-contract";
+
+// Runtime config loading already normalizes these aliases without rewriting the
+// source file. Keep doctor non-destructive so downgrade paths remain recoverable.
+export const DISCORD_LEGACY_CONFIG_RULES: ChannelDoctorLegacyConfigRule[] = [];
+>>>>>>> upstream/main

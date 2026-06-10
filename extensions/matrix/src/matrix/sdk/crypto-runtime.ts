@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix plugin module implements crypto runtime behavior.
+>>>>>>> upstream/main
 import "fake-indexeddb/auto";
 
 export { MatrixCryptoBootstrapper } from "./crypto-bootstrap.js";
@@ -8,4 +12,11 @@ export { MatrixDecryptBridge } from "./decrypt-bridge.js";
 export { persistIdbToDisk, restoreIdbFromDisk } from "./idb-persistence.js";
 export { MatrixVerificationManager } from "./verification-manager.js";
 export type { MatrixVerificationSummary } from "./verification-manager.js";
+<<<<<<< HEAD
 export { isMatrixDeviceOwnerVerified } from "./verification-status.js";
+=======
+export {
+  isMatrixDeviceOwnerVerified,
+  isMatrixDeviceVerifiedInCurrentClient,
+} from "./verification-status.js";
+>>>>>>> upstream/main

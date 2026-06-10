@@ -1,19 +1,30 @@
-import type { AgentTool } from "@mariozechner/pi-agent-core";
+// Implements system prompt inspection commands for agent runtime sessions.
+import { isAcpRuntimeSpawnAvailable } from "../../acp/runtime/availability.js";
 import { resolveSessionAgentIds } from "../../agents/agent-scope.js";
+import { createOpenClawCodingTools } from "../../agents/agent-tools.js";
 import { resolveBootstrapContextForRun } from "../../agents/bootstrap-files.js";
+<<<<<<< HEAD
+=======
+import type { EmbeddedContextFile } from "../../agents/embedded-agent-helpers.js";
+import { resolveEmbeddedFullAccessState } from "../../agents/embedded-agent-runner/sandbox-info.js";
+>>>>>>> upstream/main
 import { canExecRequestNode } from "../../agents/exec-defaults.js";
 import { resolveDefaultModelForAgent } from "../../agents/model-selection.js";
-import type { EmbeddedContextFile } from "../../agents/pi-embedded-helpers.js";
-import { createOpenClawCodingTools } from "../../agents/pi-tools.js";
+import { resolveAgentPromptSurfaceForSessionKey } from "../../agents/prompt-surface.js";
+import type { AgentTool } from "../../agents/runtime/index.js";
 import { resolveSandboxRuntimeStatus } from "../../agents/sandbox.js";
-import { buildWorkspaceSkillSnapshot } from "../../agents/skills.js";
-import { getSkillsSnapshotVersion } from "../../agents/skills/refresh.js";
+import { buildConfiguredAgentSystemPrompt } from "../../agents/system-prompt-config.js";
 import { buildSystemPromptParams } from "../../agents/system-prompt-params.js";
+<<<<<<< HEAD
 import { buildAgentSystemPrompt } from "../../agents/system-prompt.js";
+=======
+>>>>>>> upstream/main
 import type { WorkspaceBootstrapFile } from "../../agents/workspace.js";
-import { getRemoteSkillEligibility } from "../../infra/skills-remote.js";
-import { buildTtsSystemPromptHint } from "../../tts/tts.js";
+import { listRegisteredPluginAgentPromptGuidance } from "../../plugins/command-registry-state.js";
+import { getRemoteSkillEligibility } from "../../skills/runtime/remote.js";
+import { resolveReusableWorkspaceSkillSnapshot } from "../../skills/runtime/session-snapshot.js";
 import type { HandleCommandsParams } from "./commands-types.js";
+import { resolveRuntimePolicySessionKey } from "./runtime-policy-session-key.js";
 
 export type CommandsSystemPromptBundle = {
   systemPrompt: string;
@@ -28,6 +39,10 @@ export async function resolveCommandsSystemPromptBundle(
   params: HandleCommandsParams,
 ): Promise<CommandsSystemPromptBundle> {
   const workspaceDir = params.workspaceDir;
+<<<<<<< HEAD
+=======
+  const targetSessionEntry = params.sessionStore?.[params.sessionKey] ?? params.sessionEntry;
+>>>>>>> upstream/main
   const { sessionAgentId } = resolveSessionAgentIds({
     sessionKey: params.sessionKey,
     config: params.cfg,
@@ -37,7 +52,21 @@ export async function resolveCommandsSystemPromptBundle(
     workspaceDir,
     config: params.cfg,
     sessionKey: params.sessionKey,
-    sessionId: params.sessionEntry?.sessionId,
+    sessionId: targetSessionEntry?.sessionId,
+    agentId: sessionAgentId,
+  });
+  const sandboxRuntime = resolveSandboxRuntimeStatus({
+    cfg: params.cfg,
+    sessionKey: resolveRuntimePolicySessionKey({
+      cfg: params.cfg,
+      ctx: params.ctx,
+      sessionKey: params.sessionKey ?? params.ctx.SessionKey,
+    }),
+  });
+  const toolPolicySessionKey = resolveRuntimePolicySessionKey({
+    cfg: params.cfg,
+    ctx: params.ctx,
+    sessionKey: params.sessionKey,
   });
   const sandboxRuntime = resolveSandboxRuntimeStatus({
     cfg: params.cfg,
@@ -45,40 +74,56 @@ export async function resolveCommandsSystemPromptBundle(
   });
   const skillsSnapshot = (() => {
     try {
-      return buildWorkspaceSkillSnapshot(workspaceDir, {
+      return resolveReusableWorkspaceSkillSnapshot({
+        workspaceDir,
         config: params.cfg,
         agentId: sessionAgentId,
         eligibility: {
           remote: getRemoteSkillEligibility({
             advertiseExecNode: canExecRequestNode({
               cfg: params.cfg,
+<<<<<<< HEAD
               sessionEntry: params.sessionEntry,
+=======
+              sessionEntry: targetSessionEntry,
+>>>>>>> upstream/main
               sessionKey: params.sessionKey,
               agentId: sessionAgentId,
             }),
           }),
         },
+<<<<<<< HEAD
         snapshotVersion: getSkillsSnapshotVersion(workspaceDir),
+=======
+        watch: false,
+>>>>>>> upstream/main
       });
     } catch {
-      return { prompt: "", skills: [], resolvedSkills: [] };
+      return { snapshot: { prompt: "", skills: [], resolvedSkills: [] } };
     }
   })();
+<<<<<<< HEAD
   const skillsPrompt = skillsSnapshot.prompt ?? "";
+=======
+  const skillsPrompt = skillsSnapshot.snapshot.prompt ?? "";
+>>>>>>> upstream/main
   const tools = (() => {
     try {
       return createOpenClawCodingTools({
         config: params.cfg,
-        agentId: params.agentId,
+        agentId: sessionAgentId,
         workspaceDir,
-        sessionKey: params.sessionKey,
+        sessionKey: toolPolicySessionKey,
         allowGatewaySubagentBinding: true,
         messageProvider: params.command.channel,
-        groupId: params.sessionEntry?.groupId ?? undefined,
-        groupChannel: params.sessionEntry?.groupChannel ?? undefined,
-        groupSpace: params.sessionEntry?.space ?? undefined,
-        spawnedBy: params.sessionEntry?.spawnedBy ?? undefined,
-        senderIsOwner: params.command.senderIsOwner,
+        groupId: targetSessionEntry?.groupId ?? undefined,
+        groupChannel: targetSessionEntry?.groupChannel ?? undefined,
+        groupSpace: targetSessionEntry?.space ?? undefined,
+        spawnedBy: targetSessionEntry?.spawnedBy ?? undefined,
+        senderId: params.command.senderId,
+        senderName: params.ctx.SenderName,
+        senderUsername: params.ctx.SenderUsername,
+        senderE164: params.ctx.SenderE164,
         modelProvider: params.provider,
         modelId: params.model,
       });
@@ -87,6 +132,10 @@ export async function resolveCommandsSystemPromptBundle(
     }
   })();
   const toolNames = tools.map((t) => t.name);
+<<<<<<< HEAD
+=======
+  const promptSurface = resolveAgentPromptSurfaceForSessionKey(params.sessionKey);
+>>>>>>> upstream/main
   const defaultModelRef = resolveDefaultModelForAgent({
     cfg: params.cfg,
     agentId: sessionAgentId,
@@ -106,6 +155,13 @@ export async function resolveCommandsSystemPromptBundle(
       defaultModel: defaultModelLabel,
     },
   });
+  const fullAccessState = resolveEmbeddedFullAccessState({
+    execElevated: {
+      enabled: params.elevated.enabled,
+      allowed: params.elevated.allowed,
+      defaultLevel: (params.resolvedElevatedLevel ?? "off") as "on" | "off" | "ask" | "full",
+    },
+  });
   const sandboxInfo = sandboxRuntime.sandboxed
     ? {
         enabled: true,
@@ -114,12 +170,16 @@ export async function resolveCommandsSystemPromptBundle(
         elevated: {
           allowed: params.elevated.allowed,
           defaultLevel: (params.resolvedElevatedLevel ?? "off") as "on" | "off" | "ask" | "full",
+          fullAccessAvailable: fullAccessState.available,
+          ...(fullAccessState.blockedReason
+            ? { fullAccessBlockedReason: fullAccessState.blockedReason }
+            : {}),
         },
       }
     : { enabled: false };
-  const ttsHint = params.cfg ? buildTtsSystemPromptHint(params.cfg) : undefined;
-
-  const systemPrompt = buildAgentSystemPrompt({
+  const systemPrompt = buildConfiguredAgentSystemPrompt({
+    config: params.cfg,
+    agentId: sessionAgentId,
     workspaceDir,
     defaultThinkLevel: params.resolvedThinkLevel,
     reasoningLevel: params.resolvedReasoningLevel,
@@ -127,18 +187,26 @@ export async function resolveCommandsSystemPromptBundle(
     ownerNumbers: undefined,
     reasoningTagHint: false,
     toolNames,
+<<<<<<< HEAD
     modelAliasLines: [],
+=======
+>>>>>>> upstream/main
     userTimezone,
     userTime,
     userTimeFormat,
     contextFiles: injectedFiles,
     skillsPrompt,
     heartbeatPrompt: undefined,
-    ttsHint,
-    acpEnabled: params.cfg?.acp?.enabled !== false,
+    acpEnabled: isAcpRuntimeSpawnAvailable({
+      config: params.cfg,
+      sandboxed: sandboxRuntime.sandboxed,
+    }),
+    promptSurface,
+    nativeCommandGuidanceLines: listRegisteredPluginAgentPromptGuidance({
+      surface: promptSurface,
+    }),
     runtimeInfo,
     sandboxInfo,
-    memoryCitationsMode: params.cfg?.memory?.citations,
   });
 
   return { systemPrompt, tools, skillsPrompt, bootstrapFiles, injectedFiles, sandboxRuntime };

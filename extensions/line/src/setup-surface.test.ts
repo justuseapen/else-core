@@ -1,31 +1,59 @@
+// Line tests cover setup surface plugin behavior.
 import { readFileSync } from "node:fs";
 import path from "node:path";
+<<<<<<< HEAD
 import ts from "typescript";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { bundledPluginRoot } from "../../../test/helpers/bundled-plugin-paths.js";
 import { loadRuntimeApiExportTypesViaJiti } from "../../../test/helpers/plugins/jiti-runtime-api.ts";
+=======
+import { createStartAccountContext } from "openclaw/plugin-sdk/channel-test-helpers";
+>>>>>>> upstream/main
 import {
   createPluginSetupWizardConfigure,
   createTestWizardPrompter,
   runSetupWizardConfigure,
+<<<<<<< HEAD
   type WizardPrompter,
 } from "../../../test/helpers/plugins/setup-wizard.js";
 import { createStartAccountContext } from "../../../test/helpers/plugins/start-account-context.js";
 import type { OpenClawConfig, PluginRuntime, ResolvedLineAccount } from "../api.js";
 import { linePlugin } from "./channel.js";
 import { clearLineRuntime, setLineRuntime } from "./runtime.js";
+=======
+} from "openclaw/plugin-sdk/plugin-test-runtime";
+import type { WizardPrompter } from "openclaw/plugin-sdk/plugin-test-runtime";
+import { bundledPluginRoot } from "openclaw/plugin-sdk/test-fixtures";
+import ts from "typescript";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { OpenClawConfig, PluginRuntime, ResolvedLineAccount } from "../api.js";
+import { linePlugin } from "./channel.js";
+import { lineGatewayAdapter } from "./gateway.js";
+import { probeLineBot } from "./probe.js";
+import { clearLineRuntime, setLineRuntime } from "./runtime.js";
+import { lineSetupWizard } from "./setup-surface.js";
+import { lineStatusAdapter } from "./status.js";
+>>>>>>> upstream/main
 
 const { getBotInfoMock, MessagingApiClientMock } = vi.hoisted(() => {
-  const getBotInfoMock = vi.fn();
-  const MessagingApiClientMock = vi.fn(function () {
-    return { getBotInfo: getBotInfoMock };
+  const getBotInfoMockLocal = vi.fn();
+  const MessagingApiClientMockLocal = vi.fn(function () {
+    return { getBotInfo: getBotInfoMockLocal };
   });
-  return { getBotInfoMock, MessagingApiClientMock };
+  return {
+    getBotInfoMock: getBotInfoMockLocal,
+    MessagingApiClientMock: MessagingApiClientMockLocal,
+  };
 });
 
 vi.mock("@line/bot-sdk", () => ({
   messagingApi: { MessagingApiClient: MessagingApiClientMock },
 }));
+
+afterAll(() => {
+  vi.doUnmock("@line/bot-sdk");
+  vi.resetModules();
+});
 
 const lineConfigure = createPluginSetupWizardConfigure(linePlugin);
 const LINE_SRC_PREFIX = `../../${bundledPluginRoot("line")}/src/`;
@@ -99,6 +127,7 @@ function collectRuntimeApiPreExports(runtimeApiPath: string): string[] {
   );
   const preExports = new Set<string>();
   let pluginSdkLineRuntimeSeen = false;
+  const removedLineRuntimeSpecifier = ["openclaw", "plugin-sdk", "line-runtime"].join("/");
 
   for (const statement of runtimeApiFile.statements) {
     if (!ts.isExportDeclaration(statement)) {
@@ -111,7 +140,7 @@ function collectRuntimeApiPreExports(runtimeApiPath: string): string[] {
     if (!moduleSpecifier) {
       continue;
     }
-    if (moduleSpecifier === "openclaw/plugin-sdk/line-runtime") {
+    if (moduleSpecifier === removedLineRuntimeSpecifier) {
       pluginSdkLineRuntimeSeen = true;
       break;
     }
@@ -174,9 +203,13 @@ describe("line setup wizard", () => {
     expect(result.cfg.channels?.line?.channelSecret).toBe("line-secret");
   });
 
+<<<<<<< HEAD
   it("reads the named-account DM policy instead of the channel root", async () => {
     const { lineSetupWizard } = await import("./setup-surface.js");
 
+=======
+  it("reads the named-account DM policy instead of the channel root", () => {
+>>>>>>> upstream/main
     expect(
       lineSetupWizard.dmPolicy?.getCurrent(
         {
@@ -198,18 +231,26 @@ describe("line setup wizard", () => {
     ).toBe("allowlist");
   });
 
+<<<<<<< HEAD
   it("reports account-scoped config keys for named accounts", async () => {
     const { lineSetupWizard } = await import("./setup-surface.js");
 
+=======
+  it("reports account-scoped config keys for named accounts", () => {
+>>>>>>> upstream/main
     expect(lineSetupWizard.dmPolicy?.resolveConfigKeys?.({} as OpenClawConfig, "work")).toEqual({
       policyKey: "channels.line.accounts.work.dmPolicy",
       allowFromKey: "channels.line.accounts.work.allowFrom",
     });
   });
 
+<<<<<<< HEAD
   it("uses configured defaultAccount for omitted DM policy account context", async () => {
     const { lineSetupWizard } = await import("./setup-surface.js");
 
+=======
+  it("uses configured defaultAccount for omitted DM policy account context", () => {
+>>>>>>> upstream/main
     const cfg = {
       channels: {
         line: {
@@ -234,6 +275,7 @@ describe("line setup wizard", () => {
     });
 
     const next = lineSetupWizard.dmPolicy?.setPolicy(cfg, "open");
+<<<<<<< HEAD
     expect(next?.channels?.line?.dmPolicy).toBe("disabled");
     expect(next?.channels?.line?.accounts?.work?.dmPolicy).toBe("open");
   });
@@ -241,6 +283,18 @@ describe("line setup wizard", () => {
   it('writes open policy state to the named account and preserves inherited allowFrom with "*"', async () => {
     const { lineSetupWizard } = await import("./setup-surface.js");
 
+=======
+    const workAccount = next?.channels?.line?.accounts?.work as
+      | {
+          dmPolicy?: string;
+        }
+      | undefined;
+    expect(next?.channels?.line?.dmPolicy).toBe("disabled");
+    expect(workAccount?.dmPolicy).toBe("open");
+  });
+
+  it('writes open policy state to the named account and preserves inherited allowFrom with "*"', () => {
+>>>>>>> upstream/main
     const next = lineSetupWizard.dmPolicy?.setPolicy(
       {
         channels: {
@@ -259,6 +313,7 @@ describe("line setup wizard", () => {
       "work",
     );
 
+<<<<<<< HEAD
     expect(next?.channels?.line?.dmPolicy).toBeUndefined();
     expect(next?.channels?.line?.allowFrom).toEqual(["Uroot"]);
     expect(next?.channels?.line?.accounts?.work?.dmPolicy).toBe("open");
@@ -268,6 +323,21 @@ describe("line setup wizard", () => {
   it("uses configured defaultAccount for omitted setup configured state", async () => {
     const { lineSetupWizard } = await import("./setup-surface.js");
 
+=======
+    const workAccount = next?.channels?.line?.accounts?.work as
+      | {
+          dmPolicy?: string;
+          allowFrom?: string[];
+        }
+      | undefined;
+    expect(next?.channels?.line?.dmPolicy).toBeUndefined();
+    expect(next?.channels?.line?.allowFrom).toEqual(["Uroot"]);
+    expect(workAccount?.dmPolicy).toBe("open");
+    expect(workAccount?.allowFrom).toEqual(["Uroot", "*"]);
+  });
+
+  it("uses configured defaultAccount for omitted setup configured state", async () => {
+>>>>>>> upstream/main
     const configured = await lineSetupWizard.status.resolveConfigured({
       cfg: {
         channels: {
@@ -340,7 +410,10 @@ describe("probeLineBot", () => {
 
 describe("linePlugin status.probeAccount", () => {
   it("falls back to the direct probe helper when runtime is not initialized", async () => {
+<<<<<<< HEAD
     const { probeLineBot } = await import("./probe.js");
+=======
+>>>>>>> upstream/main
     MessagingApiClientMock.mockReset();
     MessagingApiClientMock.mockImplementation(function () {
       return { getBotInfo: getBotInfoMock };
@@ -350,6 +423,7 @@ describe("linePlugin status.probeAccount", () => {
       userId: "U123",
       basicId: "@openclaw",
       pictureUrl: "https://example.com/bot.png",
+<<<<<<< HEAD
     });
 
     const params = {
@@ -394,9 +468,11 @@ describe("line runtime api", () => {
       isSenderAllowed: "function",
       probeLineBot: "function",
       pushMessageLine: "function",
+=======
+>>>>>>> upstream/main
     });
-  }, 240_000);
 
+<<<<<<< HEAD
   it("keeps the LINE runtime barrel self-contained", () => {
     const runtimeApiPath = path.join(process.cwd(), "extensions", "line", "runtime-api.ts");
     expect(collectRuntimeApiPreExports(runtimeApiPath)).toEqual([]);
@@ -404,15 +480,44 @@ describe("line runtime api", () => {
 
     expect(runtimeApiSource).not.toContain("openclaw/plugin-sdk/line-runtime");
     expect(collectRuntimeApiPreExports(runtimeApiPath)).toEqual([]);
+=======
+    const params = {
+      cfg: {} as OpenClawConfig,
+      account: {
+        accountId: "default",
+        enabled: true,
+        channelAccessToken: "token",
+        channelSecret: "secret",
+        tokenSource: "config",
+      } as ResolvedLineAccount,
+      timeoutMs: 50,
+    };
+
+    clearLineRuntime();
+
+    await expect(lineStatusAdapter.probeAccount!(params)).resolves.toEqual(
+      await probeLineBot("token", 50),
+    );
+>>>>>>> upstream/main
+  });
+});
+
+describe("line runtime api", () => {
+  it("keeps the LINE runtime barrel self-contained", () => {
+    const runtimeApiPath = path.join(process.cwd(), "extensions", "line", "runtime-api.ts");
+    expect(collectRuntimeApiPreExports(runtimeApiPath)).toStrictEqual([]);
+    expect(collectRuntimeApiPreExports(runtimeApiPath)).toStrictEqual([]);
   });
 });
 
 function createRuntime() {
-  const monitorLineProvider = vi.fn(async () => ({
-    account: { accountId: "default" },
-    handleWebhook: async () => {},
-    stop: () => {},
-  }));
+  const monitorLineProvider = vi.fn(
+    async (_opts: { accountId?: string; channelAccessToken: string; channelSecret: string }) => ({
+      account: { accountId: "default" },
+      handleWebhook: async () => {},
+      stop: () => {},
+    }),
+  );
 
   const runtime = {
     channel: {
@@ -444,7 +549,7 @@ function startLineAccount(params: { account: ResolvedLineAccount; abortSignal?: 
   setLineRuntime(runtime);
   return {
     monitorLineProvider,
-    task: linePlugin.gateway!.startAccount!(
+    task: lineGatewayAdapter.startAccount!(
       createStartAccountContext({
         account: params.account,
         abortSignal: params.abortSignal,
@@ -484,14 +589,14 @@ describe("linePlugin gateway.startAccount", () => {
     });
 
     await vi.waitFor(() => {
-      expect(monitorLineProvider).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channelAccessToken: "token",
-          channelSecret: "secret",
-          accountId: "default",
-        }),
-      );
+      expect(monitorLineProvider).toHaveBeenCalledTimes(1);
     });
+    const startupParams = (monitorLineProvider.mock.calls as unknown[][])[0]?.[0] as
+      | { accountId?: string; channelAccessToken?: string; channelSecret?: string }
+      | undefined;
+    expect(startupParams?.channelAccessToken).toBe("token");
+    expect(startupParams?.channelSecret).toBe("secret");
+    expect(startupParams?.accountId).toBe("default");
 
     abort.abort();
     await task;

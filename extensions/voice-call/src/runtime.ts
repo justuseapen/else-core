@@ -1,19 +1,51 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 import type {
   RealtimeVoiceProviderConfig,
   RealtimeVoiceProviderPlugin,
+=======
+// Voice Call plugin module implements runtime behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { formatErrorMessage } from "openclaw/plugin-sdk/error-runtime";
+import { isLoopbackHost } from "openclaw/plugin-sdk/gateway-runtime";
+import {
+  consultRealtimeVoiceAgent,
+  REALTIME_VOICE_AGENT_CONSULT_TOOL_NAME,
+  resolveRealtimeVoiceAgentConsultTools,
+  resolveRealtimeVoiceAgentConsultToolsAllow,
+  type RealtimeVoiceAgentConsultTranscriptEntry,
+  type ResolvedRealtimeVoiceProvider,
+>>>>>>> upstream/main
 } from "openclaw/plugin-sdk/realtime-voice";
 import type { VoiceCallConfig } from "./config.js";
-import { resolveVoiceCallConfig, validateProviderConfig } from "./config.js";
+import {
+  resolveVoiceCallEffectiveConfig,
+  resolveVoiceCallSessionKey,
+  resolveTwilioAuthToken,
+  resolveVoiceCallConfig,
+  validateProviderConfig,
+} from "./config.js";
 import type { CoreAgentDeps, CoreConfig } from "./core-bridge.js";
 import { CallManager } from "./manager.js";
 import { resolveConfiguredCapabilityProvider } from "./provider-runtime-resolution.js";
 import type { VoiceCallProvider } from "./providers/base.js";
 import type { TwilioProvider } from "./providers/twilio.js";
+<<<<<<< HEAD
+=======
+import { buildRealtimeVoiceInstructions } from "./realtime-agent-context.js";
+import { resolveRealtimeFastContextConsult } from "./realtime-fast-context.js";
+import { resolveVoiceResponseModel } from "./response-model.js";
+import { setVoiceCallStateRuntime, type VoiceCallStateRuntime } from "./runtime-state.js";
+>>>>>>> upstream/main
 import type { TelephonyTtsRuntime } from "./telephony-tts.js";
 import { createTelephonyTtsProvider } from "./telephony-tts.js";
 import { startTunnel, type TunnelResult } from "./tunnel.js";
+import {
+  isProviderUnreachableWebhookUrl,
+  providerRequiresPublicWebhook,
+} from "./webhook-exposure.js";
 import { VoiceCallWebhookServer } from "./webhook.js";
+import type { ToolHandlerContext } from "./webhook/realtime-handler.js";
 import { cleanupTailscaleExposure, setupTailscaleExposure } from "./webhook/tailscale.js";
 
 export type VoiceCallRuntime = {
@@ -33,10 +65,105 @@ type Logger = {
   debug?: (message: string) => void;
 };
 
+<<<<<<< HEAD
 type ResolvedRealtimeProvider = {
   provider: RealtimeVoiceProviderPlugin;
   providerConfig: RealtimeVoiceProviderConfig;
 };
+=======
+type ResolvedRealtimeProvider = ResolvedRealtimeVoiceProvider;
+
+type TelnyxProviderModule = typeof import("./providers/telnyx.js");
+type TwilioProviderModule = typeof import("./providers/twilio.js");
+type PlivoProviderModule = typeof import("./providers/plivo.js");
+type MockProviderModule = typeof import("./providers/mock.js");
+type RealtimeVoiceRuntimeModule = typeof import("./realtime-voice.runtime.js");
+type RealtimeHandlerModule = typeof import("./webhook/realtime-handler.js");
+
+const REALTIME_VOICE_CONSULT_SYSTEM_PROMPT = [
+  "You are the configured OpenClaw agent receiving delegated requests from a live phone voice bridge.",
+  "Act on behalf of the caller using the normal available tools when the caller asks you to do work.",
+  "Prioritize completing the user's request and returning a fast, speakable result over exhaustive investigation.",
+  "For tool-backed status checks, prefer one or two bounded read-only queries before answering.",
+  "Do not print secret values or dump environment variables; only check whether required configuration is present.",
+  "Be accurate, brief, and speakable.",
+].join(" ");
+
+let telnyxProviderPromise: Promise<TelnyxProviderModule> | undefined;
+let twilioProviderPromise: Promise<TwilioProviderModule> | undefined;
+let plivoProviderPromise: Promise<PlivoProviderModule> | undefined;
+let mockProviderPromise: Promise<MockProviderModule> | undefined;
+let realtimeVoiceRuntimePromise: Promise<RealtimeVoiceRuntimeModule> | undefined;
+let realtimeHandlerPromise: Promise<RealtimeHandlerModule> | undefined;
+
+function loadTelnyxProvider(): Promise<TelnyxProviderModule> {
+  telnyxProviderPromise ??= import("./providers/telnyx.js");
+  return telnyxProviderPromise;
+}
+
+function loadTwilioProvider(): Promise<TwilioProviderModule> {
+  twilioProviderPromise ??= import("./providers/twilio.js");
+  return twilioProviderPromise;
+}
+
+function loadPlivoProvider(): Promise<PlivoProviderModule> {
+  plivoProviderPromise ??= import("./providers/plivo.js");
+  return plivoProviderPromise;
+}
+
+function loadMockProvider(): Promise<MockProviderModule> {
+  mockProviderPromise ??= import("./providers/mock.js");
+  return mockProviderPromise;
+}
+
+function loadRealtimeVoiceRuntime(): Promise<RealtimeVoiceRuntimeModule> {
+  realtimeVoiceRuntimePromise ??= import("./realtime-voice.runtime.js");
+  return realtimeVoiceRuntimePromise;
+}
+
+function loadRealtimeHandler(): Promise<RealtimeHandlerModule> {
+  realtimeHandlerPromise ??= import("./webhook/realtime-handler.js");
+  return realtimeHandlerPromise;
+}
+
+function resolveVoiceCallConsultSessionKey(call: {
+  config: VoiceCallConfig;
+  sessionKey?: string;
+  from?: string;
+  to?: string;
+  direction?: "inbound" | "outbound";
+  callId: string;
+}): string {
+  if (call.sessionKey) {
+    return call.sessionKey;
+  }
+  const phone = call.direction === "outbound" ? call.to : call.from;
+  return resolveVoiceCallSessionKey({
+    config: call.config,
+    callId: call.callId,
+    phone,
+  });
+}
+
+function mapVoiceCallConsultTranscript(
+  call: {
+    transcript?: Array<{ speaker: "user" | "bot"; text: string }>;
+  },
+  context?: ToolHandlerContext,
+): RealtimeVoiceAgentConsultTranscriptEntry[] {
+  const transcript: RealtimeVoiceAgentConsultTranscriptEntry[] = (call.transcript ?? []).map(
+    (entry) => ({
+      role: entry.speaker === "bot" ? "assistant" : "user",
+      text: entry.text,
+    }),
+  );
+  const partial = context?.partialUserTranscript?.trim();
+  if (partial && transcript.at(-1)?.text !== partial) {
+    transcript.push({ role: "user", text: partial });
+  }
+  return transcript;
+}
+>>>>>>> upstream/main
 
 function createRuntimeResourceLifecycle(params: {
   config: VoiceCallConfig;
@@ -81,6 +208,7 @@ function createRuntimeResourceLifecycle(params: {
   };
 }
 
+<<<<<<< HEAD
 function isLoopbackBind(bind: string | undefined): boolean {
   if (!bind) {
     return false;
@@ -88,15 +216,21 @@ function isLoopbackBind(bind: string | undefined): boolean {
   return bind === "127.0.0.1" || bind === "::1" || bind === "localhost";
 }
 
+=======
+>>>>>>> upstream/main
 async function resolveProvider(config: VoiceCallConfig): Promise<VoiceCallProvider> {
   const allowNgrokFreeTierLoopbackBypass =
     config.tunnel?.provider === "ngrok" &&
-    isLoopbackBind(config.serve?.bind) &&
+    isLoopbackHost(config.serve?.bind ?? "") &&
     (config.tunnel?.allowNgrokFreeTierLoopbackBypass ?? false);
 
   switch (config.provider) {
     case "telnyx": {
+<<<<<<< HEAD
       const { TelnyxProvider } = await import("./providers/telnyx.js");
+=======
+      const { TelnyxProvider } = await loadTelnyxProvider();
+>>>>>>> upstream/main
       return new TelnyxProvider(
         {
           apiKey: config.telnyx?.apiKey,
@@ -109,11 +243,15 @@ async function resolveProvider(config: VoiceCallConfig): Promise<VoiceCallProvid
       );
     }
     case "twilio": {
+<<<<<<< HEAD
       const { TwilioProvider } = await import("./providers/twilio.js");
+=======
+      const { TwilioProvider } = await loadTwilioProvider();
+>>>>>>> upstream/main
       return new TwilioProvider(
         {
           accountSid: config.twilio?.accountSid,
-          authToken: config.twilio?.authToken,
+          authToken: resolveTwilioAuthToken(config),
         },
         {
           allowNgrokFreeTierLoopbackBypass,
@@ -125,7 +263,11 @@ async function resolveProvider(config: VoiceCallConfig): Promise<VoiceCallProvid
       );
     }
     case "plivo": {
+<<<<<<< HEAD
       const { PlivoProvider } = await import("./providers/plivo.js");
+=======
+      const { PlivoProvider } = await loadPlivoProvider();
+>>>>>>> upstream/main
       return new PlivoProvider(
         {
           authId: config.plivo?.authId,
@@ -140,7 +282,11 @@ async function resolveProvider(config: VoiceCallConfig): Promise<VoiceCallProvid
       );
     }
     case "mock": {
+<<<<<<< HEAD
       const { MockProvider } = await import("./providers/mock.js");
+=======
+      const { MockProvider } = await loadMockProvider();
+>>>>>>> upstream/main
       return new MockProvider();
     }
     default:
@@ -152,6 +298,7 @@ async function resolveRealtimeProvider(params: {
   config: VoiceCallConfig;
   fullConfig: OpenClawConfig;
 }): Promise<ResolvedRealtimeProvider> {
+<<<<<<< HEAD
   const { getRealtimeVoiceProvider, listRealtimeVoiceProviders } =
     await import("./realtime-voice.runtime.js");
   const resolution = resolveConfiguredCapabilityProvider({
@@ -183,6 +330,14 @@ async function resolveRealtimeProvider(params: {
     provider,
     providerConfig: resolution.providerConfig as RealtimeVoiceProviderConfig,
   };
+=======
+  const { resolveConfiguredRealtimeVoiceProvider } = await loadRealtimeVoiceRuntime();
+  return resolveConfiguredRealtimeVoiceProvider({
+    configuredProviderId: params.config.realtime.provider,
+    providerConfigs: params.config.realtime.providers,
+    cfg: params.fullConfig,
+  });
+>>>>>>> upstream/main
 }
 
 export async function createVoiceCallRuntime(params: {
@@ -190,10 +345,23 @@ export async function createVoiceCallRuntime(params: {
   coreConfig: CoreConfig;
   fullConfig?: OpenClawConfig;
   agentRuntime: CoreAgentDeps;
+  stateRuntime?: VoiceCallStateRuntime["state"];
   ttsRuntime?: TelephonyTtsRuntime;
   logger?: Logger;
 }): Promise<VoiceCallRuntime> {
+<<<<<<< HEAD
   const { config: rawConfig, coreConfig, fullConfig, agentRuntime, ttsRuntime, logger } = params;
+=======
+  const {
+    config: rawConfig,
+    coreConfig,
+    fullConfig,
+    agentRuntime,
+    stateRuntime,
+    ttsRuntime,
+    logger,
+  } = params;
+>>>>>>> upstream/main
   const log = logger ?? {
     info: console.log,
     warn: console.warn,
@@ -202,6 +370,7 @@ export async function createVoiceCallRuntime(params: {
   };
 
   const config = resolveVoiceCallConfig(rawConfig);
+  const cfg = fullConfig ?? (coreConfig as OpenClawConfig);
 
   if (!config.enabled) {
     throw new Error("Voice call disabled. Enable the plugin entry in config.");
@@ -219,11 +388,21 @@ export async function createVoiceCallRuntime(params: {
   }
 
   const provider = await resolveProvider(config);
+<<<<<<< HEAD
+=======
+  if (stateRuntime) {
+    setVoiceCallStateRuntime({ state: stateRuntime });
+  }
+>>>>>>> upstream/main
   const manager = new CallManager(config);
   const realtimeProvider = config.realtime.enabled
     ? await resolveRealtimeProvider({
         config,
+<<<<<<< HEAD
         fullConfig: (fullConfig ?? (coreConfig as OpenClawConfig)) as OpenClawConfig,
+=======
+        fullConfig: cfg,
+>>>>>>> upstream/main
       })
     : null;
   const webhookServer = new VoiceCallWebhookServer(
@@ -231,10 +410,16 @@ export async function createVoiceCallRuntime(params: {
     manager,
     provider,
     coreConfig,
+<<<<<<< HEAD
     (fullConfig ?? (coreConfig as OpenClawConfig)) as OpenClawConfig,
+=======
+    fullConfig ?? (coreConfig as OpenClawConfig),
+>>>>>>> upstream/main
     agentRuntime,
+    log,
   );
   if (realtimeProvider) {
+<<<<<<< HEAD
     const { RealtimeCallHandler } = await import("./webhook/realtime-handler.js");
     webhookServer.setRealtimeHandler(
       new RealtimeCallHandler(
@@ -246,6 +431,107 @@ export async function createVoiceCallRuntime(params: {
         config.serve.path,
       ),
     );
+=======
+    const { RealtimeCallHandler } = await loadRealtimeHandler();
+    const realtimeInstructions = await buildRealtimeVoiceInstructions({
+      baseInstructions: config.realtime.instructions,
+      config,
+      coreConfig,
+      agentRuntime,
+    });
+    const realtimeConfig = {
+      ...config.realtime,
+      instructions: realtimeInstructions,
+      tools: resolveRealtimeVoiceAgentConsultTools(
+        config.realtime.toolPolicy,
+        config.realtime.tools,
+      ),
+    };
+    const realtimeHandler = new RealtimeCallHandler(
+      realtimeConfig,
+      manager,
+      provider,
+      realtimeProvider.provider,
+      realtimeProvider.providerConfig,
+      config.serve.path,
+      cfg,
+    );
+    if (config.realtime.toolPolicy !== "none") {
+      realtimeHandler.registerToolHandler(
+        REALTIME_VOICE_AGENT_CONSULT_TOOL_NAME,
+        async (args, callId, handlerContext) => {
+          const call = manager.getCall(callId);
+          if (!call) {
+            return { error: `Call "${callId}" not found` };
+          }
+          const numberRouteKey =
+            typeof call.metadata?.numberRouteKey === "string"
+              ? call.metadata.numberRouteKey
+              : call.to;
+          const effectiveConfig = resolveVoiceCallEffectiveConfig(config, numberRouteKey).config;
+          const agentId = effectiveConfig.agentId ?? "main";
+          const sessionKey = resolveVoiceCallConsultSessionKey({
+            ...call,
+            config: effectiveConfig,
+          });
+          const requesterSessionKey =
+            typeof call.metadata?.requesterSessionKey === "string"
+              ? call.metadata.requesterSessionKey
+              : undefined;
+          const fastContext = await resolveRealtimeFastContextConsult({
+            cfg,
+            agentId,
+            sessionKey,
+            config: effectiveConfig.realtime.fastContext,
+            args,
+            logger: log,
+          });
+          if (fastContext.handled) {
+            return fastContext.result;
+          }
+          const { provider: agentProvider, model } = resolveVoiceResponseModel({
+            voiceConfig: effectiveConfig,
+            agentRuntime,
+          });
+          const thinkLevel =
+            effectiveConfig.realtime.consultThinkingLevel ??
+            agentRuntime.resolveThinkingDefault({
+              cfg,
+              provider: agentProvider,
+              model,
+            });
+          return await consultRealtimeVoiceAgent({
+            cfg,
+            agentRuntime,
+            logger: log,
+            agentId,
+            sessionKey,
+            messageProvider: "voice",
+            lane: "voice",
+            runIdPrefix: `voice-realtime-consult:${callId}`,
+            args,
+            transcript: mapVoiceCallConsultTranscript(call, handlerContext),
+            surface: "a live phone call",
+            userLabel: "Caller",
+            assistantLabel: "Agent",
+            questionSourceLabel: "caller",
+            provider: agentProvider,
+            model,
+            thinkLevel,
+            fastMode: effectiveConfig.realtime.consultFastMode,
+            timeoutMs: effectiveConfig.responseTimeoutMs,
+            spawnedBy: requesterSessionKey,
+            contextMode: requesterSessionKey ? "fork" : undefined,
+            toolsAllow: resolveRealtimeVoiceAgentConsultToolsAllow(
+              effectiveConfig.realtime.toolPolicy,
+            ),
+            extraSystemPrompt: REALTIME_VOICE_CONSULT_SYSTEM_PROMPT,
+          });
+        },
+      );
+    }
+    webhookServer.setRealtimeHandler(realtimeHandler);
+>>>>>>> upstream/main
   }
   const lifecycle = createRuntimeResourceLifecycle({ config, webhookServer });
 
@@ -271,9 +557,7 @@ export async function createVoiceCallRuntime(params: {
         lifecycle.setTunnelResult(nextTunnelResult);
         publicUrl = nextTunnelResult?.publicUrl ?? null;
       } catch (err) {
-        log.error(
-          `[voice-call] Tunnel setup failed: ${err instanceof Error ? err.message : String(err)}`,
-        );
+        log.error(`[voice-call] Tunnel setup failed: ${formatErrorMessage(err)}`);
       }
     }
 
@@ -283,8 +567,27 @@ export async function createVoiceCallRuntime(params: {
 
     const webhookUrl = publicUrl ?? localUrl;
 
-    if (publicUrl && provider.name === "twilio") {
-      (provider as TwilioProvider).setPublicUrl(publicUrl);
+    if (
+      providerRequiresPublicWebhook(provider.name) &&
+      isProviderUnreachableWebhookUrl(webhookUrl)
+    ) {
+      throw new Error(
+        `[voice-call] ${provider.name} requires a publicly reachable webhook URL. ` +
+          `Refusing to use local-only webhook ${webhookUrl}. ` +
+          "Set plugins.entries.voice-call.config.publicUrl or enable tunnel/tailscale exposure.",
+      );
+    }
+
+    if (publicUrl) {
+      provider.setPublicUrl?.(publicUrl);
+    }
+    if (publicUrl && realtimeProvider) {
+      webhookServer.getRealtimeHandler()?.setPublicUrl(publicUrl);
+    }
+
+    const realtimeHandler = webhookServer.getRealtimeHandler();
+    if (realtimeHandler) {
+      manager.streamSessionIssuer = (request) => realtimeHandler.issueStreamSession(request);
     }
     if (publicUrl && realtimeProvider) {
       webhookServer.getRealtimeHandler()?.setPublicUrl(publicUrl);
@@ -303,11 +606,7 @@ export async function createVoiceCallRuntime(params: {
           twilioProvider.setTTSProvider(ttsProvider);
           log.info("[voice-call] Telephony TTS provider configured");
         } catch (err) {
-          log.warn(
-            `[voice-call] Failed to initialize telephony TTS: ${
-              err instanceof Error ? err.message : String(err)
-            }`,
-          );
+          log.warn(`[voice-call] Failed to initialize telephony TTS: ${formatErrorMessage(err)}`);
         }
       } else {
         log.warn("[voice-call] Telephony TTS unavailable; streaming TTS disabled");
@@ -330,7 +629,7 @@ export async function createVoiceCallRuntime(params: {
 
     log.info("[voice-call] Runtime initialized");
     log.info(`[voice-call] Webhook URL: ${webhookUrl}`);
-    if (publicUrl) {
+    if (publicUrl && publicUrl !== webhookUrl) {
       log.info(`[voice-call] Public URL: ${publicUrl}`);
     }
 

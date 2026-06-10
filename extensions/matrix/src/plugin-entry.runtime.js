@@ -2,6 +2,7 @@
 // while packaged dist builds resolve a distinct runtime entry that cannot loop
 // back into this wrapper through the stable root runtime alias.
 import fs from "node:fs";
+<<<<<<< HEAD
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,6 +27,14 @@ const JITI_EXTENSIONS = [
   ".cjs",
   ".json",
 ];
+=======
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const PLUGIN_ID = "matrix";
+const PLUGIN_ENTRY_RUNTIME_BASENAME = "plugin-entry.handlers.runtime";
+const NATIVE_RUNTIME_EXTENSIONS = [".js", ".mjs", ".cjs"];
+>>>>>>> upstream/main
 
 function readPackageJson(packageRoot) {
   try {
@@ -35,11 +44,38 @@ function readPackageJson(packageRoot) {
   }
 }
 
+<<<<<<< HEAD
+=======
+function normalizeLowercaseStringOrEmpty(value) {
+  return typeof value === "string" ? value.toLowerCase() : "";
+}
+
+function hasTrustedOpenClawRootIndicator(packageRoot, packageJson) {
+  const packageExports = packageJson?.exports ?? {};
+  if (!Object.hasOwn(packageExports, "./plugin-sdk")) {
+    return false;
+  }
+  const hasCliEntryExport = Object.hasOwn(packageExports, "./cli-entry");
+  const hasOpenClawBin =
+    (typeof packageJson?.bin === "string" &&
+      normalizeLowercaseStringOrEmpty(packageJson.bin).includes("openclaw")) ||
+    (typeof packageJson?.bin === "object" &&
+      packageJson.bin !== null &&
+      typeof packageJson.bin.openclaw === "string");
+  const hasOpenClawEntrypoint = fs.existsSync(path.join(packageRoot, "openclaw.mjs"));
+  return hasCliEntryExport || hasOpenClawBin || hasOpenClawEntrypoint;
+}
+
+>>>>>>> upstream/main
 function findOpenClawPackageRoot(startDir) {
   let cursor = path.resolve(startDir);
   for (let i = 0; i < 12; i += 1) {
     const pkg = readPackageJson(cursor);
+<<<<<<< HEAD
     if (pkg?.name === "openclaw" && pkg.exports?.["./plugin-sdk"]) {
+=======
+    if (pkg?.name === "openclaw" && hasTrustedOpenClawRootIndicator(cursor, pkg)) {
+>>>>>>> upstream/main
       return { packageRoot: cursor, packageJson: pkg };
     }
     const parent = path.dirname(cursor);
@@ -61,6 +97,7 @@ function resolveExistingFile(basePath, extensions) {
   return null;
 }
 
+<<<<<<< HEAD
 function buildPluginSdkAliasMap(moduleUrl) {
   const location = findOpenClawPackageRoot(path.dirname(fileURLToPath(moduleUrl)));
   if (!location) {
@@ -104,6 +141,8 @@ function buildPluginSdkAliasMap(moduleUrl) {
   return aliasMap;
 }
 
+=======
+>>>>>>> upstream/main
 function resolveBundledPluginRuntimeModulePath(moduleUrl, params) {
   const modulePath = fileURLToPath(moduleUrl);
   const moduleDir = path.dirname(modulePath);
@@ -113,7 +152,11 @@ function resolveBundledPluginRuntimeModulePath(moduleUrl, params) {
   ];
 
   for (const candidate of localCandidates) {
+<<<<<<< HEAD
     const resolved = resolveExistingFile(candidate, PLUGIN_SDK_SOURCE_EXTENSIONS);
+=======
+    const resolved = resolveExistingFile(candidate, NATIVE_RUNTIME_EXTENSIONS);
+>>>>>>> upstream/main
     if (resolved) {
       return resolved;
     }
@@ -128,7 +171,11 @@ function resolveBundledPluginRuntimeModulePath(moduleUrl, params) {
     ];
 
     for (const candidate of packageCandidates) {
+<<<<<<< HEAD
       const resolved = resolveExistingFile(candidate, PLUGIN_SDK_SOURCE_EXTENSIONS);
+=======
+      const resolved = resolveExistingFile(candidate, NATIVE_RUNTIME_EXTENSIONS);
+>>>>>>> upstream/main
       if (resolved) {
         return resolved;
       }
@@ -140,6 +187,7 @@ function resolveBundledPluginRuntimeModulePath(moduleUrl, params) {
   );
 }
 
+<<<<<<< HEAD
 const jiti = createJiti(import.meta.url, {
   alias: buildPluginSdkAliasMap(import.meta.url),
   interopDefault: true,
@@ -148,6 +196,13 @@ const jiti = createJiti(import.meta.url, {
 });
 
 const mod = jiti(
+=======
+async function loadRuntimeModule(modulePath) {
+  return import(pathToFileURL(modulePath).href);
+}
+
+const mod = await loadRuntimeModule(
+>>>>>>> upstream/main
   resolveBundledPluginRuntimeModulePath(import.meta.url, {
     pluginId: PLUGIN_ID,
     runtimeBasename: PLUGIN_ENTRY_RUNTIME_BASENAME,

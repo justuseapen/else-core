@@ -1,7 +1,10 @@
+// Implements approval commands for pending tool and execution requests.
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
 import {
   getChannelPlugin,
   resolveChannelApprovalCapability,
 } from "../../channels/plugins/index.js";
+<<<<<<< HEAD
 import { callGateway } from "../../gateway/call.js";
 import { logVerbose } from "../../globals.js";
 import { isApprovalNotFoundError } from "../../infra/approval-errors.js";
@@ -9,6 +12,15 @@ import { resolveApprovalCommandAuthorization } from "../../infra/channel-approva
 import { GATEWAY_CLIENT_MODES, GATEWAY_CLIENT_NAMES } from "../../utils/message-channel.js";
 import { resolveChannelAccountId } from "./channel-context.js";
 import { requireGatewayClientScopeForInternalChannel } from "./command-gates.js";
+=======
+import { logVerbose } from "../../globals.js";
+import { isApprovalNotFoundError } from "../../infra/approval-errors.js";
+import { resolveApprovalOverGateway } from "../../infra/approval-gateway-resolver.js";
+import { resolveApprovalCommandAuthorization } from "../../infra/channel-approval-auth.js";
+import { formatErrorMessage } from "../../infra/errors.js";
+import { resolveChannelAccountId } from "./channel-context.js";
+import { requireGatewayClientScope } from "./command-gates.js";
+>>>>>>> upstream/main
 import type { CommandHandler } from "./commands-types.js";
 
 const COMMAND_REGEX = /^\/?approve(?:\s|$)/i;
@@ -52,8 +64,8 @@ function parseApproveCommand(raw: string): ParsedApproveCommand | null {
     return { ok: false, error: APPROVE_USAGE_TEXT };
   }
 
-  const first = tokens[0].toLowerCase();
-  const second = tokens[1].toLowerCase();
+  const first = normalizeLowercaseStringOrEmpty(tokens[0]);
+  const second = normalizeLowercaseStringOrEmpty(tokens[1]);
 
   if (DECISION_ALIASES[first]) {
     return {
@@ -79,7 +91,11 @@ function buildResolvedByLabel(params: Parameters<CommandHandler>[0]): string {
 }
 
 function formatApprovalSubmitError(error: unknown): string {
+<<<<<<< HEAD
   return error instanceof Error ? error.message : String(error);
+=======
+  return formatErrorMessage(error);
+>>>>>>> upstream/main
 }
 
 type ApprovalMethod = "exec.approval.resolve" | "plugin.approval.resolve";
@@ -179,7 +195,11 @@ export const handleApproveCommand: CommandHandler = async (params, allowTextComm
     return { shouldContinue: false };
   }
 
+<<<<<<< HEAD
   const missingScope = requireGatewayClientScopeForInternalChannel(params, {
+=======
+  const missingScope = requireGatewayClientScope(params, {
+>>>>>>> upstream/main
     label: "/approve",
     allowedScopes: ["operator.approvals", "operator.admin"],
     missingText: "❌ /approve requires operator.approvals for gateway clients.",
@@ -189,13 +209,22 @@ export const handleApproveCommand: CommandHandler = async (params, allowTextComm
   }
 
   const resolvedBy = buildResolvedByLabel(params);
+<<<<<<< HEAD
   const callApprovalMethod = async (method: string): Promise<void> => {
     await callGateway({
       method,
       params: { id: parsed.id, decision: parsed.decision },
       clientName: GATEWAY_CLIENT_NAMES.GATEWAY_CLIENT,
+=======
+  const callApprovalMethod = async (method: ApprovalMethod): Promise<void> => {
+    await resolveApprovalOverGateway({
+      cfg: params.cfg,
+      approvalId: parsed.id,
+      decision: parsed.decision,
+      senderId: params.command.senderId,
+      ...(method === "plugin.approval.resolve" ? { resolveMethod: "plugin" as const } : {}),
+>>>>>>> upstream/main
       clientDisplayName: `Chat approval (${resolvedBy})`,
-      mode: GATEWAY_CLIENT_MODES.BACKEND,
     });
   };
 
@@ -217,6 +246,7 @@ export const handleApproveCommand: CommandHandler = async (params, allowTextComm
     };
   }
 
+<<<<<<< HEAD
   let lastError: unknown = null;
   for (const [index, method] of methods.entries()) {
     try {
@@ -225,6 +255,13 @@ export const handleApproveCommand: CommandHandler = async (params, allowTextComm
       break;
     } catch (error) {
       lastError = error;
+=======
+  for (const [index, method] of methods.entries()) {
+    try {
+      await callApprovalMethod(method);
+      break;
+    } catch (error) {
+>>>>>>> upstream/main
       const isLastMethod = index === methods.length - 1;
       if (!isApprovalNotFoundError(error) || isLastMethod) {
         return {
@@ -235,6 +272,7 @@ export const handleApproveCommand: CommandHandler = async (params, allowTextComm
     }
   }
 
+<<<<<<< HEAD
   if (lastError) {
     return {
       shouldContinue: false,
@@ -242,6 +280,8 @@ export const handleApproveCommand: CommandHandler = async (params, allowTextComm
     };
   }
 
+=======
+>>>>>>> upstream/main
   return {
     shouldContinue: false,
     reply: { text: `✅ Approval ${parsed.decision} submitted for ${parsed.id}.` },

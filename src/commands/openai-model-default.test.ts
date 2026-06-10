@@ -1,24 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+// OpenAI model default tests cover provider-specific default model migration helpers.
+import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
+<<<<<<< HEAD
 import type { WizardPrompter } from "../wizard/prompts.js";
 import { applyDefaultModelChoice } from "./auth-choice.default-model.js";
+=======
+>>>>>>> upstream/main
 import {
   applyOpencodeZenModelDefault,
   OPENCODE_ZEN_DEFAULT_MODEL,
-} from "./opencode-zen-model-default.js";
-
-function makePrompter(): WizardPrompter {
-  return {
-    intro: async () => {},
-    outro: async () => {},
-    note: async () => {},
-    select: (async <T>() => "" as T) as WizardPrompter["select"],
-    multiselect: (async <T>() => [] as T[]) as WizardPrompter["multiselect"],
-    text: async () => "",
-    confirm: async () => false,
-    progress: () => ({ update: () => {}, stop: () => {} }),
-  };
-}
+} from "../plugin-sdk/opencode.js";
 
 function expectPrimaryModelChanged(
   applied: { changed: boolean; next: OpenClawConfig },
@@ -36,6 +27,7 @@ function expectConfigUnchanged(
   expect(applied.next).toEqual(cfg);
 }
 
+<<<<<<< HEAD
 describe("applyDefaultModelChoice", () => {
   it("ensures allowlist entry exists when returning an agent override", async () => {
     const defaultModel = "vercel-ai-gateway/anthropic/claude-opus-4.6";
@@ -96,6 +88,8 @@ describe("applyDefaultModelChoice", () => {
   });
 });
 
+=======
+>>>>>>> upstream/main
 describe("applyOpencodeZenModelDefault", () => {
   it("sets defaults when model is unset", () => {
     const cfg: OpenClawConfig = { agents: { defaults: {} } };
@@ -134,7 +128,7 @@ describe("applyOpencodeZenModelDefault", () => {
     expect(applied.changed).toBe(true);
     expect(applied.next.agents?.defaults?.model).toEqual({
       primary: OPENCODE_ZEN_DEFAULT_MODEL,
-      fallbacks: ["google/gemini-3-pro"],
+      fallbacks: ["google/gemini-3.1-pro-preview"],
     });
   });
 

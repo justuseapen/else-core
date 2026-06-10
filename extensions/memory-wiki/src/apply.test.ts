@@ -1,13 +1,79 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { applyMemoryWikiMutation } from "./apply.js";
+=======
+// Memory Wiki tests cover apply plugin behavior.
+import fs from "node:fs/promises";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { applyMemoryWikiMutation, normalizeMemoryWikiMutationInput } from "./apply.js";
+>>>>>>> upstream/main
 import { parseWikiMarkdown, renderWikiMarkdown } from "./markdown.js";
 import { createMemoryWikiTestHarness } from "./test-helpers.js";
 
 const { createVault } = createMemoryWikiTestHarness();
 
 describe("applyMemoryWikiMutation", () => {
+<<<<<<< HEAD
+=======
+  it("normalizes string confidence in wiki mutations", () => {
+    expect(
+      normalizeMemoryWikiMutationInput({
+        op: "create_synthesis",
+        title: "Alpha Synthesis",
+        body: "Alpha summary body.",
+        sourceIds: ["source.alpha"],
+        confidence: "0.7",
+      }),
+    ).toMatchObject({ confidence: 0.7 });
+
+    expect(
+      normalizeMemoryWikiMutationInput({
+        op: "update_metadata",
+        lookup: "entity.alpha",
+        confidence: "0.4",
+      }),
+    ).toMatchObject({ confidence: 0.4 });
+  });
+
+  it("normalizes CLI-style wiki mutation operation aliases", () => {
+    expect(
+      normalizeMemoryWikiMutationInput({
+        op: "synthesis",
+        title: "Alpha Synthesis",
+        body: "Alpha summary body.",
+        sourceIds: ["source.alpha"],
+      }),
+    ).toMatchObject({
+      op: "create_synthesis",
+      title: "Alpha Synthesis",
+    });
+
+    expect(
+      normalizeMemoryWikiMutationInput({
+        op: "metadata",
+        lookup: "entity.alpha",
+        sourceIds: ["source.alpha"],
+      }),
+    ).toMatchObject({
+      op: "update_metadata",
+      lookup: "entity.alpha",
+    });
+  });
+
+  it("rejects out-of-range string confidence in wiki mutations", () => {
+    expect(() =>
+      normalizeMemoryWikiMutationInput({
+        op: "update_metadata",
+        lookup: "entity.alpha",
+        confidence: "1.5",
+      }),
+    ).toThrow("confidence must be a finite number");
+  });
+
+>>>>>>> upstream/main
   it("creates synthesis pages with managed summary blocks and refreshed indexes", async () => {
     const { rootDir, config } = await createVault({ prefix: "memory-wiki-apply-" });
 
@@ -18,6 +84,24 @@ describe("applyMemoryWikiMutation", () => {
         title: "Alpha Synthesis",
         body: "Alpha summary body.",
         sourceIds: ["source.alpha", "source.beta"],
+<<<<<<< HEAD
+=======
+        claims: [
+          {
+            id: "claim.alpha.postgres",
+            text: "Alpha uses PostgreSQL for production writes.",
+            status: "supported",
+            confidence: 0.86,
+            evidence: [
+              {
+                sourceId: "source.alpha",
+                lines: "12-18",
+                weight: 0.9,
+              },
+            ],
+          },
+        ],
+>>>>>>> upstream/main
         contradictions: ["Needs a better primary source"],
         questions: ["What changed after launch?"],
         confidence: 0.7,
@@ -32,6 +116,7 @@ describe("applyMemoryWikiMutation", () => {
     const page = await fs.readFile(path.join(rootDir, result.pagePath), "utf8");
     const parsed = parseWikiMarkdown(page);
 
+<<<<<<< HEAD
     expect(parsed.frontmatter).toMatchObject({
       pageType: "synthesis",
       id: "synthesis.alpha-synthesis",
@@ -42,6 +127,38 @@ describe("applyMemoryWikiMutation", () => {
       confidence: 0.7,
       status: "active",
     });
+=======
+    expect(parsed.frontmatter.pageType).toBe("synthesis");
+    expect(parsed.frontmatter.id).toBe("synthesis.alpha-synthesis");
+    expect(parsed.frontmatter.title).toBe("Alpha Synthesis");
+    expect(parsed.frontmatter.sourceIds).toEqual(["source.alpha", "source.beta"]);
+    expect(parsed.frontmatter.claims).toHaveLength(1);
+    const claims = parsed.frontmatter.claims as
+      | Array<{
+          confidence?: number;
+          evidence?: Array<Record<string, unknown>>;
+          id?: string;
+          status?: string;
+          text?: string;
+        }>
+      | undefined;
+    const claim = claims?.[0];
+    expect(claim?.id).toBe("claim.alpha.postgres");
+    expect(claim?.text).toBe("Alpha uses PostgreSQL for production writes.");
+    expect(claim?.status).toBe("supported");
+    expect(claim?.confidence).toBe(0.86);
+    expect(claim?.evidence).toEqual([
+      {
+        sourceId: "source.alpha",
+        lines: "12-18",
+        weight: 0.9,
+      },
+    ]);
+    expect(parsed.frontmatter.contradictions).toEqual(["Needs a better primary source"]);
+    expect(parsed.frontmatter.questions).toEqual(["What changed after launch?"]);
+    expect(parsed.frontmatter.confidence).toBe(0.7);
+    expect(parsed.frontmatter.status).toBe("active");
+>>>>>>> upstream/main
     expect(parsed.body).toContain("## Summary");
     expect(parsed.body).toContain("<!-- openclaw:wiki:generated:start -->");
     expect(parsed.body).toContain("Alpha summary body.");
@@ -55,10 +172,17 @@ describe("applyMemoryWikiMutation", () => {
   it("updates page metadata without overwriting existing human notes", async () => {
     const { rootDir, config } = await createVault({
       prefix: "memory-wiki-apply-",
+<<<<<<< HEAD
       initialize: true,
     });
 
     const targetPath = path.join(rootDir, "entities", "alpha.md");
+=======
+    });
+
+    const targetPath = path.join(rootDir, "entities", "alpha.md");
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+>>>>>>> upstream/main
     await fs.writeFile(
       targetPath,
       renderWikiMarkdown({
@@ -86,6 +210,17 @@ keep this note
         op: "update_metadata",
         lookup: "entity.alpha",
         sourceIds: ["source.new"],
+<<<<<<< HEAD
+=======
+        claims: [
+          {
+            id: "claim.alpha.status",
+            text: "Alpha is still active for existing tenants.",
+            status: "contested",
+            evidence: [{ sourceId: "source.new", lines: "4-9" }],
+          },
+        ],
+>>>>>>> upstream/main
         contradictions: ["Conflicts with source.beta"],
         questions: ["Is Alpha still active?"],
         confidence: null,
@@ -100,6 +235,7 @@ keep this note
     const updated = await fs.readFile(targetPath, "utf8");
     const parsed = parseWikiMarkdown(updated);
 
+<<<<<<< HEAD
     expect(parsed.frontmatter).toMatchObject({
       pageType: "entity",
       id: "entity.alpha",
@@ -109,11 +245,38 @@ keep this note
       questions: ["Is Alpha still active?"],
       status: "review",
     });
+=======
+    expect(parsed.frontmatter.pageType).toBe("entity");
+    expect(parsed.frontmatter.id).toBe("entity.alpha");
+    expect(parsed.frontmatter.title).toBe("Alpha");
+    expect(parsed.frontmatter.sourceIds).toEqual(["source.new"]);
+    expect(parsed.frontmatter.claims).toHaveLength(1);
+    const claims = parsed.frontmatter.claims as
+      | Array<{
+          evidence?: Array<Record<string, unknown>>;
+          id?: string;
+          status?: string;
+          text?: string;
+        }>
+      | undefined;
+    const claim = claims?.[0];
+    expect(claim?.id).toBe("claim.alpha.status");
+    expect(claim?.text).toBe("Alpha is still active for existing tenants.");
+    expect(claim?.status).toBe("contested");
+    expect(claim?.evidence).toEqual([{ sourceId: "source.new", lines: "4-9" }]);
+    expect(parsed.frontmatter.contradictions).toEqual(["Conflicts with source.beta"]);
+    expect(parsed.frontmatter.questions).toEqual(["Is Alpha still active?"]);
+    expect(parsed.frontmatter.status).toBe("review");
+>>>>>>> upstream/main
     expect(parsed.frontmatter).not.toHaveProperty("confidence");
     expect(parsed.body).toContain("keep this note");
     expect(parsed.body).toContain("<!-- openclaw:human:start -->");
     await expect(
       fs.readFile(path.join(rootDir, "entities", "index.md"), "utf8"),
+<<<<<<< HEAD
     ).resolves.toContain("[Alpha](entities/alpha.md)");
+=======
+    ).resolves.toContain("[Alpha](alpha.md)");
+>>>>>>> upstream/main
   });
 });

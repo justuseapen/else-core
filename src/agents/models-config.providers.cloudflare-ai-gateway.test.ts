@@ -1,8 +1,16 @@
+<<<<<<< HEAD
+=======
+// Covers Cloudflare AI Gateway profile provenance and generated provider config.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { captureEnv } from "../test-utils/env.js";
 import type { ApiKeyCredential } from "./auth-profiles/types.js";
 import { NON_ENV_SECRETREF_MARKER } from "./model-auth-markers.js";
+<<<<<<< HEAD
 import { resolveApiKeyFromCredential } from "./models-config.providers.secrets.js";
+=======
+import { resolveApiKeyFromCredential } from "./models-config.providers.secret-helpers.js";
+>>>>>>> upstream/main
 
 function expectedCloudflareGatewayBaseUrl(accountId: string, gatewayId: string): string {
   return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/anthropic`;
@@ -19,6 +27,11 @@ function buildCloudflareAiGatewayCatalogProvider(params: {
     | undefined;
   envApiKey?: string;
 }) {
+<<<<<<< HEAD
+=======
+  // Cloudflare gateway providers require both account/gateway metadata and an
+  // auth marker from the same profile/env source.
+>>>>>>> upstream/main
   const apiKey = params.envApiKey?.trim() || resolveApiKeyFromCredential(params.credential)?.apiKey;
   const accountId = params.credential?.metadata?.accountId?.trim();
   const gatewayId = params.credential?.metadata?.gatewayId?.trim();
@@ -35,6 +48,11 @@ function buildCloudflareAiGatewayCatalogProvider(params: {
 
 describe("cloudflare-ai-gateway profile provenance", () => {
   it("prefers env keyRef marker over runtime plaintext for persistence", () => {
+<<<<<<< HEAD
+=======
+    // Env-backed profile refs persist the env var name, not the runtime
+    // plaintext value.
+>>>>>>> upstream/main
     const envSnapshot = captureEnv(["CLOUDFLARE_AI_GATEWAY_API_KEY"]);
     delete process.env.CLOUDFLARE_AI_GATEWAY_API_KEY;
     try {
@@ -56,7 +74,11 @@ describe("cloudflare-ai-gateway profile provenance", () => {
     }
   });
 
+<<<<<<< HEAD
   it("uses non-env marker for non-env keyRef cloudflare profiles", async () => {
+=======
+  it("uses non-env marker for non-env keyRef cloudflare profiles", () => {
+>>>>>>> upstream/main
     const provider = buildCloudflareAiGatewayCatalogProvider({
       credential: {
         type: "api_key",
@@ -72,7 +94,11 @@ describe("cloudflare-ai-gateway profile provenance", () => {
     expect(provider?.apiKey).toBe(NON_ENV_SECRETREF_MARKER);
   });
 
+<<<<<<< HEAD
   it("keeps Cloudflare gateway metadata and apiKey from the same auth profile", async () => {
+=======
+  it("keeps Cloudflare gateway metadata and apiKey from the same auth profile", () => {
+>>>>>>> upstream/main
     const provider = buildCloudflareAiGatewayCatalogProvider({
       credential: {
         type: "api_key",

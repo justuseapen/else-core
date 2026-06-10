@@ -1,16 +1,30 @@
+<<<<<<< HEAD
+=======
+// Telegram tests cover auto topic label plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it, vi } from "vitest";
 
 const generateConversationLabel = vi.hoisted(() => vi.fn());
 
+<<<<<<< HEAD
 vi.mock("openclaw/plugin-sdk/reply-runtime", () => ({
+=======
+vi.mock("openclaw/plugin-sdk/reply-dispatch-runtime", () => ({
+>>>>>>> upstream/main
   generateConversationLabel,
 }));
 
 import {
   AUTO_TOPIC_LABEL_DEFAULT_PROMPT,
+<<<<<<< HEAD
   generateTelegramTopicLabel,
   resolveAutoTopicLabelConfig,
 } from "./auto-topic-label.js";
+=======
+  resolveAutoTopicLabelConfig,
+} from "./auto-topic-label-config.js";
+import { generateTelegramTopicLabel } from "./auto-topic-label.js";
+>>>>>>> upstream/main
 
 describe("resolveAutoTopicLabelConfig", () => {
   it("returns enabled with default prompt when configs are undefined", () => {

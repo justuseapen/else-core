@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+=======
+// Feishu tests cover send target plugin behavior.
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import type { ClawdbotConfig } from "../runtime-api.js";
 
 const resolveFeishuAccountMock = vi.hoisted(() => vi.fn());
@@ -23,6 +28,15 @@ describe("resolveFeishuSendTarget", () => {
     ({ resolveFeishuSendTarget } = await import("./send-target.js"));
   });
 
+<<<<<<< HEAD
+=======
+  afterAll(() => {
+    vi.doUnmock("./accounts.js");
+    vi.doUnmock("./client.js");
+    vi.resetModules();
+  });
+
+>>>>>>> upstream/main
   beforeEach(() => {
     resolveFeishuAccountMock.mockReset().mockReturnValue({
       accountId: "default",

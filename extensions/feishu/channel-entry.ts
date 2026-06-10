@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Feishu plugin module implements channel entry behavior.
+>>>>>>> upstream/main
 import { defineBundledChannelEntry } from "openclaw/plugin-sdk/channel-entry-contract";
 
 export default defineBundledChannelEntry({
@@ -9,6 +13,13 @@ export default defineBundledChannelEntry({
     specifier: "./api.js",
     exportName: "feishuPlugin",
   },
+<<<<<<< HEAD
+=======
+  secrets: {
+    specifier: "./secret-contract-api.js",
+    exportName: "channelSecrets",
+  },
+>>>>>>> upstream/main
   runtime: {
     specifier: "./runtime-api.js",
     exportName: "setFeishuRuntime",

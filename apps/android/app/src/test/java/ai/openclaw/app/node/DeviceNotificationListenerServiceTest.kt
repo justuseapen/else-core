@@ -1,10 +1,17 @@
 package ai.openclaw.app.node
 
+<<<<<<< HEAD
 import android.content.Context
+=======
+>>>>>>> upstream/main
 import ai.openclaw.app.NotificationBurstLimiter
 import ai.openclaw.app.NotificationForwardingPolicy
 import ai.openclaw.app.NotificationPackageFilterMode
 import ai.openclaw.app.isWithinQuietHours
+<<<<<<< HEAD
+=======
+import android.content.Context
+>>>>>>> upstream/main
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -20,7 +27,12 @@ class DeviceNotificationListenerServiceTest {
   fun recentPackages_migratesLegacyPreferenceKey() {
     val context = RuntimeEnvironment.getApplication()
     val prefs = context.getSharedPreferences("openclaw.secure", Context.MODE_PRIVATE)
+<<<<<<< HEAD
     prefs.edit()
+=======
+    prefs
+      .edit()
+>>>>>>> upstream/main
       .clear()
       .putString("notifications.recentPackages", "com.example.one, com.example.two")
       .commit()
@@ -39,7 +51,12 @@ class DeviceNotificationListenerServiceTest {
   fun recentPackages_cleansUpLegacyKeyWhenNewKeyAlreadyExists() {
     val context = RuntimeEnvironment.getApplication()
     val prefs = context.getSharedPreferences("openclaw.secure", Context.MODE_PRIVATE)
+<<<<<<< HEAD
     prefs.edit()
+=======
+    prefs
+      .edit()
+>>>>>>> upstream/main
       .clear()
       .putString("notifications.forwarding.recentPackages", "com.example.new")
       .putString("notifications.recentPackages", "com.example.legacy")
@@ -55,13 +72,22 @@ class DeviceNotificationListenerServiceTest {
   fun recentPackages_trimsDedupesAndPreservesRecencyOrder() {
     val context = RuntimeEnvironment.getApplication()
     val prefs = context.getSharedPreferences("openclaw.secure", Context.MODE_PRIVATE)
+<<<<<<< HEAD
     prefs.edit()
+=======
+    prefs
+      .edit()
+>>>>>>> upstream/main
       .clear()
       .putString(
         "notifications.forwarding.recentPackages",
         " com.example.recent , ,com.example.other,com.example.recent, com.example.third ",
+<<<<<<< HEAD
       )
       .commit()
+=======
+      ).commit()
+>>>>>>> upstream/main
 
     val packages = DeviceNotificationListenerService.recentPackages(context)
 
@@ -75,8 +101,23 @@ class DeviceNotificationListenerServiceTest {
   fun quietHoursAndRateLimitingUseWallClockTimeNotNotificationPostTime() {
     val zone = java.time.ZoneId.systemDefault()
     val now = java.time.ZonedDateTime.now(zone)
+<<<<<<< HEAD
     val quietStart = now.minusMinutes(5).toLocalTime().withSecond(0).withNano(0)
     val quietEnd = now.plusMinutes(5).toLocalTime().withSecond(0).withNano(0)
+=======
+    val quietStart =
+      now
+        .minusMinutes(5)
+        .toLocalTime()
+        .withSecond(0)
+        .withNano(0)
+    val quietEnd =
+      now
+        .plusMinutes(5)
+        .toLocalTime()
+        .withSecond(0)
+        .withNano(0)
+>>>>>>> upstream/main
     val stalePostTime =
       now
         .minusHours(2)

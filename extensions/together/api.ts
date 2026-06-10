@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Together API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   buildTogetherModelDefinition,
   TOGETHER_BASE_URL,

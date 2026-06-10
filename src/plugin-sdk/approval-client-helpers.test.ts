@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+/**
+ * Tests approval client helper filters and target recipient matching.
+ */
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   createChannelExecApprovalProfile,
@@ -77,12 +83,20 @@ describe("createChannelExecApprovalProfile", () => {
     matchesRequestAccount: ({ accountId }) => accountId !== "other",
   });
 
+<<<<<<< HEAD
   it("treats unset enabled as auto and false as disabled", () => {
+=======
+  it("requires explicit enablement when approvers exist", () => {
+>>>>>>> upstream/main
     expect(
       isChannelExecApprovalClientEnabledFromConfig({
         approverCount: 1,
       }),
+<<<<<<< HEAD
     ).toBe(true);
+=======
+    ).toBe(false);
+>>>>>>> upstream/main
     expect(
       isChannelExecApprovalClientEnabledFromConfig({
         enabled: "auto",

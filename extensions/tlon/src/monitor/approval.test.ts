@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tlon tests cover approval plugin behavior.
+>>>>>>> upstream/main
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const cryptoMocks = vi.hoisted(() => ({

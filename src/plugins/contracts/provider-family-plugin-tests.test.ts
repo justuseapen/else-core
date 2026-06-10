@@ -1,7 +1,16 @@
+<<<<<<< HEAD
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+=======
+// Provider family plugin tests cover grouped provider-family contract cases.
+import fs from "node:fs";
+import { basename, resolve } from "node:path";
+import { beforeAll, describe, expect, it } from "vitest";
+import { expectNoReaddirSyncDuring } from "../../test-utils/fs-scan-assertions.js";
+import { listGitTrackedFiles, toRepoRelativePath } from "../../test-utils/repo-files.js";
+>>>>>>> upstream/main
 import { loadPluginManifestRegistry } from "../manifest-registry.js";
 
 type SharedFamilyHookKind = "replay" | "stream" | "tool-compat";
@@ -17,8 +26,13 @@ type ExpectedSharedFamilyContract = {
   toolCompatFamilies?: readonly string[];
 };
 
+<<<<<<< HEAD
 const SRC_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const REPO_ROOT = resolve(SRC_ROOT, "..");
+=======
+const REPO_ROOT = resolve(process.cwd());
+const BUNDLED_SOURCE_EXTENSIONS_ROOT = resolve(REPO_ROOT, "extensions");
+>>>>>>> upstream/main
 const SHARED_FAMILY_HOOK_PATTERNS: ReadonlyArray<{
   kind: SharedFamilyHookKind;
   regex: RegExp;
@@ -30,6 +44,7 @@ const SHARED_FAMILY_HOOK_PATTERNS: ReadonlyArray<{
 const PROVIDER_BOUNDARY_TEST_SIGNALS = [
   /\bregister(?:Single)?ProviderPlugin\s*\(/u,
   /\bcreateTestPluginApi\s*\(/u,
+<<<<<<< HEAD
 ] as const;
 const EXPECTED_SHARED_FAMILY_CONTRACTS: Record<string, ExpectedSharedFamilyContract> = {
   "amazon-bedrock": {
@@ -87,6 +102,68 @@ function listFiles(dir: string): string[] {
   const files: string[] = [];
 
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
+=======
+  /\bexpectPassthroughReplayPolicy\s*\(/u,
+] as const;
+const EXPECTED_SENTINEL_SHARED_FAMILY_ASSIGNMENTS: Record<string, ExpectedSharedFamilyContract> = {
+  google: {
+    replayFamilies: ["google-gemini"],
+    toolCompatFamilies: ["gemini"],
+  },
+  minimax: {
+    replayFamilies: ["hybrid-anthropic-openai"],
+  },
+  openai: {
+    toolCompatFamilies: ["openai"],
+  },
+};
+let bundledPluginRootsCache:
+  | Array<{
+      pluginId: string;
+      rootDir: string;
+    }>
+  | undefined;
+const filesByDirCache = new Map<string, string[]>();
+
+function toRepoRelative(path: string): string {
+  return toRepoRelativePath(REPO_ROOT, path);
+}
+
+function shouldSkipScannedPath(relativePath: string): boolean {
+  return relativePath.split("/").some((part) => part === "dist" || part === "node_modules");
+}
+
+function listGitFiles(dir: string): string[] | null {
+  const relativeDir = toRepoRelative(dir);
+  if (!relativeDir || relativeDir.startsWith("..")) {
+    return null;
+  }
+  const files = listGitTrackedFiles({ repoRoot: REPO_ROOT, pathspecs: relativeDir });
+  if (!files) {
+    return null;
+  }
+  return files
+    .filter((line) => !shouldSkipScannedPath(line))
+    .map((line) => resolve(REPO_ROOT, line))
+    .filter((filePath) => fs.existsSync(filePath))
+    .toSorted();
+}
+
+function listFiles(dir: string): string[] {
+  const cached = filesByDirCache.get(dir);
+  if (cached) {
+    return cached;
+  }
+  const gitFiles = listGitFiles(dir);
+  if (gitFiles) {
+    filesByDirCache.set(dir, gitFiles);
+    return gitFiles;
+  }
+
+  const files: string[] = [];
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+>>>>>>> upstream/main
     if (entry.name === "dist" || entry.name === "node_modules") {
       continue;
     }
@@ -98,10 +175,15 @@ function listFiles(dir: string): string[] {
     files.push(entryPath);
   }
 
+<<<<<<< HEAD
+=======
+  filesByDirCache.set(dir, files);
+>>>>>>> upstream/main
   return files;
 }
 
 function listBundledPluginRoots() {
+<<<<<<< HEAD
   return loadPluginManifestRegistry({})
     .plugins.filter((plugin) => plugin.origin === "bundled")
     .map((plugin) => ({
@@ -109,6 +191,34 @@ function listBundledPluginRoots() {
       rootDir: plugin.workspaceDir ?? plugin.rootDir,
     }))
     .toSorted((left, right) => left.pluginId.localeCompare(right.pluginId));
+=======
+  if (bundledPluginRootsCache) {
+    return bundledPluginRootsCache;
+  }
+  bundledPluginRootsCache = loadPluginManifestRegistry({
+    workspaceDir: REPO_ROOT,
+    env: {
+      ...process.env,
+      OPENCLAW_BUNDLED_PLUGINS_DIR: BUNDLED_SOURCE_EXTENSIONS_ROOT,
+      OPENCLAW_TEST_TRUST_BUNDLED_PLUGINS_DIR: "1",
+    },
+  })
+    .plugins.filter((plugin) => plugin.origin === "bundled")
+    .map((plugin) => ({
+      pluginId: plugin.id,
+      rootDir: resolveBundledPluginSourceRoot(plugin.rootDir, plugin.workspaceDir),
+    }))
+    .toSorted((left, right) => left.pluginId.localeCompare(right.pluginId));
+  return bundledPluginRootsCache;
+}
+
+function resolveBundledPluginSourceRoot(rootDir: string, workspaceDir?: string): string {
+  if (workspaceDir) {
+    return workspaceDir;
+  }
+  const sourceRoot = resolve(REPO_ROOT, "extensions", basename(rootDir));
+  return fs.existsSync(sourceRoot) ? sourceRoot : rootDir;
+>>>>>>> upstream/main
 }
 
 function collectSharedFamilyProviders(): Map<string, SharedFamilyProviderInventory> {
@@ -119,7 +229,11 @@ function collectSharedFamilyProviders(): Map<string, SharedFamilyProviderInvento
       if (!filePath.endsWith(".ts") || filePath.endsWith(".test.ts")) {
         continue;
       }
+<<<<<<< HEAD
       const source = readFileSync(filePath, "utf8");
+=======
+      const source = fs.readFileSync(filePath, "utf8");
+>>>>>>> upstream/main
       const matchedKinds = SHARED_FAMILY_HOOK_PATTERNS.filter(({ regex }) => regex.test(source));
       if (matchedKinds.length === 0) {
         continue;
@@ -147,7 +261,11 @@ function collectProviderBoundaryTests(): Map<string, Set<string>> {
       if (!filePath.endsWith(".test.ts")) {
         continue;
       }
+<<<<<<< HEAD
       const source = readFileSync(filePath, "utf8");
+=======
+      const source = fs.readFileSync(filePath, "utf8");
+>>>>>>> upstream/main
       if (!PROVIDER_BOUNDARY_TEST_SIGNALS.some((signal) => signal.test(source))) {
         continue;
       }
@@ -166,7 +284,11 @@ function listMatchingFamilies(source: string, pattern: RegExp): string[] {
 
 function collectSharedFamilyAssignments(): Map<string, ExpectedSharedFamilyContract> {
   const inventory = new Map<string, ExpectedSharedFamilyContract>();
+<<<<<<< HEAD
   const replayPattern = /buildProviderReplayFamilyHooks\s*\(\s*\{\s*family:\s*"([^"]+)"/gu;
+=======
+  const replayPattern = /buildProviderReplayFamilyHooks\s*\(\s*\{[\s\S]*?\bfamily:\s*"([^"]+)"/gu;
+>>>>>>> upstream/main
   const streamPattern = /buildProviderStreamFamilyHooks\s*\(\s*"([^"]+)"/gu;
   const toolCompatPattern = /buildProviderToolCompatFamilyHooks\s*\(\s*"([^"]+)"/gu;
 
@@ -175,7 +297,11 @@ function collectSharedFamilyAssignments(): Map<string, ExpectedSharedFamilyContr
       if (!filePath.endsWith(".ts") || filePath.endsWith(".test.ts")) {
         continue;
       }
+<<<<<<< HEAD
       const source = readFileSync(filePath, "utf8");
+=======
+      const source = fs.readFileSync(filePath, "utf8");
+>>>>>>> upstream/main
       const replayFamilies = listMatchingFamilies(source, replayPattern);
       const streamFamilies = listMatchingFamilies(source, streamPattern);
       const toolCompatFamilies = listMatchingFamilies(source, toolCompatPattern);
@@ -210,10 +336,43 @@ function collectSharedFamilyAssignments(): Map<string, ExpectedSharedFamilyContr
 }
 
 describe("provider family plugin-boundary inventory", () => {
+<<<<<<< HEAD
   it("keeps shared-family provider hooks covered by at least one plugin-boundary test", () => {
     const sharedFamilyProviders = collectSharedFamilyProviders();
     const providerBoundaryTests = collectProviderBoundaryTests();
 
+=======
+  let bundledRoots: ReturnType<typeof listBundledPluginRoots>;
+  let sharedFamilyProviders: ReturnType<typeof collectSharedFamilyProviders>;
+  let providerBoundaryTests: ReturnType<typeof collectProviderBoundaryTests>;
+  let actualAssignments: Record<string, ExpectedSharedFamilyContract>;
+
+  beforeAll(() => {
+    bundledRoots = listBundledPluginRoots();
+    for (const plugin of bundledRoots) {
+      listFiles(plugin.rootDir);
+    }
+    sharedFamilyProviders = collectSharedFamilyProviders();
+    providerBoundaryTests = collectProviderBoundaryTests();
+    actualAssignments = Object.fromEntries(
+      [...collectSharedFamilyAssignments().entries()].toSorted(([left], [right]) =>
+        left.localeCompare(right),
+      ),
+    );
+  });
+
+  it("lists bundled plugin files from git without walking plugin roots", () => {
+    filesByDirCache.clear();
+    expectNoReaddirSyncDuring(() => {
+      const files = bundledRoots.flatMap((plugin) => listFiles(plugin.rootDir));
+
+      expect(files.length).toBeGreaterThan(0);
+      expect(files.some((file) => toRepoRelative(file).startsWith("extensions/"))).toBe(true);
+    });
+  });
+
+  it("keeps shared-family provider hooks covered by at least one plugin-boundary test", () => {
+>>>>>>> upstream/main
     const missing = [...sharedFamilyProviders.entries()]
       .filter(([pluginId]) => !providerBoundaryTests.has(pluginId))
       .map(([pluginId, inventory]) => {
@@ -222,6 +381,7 @@ describe("provider family plugin-boundary inventory", () => {
         return `${pluginId} declares shared ${hookKinds} hooks but has no plugin-boundary provider test. Sources: ${sourceFiles}`;
       });
 
+<<<<<<< HEAD
     expect(missing).toEqual([]);
   });
 
@@ -233,5 +393,19 @@ describe("provider family plugin-boundary inventory", () => {
     );
 
     expect(actualAssignments).toEqual(EXPECTED_SHARED_FAMILY_CONTRACTS);
+=======
+    expect(missing).toStrictEqual([]);
+  });
+
+  it("keeps sentinel shared-family assignments wired through bundled provider sources", () => {
+    for (const [pluginId, expected] of Object.entries(
+      EXPECTED_SENTINEL_SHARED_FAMILY_ASSIGNMENTS,
+    )) {
+      if (actualAssignments[pluginId] === undefined) {
+        throw new Error(`missing shared provider-family assignment for ${pluginId}`);
+      }
+      expect(actualAssignments[pluginId]).toEqual(expected);
+    }
+>>>>>>> upstream/main
   });
 });

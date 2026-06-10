@@ -1,8 +1,22 @@
 {
   "id": "runway",
+<<<<<<< HEAD
   "enabledByDefault": true,
   "providerAuthEnvVars": {
     "runway": ["RUNWAYML_API_SECRET", "RUNWAY_API_KEY"]
+=======
+  "activation": {
+    "onStartup": false
+  },
+  "enabledByDefault": true,
+  "setup": {
+    "providers": [
+      {
+        "id": "runway",
+        "envVars": ["RUNWAYML_API_SECRET", "RUNWAY_API_KEY"]
+      }
+    ]
+>>>>>>> upstream/main
   },
   "providerAuthChoices": [
     {
@@ -13,6 +27,10 @@
       "groupId": "runway",
       "groupLabel": "Runway",
       "groupHint": "API key",
+<<<<<<< HEAD
+=======
+      "onboardingScopes": ["image-generation"],
+>>>>>>> upstream/main
       "optionKey": "runwayApiKey",
       "cliFlag": "--runway-api-key",
       "cliOption": "--runway-api-key <key>",

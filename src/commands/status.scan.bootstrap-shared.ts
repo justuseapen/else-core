@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+// Shared bootstrap for status scans.
+// Starts update, Tailscale, agent, and gateway probes with cold-start shortcuts for first-run users.
+
+>>>>>>> upstream/main
 import type { OpenClawConfig } from "../config/types.js";
 import type { UpdateCheckResult } from "../infra/update-check.js";
 import { runExec } from "../process/exec.js";
@@ -5,7 +11,11 @@ import { createEmptyTaskAuditSummary } from "../tasks/task-registry.audit.shared
 import { createEmptyTaskRegistrySummary } from "../tasks/task-registry.summary.js";
 import { buildTailscaleHttpsUrl, resolveGatewayProbeSnapshot } from "./status.scan.shared.js";
 
+<<<<<<< HEAD
 export function buildColdStartUpdateResult(): UpdateCheckResult {
+=======
+function buildColdStartUpdateResult(): UpdateCheckResult {
+>>>>>>> upstream/main
   return {
     root: null,
     installKind: "unknown",
@@ -13,7 +23,11 @@ export function buildColdStartUpdateResult(): UpdateCheckResult {
   };
 }
 
+<<<<<<< HEAD
 export function buildColdStartAgentLocalStatuses() {
+=======
+function buildColdStartAgentLocalStatuses() {
+>>>>>>> upstream/main
   return {
     defaultId: "main",
     agents: [],
@@ -22,6 +36,10 @@ export function buildColdStartAgentLocalStatuses() {
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Builds an empty summary for cold-start status paths that skip network and session work. */
+>>>>>>> upstream/main
 export function buildColdStartStatusSummary() {
   return {
     runtimeVersion: null,
@@ -43,41 +61,87 @@ export function buildColdStartStatusSummary() {
   };
 }
 
+<<<<<<< HEAD
 export function shouldSkipStatusScanNetworkChecks(params: {
+=======
+function shouldSkipStatusScanNetworkChecks(params: {
+>>>>>>> upstream/main
   coldStart: boolean;
   hasConfiguredChannels: boolean;
   all?: boolean;
 }): boolean {
+<<<<<<< HEAD
   return params.coldStart && !params.hasConfiguredChannels && params.all !== true;
 }
 
 export async function createStatusScanCoreBootstrap<TAgentStatus>(params: {
+=======
+  // First-run users without channels should get instant status instead of waiting on network probes.
+  return params.coldStart && !params.hasConfiguredChannels && params.all !== true;
+}
+
+type StatusScanExecRunner = (
+  command: string,
+  args: string[],
+  opts?: number | { timeoutMs?: number; maxBuffer?: number; cwd?: string },
+) => Promise<{ stdout: string; stderr: string }>;
+
+type StatusScanCoreBootstrapParams<TAgentStatus> = {
+>>>>>>> upstream/main
   coldStart: boolean;
   cfg: OpenClawConfig;
   hasConfiguredChannels: boolean;
   opts: { timeoutMs?: number; all?: boolean };
+<<<<<<< HEAD
   getTailnetHostname: (
     runner: (cmd: string, args: string[]) => Promise<unknown>,
   ) => Promise<string | null>;
+=======
+  skipUpdateCheck?: boolean;
+  fetchGitUpdate?: boolean;
+  includeRegistryUpdate?: boolean;
+  includeLocalStatusRpcFallback?: boolean;
+  gatewayProbeTimeoutMs?: number;
+  getTailnetHostname: (runner: StatusScanExecRunner) => Promise<string | null>;
+>>>>>>> upstream/main
   getUpdateCheckResult: (params: {
     timeoutMs: number;
     fetchGit: boolean;
     includeRegistry: boolean;
+<<<<<<< HEAD
   }) => Promise<UpdateCheckResult>;
   getAgentLocalStatuses: (cfg: OpenClawConfig) => Promise<TAgentStatus>;
 }) {
+=======
+    updateConfigChannel?: string | null;
+  }) => Promise<UpdateCheckResult>;
+  getAgentLocalStatuses: (cfg: OpenClawConfig) => Promise<TAgentStatus>;
+};
+
+/** Starts the common async probes used by status scans and exposes their promises to callers. */
+export async function createStatusScanCoreBootstrap<TAgentStatus>(
+  params: StatusScanCoreBootstrapParams<TAgentStatus>,
+) {
+>>>>>>> upstream/main
   const tailscaleMode = params.cfg.gateway?.tailscale?.mode ?? "off";
   const skipColdStartNetworkChecks = shouldSkipStatusScanNetworkChecks({
     coldStart: params.coldStart,
     hasConfiguredChannels: params.hasConfiguredChannels,
     all: params.opts.all,
   });
+<<<<<<< HEAD
   const updateTimeoutMs = params.opts.all ? 6500 : 2500;
+=======
+  const statusTimeoutMs = params.opts.timeoutMs ?? 10_000;
+  const updateTimeoutMs = Math.min(params.opts.all ? 6500 : 2500, statusTimeoutMs);
+  const tailscaleTimeoutMs = Math.min(1200, statusTimeoutMs);
+>>>>>>> upstream/main
   const tailscaleDnsPromise =
     tailscaleMode === "off"
       ? Promise.resolve<string | null>(null)
       : params
           .getTailnetHostname((cmd, args) =>
+<<<<<<< HEAD
             runExec(cmd, args, { timeoutMs: 1200, maxBuffer: 200_000 }),
           )
           .catch(() => null);
@@ -87,6 +151,20 @@ export async function createStatusScanCoreBootstrap<TAgentStatus>(params: {
         timeoutMs: updateTimeoutMs,
         fetchGit: true,
         includeRegistry: true,
+=======
+            runExec(cmd, args, { timeoutMs: tailscaleTimeoutMs, maxBuffer: 200_000 }),
+          )
+          .catch(() => null);
+  const skipNetworkUpdate = skipColdStartNetworkChecks || params.skipUpdateCheck === true;
+  // Update checks can hit git/registry, so cold-start status uses a synthetic unknown result.
+  const updatePromise = skipNetworkUpdate
+    ? Promise.resolve(buildColdStartUpdateResult())
+    : params.getUpdateCheckResult({
+        timeoutMs: updateTimeoutMs,
+        fetchGit: params.fetchGitUpdate ?? true,
+        includeRegistry: params.includeRegistryUpdate ?? true,
+        updateConfigChannel: params.cfg.update?.channel ?? null,
+>>>>>>> upstream/main
       });
   const agentStatusPromise = skipColdStartNetworkChecks
     ? Promise.resolve(buildColdStartAgentLocalStatuses() as TAgentStatus)
@@ -95,7 +173,15 @@ export async function createStatusScanCoreBootstrap<TAgentStatus>(params: {
     cfg: params.cfg,
     opts: {
       ...params.opts,
+<<<<<<< HEAD
       ...(skipColdStartNetworkChecks ? { skipProbe: true } : {}),
+=======
+      ...(params.gatewayProbeTimeoutMs !== undefined
+        ? { timeoutMs: params.gatewayProbeTimeoutMs }
+        : {}),
+      ...(skipColdStartNetworkChecks ? { skipProbe: true } : {}),
+      localStatusRpcFallback: params.includeLocalStatusRpcFallback !== false,
+>>>>>>> upstream/main
     },
   });
 
@@ -110,10 +196,15 @@ export async function createStatusScanCoreBootstrap<TAgentStatus>(params: {
       buildTailscaleHttpsUrl({
         tailscaleMode,
         tailscaleDns: await tailscaleDnsPromise,
+<<<<<<< HEAD
+=======
+        serviceName: params.cfg.gateway?.tailscale?.serviceName,
+>>>>>>> upstream/main
         controlUiBasePath: params.cfg.gateway?.controlUi?.basePath,
       }),
   };
 }
+<<<<<<< HEAD
 
 export async function createStatusScanBootstrap<TAgentStatus, TSummary>(params: {
   coldStart: boolean;
@@ -155,3 +246,5 @@ export async function createStatusScanBootstrap<TAgentStatus, TSummary>(params: 
     summaryPromise,
   };
 }
+=======
+>>>>>>> upstream/main

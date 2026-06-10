@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Private helper surface for the bundled matrix plugin.
 // Keep this list additive and scoped to the bundled Matrix surface.
 
@@ -188,3 +189,11 @@ const matrixSetup = createOptionalChannelSetupSurface({
 
 export const matrixSetupWizard = matrixSetup.setupWizard;
 export const matrixSetupAdapter = matrixSetup.setupAdapter;
+=======
+/**
+ * @deprecated Compatibility facade for older third-party channel packages that
+ * imported the previous Matrix-shaped helper bundle. New plugins should import
+ * `openclaw/plugin-sdk/run-command` directly.
+ */
+export { runPluginCommandWithTimeout } from "./run-command.js";
+>>>>>>> upstream/main

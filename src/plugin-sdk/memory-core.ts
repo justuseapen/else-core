@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Narrow plugin-sdk surface for the bundled memory-core plugin.
 // Keep this list additive and scoped to the bundled memory-core surface.
 
@@ -67,3 +68,10 @@ export {
   resolveMemoryBackendConfig,
 } from "./memory-core-host-runtime-files.js";
 export type { MemorySearchResult } from "./memory-core-host-runtime-files.js";
+=======
+/**
+ * @deprecated Use `openclaw/plugin-sdk/memory-host-core` for vendor-neutral
+ * memory host helpers.
+ */
+export * from "./memory-host-core.js";
+>>>>>>> upstream/main

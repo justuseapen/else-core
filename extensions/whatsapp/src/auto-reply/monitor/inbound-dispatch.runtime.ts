@@ -1,10 +1,20 @@
+<<<<<<< HEAD
 export {
   createChannelReplyPipeline,
+=======
+// Whatsapp plugin module implements inbound dispatch behavior.
+export {
+  createChannelMessageReplyPipeline,
+>>>>>>> upstream/main
   dispatchReplyWithBufferedBlockDispatcher,
   finalizeInboundContext,
   getAgentScopedMediaLocalRoots,
   jidToE164,
   logVerbose,
+<<<<<<< HEAD
+=======
+  resolveChannelMessageSourceReplyDeliveryMode,
+>>>>>>> upstream/main
   resolveChunkMode,
   resolveIdentityNamePrefix,
   resolveInboundLastRouteSessionKey,

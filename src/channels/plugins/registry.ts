@@ -1,4 +1,13 @@
+/**
+ * Runtime channel plugin registry facade.
+ *
+ * Lists, resolves, and normalizes active channel plugins with bundled fallback.
+ */
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { normalizeAnyChannelId } from "../registry.js";
+import { getBundledChannelPlugin } from "./bundled.js";
 import {
+<<<<<<< HEAD
   getActivePluginChannelRegistryVersion,
   requireActivePluginChannelRegistry,
 } from "../../plugins/runtime.js";
@@ -73,19 +82,60 @@ function resolveCachedChannelPlugins(): CachedChannelPlugins {
   cachedChannelPlugins = next;
   return next;
 }
+=======
+  getLoadedChannelPluginById,
+  getLoadedChannelPluginEntryById,
+  listLoadedChannelPlugins,
+} from "./registry-loaded.js";
+import type { ChannelPlugin } from "./types.plugin.js";
+import type { ChannelId } from "./types.public.js";
+>>>>>>> upstream/main
 
+/**
+ * Lists currently loaded channel plugins in registry order.
+ */
 export function listChannelPlugins(): ChannelPlugin[] {
-  return resolveCachedChannelPlugins().sorted.slice();
+  return listLoadedChannelPlugins() as ChannelPlugin[];
 }
 
-export function getChannelPlugin(id: ChannelId): ChannelPlugin | undefined {
-  const resolvedId = String(id).trim();
+/**
+ * Returns a loaded channel plugin without falling back to bundled metadata.
+ */
+export function getLoadedChannelPlugin(id: ChannelId): ChannelPlugin | undefined {
+  const resolvedId = normalizeOptionalString(id) ?? "";
   if (!resolvedId) {
     return undefined;
   }
-  return resolveCachedChannelPlugins().byId.get(resolvedId);
+  return getLoadedChannelPluginById(resolvedId) as ChannelPlugin | undefined;
 }
 
+/**
+ * Returns the package/install origin for a loaded channel plugin.
+ */
+export function getLoadedChannelPluginOrigin(id: ChannelId): string | undefined {
+  const resolvedId = normalizeOptionalString(id) ?? "";
+  if (!resolvedId) {
+    return undefined;
+  }
+  return normalizeOptionalString(getLoadedChannelPluginEntryById(resolvedId)?.origin) ?? undefined;
+}
+
+/**
+ * Returns the active channel plugin, with bundled fallback for built-in channels.
+ */
+export function getChannelPlugin(id: ChannelId): ChannelPlugin | undefined {
+  const resolvedId = normalizeOptionalString(id) ?? "";
+  if (!resolvedId) {
+    return undefined;
+  }
+  // Loaded plugins win over bundled fallbacks so installed plugin state can pin
+  // or override a bundled channel during runtime.
+  return getLoadedChannelPlugin(resolvedId) ?? getBundledChannelPlugin(resolvedId);
+}
+
+/**
+ * Normalizes user-facing channel aliases to canonical channel ids.
+ */
 export function normalizeChannelId(raw?: string | null): ChannelId | null {
   return normalizeAnyChannelId(raw);
 }

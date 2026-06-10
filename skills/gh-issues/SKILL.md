@@ -1,12 +1,12 @@
 ---
 name: gh-issues
-description: "Fetch GitHub issues, spawn sub-agents to implement fixes and open PRs, then monitor and address PR review comments. Usage: /gh-issues [owner/repo] [--label bug] [--limit 5] [--milestone v1.0] [--assignee @me] [--fork user/repo] [--watch] [--interval 5] [--reviews-only] [--cron] [--dry-run] [--model glm-5] [--notify-channel -1002381931352]"
+description: "Fetch GitHub issues, select candidates, spawn background fix agents, open PRs, and optionally process PR review comments."
 user-invocable: true
 metadata:
   {
     "openclaw":
       {
-        "requires": { "bins": ["curl", "git", "gh"] },
+        "requires": { "bins": ["git", "gh"] },
         "primaryEnv": "GH_TOKEN",
         "install":
           [
@@ -22,114 +22,133 @@ metadata:
   }
 ---
 
-# gh-issues — Auto-fix GitHub Issues with Parallel Sub-agents
+# gh-issues
 
-You are an orchestrator. Follow these 6 phases exactly. Do not skip phases.
+Use for issue-to-PR automation. Prefer `gh` CLI; fall back to `gh api` only when a high-level command lacks the needed field.
 
-IMPORTANT — No `gh` CLI dependency. This skill uses curl + the GitHub REST API exclusively. The GH_TOKEN env var is already injected by OpenClaw. Pass it as a Bearer token in all API calls:
+## Arguments
 
-```
-curl -s -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" ...
-```
+- positional `owner/repo`: optional; else infer from `git remote get-url origin`.
+- `--label <label>`: filter.
+- `--limit <n>`: default 10.
+- `--milestone <title>`: filter.
+- `--assignee <login|@me>`: filter.
+- `--state open|closed|all`: default open.
+- `--fork <owner/repo>`: push branches to fork, PR to source.
+- `--watch`: poll issues + reviews.
+- `--interval <minutes>`: default 5.
+- `--dry-run`: list only.
+- `--yes`: no confirmation.
+- `--reviews-only`: skip issue fixing; handle PR reviews.
+- `--cron`: spawn and exit; implies `--yes`.
+- `--model <id>`: pass to workers when supported.
+- `--notify-channel <id>`: optional final notification target.
 
----
+## Phase 1: resolve repo
 
-## Phase 1 — Parse Arguments
-
-Parse the arguments string provided after /gh-issues.
-
-Positional:
-
-- owner/repo — optional. This is the source repo to fetch issues from. If omitted, detect from the current git remote:
-  `git remote get-url origin`
-  Extract owner/repo from the URL (handles both HTTPS and SSH formats).
-  - HTTPS: https://github.com/owner/repo.git → owner/repo
-  - SSH: git@github.com:owner/repo.git → owner/repo
-    If not in a git repo or no remote found, stop with an error asking the user to specify owner/repo.
-
-Flags (all optional):
-| Flag | Default | Description |
-|------|---------|-------------|
-| --label | _(none)_ | Filter by label (e.g. bug, `enhancement`) |
-| --limit | 10 | Max issues to fetch per poll |
-| --milestone | _(none)_ | Filter by milestone title |
-| --assignee | _(none)_ | Filter by assignee (`@me` for self) |
-| --state | open | Issue state: open, closed, all |
-| --fork | _(none)_ | Your fork (`user/repo`) to push branches and open PRs from. Issues are fetched from the source repo; code is pushed to the fork; PRs are opened from the fork to the source repo. |
-| --watch | false | Keep polling for new issues and PR reviews after each batch |
-| --interval | 5 | Minutes between polls (only with `--watch`) |
-| --dry-run | false | Fetch and display only — no sub-agents |
-| --yes | false | Skip confirmation and auto-process all filtered issues |
-| --reviews-only | false | Skip issue processing (Phases 2-5). Only run Phase 6 — check open PRs for review comments and address them. |
-| --cron | false | Cron-safe mode: fetch issues and spawn sub-agents, exit without waiting for results. |
-| --model | _(none)_ | Model to use for sub-agents (e.g. `glm-5`, `zai/glm-5`). If not specified, uses the agent's default model. |
-| --notify-channel | _(none)_ | Telegram channel ID to send final PR summary to (e.g. -1002381931352). Only the final result with PR links is sent, not status updates. |
-
-Store parsed values for use in subsequent phases.
-
-Derived values:
-
-- SOURCE_REPO = the positional owner/repo (where issues live)
-- PUSH_REPO = --fork value if provided, otherwise same as SOURCE_REPO
-- FORK_MODE = true if --fork was provided, false otherwise
-
-**If `--reviews-only` is set:** Skip directly to Phase 6. Run token resolution (from Phase 2) first, then jump to Phase 6.
-
-**If `--cron` is set:**
-
-- Force `--yes` (skip confirmation)
-- If `--reviews-only` is also set, run token resolution then jump to Phase 6 (cron review mode)
-- Otherwise, proceed normally through Phases 2-5 with cron-mode behavior active
-
----
-
-## Phase 2 — Fetch Issues
-
-**Token Resolution:**
-First, ensure GH_TOKEN is available. Check environment:
-
-```
-echo $GH_TOKEN
+```bash
+git remote get-url origin
+if [ -z "${GH_TOKEN:-}" ]; then
+  CONFIG_PATH="${OPENCLAW_CONFIG_PATH:-${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/openclaw.json}"
+  GH_TOKEN=$(jq -r '.skills.entries["gh-issues"].apiKey // empty' "$CONFIG_PATH" 2>/dev/null || true)
+  if [ -n "$GH_TOKEN" ]; then export GH_TOKEN; fi
+fi
+gh auth status
+gh repo view OWNER/REPO --json nameWithOwner,defaultBranchRef
 ```
 
-If empty, read from config:
+If `gh auth status` fails and `GH_TOKEN` is missing, stop and ask for GitHub auth/config.
 
+Derived:
+
+- `SOURCE_REPO`: issue repo.
+- `PUSH_REPO`: fork if set, else source.
+- `BASE_BRANCH`: source default branch unless user says otherwise.
+- `PUSH_REMOTE`: `fork` in fork mode, else `origin`.
+
+Stop on dirty worktree unless user confirms that workers should ignore uncommitted changes.
+
+In fork mode, do not mutate remotes before confirmation or during `--dry-run`.
+
+Verify auth/read access only:
+
+```bash
+gh auth token >/dev/null || test -n "${GH_TOKEN:-}"
+gh repo view "$PUSH_REPO" --json nameWithOwner
+git ls-remote --exit-code origin HEAD
+```
+
+## Phase 2: fetch issues
+
+<<<<<<< HEAD
 ```
 CONFIG_PATH="${OPENCLAW_CONFIG_PATH:-${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/openclaw.json}"
 cat "$CONFIG_PATH" | jq -r '.skills.entries["gh-issues"].apiKey // empty'
+=======
+Build filters and fetch:
+
+```bash
+gh issue list --repo "$SOURCE_REPO" --state open --limit 10 --json number,title,labels,url,body,assignees,milestone
+>>>>>>> upstream/main
 ```
 
-If still empty, check `/data/.clawdbot/openclaw.json`:
+Add `--label`, `--milestone`, `--assignee`, `--state`, `--limit` as requested. `gh issue list` already excludes PRs.
 
-```
-cat /data/.clawdbot/openclaw.json | jq -r '.skills.entries["gh-issues"].apiKey // empty'
-```
+If none found: report no matches. If `--dry-run`: show compact list and stop.
 
-Export as GH_TOKEN for subsequent commands:
+## Phase 3: avoid duplicate work
 
-```
-export GH_TOKEN="<token>"
-```
+For each candidate:
 
-Build and run a curl request to the GitHub Issues API via exec:
-
-```
-curl -s -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-  "https://api.github.com/repos/{SOURCE_REPO}/issues?per_page={limit}&state={state}&{query_params}"
+```bash
+gh pr list --repo "$SOURCE_REPO" --search "$SOURCE_REPO#<n>" --state open --json number,url,title,headRefName
+gh pr list --repo "$SOURCE_REPO" --head "fix/issue-<n>" --state open --json number,url
+gh api "repos/$PUSH_REPO/branches/fix/issue-<n>" >/dev/null
 ```
 
-Where {query_params} is built from:
+Skip candidates with an open PR, existing branch, or active local claim.
 
-- labels={label} if --label was provided
-- milestone={milestone} if --milestone was provided (note: API expects milestone _number_, so if user provides a title, first resolve it via GET /repos/{SOURCE_REPO}/milestones and match by title)
-- assignee={assignee} if --assignee was provided (if @me, first resolve your username via `GET /user`)
+Claim file:
 
-IMPORTANT: The GitHub Issues API also returns pull requests. Filter them out — exclude any item where pull_request key exists in the response object.
+```text
+${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/gh-issues-<owner>-<repo>.json
+```
 
-If in watch mode: Also filter out any issue numbers already in the PROCESSED_ISSUES set from previous batches.
+Expire claims older than 2 hours.
+Create the parent directory before writing.
 
-Error handling:
+## Phase 4: confirm
 
+Unless `--yes` or `--cron`, ask user to choose:
+
+- `all`
+- comma-separated issue numbers
+- `cancel`
+
+After confirmation, in fork mode, configure the push remote before handing work to agents:
+
+```bash
+gh auth setup-git
+git remote get-url fork || git remote add fork "https://github.com/$PUSH_REPO.git"
+git remote set-url fork "https://github.com/$PUSH_REPO.git"
+git ls-remote --exit-code fork HEAD
+```
+
+## Phase 5: spawn workers
+
+Launch up to 8 background workers. Do not block on each worker when `--cron`.
+
+Before each spawn, write a claim for `SOURCE_REPO#<n>` with the current ISO timestamp. After a worker reports PR/failure, remove or update the claim. This prevents watch/cron overlap before a branch or PR exists.
+
+Worker prompt must include:
+
+- issue URL, title, body, labels.
+- `SOURCE_REPO`, `PUSH_REPO`, `BASE_BRANCH`, `PUSH_REMOTE`, fork mode.
+- target branch `fix/issue-<n>`.
+- required proof and PR body.
+- notification route.
+
+<<<<<<< HEAD
 - If curl returns an HTTP 401 or 403 → stop and tell the user:
   > "GitHub authentication failed. Please check your apiKey in the OpenClaw dashboard or in the active OpenClaw config path (`$OPENCLAW_CONFIG_PATH`, default `~/.openclaw/openclaw.json`) under `skills.entries.gh-issues`."
 - If the response is an empty array (after filtering) → report "No issues found matching filters" and stop (or loop back if in watch mode).
@@ -391,134 +410,82 @@ Body: {body}
 Follow these steps in order. If any step fails, report the failure and stop.
 
 0. SETUP — Ensure GH_TOKEN is available:
+=======
+Worker instructions:
+
+```text
+Use gh and git. Do not handwave.
+Checkout/create fix/issue-<n> from BASE_BRANCH.
+Implement minimal fix.
+Run relevant tests.
+Commit with conventional message.
+Push to PUSH_REMOTE.
+Open PR against SOURCE_REPO BASE_BRANCH.
+PR body: Summary + Verification + Fixes SOURCE_REPO#<n>.
+Report PR URL or failure reason.
+Send completion/failure with openclaw message send if route provided.
+>>>>>>> upstream/main
 ```
 
-export GH_TOKEN=$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync('/data/.clawdbot/openclaw.json','utf8')); console.log(c.skills?.entries?.['gh-issues']?.apiKey || '')")
+Use `coding-agent` launch rules when available.
 
-```
-If that fails, also try:
+## Phase 6: collect
+
+Poll workers with `process` or task registry. Report:
+
+- issue number + title.
+- status: PR opened, skipped, failed, timed out.
+- PR URL or reason.
+
+Notify channel only with final compact summary.
+
+## Reviews-only / watch reviews
+
+Discover open PRs:
+
+```bash
+gh pr list --repo "$SOURCE_REPO" --state open --json number,title,url,headRefName,reviewDecision \
+  --jq '[.[] | select(.headRefName | startswith("fix/issue-"))]'
 ```
 
+<<<<<<< HEAD
 export CONFIG_PATH="${OPENCLAW_CONFIG_PATH:-${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/openclaw.json}"
 export GH_TOKEN=$(cat "$CONFIG_PATH" 2>/dev/null | node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync(0,'utf8'));console.log(d.skills?.entries?.['gh-issues']?.apiKey||'')")
+=======
+Fetch review threads/comments:
+>>>>>>> upstream/main
 
-```
-Verify: echo "Token: ${GH_TOKEN:0:10}..."
-
-1. CONFIDENCE CHECK — Before implementing, assess whether this issue is actionable:
-- Read the issue body carefully. Is the problem clearly described?
-- Search the codebase (grep/find) for the relevant code. Can you locate it?
-- Is the scope reasonable? (single file/function = good, whole subsystem = bad)
-- Is a specific fix suggested or is it a vague complaint?
-
-Rate your confidence (1-10). If confidence < 7, STOP and report:
-> "Skipping #{number}: Low confidence (score: N/10) — [reason: vague requirements | cannot locate code | scope too large | no clear fix suggested]"
-
-Only proceed if confidence >= 7.
-
-1. UNDERSTAND — Read the issue carefully. Identify what needs to change and where.
-
-2. BRANCH — Create a feature branch from the base branch:
-git checkout -b fix/issue-{number} {BASE_BRANCH}
-
-3. ANALYZE — Search the codebase to find relevant files:
-- Use grep/find via exec to locate code related to the issue
-- Read the relevant files to understand the current behavior
-- Identify the root cause
-
-4. IMPLEMENT — Make the minimal, focused fix:
-- Follow existing code style and conventions
-- Change only what is necessary to fix the issue
-- Do not add unrelated changes or new dependencies without justification
-
-5. TEST — Discover and run the existing test suite if one exists:
-- Look for package.json scripts, Makefile targets, pytest, cargo test, etc.
-- Run the relevant tests
-- If tests fail after your fix, attempt ONE retry with a corrected approach
-- If tests still fail, report the failure
-
-6. COMMIT — Stage and commit your changes:
-git add {changed_files}
-git commit -m "fix: {short_description}
-
-Fixes {SOURCE_REPO}#{number}"
-
-7. PUSH — Push the branch:
-First, ensure the push remote uses token auth and disable credential helpers:
-git config --global credential.helper ""
-git remote set-url {PUSH_REMOTE} https://x-access-token:$GH_TOKEN@github.com/{PUSH_REPO}.git
-Then push:
-GIT_ASKPASS=true git push -u {PUSH_REMOTE} fix/issue-{number}
-
-8. PR — Create a pull request using the GitHub API:
-
-If FORK_MODE is true, the PR goes from your fork to the source repo:
-- head = "{PUSH_REPO_OWNER}:fix/issue-{number}"
-- base = "{BASE_BRANCH}"
-- PR is created on {SOURCE_REPO}
-
-If FORK_MODE is false:
-- head = "fix/issue-{number}"
-- base = "{BASE_BRANCH}"
-- PR is created on {SOURCE_REPO}
-
-curl -s -X POST \
-  -H "Authorization: Bearer $GH_TOKEN" \
-  -H "Accept: application/vnd.github+json" \
-  https://api.github.com/repos/{SOURCE_REPO}/pulls \
-  -d '{
-    "title": "fix: {title}",
-    "head": "{head_value}",
-    "base": "{BASE_BRANCH}",
-    "body": "## Summary\n\n{one_paragraph_description_of_fix}\n\n## Changes\n\n{bullet_list_of_changes}\n\n## Testing\n\n{what_was_tested_and_results}\n\nFixes {SOURCE_REPO}#{number}"
-  }'
-
-Extract the `html_url` from the response — this is the PR link.
-
-9. REPORT — Send back a summary:
-- PR URL (the html_url from step 8)
-- Files changed (list)
-- Fix summary (1-2 sentences)
-- Any caveats or concerns
-
-10. NOTIFY (if notify_channel is set) — If {notify_channel} is not empty, send a notification to the Telegram channel:
+```bash
+gh pr view <n> --repo "$SOURCE_REPO" --json url,headRefName,comments,reviews
+gh api "repos/$SOURCE_REPO/pulls/<n>/comments"
+gh api "repos/$SOURCE_REPO/issues/<n>/comments"
 ```
 
-Use the message tool with:
+Only process `fix/issue-*` PRs created by this workflow unless the user explicitly named PR numbers. Group actionable comments by PR. Ignore praise, status, duplicates, and already-addressed comments. Spawn one worker per selected/scoped PR, same background rules.
 
-- action: "send"
-- channel: "telegram"
-- target: "{notify_channel}"
-- message: "✅ PR Created: {SOURCE_REPO}#{number}
+Review worker instructions:
 
-{title}
-
-{pr_url}
-
-Files changed: {files_changed_list}"
-
-```
-</instructions>
-
-<constraints>
-- No force-push, no modifying the base branch
-- No unrelated changes or gratuitous refactoring
-- No new dependencies without strong justification
-- If the issue is unclear or too complex to fix confidently, report your analysis instead of guessing
-- Do NOT use the gh CLI — it is not available. Use curl + GitHub REST API for all GitHub operations.
-- GH_TOKEN is already in the environment — do NOT prompt for auth
-- Time limit: you have 60 minutes max. Be thorough — analyze properly, test your fix, don't rush.
-</constraints>
+```text
+Checkout PR branch.
+Read all actionable review comments.
+Patch minimal changes.
+Run relevant tests.
+Commit and push normally; do not force-push unless explicitly told.
+Reply to addressed comments with fix + commit/file reference.
+Report comments addressed/skipped and proof.
 ```
 
-### Spawn configuration per sub-agent:
+## Watch mode
 
-- runTimeoutSeconds: 3600 (60 minutes)
-- cleanup: "keep" (preserve transcripts for review)
-- If `--model` was provided, include `model: "{MODEL}"` in the spawn config
+Loop:
 
-### Timeout Handling
+1. Fetch issues.
+2. Spawn eligible issue workers.
+3. Process actionable PR reviews.
+4. Sleep `--interval`.
+5. Stop when user says stop.
 
+<<<<<<< HEAD
 If a sub-agent exceeds 60 minutes, record it as:
 
 > "#{N} — Timed out (issue may be too complex for auto-fix)"
@@ -883,3 +850,6 @@ Only retain between poll cycles:
 - Parsed arguments from Phase 1
 - BASE_BRANCH, SOURCE_REPO, PUSH_REPO, FORK_MODE, BOT_USERNAME
   Do NOT retain issue bodies, comment bodies, sub-agent transcripts, or codebase analysis between polls.
+=======
+Keep cumulative summary small.
+>>>>>>> upstream/main

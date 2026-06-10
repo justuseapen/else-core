@@ -1,7 +1,8 @@
+// Matrix tests cover route plugin behavior.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { matrixPlugin } from "../../channel.js";
 import {
-  __testing as sessionBindingTesting,
+  testing as sessionBindingTesting,
   createTestRegistry,
   registerSessionBindingAdapter,
   resolveAgentRoute,
@@ -17,6 +18,36 @@ const baseCfg = {
   },
 } satisfies OpenClawConfig;
 
+<<<<<<< HEAD
+=======
+type RouteBinding = NonNullable<OpenClawConfig["bindings"]>[number];
+type RoutePeer = NonNullable<RouteBinding["match"]["peer"]>;
+
+function matrixBinding(
+  agentId: string,
+  peer?: RoutePeer,
+  type?: RouteBinding["type"],
+): RouteBinding {
+  return {
+    ...(type ? { type } : {}),
+    agentId,
+    match: {
+      channel: "matrix",
+      accountId: "ops",
+      ...(peer ? { peer } : {}),
+    },
+  } as RouteBinding;
+}
+
+function senderPeer(id = "@alice:example.org"): RoutePeer {
+  return { kind: "direct", id };
+}
+
+function dmRoomPeer(id = "!dm:example.org"): RoutePeer {
+  return { kind: "channel", id };
+}
+
+>>>>>>> upstream/main
 function resolveDmRoute(
   cfg: OpenClawConfig,
   opts: {
@@ -46,22 +77,8 @@ describe("resolveMatrixInboundRoute", () => {
     const cfg = {
       ...baseCfg,
       bindings: [
-        {
-          agentId: "room-agent",
-          match: {
-            channel: "matrix",
-            accountId: "ops",
-            peer: { kind: "channel", id: "!dm:example.org" },
-          },
-        },
-        {
-          agentId: "sender-agent",
-          match: {
-            channel: "matrix",
-            accountId: "ops",
-            peer: { kind: "direct", id: "@alice:example.org" },
-          },
-        },
+        matrixBinding("room-agent", dmRoomPeer()),
+        matrixBinding("sender-agent", senderPeer()),
       ],
     } satisfies OpenClawConfig;
 
@@ -76,23 +93,7 @@ describe("resolveMatrixInboundRoute", () => {
   it("uses the DM room as a parent-peer fallback before account-level bindings", () => {
     const cfg = {
       ...baseCfg,
-      bindings: [
-        {
-          agentId: "acp-agent",
-          match: {
-            channel: "matrix",
-            accountId: "ops",
-          },
-        },
-        {
-          agentId: "room-agent",
-          match: {
-            channel: "matrix",
-            accountId: "ops",
-            peer: { kind: "channel", id: "!dm:example.org" },
-          },
-        },
-      ],
+      bindings: [matrixBinding("acp-agent"), matrixBinding("room-agent", dmRoomPeer())],
     } satisfies OpenClawConfig;
 
     const { route, configuredBinding } = resolveDmRoute(cfg);
@@ -106,6 +107,7 @@ describe("resolveMatrixInboundRoute", () => {
   it("can isolate Matrix DMs per room without changing agent selection", () => {
     const cfg = {
       ...baseCfg,
+<<<<<<< HEAD
       bindings: [
         {
           agentId: "sender-agent",
@@ -116,6 +118,9 @@ describe("resolveMatrixInboundRoute", () => {
           },
         },
       ],
+=======
+      bindings: [matrixBinding("sender-agent", senderPeer())],
+>>>>>>> upstream/main
     } satisfies OpenClawConfig;
 
     const { route, configuredBinding } = resolveDmRoute(cfg, {
@@ -134,23 +139,8 @@ describe("resolveMatrixInboundRoute", () => {
     const cfg = {
       ...baseCfg,
       bindings: [
-        {
-          agentId: "room-agent",
-          match: {
-            channel: "matrix",
-            accountId: "ops",
-            peer: { kind: "channel", id: "!dm:example.org" },
-          },
-        },
-        {
-          type: "acp",
-          agentId: "acp-agent",
-          match: {
-            channel: "matrix",
-            accountId: "ops",
-            peer: { kind: "channel", id: "!dm:example.org" },
-          },
-        },
+        matrixBinding("room-agent", dmRoomPeer()),
+        matrixBinding("acp-agent", dmRoomPeer(), "acp"),
       ],
     } satisfies OpenClawConfig;
 
@@ -167,6 +157,7 @@ describe("resolveMatrixInboundRoute", () => {
     const cfg = {
       ...baseCfg,
       bindings: [
+<<<<<<< HEAD
         {
           agentId: "room-agent",
           match: {
@@ -184,6 +175,10 @@ describe("resolveMatrixInboundRoute", () => {
             peer: { kind: "channel", id: "!dm:example.org" },
           },
         },
+=======
+        matrixBinding("room-agent", dmRoomPeer()),
+        matrixBinding("acp-agent", dmRoomPeer(), "acp"),
+>>>>>>> upstream/main
       ],
     } satisfies OpenClawConfig;
 
@@ -227,22 +222,8 @@ describe("resolveMatrixInboundRoute", () => {
     const cfg = {
       ...baseCfg,
       bindings: [
-        {
-          agentId: "sender-agent",
-          match: {
-            channel: "matrix",
-            accountId: "ops",
-            peer: { kind: "direct", id: "@alice:example.org" },
-          },
-        },
-        {
-          agentId: "room-agent",
-          match: {
-            channel: "matrix",
-            accountId: "ops",
-            peer: { kind: "channel", id: "!dm:example.org" },
-          },
-        },
+        matrixBinding("sender-agent", senderPeer()),
+        matrixBinding("room-agent", dmRoomPeer()),
       ],
     } satisfies OpenClawConfig;
 

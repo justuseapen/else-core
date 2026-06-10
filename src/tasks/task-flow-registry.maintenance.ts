@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Reconciles stale task-flow records with their child task state.
+>>>>>>> upstream/main
 import { listTasksForFlowId } from "./runtime-internal.js";
 import {
   listTaskFlowAuditFindings,
@@ -14,6 +18,10 @@ import type { TaskFlowRecord } from "./task-flow-registry.types.js";
 
 const TASK_FLOW_RETENTION_MS = 7 * 24 * 60 * 60_000;
 
+<<<<<<< HEAD
+=======
+/** Counts task-flow registry maintenance actions without exposing individual records. */
+>>>>>>> upstream/main
 export type TaskFlowRegistryMaintenanceSummary = {
   reconciled: number;
   pruned: number;
@@ -22,6 +30,10 @@ export type TaskFlowRegistryMaintenanceSummary = {
 function isTerminalFlow(flow: TaskFlowRecord): boolean {
   return (
     flow.status === "succeeded" ||
+<<<<<<< HEAD
+=======
+    flow.status === "blocked" ||
+>>>>>>> upstream/main
     flow.status === "failed" ||
     flow.status === "cancelled" ||
     flow.status === "lost"
@@ -88,6 +100,43 @@ function finalizeCancelledFlow(flow: TaskFlowRecord, now: number): boolean {
   return false;
 }
 
+<<<<<<< HEAD
+=======
+function shouldRepairTerminalMirroredFlowTimestamp(flow: TaskFlowRecord): boolean {
+  if (flow.syncMode !== "task_mirrored" || !isTerminalFlow(flow)) {
+    return false;
+  }
+  if (flow.endedAt == null || flow.endedAt < flow.createdAt) {
+    return false;
+  }
+  return flow.updatedAt > flow.endedAt;
+}
+
+function repairTerminalMirroredFlowTimestamp(flow: TaskFlowRecord): boolean {
+  let current = flow;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    if (!shouldRepairTerminalMirroredFlowTimestamp(current)) {
+      return false;
+    }
+    const result = updateFlowRecordByIdExpectedRevision({
+      flowId: current.flowId,
+      expectedRevision: current.revision,
+      patch: {
+        updatedAt: current.endedAt,
+      },
+    });
+    if (result.applied) {
+      return true;
+    }
+    if (result.reason === "not_found" || !result.current) {
+      return false;
+    }
+    current = result.current;
+  }
+  return false;
+}
+
+>>>>>>> upstream/main
 export function getInspectableTaskFlowAuditSummary(): TaskFlowAuditSummary {
   return summarizeTaskFlowAuditFindings(listTaskFlowAuditFindings());
 }
@@ -97,6 +146,13 @@ export function previewTaskFlowRegistryMaintenance(): TaskFlowRegistryMaintenanc
   let reconciled = 0;
   let pruned = 0;
   for (const flow of listTaskFlowRecords()) {
+<<<<<<< HEAD
+=======
+    if (shouldRepairTerminalMirroredFlowTimestamp(flow)) {
+      reconciled += 1;
+      continue;
+    }
+>>>>>>> upstream/main
     if (shouldFinalizeCancelledFlow(flow)) {
       reconciled += 1;
       continue;
@@ -117,6 +173,15 @@ export async function runTaskFlowRegistryMaintenance(): Promise<TaskFlowRegistry
     if (!current) {
       continue;
     }
+<<<<<<< HEAD
+=======
+    if (shouldRepairTerminalMirroredFlowTimestamp(current)) {
+      if (repairTerminalMirroredFlowTimestamp(current)) {
+        reconciled += 1;
+      }
+      continue;
+    }
+>>>>>>> upstream/main
     if (shouldFinalizeCancelledFlow(current)) {
       if (finalizeCancelledFlow(current, now)) {
         reconciled += 1;

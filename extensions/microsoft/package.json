@@ -1,11 +1,18 @@
 {
   "name": "@openclaw/microsoft-speech",
+<<<<<<< HEAD
   "version": "2026.4.5",
+=======
+  "version": "2026.6.2",
+>>>>>>> upstream/main
   "private": true,
   "description": "OpenClaw Microsoft speech plugin",
   "type": "module",
   "dependencies": {
-    "node-edge-tts": "^1.2.10"
+    "node-edge-tts": "1.2.10"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
   },
   "openclaw": {
     "extensions": [

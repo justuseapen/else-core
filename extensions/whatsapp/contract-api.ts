@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 type UnsupportedSecretRefConfigCandidate = {
   path: string;
   value: unknown;
@@ -15,14 +16,23 @@ export const unsupportedSecretRefSurfacePatterns = [
 import { whatsappCommandPolicy as whatsappCommandPolicyImpl } from "./src/command-policy.js";
 import { resolveLegacyGroupSessionKey as resolveLegacyGroupSessionKeyImpl } from "./src/group-session-contract.js";
 import { __testing as whatsappAccessControlTestingImpl } from "./src/inbound/access-control.js";
+=======
+// Whatsapp API module exposes the plugin public contract.
+import { whatsappCommandPolicy as whatsappCommandPolicyImpl } from "./src/command-policy.js";
+import { resolveLegacyGroupSessionKey as resolveLegacyGroupSessionKeyImpl } from "./src/group-session-contract.js";
+import { testing as whatsappAccessControlTestingImpl } from "./src/inbound/access-control.js";
+>>>>>>> upstream/main
 import {
   isWhatsAppGroupJid as isWhatsAppGroupJidImpl,
   normalizeWhatsAppTarget as normalizeWhatsAppTargetImpl,
 } from "./src/normalize-target.js";
+<<<<<<< HEAD
 import {
   createWhatsAppPollFixture as createWhatsAppPollFixtureImpl,
   expectWhatsAppPollSent as expectWhatsAppPollSentImpl,
 } from "./src/outbound-test-support.js";
+=======
+>>>>>>> upstream/main
 import { resolveWhatsAppRuntimeGroupPolicy as resolveWhatsAppRuntimeGroupPolicyImpl } from "./src/runtime-group-policy.js";
 import {
   canonicalizeLegacySessionKey as canonicalizeLegacySessionKeyImpl,
@@ -30,8 +40,11 @@ import {
 } from "./src/session-contract.js";
 
 export const canonicalizeLegacySessionKey = canonicalizeLegacySessionKeyImpl;
+<<<<<<< HEAD
 export const createWhatsAppPollFixture = createWhatsAppPollFixtureImpl;
 export const expectWhatsAppPollSent = expectWhatsAppPollSentImpl;
+=======
+>>>>>>> upstream/main
 export const isLegacyGroupSessionKey = isLegacyGroupSessionKeyImpl;
 export const isWhatsAppGroupJid = isWhatsAppGroupJidImpl;
 export const normalizeWhatsAppTarget = normalizeWhatsAppTargetImpl;
@@ -39,6 +52,7 @@ export const resolveLegacyGroupSessionKey = resolveLegacyGroupSessionKeyImpl;
 export const resolveWhatsAppRuntimeGroupPolicy = resolveWhatsAppRuntimeGroupPolicyImpl;
 export const whatsappAccessControlTesting = whatsappAccessControlTestingImpl;
 export const whatsappCommandPolicy = whatsappCommandPolicyImpl;
+<<<<<<< HEAD
 
 export function collectUnsupportedSecretRefConfigCandidates(
   raw: unknown,
@@ -75,3 +89,5 @@ export function collectUnsupportedSecretRefConfigCandidates(
   }
   return candidates;
 }
+=======
+>>>>>>> upstream/main

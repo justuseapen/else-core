@@ -1,9 +1,24 @@
 {
   "id": "vydra",
+<<<<<<< HEAD
   "enabledByDefault": true,
   "providers": ["vydra"],
   "providerAuthEnvVars": {
     "vydra": ["VYDRA_API_KEY"]
+=======
+  "activation": {
+    "onStartup": false
+  },
+  "enabledByDefault": true,
+  "providers": ["vydra"],
+  "setup": {
+    "providers": [
+      {
+        "id": "vydra",
+        "envVars": ["VYDRA_API_KEY"]
+      }
+    ]
+>>>>>>> upstream/main
   },
   "providerAuthChoices": [
     {

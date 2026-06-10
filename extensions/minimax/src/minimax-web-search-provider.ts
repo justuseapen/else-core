@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Type } from "@sinclair/typebox";
 import {
   DEFAULT_SEARCH_COUNT,
@@ -267,18 +268,63 @@ export const __testing = {
   resolveMiniMaxEndpoint,
   resolveMiniMaxRegion,
 } as const;
+=======
+// Minimax provider module implements model/runtime integration.
+import {
+  createWebSearchProviderContractFields,
+  type WebSearchProviderPlugin,
+} from "openclaw/plugin-sdk/provider-web-search-config-contract";
+
+const MINIMAX_CREDENTIAL_PATH = "plugins.entries.minimax.config.webSearch.apiKey";
+const MINIMAX_TOKEN_PLAN_ENV_VARS = [
+  "MINIMAX_CODE_PLAN_KEY",
+  "MINIMAX_CODING_API_KEY",
+  "MINIMAX_OAUTH_TOKEN",
+] as const;
+const MINIMAX_WEB_SEARCH_ENV_VARS = [...MINIMAX_TOKEN_PLAN_ENV_VARS, "MINIMAX_API_KEY"] as const;
+
+type MiniMaxWebSearchRuntime = typeof import("./minimax-web-search-provider.runtime.js");
+
+let miniMaxWebSearchRuntimePromise: Promise<MiniMaxWebSearchRuntime> | undefined;
+
+function loadMiniMaxWebSearchRuntime(): Promise<MiniMaxWebSearchRuntime> {
+  miniMaxWebSearchRuntimePromise ??= import("./minimax-web-search-provider.runtime.js");
+  return miniMaxWebSearchRuntimePromise;
+}
+
+const MiniMaxSearchSchema = {
+  type: "object",
+  properties: {
+    query: { type: "string", description: "Search query string." },
+    count: {
+      type: "integer",
+      description: "Number of results to return (1-10).",
+      minimum: 1,
+      maximum: 10,
+    },
+  },
+} satisfies Record<string, unknown>;
+>>>>>>> upstream/main
 
 export function createMiniMaxWebSearchProvider(): WebSearchProviderPlugin {
   return {
     id: "minimax",
     label: "MiniMax Search",
+<<<<<<< HEAD
     hint: "Structured results via MiniMax Coding Plan search API",
     credentialLabel: "MiniMax Coding Plan key",
     envVars: [...MINIMAX_CODING_PLAN_ENV_VARS],
+=======
+    hint: "Structured results via MiniMax Token Plan search API",
+    onboardingScopes: ["text-inference"],
+    credentialLabel: "MiniMax Token Plan key or OAuth token",
+    envVars: [...MINIMAX_WEB_SEARCH_ENV_VARS],
+>>>>>>> upstream/main
     placeholder: "sk-cp-...",
     signupUrl: "https://platform.minimax.io/user-center/basic-information/interface-key",
     docsUrl: "https://docs.openclaw.ai/tools/minimax-search",
     autoDetectOrder: 15,
+<<<<<<< HEAD
     credentialPath: "plugins.entries.minimax.config.webSearch.apiKey",
     inactiveSecretPaths: ["plugins.entries.minimax.config.webSearch.apiKey"],
     getCredentialValue: (searchConfig) => searchConfig?.apiKey,
@@ -298,5 +344,22 @@ export function createMiniMaxWebSearchProvider(): WebSearchProviderPlugin {
         ) as SearchConfigRecord | undefined,
         ctx.config as Record<string, unknown> | undefined,
       ),
+=======
+    credentialPath: MINIMAX_CREDENTIAL_PATH,
+    ...createWebSearchProviderContractFields({
+      credentialPath: MINIMAX_CREDENTIAL_PATH,
+      searchCredential: { type: "top-level" },
+      configuredCredential: { pluginId: "minimax" },
+    }),
+    createTool: (ctx) => ({
+      description:
+        "Search the web using MiniMax Search API. Returns titles, URLs, snippets, and related search suggestions.",
+      parameters: MiniMaxSearchSchema,
+      execute: async (args) => {
+        const { executeMiniMaxWebSearchProviderTool } = await loadMiniMaxWebSearchRuntime();
+        return await executeMiniMaxWebSearchProviderTool(ctx, args);
+      },
+    }),
+>>>>>>> upstream/main
   };
 }

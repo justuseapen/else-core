@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+/**
+ * Runtime SDK subpath for provider group policy resolution.
+ */
+>>>>>>> upstream/main
 export {
   GROUP_POLICY_BLOCKED_LABEL,
   resolveAllowlistProviderRuntimeGroupPolicy,

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Litellm API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   applyLitellmConfig,
   applyLitellmProviderConfig,

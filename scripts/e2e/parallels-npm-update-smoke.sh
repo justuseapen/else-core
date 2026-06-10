@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+<<<<<<< HEAD
 
 MACOS_VM="macOS Tahoe"
 WINDOWS_VM="Windows 11"
@@ -896,4 +897,10 @@ if [[ "$JSON_OUTPUT" -eq 1 ]]; then
 else
   say "Run dir: $RUN_DIR"
   cat "$RUN_DIR/summary.json"
+=======
+cd "$ROOT_DIR"
+if command -v pnpm >/dev/null 2>&1; then
+  exec pnpm exec tsx scripts/e2e/parallels/npm-update-smoke.ts "$@"
+>>>>>>> upstream/main
 fi
+exec node --import tsx scripts/e2e/parallels/npm-update-smoke.ts "$@"

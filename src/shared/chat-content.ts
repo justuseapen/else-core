@@ -1,3 +1,30 @@
+/** Coerces arbitrary provider content values into displayable text without throwing. */
+export function coerceChatContentText(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value == null) {
+    return "";
+  }
+  if (
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint" ||
+    typeof value === "symbol"
+  ) {
+    return String(value);
+  }
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value) ?? "";
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
+/** Extracts normalized plain text from string content or OpenAI-style text blocks. */
 export function extractTextFromChatContent(
   content: unknown,
   opts?: {
@@ -8,6 +35,7 @@ export function extractTextFromChatContent(
 ): string | null {
   const normalizeText = opts?.normalizeText ?? ((text: string) => text.replace(/\s+/g, " ").trim());
   const joinWith = opts?.joinWith ?? " ";
+<<<<<<< HEAD
   const coerceText = (value: unknown): string => {
     if (typeof value === "string") {
       return value;
@@ -38,6 +66,15 @@ export function extractTextFromChatContent(
     return coerceText(sanitized);
   };
   const normalize = (text: unknown): string => coerceText(normalizeText(coerceText(text)));
+=======
+  const sanitize = (text: unknown): string => {
+    const raw = coerceChatContentText(text);
+    const sanitized = opts?.sanitizeText ? opts.sanitizeText(raw) : raw;
+    return coerceChatContentText(sanitized);
+  };
+  const normalize = (text: unknown): string =>
+    coerceChatContentText(normalizeText(coerceChatContentText(text)));
+>>>>>>> upstream/main
 
   if (typeof content === "string") {
     const value = sanitize(content);
@@ -54,6 +91,7 @@ export function extractTextFromChatContent(
     if (!block || typeof block !== "object") {
       continue;
     }
+    // Non-text blocks can contain media or tool payloads; callers here need visible text only.
     if ((block as { type?: unknown }).type !== "text") {
       continue;
     }

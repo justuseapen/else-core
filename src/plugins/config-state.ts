@@ -1,8 +1,28 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../config/config.js";
+=======
+/** Normalizes plugin config and resolves effective enablement, slots, and activation sources. */
+import {
+  normalizeOptionalLowercaseString,
+  normalizeOptionalString,
+} from "@openclaw/normalization-core/string-coerce";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import {
+  createEffectiveEnableStateResolver,
+  createPluginEnableStateResolver,
+  resolveMemorySlotDecisionShared,
+  resolvePluginActivationDecisionShared,
+  toPluginActivationState,
+  type PluginActivationConfigSourceLike,
+  type PluginActivationSource,
+  type PluginActivationStateLike,
+} from "./config-activation-shared.js";
+>>>>>>> upstream/main
 import {
   hasExplicitPluginConfig as hasExplicitPluginConfigShared,
   isBundledChannelEnabledByChannelConfig as isBundledChannelEnabledByChannelConfigShared,
   normalizePluginsConfigWithResolver,
+<<<<<<< HEAD
   type NormalizedPluginsConfig as SharedNormalizedPluginsConfig,
 } from "./config-normalization-shared.js";
 import { loadPluginManifestRegistry } from "./manifest-registry.js";
@@ -45,10 +65,21 @@ type PluginActivationDecision = {
   cause?: PluginActivationCause;
   reason?: string;
 };
+=======
+  type NormalizePluginId,
+  type NormalizedPluginsConfig as SharedNormalizedPluginsConfig,
+} from "./config-normalization-shared.js";
+import type { PluginOrigin } from "./plugin-origin.types.js";
+import { defaultSlotIdForKey } from "./slots.js";
+
+export type { PluginActivationSource };
+export type PluginActivationState = PluginActivationStateLike;
+>>>>>>> upstream/main
 
 export type PluginActivationConfigSource = {
   plugins: NormalizedPluginsConfig;
   rootConfig?: OpenClawConfig;
+<<<<<<< HEAD
 };
 
 export type NormalizedPluginsConfig = SharedNormalizedPluginsConfig;
@@ -116,12 +147,65 @@ function toPluginActivationState(decision: PluginActivationDecision): PluginActi
     source: decision.source,
     reason: resolvePluginActivationReason(decision.cause, decision.reason),
   };
+=======
+} & PluginActivationConfigSourceLike<OpenClawConfig>;
+
+export type NormalizedPluginsConfig = SharedNormalizedPluginsConfig;
+
+const BUILT_IN_PLUGIN_ALIAS_FALLBACKS: ReadonlyArray<readonly [alias: string, pluginId: string]> = [
+  ["google-gemini-cli", "google"],
+  ["minimax-portal", "minimax"],
+  ["minimax-portal-auth", "minimax"],
+] as const;
+const BUILT_IN_PLUGIN_ALIAS_LOOKUP = new Map<string, string>([
+  ...BUILT_IN_PLUGIN_ALIAS_FALLBACKS,
+  ...BUILT_IN_PLUGIN_ALIAS_FALLBACKS.map(([, pluginId]) => [pluginId, pluginId] as const),
+]);
+
+function getBundledPluginAliasLookup(): ReadonlyMap<string, string> {
+  const lookup = new Map<string, string>();
+  for (const [alias, pluginId] of BUILT_IN_PLUGIN_ALIAS_FALLBACKS) {
+    lookup.set(alias, pluginId);
+  }
+  return lookup;
+}
+
+function normalizePluginIdWithLookup(
+  id: string,
+  getAliasLookup: () => ReadonlyMap<string, string>,
+): string {
+  const trimmed = normalizeOptionalString(id) ?? "";
+  const normalized = normalizeOptionalLowercaseString(trimmed) ?? "";
+  const builtInAlias = BUILT_IN_PLUGIN_ALIAS_LOOKUP.get(normalized);
+  if (builtInAlias) {
+    return builtInAlias;
+  }
+  return getAliasLookup().get(normalized) ?? trimmed;
+}
+
+function createScopedPluginIdNormalizer(): NormalizePluginId {
+  let lookup: ReadonlyMap<string, string> | undefined;
+  return (id) =>
+    normalizePluginIdWithLookup(id, () => {
+      lookup ??= getBundledPluginAliasLookup();
+      return lookup;
+    });
+}
+
+/** Normalizes user/config plugin ids into the canonical lowercase key form. */
+export function normalizePluginId(id: string): string {
+  return normalizePluginIdWithLookup(id, getBundledPluginAliasLookup);
+>>>>>>> upstream/main
 }
 
 export const normalizePluginsConfig = (
   config?: OpenClawConfig["plugins"],
 ): NormalizedPluginsConfig => {
+<<<<<<< HEAD
   return normalizePluginsConfigWithResolver(config, normalizePluginId);
+=======
+  return normalizePluginsConfigWithResolver(config, createScopedPluginIdNormalizer());
+>>>>>>> upstream/main
 };
 
 export function createPluginActivationSource(params: {
@@ -135,10 +219,10 @@ export function createPluginActivationSource(params: {
 }
 
 const hasExplicitMemorySlot = (plugins?: OpenClawConfig["plugins"]) =>
-  Boolean(plugins?.slots && Object.prototype.hasOwnProperty.call(plugins.slots, "memory"));
+  Boolean(plugins?.slots && Object.hasOwn(plugins.slots, "memory"));
 
 const hasExplicitMemoryEntry = (plugins?: OpenClawConfig["plugins"]) =>
-  Boolean(plugins?.entries && Object.prototype.hasOwnProperty.call(plugins.entries, "memory-core"));
+  Boolean(plugins?.entries && Object.hasOwn(plugins.entries, defaultSlotIdForKey("memory")));
 
 export const hasExplicitPluginConfig = (plugins?: OpenClawConfig["plugins"]) =>
   hasExplicitPluginConfigShared(plugins);
@@ -195,6 +279,7 @@ export function isTestDefaultMemorySlotDisabled(
   return true;
 }
 
+<<<<<<< HEAD
 function resolveExplicitPluginSelection(params: {
   id: string;
   origin: PluginOrigin;
@@ -394,24 +479,72 @@ export function isBundledChannelEnabledByChannelConfig(
 }
 
 export function resolveEffectiveEnableState(params: {
+=======
+export function resolvePluginActivationState(params: {
+>>>>>>> upstream/main
   id: string;
   origin: PluginOrigin;
   config: NormalizedPluginsConfig;
   rootConfig?: OpenClawConfig;
   enabledByDefault?: boolean;
   activationSource?: PluginActivationConfigSource;
+<<<<<<< HEAD
 }): { enabled: boolean; reason?: string } {
   const state = resolveEffectivePluginActivationState(params);
   return state.enabled ? { enabled: true } : { enabled: false, reason: state.reason };
 }
 
 export function resolveEffectivePluginActivationState(params: {
+=======
+  autoEnabledReason?: string;
+}): PluginActivationState {
+  return toPluginActivationState(
+    resolvePluginActivationDecisionShared({
+      ...params,
+      activationSource:
+        params.activationSource ??
+        createPluginActivationSource({
+          config: params.rootConfig,
+          plugins: params.config,
+        }),
+      allowBundledChannelExplicitBypassesAllowlist: true,
+      isBundledChannelEnabledByChannelConfig,
+    }),
+  );
+}
+
+export const resolveEnableState = createPluginEnableStateResolver<
+  NormalizedPluginsConfig,
+  PluginOrigin
+>(resolvePluginActivationState);
+
+export const isBundledChannelEnabledByChannelConfig = isBundledChannelEnabledByChannelConfigShared;
+
+type EffectiveActivationParams = {
+>>>>>>> upstream/main
   id: string;
   origin: PluginOrigin;
   config: NormalizedPluginsConfig;
   rootConfig?: OpenClawConfig;
   enabledByDefault?: boolean;
   activationSource?: PluginActivationConfigSource;
+<<<<<<< HEAD
+=======
+};
+
+export const resolveEffectiveEnableState =
+  createEffectiveEnableStateResolver<EffectiveActivationParams>(
+    resolveEffectivePluginActivationState,
+  );
+
+export function resolveEffectivePluginActivationState(params: {
+  id: EffectiveActivationParams["id"];
+  origin: EffectiveActivationParams["origin"];
+  config: EffectiveActivationParams["config"];
+  rootConfig?: EffectiveActivationParams["rootConfig"];
+  enabledByDefault?: EffectiveActivationParams["enabledByDefault"];
+  activationSource?: EffectiveActivationParams["activationSource"];
+>>>>>>> upstream/main
   autoEnabledReason?: string;
 }): PluginActivationState {
   return resolvePluginActivationState(params);
@@ -423,6 +556,7 @@ export function resolveMemorySlotDecision(params: {
   slot: string | null | undefined;
   selectedId: string | null;
 }): { enabled: boolean; reason?: string; selected?: boolean } {
+<<<<<<< HEAD
   if (!hasKind(params.kind as PluginKind | PluginKind[] | undefined, "memory")) {
     return { enabled: true };
   }
@@ -446,4 +580,7 @@ export function resolveMemorySlotDecision(params: {
       : { enabled: false, reason: `memory slot already filled by "${params.selectedId}"` };
   }
   return { enabled: true, selected: true };
+=======
+  return resolveMemorySlotDecisionShared(params);
+>>>>>>> upstream/main
 }

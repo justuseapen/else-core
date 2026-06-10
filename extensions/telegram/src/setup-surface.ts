@@ -1,3 +1,4 @@
+// Telegram plugin module implements setup surface behavior.
 import {
   addWildcardAllowFrom,
   applySetupAccountConfigPatch,
@@ -6,31 +7,41 @@ import {
   type ChannelSetupDmPolicy,
   DEFAULT_ACCOUNT_ID,
   hasConfiguredSecretInput,
-  type OpenClawConfig,
   patchChannelConfigForAccount,
   setSetupChannelEnabled,
   splitSetupEntries,
+  createSetupTranslator,
 } from "openclaw/plugin-sdk/setup";
 import type { ChannelSetupWizard } from "openclaw/plugin-sdk/setup";
-import { formatCliCommand, formatDocsLink } from "openclaw/plugin-sdk/setup-tools";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { inspectTelegramAccount } from "./account-inspect.js";
+import { listTelegramAccountIds, resolveTelegramAccount } from "./accounts.js";
 import {
+<<<<<<< HEAD
   listTelegramAccountIds,
   mergeTelegramAccountConfig,
   resolveDefaultTelegramAccountId,
   resolveTelegramAccount,
 } from "./accounts.js";
 import {
+=======
+  getTelegramTokenHelpLines,
+  getTelegramUserIdHelpLines,
+>>>>>>> upstream/main
   parseTelegramAllowFromId,
-  promptTelegramAllowFromForAccount,
-  resolveTelegramAllowFromEntries,
-  TELEGRAM_TOKEN_HELP_LINES,
-  TELEGRAM_USER_ID_HELP_LINES,
-  telegramSetupAdapter,
 } from "./setup-core.js";
+import {
+  buildTelegramDmAccessWarningLines,
+  ensureTelegramDefaultGroupMentionGate,
+  shouldShowTelegramDmAccessWarning,
+  telegramSetupDmPolicy,
+} from "./setup-surface.helpers.js";
+
+const t = createSetupTranslator();
 
 const channel = "telegram" as const;
 
+<<<<<<< HEAD
 function ensureTelegramDefaultGroupMentionGate(
   cfg: OpenClawConfig,
   accountId: string,
@@ -121,14 +132,16 @@ const dmPolicy: ChannelSetupDmPolicy = {
   promptAllowFrom: promptTelegramAllowFromForAccount,
 };
 
+=======
+>>>>>>> upstream/main
 export const telegramSetupWizard: ChannelSetupWizard = {
   channel,
   status: createStandardChannelSetupStatus({
     channelLabel: "Telegram",
-    configuredLabel: "configured",
-    unconfiguredLabel: "needs token",
-    configuredHint: "recommended · configured",
-    unconfiguredHint: "recommended · newcomer-friendly",
+    configuredLabel: t("wizard.channels.statusConfigured"),
+    unconfiguredLabel: t("wizard.channels.statusNeedsToken"),
+    configuredHint: t("wizard.channels.statusRecommendedConfigured"),
+    unconfiguredHint: t("wizard.channels.statusRecommendedNewcomerFriendly"),
     configuredScore: 1,
     unconfiguredScore: 10,
     resolveConfigured: ({ cfg, accountId }) =>
@@ -145,13 +158,13 @@ export const telegramSetupWizard: ChannelSetupWizard = {
     {
       inputKey: "token",
       providerHint: channel,
-      credentialLabel: "Telegram bot token",
+      credentialLabel: t("wizard.telegram.botToken"),
       preferredEnvVar: "TELEGRAM_BOT_TOKEN",
-      helpTitle: "Telegram bot token",
-      helpLines: TELEGRAM_TOKEN_HELP_LINES,
-      envPrompt: "TELEGRAM_BOT_TOKEN detected. Use env var?",
-      keepPrompt: "Telegram token already configured. Keep it?",
-      inputPrompt: "Enter Telegram bot token",
+      helpTitle: t("wizard.telegram.botToken"),
+      helpLines: getTelegramTokenHelpLines(),
+      envPrompt: t("wizard.telegram.tokenEnvPrompt"),
+      keepPrompt: t("wizard.telegram.tokenKeepPrompt"),
+      inputPrompt: t("wizard.telegram.tokenInputPrompt"),
       allowEnv: ({ accountId }) => accountId === DEFAULT_ACCOUNT_ID,
       inspect: ({ cfg, accountId }) => {
         const resolved = resolveTelegramAccount({ cfg, accountId });
@@ -161,30 +174,27 @@ export const telegramSetupWizard: ChannelSetupWizard = {
         return {
           accountConfigured: Boolean(resolved.token) || hasConfiguredValue,
           hasConfiguredValue,
-          resolvedValue: resolved.token?.trim() || undefined,
+          resolvedValue: normalizeOptionalString(resolved.token),
           envValue:
             accountId === DEFAULT_ACCOUNT_ID
-              ? process.env.TELEGRAM_BOT_TOKEN?.trim() || undefined
+              ? normalizeOptionalString(process.env.TELEGRAM_BOT_TOKEN)
               : undefined,
         };
       },
     },
   ],
   allowFrom: createAllowFromSection({
-    helpTitle: "Telegram user id",
-    helpLines: TELEGRAM_USER_ID_HELP_LINES,
-    credentialInputKey: "token",
-    message: "Telegram allowFrom (numeric sender id; @username resolves to id)",
-    placeholder: "@username",
-    invalidWithoutCredentialNote:
-      "Telegram token missing; use numeric sender ids (usernames require a bot token).",
+    helpTitle: t("wizard.telegram.userIdTitle"),
+    helpLines: getTelegramUserIdHelpLines(),
+    message: t("wizard.telegram.allowFromPrompt"),
+    placeholder: "123456789",
+    invalidWithoutCredentialNote: t("wizard.telegram.allowFromInvalid"),
     parseInputs: splitSetupEntries,
     parseId: parseTelegramAllowFromId,
-    resolveEntries: async ({ cfg, accountId, credentialValues, entries }) =>
-      resolveTelegramAllowFromEntries({
-        credentialValue: credentialValues.token,
-        entries,
-        apiRoot: resolveTelegramAccount({ cfg, accountId }).config.apiRoot,
+    resolveEntries: async ({ entries }) =>
+      entries.map((entry) => {
+        const id = parseTelegramAllowFromId(entry);
+        return { input: entry, resolved: Boolean(id), id };
       }),
     apply: async ({ cfg, accountId, allowFrom }) =>
       patchChannelConfigForAccount({
@@ -203,8 +213,6 @@ export const telegramSetupWizard: ChannelSetupWizard = {
       "Telegram DM access warning",
     );
   },
-  dmPolicy,
+  dmPolicy: telegramSetupDmPolicy,
   disable: (cfg) => setSetupChannelEnabled(cfg, channel, false),
 };
-
-export { parseTelegramAllowFromId, telegramSetupAdapter };

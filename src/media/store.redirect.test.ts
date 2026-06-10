@@ -1,13 +1,15 @@
+// Media store redirect tests cover redirected media paths and lookup behavior.
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { PassThrough } from "node:stream";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createPinnedLookup } from "../infra/net/ssrf.js";
-import { captureEnv } from "../test-utils/env.js";
+import {
+  createOpenClawTestState,
+  type OpenClawTestState,
+} from "../test-utils/openclaw-test-state.js";
 import { saveMediaSource, setMediaStoreNetworkDepsForTest } from "./store.js";
 
-const HOME = path.join(os.tmpdir(), "openclaw-home-redirect");
 const mockRequest = vi.fn();
 
 function createMockHttpExchange() {
@@ -15,6 +17,9 @@ function createMockHttpExchange() {
     statusCode: 0,
     headers: {} as Record<string, string>,
   });
+  const originalResume = res.resume.bind(res);
+  const resume = vi.fn(() => originalResume());
+  res.resume = resume as typeof res.resume;
   const req = {
     on: (event: string, handler: (...args: unknown[]) => void) => {
       if (event === "error") {
@@ -25,7 +30,91 @@ function createMockHttpExchange() {
     end: () => undefined,
     destroy: () => res.destroy(),
   } as const;
-  return { req, res };
+  return { req, res, resume };
+}
+
+function mockRedirectExchange(params: { body?: string; location?: string }) {
+  const { req, res, resume } = createMockHttpExchange();
+  res.statusCode = 302;
+  res.headers = params.location ? { location: params.location } : {};
+  return {
+    req,
+    resume,
+    send(cb: (value: unknown) => void) {
+      setImmediate(() => {
+        cb(res as unknown);
+        if (params.body) {
+          res.write(params.body);
+        }
+        res.end();
+      });
+    },
+  };
+}
+
+function mockHttpStatusExchange(params: { body?: string; statusCode: number }) {
+  const { req, res, resume } = createMockHttpExchange();
+  res.statusCode = params.statusCode;
+  return {
+    req,
+    resume,
+    send(cb: (value: unknown) => void) {
+      setImmediate(() => {
+        cb(res as unknown);
+        if (params.body) {
+          res.write(params.body);
+        }
+        res.end();
+      });
+    },
+  };
+}
+
+function mockSuccessfulTextExchange(params: { text: string; contentType: string }) {
+  const { req, res } = createMockHttpExchange();
+  res.statusCode = 200;
+  res.headers = { "content-type": params.contentType };
+  return {
+    req,
+    send(cb: (value: unknown) => void) {
+      setImmediate(() => {
+        cb(res as unknown);
+        res.write(params.text);
+        res.end();
+      });
+    },
+  };
+}
+
+function getRequestHeaders(callIndex: number): Headers {
+  const [, options] = mockRequest.mock.calls[callIndex] as [
+    URL,
+    { headers?: HeadersInit | Record<string, string> } | undefined,
+  ];
+  return new Headers(options?.headers);
+}
+
+async function expectRedirectSaveResult(params: {
+  expectedText: string;
+  expectedContentType: string;
+  expectedExtension: string;
+  headers?: Record<string, string>;
+  assertRequests?: () => void;
+}) {
+  const saved = await saveMediaSource("https://example.com/start", params.headers);
+  expect(mockRequest).toHaveBeenCalledTimes(2);
+  params.assertRequests?.();
+  expect(saved.contentType).toBe(params.expectedContentType);
+  expect(path.extname(saved.path)).toBe(params.expectedExtension);
+  expect(await fs.readFile(saved.path, "utf8")).toBe(params.expectedText);
+  const stat = await fs.stat(saved.path);
+  const expectedMode = process.platform === "win32" ? 0o666 : 0o644 & ~process.umask();
+  expect(stat.mode & 0o777).toBe(expectedMode);
+}
+
+async function expectRedirectSaveFailure(expectedMessage: string) {
+  await expect(saveMediaSource("https://example.com/start")).rejects.toThrow(expectedMessage);
+  expect(mockRequest).toHaveBeenCalledTimes(1);
 }
 
 function mockRedirectExchange(params: { location?: string }) {
@@ -91,12 +180,13 @@ async function expectRedirectSaveFailure(expectedMessage: string) {
 }
 
 describe("media store redirects", () => {
-  let envSnapshot: ReturnType<typeof captureEnv>;
+  let testState: OpenClawTestState;
 
   beforeAll(async () => {
-    envSnapshot = captureEnv(["OPENCLAW_STATE_DIR"]);
-    await fs.rm(HOME, { recursive: true, force: true });
-    process.env.OPENCLAW_STATE_DIR = HOME;
+    testState = await createOpenClawTestState({
+      layout: "state-only",
+      prefix: "openclaw-media-store-redirect-",
+    });
   });
 
   beforeEach(() => {
@@ -113,8 +203,7 @@ describe("media store redirects", () => {
   });
 
   afterAll(async () => {
-    await fs.rm(HOME, { recursive: true, force: true });
-    envSnapshot.restore();
+    await testState.cleanup();
     setMediaStoreNetworkDepsForTest();
     vi.clearAllMocks();
   });
@@ -202,14 +291,87 @@ describe("media store redirects", () => {
     });
 
     expect(getRequestHeaders(1).get("authorization")).toBe("Bearer secret");
+<<<<<<< HEAD
+=======
+  });
+
+  it("drains ignored redirect response bodies before following redirects", async () => {
+    let redirectResume: ReturnType<typeof vi.fn> | undefined;
+    let call = 0;
+    mockRequest.mockImplementation((_url, _opts, cb) => {
+      call += 1;
+      if (call === 1) {
+        const exchange = mockRedirectExchange({
+          body: "ignored redirect response body",
+          location: "https://example.com/final",
+        });
+        redirectResume = exchange.resume;
+        exchange.send(cb);
+        return exchange.req;
+      }
+
+      const exchange = mockSuccessfulTextExchange({
+        text: "redirected",
+        contentType: "text/plain",
+      });
+      exchange.send(cb);
+      return exchange.req;
+    });
+
+    await saveMediaSource("https://example.com/start");
+
+    expect(redirectResume).toHaveBeenCalledOnce();
+>>>>>>> upstream/main
   });
 
   it("fails when redirect response omits location header", async () => {
+    let redirectResume: ReturnType<typeof vi.fn> | undefined;
     mockRequest.mockImplementationOnce((_url, _opts, cb) => {
+<<<<<<< HEAD
       const exchange = mockRedirectExchange({});
       exchange.send(cb);
       return exchange.req;
     });
     await expectRedirectSaveFailure("Redirect loop or missing Location header");
+=======
+      const exchange = mockRedirectExchange({ body: "ignored redirect response body" });
+      redirectResume = exchange.resume;
+      exchange.send(cb);
+      return exchange.req;
+    });
+    await expectRedirectSaveFailure("Redirect loop or missing Location header");
+    expect(redirectResume).toHaveBeenCalledOnce();
+  });
+
+  it("fails when redirect location is malformed", async () => {
+    let redirectResume: ReturnType<typeof vi.fn> | undefined;
+    mockRequest.mockImplementationOnce((_url, _opts, cb) => {
+      const exchange = mockRedirectExchange({
+        body: "ignored redirect response body",
+        location: "http://[",
+      });
+      redirectResume = exchange.resume;
+      exchange.send(cb);
+      return exchange.req;
+    });
+    await expectRedirectSaveFailure("Invalid redirect Location header");
+    expect(redirectResume).toHaveBeenCalledOnce();
+  });
+
+  it("drains ignored HTTP error response bodies before failing", async () => {
+    let errorResume: ReturnType<typeof vi.fn> | undefined;
+    mockRequest.mockImplementationOnce((_url, _opts, cb) => {
+      const exchange = mockHttpStatusExchange({
+        body: "ignored error response body",
+        statusCode: 500,
+      });
+      errorResume = exchange.resume;
+      exchange.send(cb);
+      return exchange.req;
+    });
+
+    await expectRedirectSaveFailure("HTTP 500 downloading media");
+    expect(errorResume).toHaveBeenCalledOnce();
+>>>>>>> upstream/main
   });
 });

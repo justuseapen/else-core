@@ -15,7 +15,11 @@ import { canonicalizeMainSessionAlias } from "../config/sessions/main-session.js
 import { resolveMainSessionKey } from "../config/sessions/main-session.js";
 import { resolveSessionKey } from "../config/sessions/session-key.js";
 import { resolveCronAgentSessionKey } from "../cron/isolated-agent/session-key.js";
+<<<<<<< HEAD
 import { resolveSessionStoreKey } from "../gateway/session-utils.js";
+=======
+import { resolveSessionStoreKey } from "../gateway/session-store-key.js";
+>>>>>>> upstream/main
 import { normalizeMainKey } from "../routing/session-key.js";
 
 function makeNonDefaultAgentCfg(overrides?: Partial<OpenClawConfig>): OpenClawConfig {

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Qwen plugin module implements model definitions behavior.
+>>>>>>> upstream/main
 export {
   buildQwenDefaultModelDefinition,
   buildQwenModelDefinition,

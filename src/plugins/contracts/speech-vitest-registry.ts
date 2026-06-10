@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createJiti } from "jiti";
 import { loadBundledCapabilityRuntimeRegistry } from "../bundled-capability-runtime.js";
 import { resolveBundledPluginRepoEntryPath } from "../bundled-plugin-metadata.js";
@@ -6,6 +7,14 @@ import type { OpenClawPluginDefinition } from "../types.js";
 import type {
   ImageGenerationProviderPlugin,
   MediaUnderstandingProviderPlugin,
+=======
+// Speech Vitest registry helpers load speech capability runtimes for contract tests.
+import { loadBundledCapabilityRuntimeRegistry } from "../bundled-capability-runtime.js";
+import type {
+  ImageGenerationProviderPlugin,
+  MediaUnderstandingProviderPlugin,
+  TranscriptSourceProvider,
+>>>>>>> upstream/main
   MusicGenerationProviderPlugin,
   RealtimeTranscriptionProviderPlugin,
   RealtimeVoiceProviderPlugin,
@@ -24,6 +33,14 @@ export type MediaUnderstandingProviderContractEntry = {
   provider: MediaUnderstandingProviderPlugin;
 };
 
+<<<<<<< HEAD
+=======
+export type TranscriptsSourceProviderContractEntry = {
+  pluginId: string;
+  provider: TranscriptSourceProvider;
+};
+
+>>>>>>> upstream/main
 export type RealtimeVoiceProviderContractEntry = {
   pluginId: string;
   provider: RealtimeVoiceProviderPlugin;
@@ -53,6 +70,10 @@ type ManifestContractKey =
   | "imageGenerationProviders"
   | "speechProviders"
   | "mediaUnderstandingProviders"
+<<<<<<< HEAD
+=======
+  | "transcriptSourceProviders"
+>>>>>>> upstream/main
   | "realtimeVoiceProviders"
   | "realtimeTranscriptionProviders"
   | "videoGenerationProviders"
@@ -68,6 +89,12 @@ const VITEST_CONTRACT_PLUGIN_IDS = {
   mediaUnderstandingProviders: BUNDLED_PLUGIN_CONTRACT_SNAPSHOTS.filter(
     (entry) => entry.mediaUnderstandingProviderIds.length > 0,
   ).map((entry) => entry.pluginId),
+<<<<<<< HEAD
+=======
+  transcriptSourceProviders: BUNDLED_PLUGIN_CONTRACT_SNAPSHOTS.filter(
+    (entry) => entry.transcriptSourceProviderIds.length > 0,
+  ).map((entry) => entry.pluginId),
+>>>>>>> upstream/main
   realtimeVoiceProviders: BUNDLED_PLUGIN_CONTRACT_SNAPSHOTS.filter(
     (entry) => entry.realtimeVoiceProviderIds.length > 0,
   ).map((entry) => entry.pluginId),
@@ -85,6 +112,7 @@ const VITEST_CONTRACT_PLUGIN_IDS = {
 function loadVitestVideoGenerationFallbackEntries(
   pluginIds: readonly string[],
 ): VideoGenerationProviderContractEntry[] {
+<<<<<<< HEAD
   const jiti = createJiti(import.meta.url, {
     interopDefault: true,
     moduleCache: false,
@@ -124,19 +152,87 @@ function loadVitestVideoGenerationFallbackEntries(
 
 function loadVitestCapabilityContractEntries<T>(params: {
   contract: ManifestContractKey;
+=======
+  return loadVitestCapabilityContractEntries({
+    contract: "videoGenerationProviders",
+    pluginSdkResolution: "src",
+    pluginIds,
+    pickEntries: (registry) =>
+      registry.videoGenerationProviders.map((entry) => ({
+        pluginId: entry.pluginId,
+        provider: entry.provider,
+      })),
+  });
+}
+
+function loadVitestMusicGenerationFallbackEntries(
+  pluginIds: readonly string[],
+): MusicGenerationProviderContractEntry[] {
+  return loadVitestCapabilityContractEntries({
+    contract: "musicGenerationProviders",
+    pluginSdkResolution: "src",
+    pluginIds,
+    pickEntries: (registry) =>
+      registry.musicGenerationProviders.map((entry) => ({
+        pluginId: entry.pluginId,
+        provider: entry.provider,
+      })),
+  });
+}
+
+function loadVitestSpeechFallbackEntries(
+  pluginIds: readonly string[],
+): SpeechProviderContractEntry[] {
+  return loadVitestCapabilityContractEntries({
+    contract: "speechProviders",
+    pluginSdkResolution: "src",
+    pluginIds,
+    pickEntries: (registry) =>
+      registry.speechProviders.map((entry) => ({
+        pluginId: entry.pluginId,
+        provider: entry.provider,
+      })),
+  });
+}
+
+function hasExplicitVideoGenerationModes(provider: VideoGenerationProviderPlugin): boolean {
+  return Boolean(
+    provider.capabilities.generate &&
+    provider.capabilities.imageToVideo &&
+    provider.capabilities.videoToVideo,
+  );
+}
+
+function hasExplicitMusicGenerationModes(provider: MusicGenerationProviderPlugin): boolean {
+  return Boolean(provider.capabilities.generate && provider.capabilities.edit);
+}
+
+function loadVitestCapabilityContractEntries<T>(params: {
+  contract: ManifestContractKey;
+  pluginIds?: readonly string[];
+  pluginSdkResolution?: "dist" | "src";
+>>>>>>> upstream/main
   pickEntries: (registry: ReturnType<typeof loadBundledCapabilityRuntimeRegistry>) => Array<{
     pluginId: string;
     provider: T;
   }>;
 }): Array<{ pluginId: string; provider: T }> {
+<<<<<<< HEAD
   const pluginIds = VITEST_CONTRACT_PLUGIN_IDS[params.contract];
+=======
+  const pluginIds = [...(params.pluginIds ?? VITEST_CONTRACT_PLUGIN_IDS[params.contract])];
+>>>>>>> upstream/main
   if (pluginIds.length === 0) {
     return [];
   }
   const bulkEntries = params.pickEntries(
     loadBundledCapabilityRuntimeRegistry({
       pluginIds,
+<<<<<<< HEAD
       pluginSdkResolution: "dist",
+=======
+      pluginSdkResolution: params.pluginSdkResolution ?? "dist",
+>>>>>>> upstream/main
     }),
   );
   const coveredPluginIds = new Set(bulkEntries.map((entry) => entry.pluginId));
@@ -148,7 +244,11 @@ function loadVitestCapabilityContractEntries<T>(params: {
       .pickEntries(
         loadBundledCapabilityRuntimeRegistry({
           pluginIds: [pluginId],
+<<<<<<< HEAD
           pluginSdkResolution: "dist",
+=======
+          pluginSdkResolution: params.pluginSdkResolution ?? "dist",
+>>>>>>> upstream/main
         }),
       )
       .filter((entry) => entry.pluginId === pluginId),
@@ -156,7 +256,11 @@ function loadVitestCapabilityContractEntries<T>(params: {
 }
 
 export function loadVitestSpeechProviderContractRegistry(): SpeechProviderContractEntry[] {
+<<<<<<< HEAD
   return loadVitestCapabilityContractEntries({
+=======
+  const entries = loadVitestCapabilityContractEntries({
+>>>>>>> upstream/main
     contract: "speechProviders",
     pickEntries: (registry) =>
       registry.speechProviders.map((entry) => ({
@@ -164,6 +268,22 @@ export function loadVitestSpeechProviderContractRegistry(): SpeechProviderContra
         provider: entry.provider,
       })),
   });
+<<<<<<< HEAD
+=======
+  const coveredPluginIds = new Set(entries.map((entry) => entry.pluginId));
+  const missingPluginIds = VITEST_CONTRACT_PLUGIN_IDS.speechProviders.filter(
+    (pluginId) => !coveredPluginIds.has(pluginId),
+  );
+  if (missingPluginIds.length === 0) {
+    return entries;
+  }
+  const replacementEntries = loadVitestSpeechFallbackEntries(missingPluginIds);
+  const replacedPluginIds = new Set(replacementEntries.map((entry) => entry.pluginId));
+  return [
+    ...entries.filter((entry) => !replacedPluginIds.has(entry.pluginId)),
+    ...replacementEntries,
+  ];
+>>>>>>> upstream/main
 }
 
 export function loadVitestMediaUnderstandingProviderContractRegistry(): MediaUnderstandingProviderContractEntry[] {
@@ -177,6 +297,21 @@ export function loadVitestMediaUnderstandingProviderContractRegistry(): MediaUnd
   });
 }
 
+<<<<<<< HEAD
+=======
+export function loadVitestTranscriptsSourceProviderContractRegistry(): TranscriptsSourceProviderContractEntry[] {
+  return loadVitestCapabilityContractEntries({
+    contract: "transcriptSourceProviders",
+    pluginSdkResolution: "src",
+    pickEntries: (registry) =>
+      registry.transcriptSourceProviders.map((entry) => ({
+        pluginId: entry.pluginId,
+        provider: entry.provider,
+      })),
+  });
+}
+
+>>>>>>> upstream/main
 export function loadVitestRealtimeVoiceProviderContractRegistry(): RealtimeVoiceProviderContractEntry[] {
   return loadVitestCapabilityContractEntries({
     contract: "realtimeVoiceProviders",
@@ -220,17 +355,40 @@ export function loadVitestVideoGenerationProviderContractRegistry(): VideoGenera
       })),
   });
   const coveredPluginIds = new Set(entries.map((entry) => entry.pluginId));
+<<<<<<< HEAD
   const missingPluginIds = VITEST_CONTRACT_PLUGIN_IDS.videoGenerationProviders.filter(
     (pluginId) => !coveredPluginIds.has(pluginId),
+=======
+  const stalePluginIds = new Set(
+    entries
+      .filter((entry) => !hasExplicitVideoGenerationModes(entry.provider))
+      .map((entry) => entry.pluginId),
+  );
+  const missingPluginIds = VITEST_CONTRACT_PLUGIN_IDS.videoGenerationProviders.filter(
+    (pluginId) => !coveredPluginIds.has(pluginId) || stalePluginIds.has(pluginId),
+>>>>>>> upstream/main
   );
   if (missingPluginIds.length === 0) {
     return entries;
   }
+<<<<<<< HEAD
   return [...entries, ...loadVitestVideoGenerationFallbackEntries(missingPluginIds)];
 }
 
 export function loadVitestMusicGenerationProviderContractRegistry(): MusicGenerationProviderContractEntry[] {
   return loadVitestCapabilityContractEntries({
+=======
+  const replacementEntries = loadVitestVideoGenerationFallbackEntries(missingPluginIds);
+  const replacedPluginIds = new Set(replacementEntries.map((entry) => entry.pluginId));
+  return [
+    ...entries.filter((entry) => !replacedPluginIds.has(entry.pluginId)),
+    ...replacementEntries,
+  ];
+}
+
+export function loadVitestMusicGenerationProviderContractRegistry(): MusicGenerationProviderContractEntry[] {
+  const entries = loadVitestCapabilityContractEntries({
+>>>>>>> upstream/main
     contract: "musicGenerationProviders",
     pickEntries: (registry) =>
       registry.musicGenerationProviders.map((entry) => ({
@@ -238,4 +396,25 @@ export function loadVitestMusicGenerationProviderContractRegistry(): MusicGenera
         provider: entry.provider,
       })),
   });
+<<<<<<< HEAD
+=======
+  const coveredPluginIds = new Set(entries.map((entry) => entry.pluginId));
+  const stalePluginIds = new Set(
+    entries
+      .filter((entry) => !hasExplicitMusicGenerationModes(entry.provider))
+      .map((entry) => entry.pluginId),
+  );
+  const missingPluginIds = VITEST_CONTRACT_PLUGIN_IDS.musicGenerationProviders.filter(
+    (pluginId) => !coveredPluginIds.has(pluginId) || stalePluginIds.has(pluginId),
+  );
+  if (missingPluginIds.length === 0) {
+    return entries;
+  }
+  const replacementEntries = loadVitestMusicGenerationFallbackEntries(missingPluginIds);
+  const replacedPluginIds = new Set(replacementEntries.map((entry) => entry.pluginId));
+  return [
+    ...entries.filter((entry) => !replacedPluginIds.has(entry.pluginId)),
+    ...replacementEntries,
+  ];
+>>>>>>> upstream/main
 }

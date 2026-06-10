@@ -1,3 +1,8 @@
+// Synthetic setup module handles plugin onboarding behavior.
+import {
+  createModelCatalogPresetAppliers,
+  type OpenClawConfig,
+} from "openclaw/plugin-sdk/provider-onboard";
 import {
   createModelCatalogPresetAppliers,
   type OpenClawConfig,

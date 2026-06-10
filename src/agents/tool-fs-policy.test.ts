@@ -1,3 +1,5 @@
+// Tool filesystem policy tests cover how global and agent-specific tool
+// profiles decide workspace-only access and root expansion.
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import {
@@ -64,23 +66,50 @@ describe("resolveEffectiveToolFsRootExpansionAllowed", () => {
     expect(resolveEffectiveToolFsRootExpansionAllowed({ cfg, agentId: "main" })).toBe(false);
   });
 
+<<<<<<< HEAD
   it("re-enables root expansion when tools.fs explicitly allows non-workspace reads", () => {
+=======
+  it("does not re-enable root expansion from tools.fs alone under messaging profile (#47487)", () => {
+    // A messaging profile needs an explicit read opt-in; merely configuring
+    // tools.fs should not widen filesystem reach.
+>>>>>>> upstream/main
     const cfg: OpenClawConfig = {
       tools: {
         profile: "messaging",
         fs: { workspaceOnly: false },
       },
     };
+<<<<<<< HEAD
     expect(resolveEffectiveToolFsRootExpansionAllowed({ cfg, agentId: "main" })).toBe(true);
   });
 
   it("treats an explicit tools.fs block as a filesystem opt-in", () => {
+=======
+    expect(resolveEffectiveToolFsRootExpansionAllowed({ cfg, agentId: "main" })).toBe(false);
+  });
+
+  it("does not treat an explicit tools.fs block as a filesystem opt-in (#47487)", () => {
+>>>>>>> upstream/main
     const cfg: OpenClawConfig = {
       tools: {
         profile: "messaging",
         fs: {},
       },
     };
+<<<<<<< HEAD
+=======
+    expect(resolveEffectiveToolFsRootExpansionAllowed({ cfg, agentId: "main" })).toBe(false);
+  });
+
+  it("re-enables root expansion when alsoAllow explicitly includes read (#47487)", () => {
+    const cfg: OpenClawConfig = {
+      tools: {
+        profile: "messaging",
+        alsoAllow: ["read"],
+        fs: { workspaceOnly: false },
+      },
+    };
+>>>>>>> upstream/main
     expect(resolveEffectiveToolFsRootExpansionAllowed({ cfg, agentId: "main" })).toBe(true);
   });
 

@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+/**
+ * Chutes onboarding config helpers for OAuth and API-key setup.
+ */
+>>>>>>> upstream/main
 import {
   applyAgentDefaultModelPrimary,
   applyProviderConfigWithModelCatalogPreset,
@@ -8,7 +14,11 @@ import {
   CHUTES_DEFAULT_MODEL_REF,
   CHUTES_MODEL_CATALOG,
   buildChutesModelDefinition,
+<<<<<<< HEAD
 } from "./api.js";
+=======
+} from "./models.js";
+>>>>>>> upstream/main
 
 export { CHUTES_DEFAULT_MODEL_REF };
 
@@ -58,6 +68,7 @@ export function applyChutesConfig(cfg: OpenClawConfig): OpenClawConfig {
   };
 }
 
+/** Applies Chutes provider config and sets the default model for API-key auth. */
 export function applyChutesApiKeyConfig(cfg: OpenClawConfig): OpenClawConfig {
   return applyAgentDefaultModelPrimary(applyChutesProviderConfig(cfg), CHUTES_DEFAULT_MODEL_REF);
 }

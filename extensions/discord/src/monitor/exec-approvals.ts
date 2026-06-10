@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   Button,
   Row,
@@ -84,22 +85,27 @@ function isPluginApprovalRequest(request: ApprovalRequest): request is PluginApp
 function encodeCustomIdValue(value: string): string {
   return encodeURIComponent(value);
 }
+=======
+// Discord plugin module implements exec approvals behavior.
+import { ButtonStyle } from "discord-api-types/v10";
+import { resolveApprovalOverGateway } from "openclaw/plugin-sdk/approval-gateway-runtime";
+import type { ExecApprovalDecision } from "openclaw/plugin-sdk/approval-runtime";
+import type {
+  DiscordExecApprovalConfig,
+  OpenClawConfig,
+} from "openclaw/plugin-sdk/config-contracts";
+import { Button, type ButtonInteraction, type ComponentData } from "../internal/discord.js";
+export { buildExecApprovalCustomId } from "../approval-handler.runtime.js";
+import { getDiscordExecApprovalApprovers } from "../exec-approvals.js";
+>>>>>>> upstream/main
 
+export { extractDiscordChannelId } from "../approval-native.js";
 function decodeCustomIdValue(value: string): string {
   try {
     return decodeURIComponent(value);
   } catch {
     return value;
   }
-}
-
-export function buildExecApprovalCustomId(
-  approvalId: string,
-  action: ExecApprovalDecision,
-): string {
-  return [`${EXEC_APPROVAL_KEY}:id=${encodeCustomIdValue(approvalId)}`, `action=${action}`].join(
-    ";",
-  );
 }
 
 export function parseExecApprovalData(
@@ -125,53 +131,17 @@ export function parseExecApprovalData(
   };
 }
 
-type ExecApprovalContainerParams = {
-  cfg: OpenClawConfig;
-  accountId: string;
-  title: string;
-  description?: string;
-  commandPreview: string;
-  commandSecondaryPreview?: string | null;
-  metadataLines?: string[];
-  actionRow?: Row<Button>;
-  footer?: string;
-  accentColor?: string;
+type ExecApprovalButtonContext = {
+  getApprovers: () => string[];
+  resolveApproval: (
+    approvalId: string,
+    decision: ExecApprovalDecision,
+  ) => Promise<ExecApprovalResolveResult>;
 };
 
-class ExecApprovalContainer extends DiscordUiContainer {
-  constructor(params: ExecApprovalContainerParams) {
-    const components: Array<TextDisplay | Separator | Row<Button>> = [
-      new TextDisplay(`## ${params.title}`),
-    ];
-    if (params.description) {
-      components.push(new TextDisplay(params.description));
-    }
-    components.push(new Separator({ divider: true, spacing: "small" }));
-    components.push(new TextDisplay(`### Command\n\`\`\`\n${params.commandPreview}\n\`\`\``));
-    if (params.commandSecondaryPreview) {
-      components.push(
-        new TextDisplay(`### Shell Preview\n\`\`\`\n${params.commandSecondaryPreview}\n\`\`\``),
-      );
-    }
-    if (params.metadataLines?.length) {
-      components.push(new TextDisplay(params.metadataLines.join("\n")));
-    }
-    if (params.actionRow) {
-      components.push(params.actionRow);
-    }
-    if (params.footer) {
-      components.push(new Separator({ divider: false, spacing: "small" }));
-      components.push(new TextDisplay(`-# ${params.footer}`));
-    }
-    super({
-      cfg: params.cfg,
-      accountId: params.accountId,
-      components,
-      accentColor: params.accentColor,
-    });
-  }
-}
+type ExecApprovalResolveResult = { ok: true } | { ok: false; reason: "error" | "not-found" };
 
+<<<<<<< HEAD
 class ExecApprovalActionButton extends Button {
   customId: string;
   label: string;
@@ -782,24 +752,34 @@ export class DiscordExecApprovalHandler {
       configOverride: this.opts.config,
     });
   }
+=======
+function isStructuredApprovalNotFoundError(err: unknown): boolean {
+  if (!err || typeof err !== "object") {
+    return false;
+  }
+  const record = err as {
+    gatewayCode?: unknown;
+    details?: { reason?: unknown } | null;
+  };
+  if (record.gatewayCode === "APPROVAL_NOT_FOUND") {
+    return true;
+  }
+  return (
+    record.gatewayCode === "INVALID_REQUEST" && record.details?.reason === "APPROVAL_NOT_FOUND"
+  );
+>>>>>>> upstream/main
 }
 
-export type ExecApprovalButtonContext = {
-  handler: DiscordExecApprovalHandler;
-};
-
 export class ExecApprovalButton extends Button {
-  label = "execapproval";
-  customId = `${EXEC_APPROVAL_KEY}:seed=1`;
-  style = ButtonStyle.Primary;
-  private ctx: ExecApprovalButtonContext;
+  override label = "execapproval";
+  customId = "execapproval:seed=1";
+  override style = ButtonStyle.Primary;
 
-  constructor(ctx: ExecApprovalButtonContext) {
+  constructor(private readonly ctx: ExecApprovalButtonContext) {
     super();
-    this.ctx = ctx;
   }
 
-  async run(interaction: ButtonInteraction, data: ComponentData): Promise<void> {
+  override async run(interaction: ButtonInteraction, data: ComponentData): Promise<void> {
     const parsed = parseExecApprovalData(data);
     if (!parsed) {
       try {
@@ -807,24 +787,19 @@ export class ExecApprovalButton extends Button {
           content: "This approval is no longer valid.",
           ephemeral: true,
         });
-      } catch {
-        // Interaction may have expired
-      }
+      } catch {}
       return;
     }
 
-    // Verify the user is an authorized approver
-    const approvers = this.ctx.handler.getApprovers();
+    const approvers = this.ctx.getApprovers();
     const userId = interaction.userId;
-    if (!approvers.some((id) => String(id) === userId)) {
+    if (!approvers.some((id) => id === userId)) {
       try {
         await interaction.reply({
           content: "⛔ You are not authorized to approve exec requests.",
           ephemeral: true,
         });
-      } catch {
-        // Interaction may have expired
-      }
+      } catch {}
       return;
     }
 
@@ -835,31 +810,58 @@ export class ExecApprovalButton extends Button {
           ? "Allowed (always)"
           : "Denied";
 
-    // Acknowledge immediately so Discord does not fail the interaction while
-    // the gateway resolve roundtrip completes. The resolved event will update
-    // the approval card in-place with the final state.
     try {
       await interaction.acknowledge();
-    } catch {
-      // Interaction may have expired, try to continue anyway
-    }
+    } catch {}
 
-    const ok = await this.ctx.handler.resolveApproval(parsed.approvalId, parsed.action);
-
-    if (!ok) {
+    const result = await this.ctx.resolveApproval(parsed.approvalId, parsed.action);
+    if (!result.ok) {
       try {
         await interaction.followUp({
-          content: `Failed to submit approval decision for **${decisionLabel}**. The request may have expired or already been resolved.`,
+          content:
+            result.reason === "not-found"
+              ? `That approval request is no longer pending. It may have expired or already been resolved.`
+              : `Failed to submit approval decision for **${decisionLabel}**. The request may have expired or already been resolved.`,
           ephemeral: true,
         });
-      } catch {
-        // Interaction may have expired
-      }
+      } catch {}
     }
-    // On success, the handleApprovalResolved event will update the message with the final result
   }
 }
 
 export function createExecApprovalButton(ctx: ExecApprovalButtonContext): Button {
   return new ExecApprovalButton(ctx);
+}
+
+export function createDiscordExecApprovalButtonContext(params: {
+  cfg: OpenClawConfig;
+  accountId: string;
+  config: DiscordExecApprovalConfig;
+  gatewayUrl?: string;
+}): ExecApprovalButtonContext {
+  return {
+    getApprovers: () =>
+      getDiscordExecApprovalApprovers({
+        cfg: params.cfg,
+        accountId: params.accountId,
+        configOverride: params.config,
+      }),
+    resolveApproval: async (approvalId, decision) => {
+      try {
+        await resolveApprovalOverGateway({
+          cfg: params.cfg,
+          approvalId,
+          decision,
+          gatewayUrl: params.gatewayUrl,
+          clientDisplayName: `Discord approval (${params.accountId})`,
+        });
+        return { ok: true };
+      } catch (err) {
+        return {
+          ok: false,
+          reason: isStructuredApprovalNotFoundError(err) ? "not-found" : "error",
+        };
+      }
+    },
+  };
 }

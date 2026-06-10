@@ -1,7 +1,12 @@
+<<<<<<< HEAD
+=======
+// Qqbot plugin entrypoint registers its OpenClaw integration.
+>>>>>>> upstream/main
 import {
   defineBundledChannelEntry,
   loadBundledEntryExportSync,
   type OpenClawPluginApi,
+<<<<<<< HEAD
   type PluginCommandContext,
 } from "openclaw/plugin-sdk/channel-entry-contract";
 
@@ -74,6 +79,25 @@ function registerRemindTool(api: OpenClawPluginApi): void {
   const register = loadBundledEntryExportSync<(api: OpenClawPluginApi) => void>(import.meta.url, {
     specifier: "./api.js",
     exportName: "registerRemindTool",
+=======
+} from "openclaw/plugin-sdk/channel-entry-contract";
+
+function registerQQBotFull(api: OpenClawPluginApi): void {
+  if (api.registrationMode === "tool-discovery") {
+    const registerTools = loadBundledEntryExportSync<(api: OpenClawPluginApi) => void>(
+      import.meta.url,
+      {
+        specifier: "./tools-api.js",
+        exportName: "registerQQBotTools",
+      },
+    );
+    registerTools(api);
+    return;
+  }
+  const register = loadBundledEntryExportSync<(api: OpenClawPluginApi) => void>(import.meta.url, {
+    specifier: "./channel-entry-api.js",
+    exportName: "registerQQBotFull",
+>>>>>>> upstream/main
   });
   register(api);
 }
@@ -84,13 +108,24 @@ export default defineBundledChannelEntry({
   description: "QQ Bot channel plugin",
   importMetaUrl: import.meta.url,
   plugin: {
+<<<<<<< HEAD
     specifier: "./api.js",
     exportName: "qqbotPlugin",
   },
+=======
+    specifier: "./channel-plugin-api.js",
+    exportName: "qqbotPlugin",
+  },
+  secrets: {
+    specifier: "./secret-contract-api.js",
+    exportName: "channelSecrets",
+  },
+>>>>>>> upstream/main
   runtime: {
     specifier: "./runtime-api.js",
     exportName: "setQQBotRuntime",
   },
+<<<<<<< HEAD
   registerFull(api: OpenClawPluginApi) {
     registerChannelTool(api);
     registerRemindTool(api);
@@ -193,4 +228,7 @@ export default defineBundledChannelEntry({
       });
     }
   },
+=======
+  registerFull: registerQQBotFull,
+>>>>>>> upstream/main
 });

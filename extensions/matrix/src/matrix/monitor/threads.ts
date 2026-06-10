@@ -1,10 +1,20 @@
+<<<<<<< HEAD
+=======
+// Matrix plugin module implements threads behavior.
+>>>>>>> upstream/main
 import { resolveThreadSessionKeys } from "openclaw/plugin-sdk/routing";
 import type { MatrixRawEvent, RoomMessageEventContent } from "./types.js";
 import { RelationType } from "./types.js";
 
+<<<<<<< HEAD
 export type MatrixThreadReplies = "off" | "inbound" | "always";
 
 export type MatrixThreadRouting = {
+=======
+type MatrixThreadReplies = "off" | "inbound" | "always";
+
+type MatrixThreadRouting = {
+>>>>>>> upstream/main
   threadId?: string;
 };
 

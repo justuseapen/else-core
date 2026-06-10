@@ -22,9 +22,15 @@ vi.mock("../infra/agent-events.js", () => ({
 }));
 
 import {
+<<<<<<< HEAD
   handleAutoCompactionEnd,
   handleAutoCompactionStart,
 } from "../agents/pi-embedded-subscribe.handlers.compaction.js";
+=======
+  handleCompactionEnd,
+  handleCompactionStart,
+} from "../agents/embedded-agent-subscribe.handlers.compaction.js";
+>>>>>>> upstream/main
 
 describe("compaction hook wiring", () => {
   beforeEach(() => {
@@ -55,10 +61,12 @@ describe("compaction hook wiring", () => {
         },
       },
       state: { compactionInFlight: true },
-      log: { debug: vi.fn(), warn: vi.fn() },
+      log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
       maybeResolveCompactionWait: vi.fn(),
       incrementCompactionCount: vi.fn(),
       getCompactionCount: () => params.compactionCount ?? 0,
+      noteCompactionTokensAfter: vi.fn(),
+      getLastCompactionTokensAfter: vi.fn(() => undefined),
       ...(params.withRetryHooks
         ? {
             noteCompactionRetry: vi.fn(),
@@ -97,9 +105,18 @@ describe("compaction hook wiring", () => {
     expectedEvent: Record<string, unknown>;
     expectedSessionKey?: string;
   }) {
+<<<<<<< HEAD
     expect(params.call.event).toEqual(expect.objectContaining(params.expectedEvent));
     if (params.expectedSessionKey !== undefined) {
       expect(params.call.hookCtx?.sessionKey).toBe(params.expectedSessionKey);
+=======
+    expect(params.call.event).toEqual(params.expectedEvent);
+    if (params.expectedSessionKey !== undefined) {
+      if (!params.call.hookCtx) {
+        throw new Error("Expected compaction hook context");
+      }
+      expect(params.call.hookCtx).toEqual({ sessionKey: params.expectedSessionKey });
+>>>>>>> upstream/main
     }
   }
 
@@ -107,6 +124,7 @@ describe("compaction hook wiring", () => {
     ctx: ReturnType<typeof createCompactionEndCtx> | Record<string, unknown>,
     event: {
       willRetry: boolean;
+<<<<<<< HEAD
       result?: { summary: string };
       aborted?: boolean;
     },
@@ -115,12 +133,26 @@ describe("compaction hook wiring", () => {
       ctx as never,
       {
         type: "auto_compaction_end",
+=======
+      result?: { summary: string; tokensAfter?: number };
+      aborted?: boolean;
+    },
+  ) {
+    handleCompactionEnd(
+      ctx as never,
+      {
+        type: "compaction_end",
+>>>>>>> upstream/main
         ...event,
       } as never,
     );
   }
 
+<<<<<<< HEAD
   it("calls runBeforeCompaction in handleAutoCompactionStart", () => {
+=======
+  it("calls runBeforeCompaction in handleCompactionStart", () => {
+>>>>>>> upstream/main
     hookMocks.runner.hasHooks.mockReturnValue(true);
 
     const ctx = {
@@ -131,12 +163,12 @@ describe("compaction hook wiring", () => {
         onAgentEvent: vi.fn(),
       },
       state: { compactionInFlight: false },
-      log: { debug: vi.fn(), warn: vi.fn() },
+      log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
       incrementCompactionCount: vi.fn(),
       ensureCompactionPromise: vi.fn(),
     };
 
-    handleAutoCompactionStart(ctx as never);
+    handleCompactionStart(ctx as never, { type: "compaction_start", reason: "threshold" });
 
     expect(hookMocks.runner.runBeforeCompaction).toHaveBeenCalledTimes(1);
     expectCompactionEvent({
@@ -184,6 +216,7 @@ describe("compaction hook wiring", () => {
       expectedSessionKey: "agent:main:web-xyz",
     });
     expect(ctx.incrementCompactionCount).toHaveBeenCalledTimes(1);
+    expect(ctx.noteCompactionTokensAfter).toHaveBeenCalledWith(undefined);
     expect(ctx.maybeResolveCompactionWait).toHaveBeenCalledTimes(1);
     expect(hookMocks.emitAgentEvent).toHaveBeenCalledWith({
       runId: "r2",
@@ -247,10 +280,12 @@ describe("compaction hook wiring", () => {
     const ctx = {
       params: { runId: "r4", session: { messages } },
       state: { compactionInFlight: true },
-      log: { debug: vi.fn(), warn: vi.fn() },
+      log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
       maybeResolveCompactionWait: vi.fn(),
       getCompactionCount: () => 1,
       incrementCompactionCount: vi.fn(),
+      noteCompactionTokensAfter: vi.fn(),
+      getLastCompactionTokensAfter: vi.fn(() => undefined),
     };
 
     runCompactionEnd(ctx, { willRetry: false, result: { summary: "compacted" } });
@@ -273,7 +308,7 @@ describe("compaction hook wiring", () => {
     const ctx = {
       params: { runId: "r5", session: { messages } },
       state: { compactionInFlight: true },
-      log: { debug: vi.fn(), warn: vi.fn() },
+      log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
       noteCompactionRetry: vi.fn(),
       resetForCompactionRetry: vi.fn(),
       getCompactionCount: () => 0,

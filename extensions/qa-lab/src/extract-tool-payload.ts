@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 type ResultWithDetails = {
   details?: unknown;
   content?: unknown;
@@ -29,3 +30,7 @@ export function extractQaToolPayload(result: ResultWithDetails | null | undefine
     return text;
   }
 }
+=======
+// Qa Lab plugin module implements extract tool payload behavior.
+export { extractToolPayload as extractQaToolPayload } from "openclaw/plugin-sdk/tool-payload";
+>>>>>>> upstream/main

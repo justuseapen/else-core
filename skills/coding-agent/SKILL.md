@@ -1,12 +1,16 @@
 ---
 name: coding-agent
-description: 'Delegate coding tasks to Codex, Claude Code, or Pi agents via background process. Use when: (1) building/creating new features or apps, (2) reviewing PRs (spawn in temp dir), (3) refactoring large codebases, (4) iterative coding that needs file exploration. NOT for: simple one-liner fixes (just edit), reading code (use read tool), thread-bound ACP harness requests in chat (for example spawn/run Codex or Claude Code in a Discord thread; use sessions_spawn with runtime:"acp"), or any work in ~/clawd workspace (never spawn agents here). Claude Code: use --print --permission-mode bypassPermissions (no PTY). Codex/Pi/OpenCode: pty:true required.'
+description: "Delegate coding work to Codex, Claude Code, or OpenCode as background workers; not simple edits or read-only code lookup."
 metadata:
   {
     "openclaw":
       {
         "emoji": "🧩",
-        "requires": { "anyBins": ["claude", "codex", "opencode", "pi"] },
+        "requires":
+          {
+            "anyBins": ["claude", "codex", "opencode"],
+            "config": ["skills.entries.coding-agent.enabled"],
+          },
         "install":
           [
             {
@@ -28,139 +32,113 @@ metadata:
   }
 ---
 
-# Coding Agent (bash-first)
+# Coding Agent
 
-Use **bash** (with optional background mode) for all coding agent work. Simple and effective.
+Use for background feature builds, PR reviews, large refactors, and issue-to-PR loops. Do not use for simple edits, read-only lookup, ACP thread-bound work, or any run inside `~/.openclaw`, `$OPENCLAW_STATE_DIR`, or active OpenClaw state dirs.
 
-## ⚠️ PTY Mode: Codex/Pi/OpenCode yes, Claude Code no
+## Hard rules
 
-For **Codex, Pi, and OpenCode**, PTY is still required (interactive terminal apps):
+- Always launch with `background:true`.
+- Codex and OpenCode: use `pty:true`.
+- Claude Code: no PTY; use `claude --permission-mode bypassPermissions --print`.
+- Capture a real notification route before spawning.
+- Worker must send completion/failure via `openclaw message send`.
+- Do not rely on heartbeat, system events, or notify-on-exit.
+- Monitor with `process`; do not kill slow workers without cause.
+- If user asked for a specific agent, use that agent.
+- If worker fails/hangs, respawn or ask; do not silently hand-code instead.
+- Never checkout branches or run background coding agents in `~/Projects/openclaw`; use an isolated checkout.
 
-```bash
-# ✅ Correct for Codex/Pi/OpenCode
-bash pty:true command:"codex exec 'Your prompt'"
+## Notification block
+
+Append this shape to every worker prompt with real values:
+
+```text
+Notification route:
+- channel: <notifyChannel>
+- target: <notifyTarget>
+- account: <notifyAccount or omit>
+- reply_to: <notifyReplyTo or omit>
+- thread_id: <notifyThreadId or omit>
+
+When finished, send exactly one completion or failure message using:
+openclaw message send --channel <channel> --target '<target>' --message '<brief result>'
+Add --account, --reply-to, or --thread-id only when present above.
+Do not use openclaw system event or heartbeat.
 ```
 
-For **Claude Code** (`claude` CLI), use `--print --permission-mode bypassPermissions` instead.
-`--dangerously-skip-permissions` with PTY can exit after the confirmation dialog.
-`--print` mode keeps full tool access and avoids interactive confirmation:
+If no trustworthy route exists, say completion auto-notify is unavailable.
+
+## Launch forms
+
+Write the worker prompt to a temp file first. This avoids shell quoting bugs when the required notification block contains quotes or newlines.
 
 ```bash
-# ✅ Correct for Claude Code (no PTY needed)
-cd /path/to/project && claude --permission-mode bypassPermissions --print 'Your task'
-
-# For background execution: use background:true on the exec tool
-
-# ❌ Wrong for Claude Code
-bash pty:true command:"claude --dangerously-skip-permissions 'task'"
+PROMPT=$(mktemp -t openclaw-worker-prompt.XXXXXX)
+cat >"$PROMPT" <<'EOF'
+Task.
+<notification block>
+EOF
+printf 'prompt file: %s\n' "$PROMPT"
 ```
 
-### Bash Tool Parameters
+Use `$PROMPT` when launching from the same shell/session. If using a separate tool call, substitute the printed path.
 
-| Parameter    | Type    | Description                                                                 |
-| ------------ | ------- | --------------------------------------------------------------------------- |
-| `command`    | string  | The shell command to run                                                    |
-| `pty`        | boolean | **Use for coding agents!** Allocates a pseudo-terminal for interactive CLIs |
-| `workdir`    | string  | Working directory (agent sees only this folder's context)                   |
-| `background` | boolean | Run in background, returns sessionId for monitoring                         |
-| `timeout`    | number  | Timeout in seconds (kills process on expiry)                                |
-| `elevated`   | boolean | Run on host instead of sandbox (if allowed)                                 |
-
-### Process Tool Actions (for background sessions)
-
-| Action      | Description                                          |
-| ----------- | ---------------------------------------------------- |
-| `list`      | List all running/recent sessions                     |
-| `poll`      | Check if session is still running                    |
-| `log`       | Get session output (with optional offset/limit)      |
-| `write`     | Send raw data to stdin                               |
-| `submit`    | Send data + newline (like typing and pressing Enter) |
-| `send-keys` | Send key tokens or hex bytes                         |
-| `paste`     | Paste text (with optional bracketed mode)            |
-| `kill`      | Terminate the session                                |
-
----
-
-## Quick Start: One-Shot Tasks
-
-For quick prompts/chats, create a temp git repo and run:
+Codex:
 
 ```bash
-# Quick chat (Codex needs a git repo!)
-SCRATCH=$(mktemp -d) && cd $SCRATCH && git init && codex exec "Your prompt here"
-
-# Or in a real project - with PTY!
-bash pty:true workdir:~/Projects/myproject command:"codex exec 'Add error handling to the API calls'"
+bash pty:true background:true workdir:/path/repo command:"codex exec - < \"$PROMPT\""
 ```
 
-**Why git init?** Codex refuses to run outside a trusted git directory. Creating a temp repo solves this for scratch work.
-
----
-
-## The Pattern: workdir + background + pty
-
-For longer tasks, use background mode with PTY:
+Claude Code:
 
 ```bash
-# Start agent in target directory (with PTY!)
-bash pty:true workdir:~/project background:true command:"codex exec --full-auto 'Build a snake game'"
-# Returns sessionId for tracking
-
-# Monitor progress
-process action:log sessionId:XXX
-
-# Check if done
-process action:poll sessionId:XXX
-
-# Send input (if agent asks a question)
-process action:write sessionId:XXX data:"y"
-
-# Submit with Enter (like typing "yes" and pressing Enter)
-process action:submit sessionId:XXX data:"yes"
-
-# Kill if needed
-process action:kill sessionId:XXX
+bash background:true workdir:/path/repo command:"claude --permission-mode bypassPermissions --print < \"$PROMPT\""
 ```
 
-**Why workdir matters:** Agent wakes up in a focused directory, doesn't wander off reading unrelated files (like your soul.md 😅).
-
----
-
-## Codex CLI
-
-**Model:** `gpt-5.2-codex` is the default (set in ~/.codex/config.toml)
-
-### Flags
-
-| Flag            | Effect                                             |
-| --------------- | -------------------------------------------------- |
-| `exec "prompt"` | One-shot execution, exits when done                |
-| `--full-auto`   | Sandboxed but auto-approves in workspace           |
-| `--yolo`        | NO sandbox, NO approvals (fastest, most dangerous) |
-
-### Building/Creating
+OpenCode:
 
 ```bash
-# Quick one-shot (auto-approves) - remember PTY!
-bash pty:true workdir:~/project command:"codex exec --full-auto 'Build a dark mode toggle'"
-
-# Background for longer work
-bash pty:true workdir:~/project background:true command:"codex --yolo 'Refactor the auth module'"
+bash pty:true background:true workdir:/path/repo command:"opencode run < \"$PROMPT\""
 ```
 
-### Reviewing PRs
+## Long issue-to-PR work
 
-**⚠️ CRITICAL: Never review PRs in OpenClaw's own project folder!**
-Clone to temp folder or use git worktree.
+1. Create/reuse a GitHub issue as durable spec.
+2. Include issue URL, repo, base branch, expected PR, proof, and notification route.
+3. Tell worker to branch, implement, test, run review until no accepted actionable findings, open PR.
+4. Return issue URL and `sessionId` immediately.
+5. Monitor with `process`; cancel through Task Registry if mirrored there.
+
+## Scratch Codex
+
+Codex needs a trusted git repo:
 
 ```bash
-# Clone to temp for safe review
-REVIEW_DIR=$(mktemp -d)
-git clone https://github.com/user/repo.git $REVIEW_DIR
-cd $REVIEW_DIR && gh pr checkout 130
-bash pty:true workdir:$REVIEW_DIR command:"codex review --base origin/main"
-# Clean up after: trash $REVIEW_DIR
+SCRATCH=$(mktemp -d)
+git -C "$SCRATCH" init
+PROMPT=$(mktemp -t openclaw-worker-prompt.XXXXXX)
+cat >"$PROMPT" <<'EOF'
+Build X.
+<notification block>
+EOF
+printf 'prompt file: %s\n' "$PROMPT"
+bash pty:true background:true workdir:$SCRATCH command:"codex exec - < \"$PROMPT\""
+```
 
+## Process actions
+
+- `list`: running/recent sessions.
+- `poll`: status.
+- `log`: output.
+- `submit`: send input + Enter.
+- `write`: raw stdin.
+- `paste`: paste text.
+- `kill`: terminate.
+
+## Status to user
+
+<<<<<<< HEAD
 # Or use git worktree (keeps main intact)
 git worktree add /tmp/pr-130-review pr-130-branch
 bash pty:true workdir:/tmp/pr-130-review command:"codex review --base main"
@@ -314,3 +292,8 @@ This triggers an immediate wake event — Skippy gets pinged in seconds, not 10 
 - **exec is your friend:** `codex exec "prompt"` runs and exits cleanly - perfect for one-shots.
 - **submit vs write:** Use `submit` to send input + Enter, `write` for raw data without newline.
 - **Sass works:** Codex responds well to playful prompts. Asked it to write a haiku about being second fiddle to a space lobster, got: _"Second chair, I code / Space lobster sets the tempo / Keys glow, I follow"_ 🦞
+=======
+- Say what started, where, and `sessionId`.
+- Update only on milestone, worker question, error, user action needed, or finish.
+- If killed, say why.
+>>>>>>> upstream/main

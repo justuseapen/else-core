@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type {
   ChannelDoctorConfigMutation,
   ChannelDoctorLegacyConfigRule,
@@ -103,3 +104,15 @@ export function normalizeCompatibilityConfig({
     changes,
   };
 }
+=======
+// Nextcloud Talk plugin module implements doctor contract behavior.
+import { createLegacyPrivateNetworkDoctorContract } from "openclaw/plugin-sdk/ssrf-runtime";
+
+const contract = createLegacyPrivateNetworkDoctorContract({
+  channelKey: "nextcloud-talk",
+});
+
+export const legacyConfigRules = contract.legacyConfigRules;
+
+export const normalizeCompatibilityConfig = contract.normalizeCompatibilityConfig;
+>>>>>>> upstream/main

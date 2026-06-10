@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Lobster plugin module implements lobster taskflow behavior.
+>>>>>>> upstream/main
 import type { OpenClawPluginApi } from "../runtime-api.js";
 import type { LobsterEnvelope, LobsterRunner, LobsterRunnerParams } from "./lobster-runner.js";
 
@@ -12,6 +16,7 @@ type JsonLike =
     };
 
 type BoundTaskFlow = ReturnType<
+<<<<<<< HEAD
   NonNullable<OpenClawPluginApi["runtime"]>["taskFlow"]["bindSession"]
 >;
 
@@ -19,13 +24,29 @@ type FlowRecord = ReturnType<BoundTaskFlow["createManaged"]>;
 type MutationResult = ReturnType<BoundTaskFlow["setWaiting"]>;
 
 export type LobsterApprovalWaitState = {
+=======
+  NonNullable<OpenClawPluginApi["runtime"]>["tasks"]["managedFlows"]["bindSession"]
+>;
+
+type FlowRecord = NonNullable<ReturnType<BoundTaskFlow["tryCreateManaged"]>>;
+type MutationResult = ReturnType<BoundTaskFlow["setWaiting"]>;
+
+type LobsterApprovalWaitState = {
+>>>>>>> upstream/main
   kind: "lobster_approval";
   prompt: string;
   items: JsonLike[];
   resumeToken?: string;
+<<<<<<< HEAD
 };
 
 export type RunManagedLobsterFlowParams = {
+=======
+  approvalId?: string;
+};
+
+type RunManagedLobsterFlowParams = {
+>>>>>>> upstream/main
   taskFlow: BoundTaskFlow;
   runner: LobsterRunner;
   runnerParams: LobsterRunnerParams;
@@ -36,14 +57,23 @@ export type RunManagedLobsterFlowParams = {
   waitingStep?: string;
 };
 
+<<<<<<< HEAD
 export type ResumeManagedLobsterFlowParams = {
+=======
+type ResumeManagedLobsterFlowParams = {
+>>>>>>> upstream/main
   taskFlow: BoundTaskFlow;
   runner: LobsterRunner;
   runnerParams: LobsterRunnerParams & {
     action: "resume";
+<<<<<<< HEAD
     token: string;
     approve: boolean;
   };
+=======
+    approve: boolean;
+  } & ({ token: string } | { approvalId: string });
+>>>>>>> upstream/main
   flowId: string;
   expectedRevision: number;
   currentStep?: string;
@@ -120,6 +150,12 @@ function buildApprovalWaitState(envelope: Extract<LobsterEnvelope, { ok: true }>
     ...(envelope.requiresApproval.resumeToken
       ? { resumeToken: envelope.requiresApproval.resumeToken }
       : {}),
+<<<<<<< HEAD
+=======
+    ...(envelope.requiresApproval.approvalId
+      ? { approvalId: envelope.requiresApproval.approvalId }
+      : {}),
+>>>>>>> upstream/main
   } satisfies LobsterApprovalWaitState;
 }
 
@@ -160,12 +196,29 @@ function buildEnvelopeError(envelope: Extract<LobsterEnvelope, { ok: false }>) {
 export async function runManagedLobsterFlow(
   params: RunManagedLobsterFlowParams,
 ): Promise<ManagedLobsterFlowResult> {
+<<<<<<< HEAD
   const flow = params.taskFlow.createManaged({
+=======
+  const createFlowParams = {
+>>>>>>> upstream/main
     controllerId: params.controllerId,
     goal: params.goal,
     currentStep: params.currentStep ?? "run_lobster",
     ...(params.stateJson !== undefined ? { stateJson: params.stateJson } : {}),
+<<<<<<< HEAD
   });
+=======
+  };
+  const flow = params.taskFlow.tryCreateManaged
+    ? params.taskFlow.tryCreateManaged(createFlowParams)
+    : params.taskFlow.createManaged(createFlowParams);
+  if (!flow) {
+    return {
+      ok: false,
+      error: new Error("TaskFlow persistence failed."),
+    };
+  }
+>>>>>>> upstream/main
 
   try {
     const envelope = await params.runner.run(params.runnerParams);

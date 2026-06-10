@@ -1,7 +1,12 @@
+// Matrix plugin module implements startup behavior.
 import type { RuntimeLogger } from "../../runtime-api.js";
 import type { CoreConfig, MatrixConfig } from "../../types.js";
 import type { MatrixAuth } from "../client.js";
 import type { MatrixClient } from "../sdk.js";
+<<<<<<< HEAD
+=======
+import { isMatrixStartupAbortError, throwIfMatrixStartupAborted } from "../startup-abort.js";
+>>>>>>> upstream/main
 
 type MatrixStartupClient = Pick<
   MatrixClient,
@@ -59,17 +64,30 @@ export async function runMatrixStartupMaintenance(
     accountConfig: MatrixConfig;
     logger: RuntimeLogger;
     logVerboseMessage: (message: string) => void;
+<<<<<<< HEAD
     loadConfig: () => CoreConfig;
     writeConfigFile: (cfg: never) => Promise<void>;
+=======
+    getRuntimeConfig: () => CoreConfig;
+    replaceConfigFile: (cfg: never) => Promise<void>;
+>>>>>>> upstream/main
     loadWebMedia: (
       url: string,
       maxBytes: number,
     ) => Promise<{ buffer: Buffer; contentType?: string; fileName?: string }>;
     env?: NodeJS.ProcessEnv;
+<<<<<<< HEAD
+=======
+    abortSignal?: AbortSignal;
+>>>>>>> upstream/main
   },
   deps?: MatrixStartupMaintenanceDeps,
 ): Promise<void> {
   const runtimeDeps = deps ?? (await loadMatrixStartupMaintenanceDeps());
+<<<<<<< HEAD
+=======
+  throwIfMatrixStartupAborted(params.abortSignal);
+>>>>>>> upstream/main
   try {
     const profileSync = await runtimeDeps.syncMatrixOwnProfile({
       client: params.client,
@@ -78,6 +96,7 @@ export async function runMatrixStartupMaintenance(
       avatarUrl: params.accountConfig.avatarUrl,
       loadAvatarFromUrl: async (url, maxBytes) => await params.loadWebMedia(url, maxBytes),
     });
+    throwIfMatrixStartupAborted(params.abortSignal);
     if (profileSync.displayNameUpdated) {
       params.logger.info(`matrix: profile display name updated for ${params.auth.userId}`);
     }
@@ -89,16 +108,24 @@ export async function runMatrixStartupMaintenance(
       profileSync.resolvedAvatarUrl &&
       params.accountConfig.avatarUrl !== profileSync.resolvedAvatarUrl
     ) {
+<<<<<<< HEAD
       const latestCfg = params.loadConfig();
+=======
+      const latestCfg = params.getRuntimeConfig();
+>>>>>>> upstream/main
       const updatedCfg = runtimeDeps.updateMatrixAccountConfig(latestCfg, params.accountId, {
         avatarUrl: profileSync.resolvedAvatarUrl,
       });
-      await params.writeConfigFile(updatedCfg as never);
+      await params.replaceConfigFile(updatedCfg as never);
+      throwIfMatrixStartupAborted(params.abortSignal);
       params.logVerboseMessage(
         `matrix: persisted converted avatar URL for account ${params.accountId} (${profileSync.resolvedAvatarUrl})`,
       );
     }
   } catch (err) {
+    if (isMatrixStartupAbortError(err)) {
+      throw err;
+    }
     params.logger.warn("matrix: failed to sync profile from config", { error: String(err) });
   }
 
@@ -107,6 +134,10 @@ export async function runMatrixStartupMaintenance(
   }
 
   try {
+<<<<<<< HEAD
+=======
+    throwIfMatrixStartupAborted(params.abortSignal);
+>>>>>>> upstream/main
     const deviceHealth = runtimeDeps.summarizeMatrixDeviceHealth(
       await params.client.listOwnDevices(),
     );
@@ -116,18 +147,26 @@ export async function runMatrixStartupMaintenance(
       );
     }
   } catch (err) {
+    if (isMatrixStartupAbortError(err)) {
+      throw err;
+    }
     params.logger.debug?.("Failed to inspect matrix device hygiene (non-fatal)", {
       error: String(err),
     });
   }
 
   try {
+<<<<<<< HEAD
+=======
+    throwIfMatrixStartupAborted(params.abortSignal);
+>>>>>>> upstream/main
     const startupVerification = await runtimeDeps.ensureMatrixStartupVerification({
       client: params.client,
       auth: params.auth,
       accountConfig: params.accountConfig,
       env: params.env,
     });
+    throwIfMatrixStartupAborted(params.abortSignal);
     if (startupVerification.kind === "verified") {
       params.logger.info("matrix: device is verified by its owner and ready for encrypted rooms");
     } else if (
@@ -158,17 +197,25 @@ export async function runMatrixStartupMaintenance(
       );
     }
   } catch (err) {
+    if (isMatrixStartupAbortError(err)) {
+      throw err;
+    }
     params.logger.debug?.("Failed to resolve matrix verification status (non-fatal)", {
       error: String(err),
     });
   }
 
   try {
+<<<<<<< HEAD
+=======
+    throwIfMatrixStartupAborted(params.abortSignal);
+>>>>>>> upstream/main
     const legacyCryptoRestore = await runtimeDeps.maybeRestoreLegacyMatrixBackup({
       client: params.client,
       auth: params.auth,
       env: params.env,
     });
+    throwIfMatrixStartupAborted(params.abortSignal);
     if (legacyCryptoRestore.kind === "restored") {
       params.logger.info(
         `matrix: restored ${legacyCryptoRestore.imported}/${legacyCryptoRestore.total} room key(s) from legacy encrypted-state backup`,
@@ -189,6 +236,9 @@ export async function runMatrixStartupMaintenance(
       }
     }
   } catch (err) {
+    if (isMatrixStartupAbortError(err)) {
+      throw err;
+    }
     params.logger.warn("matrix: failed restoring legacy encrypted-state backup", {
       error: String(err),
     });

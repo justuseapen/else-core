@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Analyze script supports OpenClaw repository automation.
+>>>>>>> upstream/main
 import path from "node:path";
 import ts from "typescript";
 import {
@@ -206,9 +210,21 @@ function collectReferenceEvents(
       if (!clause?.namedBindings) {
         continue;
       }
+<<<<<<< HEAD
 
       if (ts.isNamedImports(clause.namedBindings)) {
         for (const element of clause.namedBindings.elements) {
+=======
+      if (clause.isTypeOnly) {
+        continue;
+      }
+
+      if (ts.isNamedImports(clause.namedBindings)) {
+        for (const element of clause.namedBindings.elements) {
+          if (element.isTypeOnly) {
+            continue;
+          }
+>>>>>>> upstream/main
           const importedName = element.propertyName?.text ?? element.name.text;
           const record = recordMap.get(importedName);
           if (!record) {
@@ -291,8 +307,13 @@ function finalizeRecords(records: TopologyRecord[]) {
       return byRefs;
     }
     return (
+<<<<<<< HEAD
       left.publicSpecifiers[0]!.localeCompare(right.publicSpecifiers[0]) ||
       left.exportNames[0]!.localeCompare(right.exportNames[0])
+=======
+      left.publicSpecifiers[0].localeCompare(right.publicSpecifiers[0]) ||
+      left.exportNames[0].localeCompare(right.exportNames[0])
+>>>>>>> upstream/main
     );
   });
 }
@@ -413,4 +434,8 @@ export function filterRecordsForReport(
     case "public-surface-usage":
       return records;
   }
+<<<<<<< HEAD
+=======
+  throw new Error("Unsupported topology report");
+>>>>>>> upstream/main
 }

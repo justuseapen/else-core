@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import { resolveEffectiveToolPolicy } from "./pi-tools.policy.js";
+=======
+// Verifies sandbox tool allow/deny policy extraction and additive alsoAllow behavior.
+import { describe, expect, it } from "vitest";
+import type { OpenClawConfig } from "../config/config.js";
+import { resolveEffectiveToolPolicy } from "./agent-tools.policy.js";
+>>>>>>> upstream/main
 import { pickSandboxToolPolicy } from "./sandbox-tool-policy.js";
 import { resolveEffectiveToolFsRootExpansionAllowed } from "./tool-fs-policy.js";
 
@@ -33,6 +40,10 @@ describe("pickSandboxToolPolicy", () => {
   });
 
   it("preserves allow-all semantics for allow: [] plus alsoAllow", () => {
+<<<<<<< HEAD
+=======
+    // Empty allow means allow-all; alsoAllow remains additive, not restrictive.
+>>>>>>> upstream/main
     expect(
       pickSandboxToolPolicy({
         allow: [],

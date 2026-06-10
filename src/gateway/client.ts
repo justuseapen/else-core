@@ -1,5 +1,18 @@
-import { randomUUID } from "node:crypto";
-import { WebSocket, type ClientOptions, type CertMeta } from "ws";
+// OpenClaw Gateway client facade.
+// Wraps the shared gateway-client package with OpenClaw host dependencies.
+import {
+  GatewayClient as BaseGatewayClient,
+  GATEWAY_CLOSE_CODE_HINTS as BASE_GATEWAY_CLOSE_CODE_HINTS,
+  GatewayClientRequestError as BaseGatewayClientRequestError,
+  describeGatewayCloseCode as baseDescribeGatewayCloseCode,
+  isGatewayConnectAssemblyError as baseIsGatewayConnectAssemblyError,
+  resolveGatewayClientConnectChallengeTimeoutMs as baseResolveGatewayClientConnectChallengeTimeoutMs,
+} from "../../packages/gateway-client/src/index.js";
+import type {
+  GatewayClientMode,
+  GatewayClientName,
+} from "../../packages/gateway-protocol/src/client-info.js";
+import type { EventFrame, HelloOk } from "../../packages/gateway-protocol/src/index.js";
 import {
   clearDeviceAuthToken,
   loadDeviceAuthToken,
@@ -11,49 +24,71 @@ import {
   publicKeyRawBase64UrlFromPem,
   signDevicePayload,
 } from "../infra/device-identity.js";
+import {
+  ensureInheritedManagedProxyRoutingActive,
+  registerManagedProxyGatewayLoopbackBypass,
+} from "../infra/net/proxy/proxy-lifecycle.js";
 import { normalizeFingerprint } from "../infra/tls/fingerprint.js";
-import { rawDataToString } from "../infra/ws.js";
 import { logDebug, logError } from "../logger.js";
-import {
-  GATEWAY_CLIENT_MODES,
-  GATEWAY_CLIENT_NAMES,
-  type GatewayClientMode,
-  type GatewayClientName,
-} from "../utils/message-channel.js";
+import { redactToolPayloadText } from "../logging/redact.js";
 import { VERSION } from "../version.js";
-import { buildDeviceAuthPayloadV3 } from "./device-auth.js";
-import { resolveConnectChallengeTimeoutMs } from "./handshake-timeouts.js";
-import { isLoopbackHost, isSecureWebSocketUrl } from "./net.js";
-import {
-  ConnectErrorDetailCodes,
-  readConnectErrorDetailCode,
-  readConnectErrorRecoveryAdvice,
-  type ConnectErrorRecoveryAdvice,
-} from "./protocol/connect-error-details.js";
-import {
-  type ConnectParams,
-  type EventFrame,
-  type HelloOk,
-  PROTOCOL_VERSION,
-  type RequestFrame,
-  validateEventFrame,
-  validateRequestFrame,
-  validateResponseFrame,
-} from "./protocol/index.js";
 
-type Pending = {
-  resolve: (value: unknown) => void;
-  reject: (err: unknown) => void;
-  expectFinal: boolean;
-  timeout: NodeJS.Timeout | null;
+export type DeviceAuthTokenRecord = {
+  token?: string;
+  scopes?: string[];
+};
+
+export type GatewayClientHostDeps = {
+  loadOrCreateDeviceIdentity?: () => DeviceIdentity | undefined;
+  signDevicePayload?: (privateKeyPem: string, payload: string) => string;
+  publicKeyRawBase64UrlFromPem?: (publicKeyPem: string) => string;
+  loadDeviceAuthToken?: (params: {
+    deviceId: string;
+    role: string;
+    env?: NodeJS.ProcessEnv;
+  }) => DeviceAuthTokenRecord | null;
+  storeDeviceAuthToken?: (params: {
+    deviceId: string;
+    role: string;
+    token: string;
+    scopes: string[];
+    env?: NodeJS.ProcessEnv;
+  }) => void;
+  clearDeviceAuthToken?: (params: {
+    deviceId: string;
+    role: string;
+    env?: NodeJS.ProcessEnv;
+  }) => void;
+  beforeConnect?: () => void;
+  registerGatewayLoopbackBypass?: (url: string) => (() => void) | undefined;
+  logDebug?: (message: string) => void;
+  logError?: (message: string) => void;
+  redactForLog?: (message: string) => string;
+  normalizeTlsFingerprint?: (fingerprint: string | undefined) => string;
+};
+
+export type GatewayClientRequestOptions = {
+  expectFinal?: boolean;
+  timeoutMs?: number | null;
+  signal?: AbortSignal;
+  onAccepted?: (payload: unknown) => void;
+};
+
+export type GatewayReconnectPausedInfo = {
+  code: number;
+  reason: string;
+  detailCode: string | null;
 };
 
 type GatewayClientErrorShape = {
+  message: string;
   code?: string;
-  message?: string;
   details?: unknown;
+  retryable?: boolean;
+  retryAfterMs?: number;
 };
 
+<<<<<<< HEAD
 type SelectedConnectAuth = {
   authToken?: string;
   authBootstrapToken?: string;
@@ -69,31 +104,44 @@ type SelectedConnectAuth = {
 type StoredDeviceAuth = {
   token?: string;
   scopes?: string[];
+=======
+export const GATEWAY_CLOSE_CODE_HINTS: Readonly<Record<number, string>> =
+  BASE_GATEWAY_CLOSE_CODE_HINTS;
+
+export const GatewayClientRequestError = BaseGatewayClientRequestError as unknown as {
+  new (error: GatewayClientErrorShape): Error & {
+    readonly gatewayCode: string;
+    readonly details?: unknown;
+    readonly retryable: boolean;
+    readonly retryAfterMs?: number;
+  };
+>>>>>>> upstream/main
 };
 
-class GatewayClientRequestError extends Error {
-  readonly gatewayCode: string;
-  readonly details?: unknown;
+export type GatewayClientRequestError = InstanceType<typeof GatewayClientRequestError>;
 
-  constructor(error: GatewayClientErrorShape) {
-    super(error.message ?? "gateway request failed");
-    this.name = "GatewayClientRequestError";
-    this.gatewayCode = error.code ?? "UNAVAILABLE";
-    this.details = error.details;
-  }
+export function describeGatewayCloseCode(code: number): string | undefined {
+  return baseDescribeGatewayCloseCode(code);
+}
+
+export function isGatewayConnectAssemblyError(value: unknown): value is Error {
+  return baseIsGatewayConnectAssemblyError(value);
 }
 
 export type GatewayClientOptions = {
-  url?: string; // ws://127.0.0.1:18789
+  url?: string;
   connectChallengeTimeoutMs?: number;
   /** @deprecated Use connectChallengeTimeoutMs. */
   connectDelayMs?: number;
+  preauthHandshakeTimeoutMs?: number;
   tickWatchMinIntervalMs?: number;
+  tickWatchTimeoutMs?: number;
   requestTimeoutMs?: number;
   token?: string;
   bootstrapToken?: string;
   deviceToken?: string;
   password?: string;
+  approvalRuntimeToken?: string;
   instanceId?: string;
   clientName?: GatewayClientName;
   clientDisplayName?: string;
@@ -107,281 +155,84 @@ export type GatewayClientOptions = {
   commands?: string[];
   permissions?: Record<string, boolean>;
   pathEnv?: string;
+  env?: NodeJS.ProcessEnv;
   deviceIdentity?: DeviceIdentity | null;
+  hostDeps?: GatewayClientHostDeps;
   minProtocol?: number;
   maxProtocol?: number;
   tlsFingerprint?: string;
   onEvent?: (evt: EventFrame) => void;
   onHelloOk?: (hello: HelloOk) => void;
   onConnectError?: (err: Error) => void;
+  onReconnectPaused?: (info: GatewayReconnectPausedInfo) => void;
   onClose?: (code: number, reason: string) => void;
   onGap?: (info: { expected: number; received: number }) => void;
 };
 
-export const GATEWAY_CLOSE_CODE_HINTS: Readonly<Record<number, string>> = {
-  1000: "normal closure",
-  1006: "abnormal closure (no close frame)",
-  1008: "policy violation",
-  1012: "service restart",
+export type GatewayClientConnectionMetadata = {
+  clientName?: GatewayClientName;
+  hasDeviceIdentity: boolean;
+  mode?: GatewayClientMode;
+  preauthHandshakeTimeoutMs?: number;
 };
 
-export function describeGatewayCloseCode(code: number): string | undefined {
-  return GATEWAY_CLOSE_CODE_HINTS[code];
-}
-
-function readConnectChallengeTimeoutOverride(
-  opts: Pick<GatewayClientOptions, "connectChallengeTimeoutMs" | "connectDelayMs">,
-): number | undefined {
-  if (
-    typeof opts.connectChallengeTimeoutMs === "number" &&
-    Number.isFinite(opts.connectChallengeTimeoutMs)
-  ) {
-    return opts.connectChallengeTimeoutMs;
-  }
-  if (typeof opts.connectDelayMs === "number" && Number.isFinite(opts.connectDelayMs)) {
-    return opts.connectDelayMs;
-  }
-  return undefined;
+function createOpenClawGatewayClientHostDeps(
+  overrides?: GatewayClientHostDeps,
+): GatewayClientHostDeps {
+  return {
+    // This wrapper is the only place the package reaches into OpenClaw runtime
+    // state. Keep device identity, token storage, proxy, and redaction here.
+    loadOrCreateDeviceIdentity,
+    signDevicePayload,
+    publicKeyRawBase64UrlFromPem,
+    loadDeviceAuthToken,
+    storeDeviceAuthToken,
+    clearDeviceAuthToken,
+    beforeConnect: ensureInheritedManagedProxyRoutingActive,
+    registerGatewayLoopbackBypass: registerManagedProxyGatewayLoopbackBypass,
+    normalizeTlsFingerprint: (fingerprint) => normalizeFingerprint(fingerprint ?? ""),
+    logDebug,
+    logError,
+    redactForLog: redactToolPayloadText,
+    ...overrides,
+  };
 }
 
 export function resolveGatewayClientConnectChallengeTimeoutMs(
-  opts: Pick<GatewayClientOptions, "connectChallengeTimeoutMs" | "connectDelayMs">,
+  opts: Pick<
+    GatewayClientOptions,
+    "connectChallengeTimeoutMs" | "connectDelayMs" | "preauthHandshakeTimeoutMs"
+  >,
 ): number {
-  return resolveConnectChallengeTimeoutMs(readConnectChallengeTimeoutOverride(opts));
+  return baseResolveGatewayClientConnectChallengeTimeoutMs(opts);
 }
 
-const FORCE_STOP_TERMINATE_GRACE_MS = 250;
-const STOP_AND_WAIT_TIMEOUT_MS = 1_000;
-
-type PendingStop = {
-  ws: WebSocket;
-  promise: Promise<void>;
-  resolve: () => void;
-};
-
 export class GatewayClient {
-  private ws: WebSocket | null = null;
-  private opts: GatewayClientOptions;
-  private pending = new Map<string, Pending>();
-  private backoffMs = 1000;
-  private closed = false;
-  private lastSeq: number | null = null;
-  private connectNonce: string | null = null;
-  private connectSent = false;
-  private connectTimer: NodeJS.Timeout | null = null;
-  private pendingDeviceTokenRetry = false;
-  private deviceTokenRetryBudgetUsed = false;
-  private pendingConnectErrorDetailCode: string | null = null;
-  // Track last tick to detect silent stalls.
-  private lastTick: number | null = null;
-  private tickIntervalMs = 30_000;
-  private tickTimer: NodeJS.Timeout | null = null;
-  private readonly requestTimeoutMs: number;
-  private pendingStop: PendingStop | null = null;
+  #client: BaseGatewayClient;
 
   constructor(opts: GatewayClientOptions) {
-    this.opts = {
+    // Inject host deps here so the reusable package stays decoupled from
+    // OpenClaw device identity, token storage, proxy routing, and logging.
+    this.#client = new BaseGatewayClient({
       ...opts,
-      deviceIdentity:
-        opts.deviceIdentity === null
-          ? undefined
-          : (opts.deviceIdentity ?? loadOrCreateDeviceIdentity()),
-    };
-    this.requestTimeoutMs =
-      typeof opts.requestTimeoutMs === "number" && Number.isFinite(opts.requestTimeoutMs)
-        ? Math.max(1, Math.min(Math.floor(opts.requestTimeoutMs), 2_147_483_647))
-        : 30_000;
-  }
-
-  start() {
-    if (this.closed) {
-      return;
-    }
-    const url = this.opts.url ?? "ws://127.0.0.1:18789";
-    if (this.opts.tlsFingerprint && !url.startsWith("wss://")) {
-      this.opts.onConnectError?.(new Error("gateway tls fingerprint requires wss:// gateway url"));
-      return;
-    }
-
-    const allowPrivateWs = process.env.OPENCLAW_ALLOW_INSECURE_PRIVATE_WS === "1";
-    // Security check: block ALL plaintext ws:// to non-loopback addresses (CWE-319, CVSS 9.8)
-    // This protects both credentials AND chat/conversation data from MITM attacks.
-    // Device tokens may be loaded later in sendConnect(), so we block regardless of hasCredentials.
-    if (!isSecureWebSocketUrl(url, { allowPrivateWs })) {
-      // Safe hostname extraction - avoid throwing on malformed URLs in error path
-      let displayHost = url;
-      try {
-        displayHost = new URL(url).hostname || url;
-      } catch {
-        // Use raw URL if parsing fails
-      }
-      const error = new Error(
-        `SECURITY ERROR: Cannot connect to "${displayHost}" over plaintext ws://. ` +
-          "Both credentials and chat data would be exposed to network interception. " +
-          "Use wss:// for remote URLs. Safe defaults: keep gateway.bind=loopback and connect via SSH tunnel " +
-          "(ssh -N -L 18789:127.0.0.1:18789 user@gateway-host), or use Tailscale Serve/Funnel. " +
-          (allowPrivateWs
-            ? ""
-            : "Break-glass (trusted private networks only): set OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1. ") +
-          "Run `openclaw doctor --fix` for guidance.",
-      );
-      this.opts.onConnectError?.(error);
-      return;
-    }
-    // Allow node screen snapshots and other large responses.
-    const wsOptions: ClientOptions = {
-      maxPayload: 25 * 1024 * 1024,
-    };
-    if (url.startsWith("wss://") && this.opts.tlsFingerprint) {
-      wsOptions.rejectUnauthorized = false;
-      wsOptions.checkServerIdentity = ((_host: string, cert: CertMeta) => {
-        const fingerprintValue =
-          typeof cert === "object" && cert && "fingerprint256" in cert
-            ? ((cert as { fingerprint256?: string }).fingerprint256 ?? "")
-            : "";
-        const fingerprint = normalizeFingerprint(
-          typeof fingerprintValue === "string" ? fingerprintValue : "",
-        );
-        const expected = normalizeFingerprint(this.opts.tlsFingerprint ?? "");
-        if (!expected) {
-          return new Error("gateway tls fingerprint missing");
-        }
-        if (!fingerprint) {
-          return new Error("gateway tls fingerprint unavailable");
-        }
-        if (fingerprint !== expected) {
-          return new Error("gateway tls fingerprint mismatch");
-        }
-        return undefined;
-        // oxlint-disable-next-line typescript/no-explicit-any
-      }) as any;
-    }
-    const ws = new WebSocket(url, wsOptions);
-    this.ws = ws;
-
-    ws.on("open", () => {
-      if (url.startsWith("wss://") && this.opts.tlsFingerprint) {
-        const tlsError = this.validateTlsFingerprint();
-        if (tlsError) {
-          this.opts.onConnectError?.(tlsError);
-          this.ws?.close(1008, tlsError.message);
-          return;
-        }
-      }
-      this.beginPreauthHandshake();
-    });
-    ws.on("message", (data) => this.handleMessage(rawDataToString(data)));
-    ws.on("close", (code, reason) => {
-      const reasonText = rawDataToString(reason);
-      const connectErrorDetailCode = this.pendingConnectErrorDetailCode;
-      this.pendingConnectErrorDetailCode = null;
-      if (this.ws === ws) {
-        this.ws = null;
-      }
-      this.resolvePendingStop(ws);
-      // Clear persisted device auth state only when device-token auth was active.
-      // Shared token/password failures can return the same close reason but should
-      // not erase a valid cached device token.
-      if (
-        code === 1008 &&
-        reasonText.toLowerCase().includes("device token mismatch") &&
-        !this.opts.token &&
-        !this.opts.password &&
-        this.opts.deviceIdentity
-      ) {
-        const deviceId = this.opts.deviceIdentity.deviceId;
-        const role = this.opts.role ?? "operator";
-        try {
-          clearDeviceAuthToken({ deviceId, role });
-          logDebug(`cleared stale device-auth token for device ${deviceId}`);
-        } catch (err) {
-          logDebug(
-            `failed clearing stale device-auth token for device ${deviceId}: ${String(err)}`,
-          );
-        }
-      }
-      this.flushPendingErrors(new Error(`gateway closed (${code}): ${reasonText}`));
-      if (this.shouldPauseReconnectAfterAuthFailure(connectErrorDetailCode)) {
-        this.opts.onClose?.(code, reasonText);
-        return;
-      }
-      this.scheduleReconnect();
-      this.opts.onClose?.(code, reasonText);
-    });
-    ws.on("error", (err) => {
-      logDebug(`gateway client error: ${String(err)}`);
-      if (!this.connectSent) {
-        this.opts.onConnectError?.(err instanceof Error ? err : new Error(String(err)));
-      }
+      clientVersion: opts.clientVersion ?? VERSION,
+      hostDeps: createOpenClawGatewayClientHostDeps(opts.hostDeps),
     });
   }
 
-  stop() {
-    void this.beginStop();
+  start(): void {
+    this.#client.start();
   }
 
-  async stopAndWait(opts?: { timeoutMs?: number }): Promise<void> {
-    // Some callers need teardown ordering, not just "close requested". Wait for
-    // the socket to close or the terminate fallback to fire.
-    const stopPromise = this.beginStop();
-    if (!stopPromise) {
-      return;
-    }
-    const timeoutMs =
-      typeof opts?.timeoutMs === "number" && Number.isFinite(opts.timeoutMs)
-        ? Math.max(1, Math.floor(opts.timeoutMs))
-        : STOP_AND_WAIT_TIMEOUT_MS;
-    let timeout: NodeJS.Timeout | null = null;
-    try {
-      await Promise.race([
-        stopPromise,
-        new Promise<never>((_, reject) => {
-          timeout = setTimeout(() => {
-            reject(new Error(`gateway client stop timed out after ${timeoutMs}ms`));
-          }, timeoutMs);
-          timeout.unref?.();
-        }),
-      ]);
-    } finally {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
-    }
+  stop(): void {
+    this.#client.stop();
   }
 
-  private beginStop(): Promise<void> | null {
-    this.closed = true;
-    this.pendingDeviceTokenRetry = false;
-    this.deviceTokenRetryBudgetUsed = false;
-    this.pendingConnectErrorDetailCode = null;
-    if (this.tickTimer) {
-      clearInterval(this.tickTimer);
-      this.tickTimer = null;
-    }
-    this.clearConnectChallengeTimeout();
-    if (this.pendingStop) {
-      this.flushPendingErrors(new Error("gateway client stopped"));
-      return this.pendingStop.promise;
-    }
-    const ws = this.ws;
-    this.ws = null;
-    if (ws) {
-      const stopPromise = this.createPendingStop(ws);
-      ws.close();
-      const forceTerminateTimer = setTimeout(() => {
-        try {
-          ws.terminate();
-        } catch {}
-        this.resolvePendingStop(ws);
-      }, FORCE_STOP_TERMINATE_GRACE_MS);
-      forceTerminateTimer.unref?.();
-      this.flushPendingErrors(new Error("gateway client stopped"));
-      return stopPromise;
-    }
-    this.flushPendingErrors(new Error("gateway client stopped"));
-    return null;
+  stopAndWait(opts?: { timeoutMs?: number }): Promise<void> {
+    return this.#client.stopAndWait(opts);
   }
 
+<<<<<<< HEAD
   private createPendingStop(ws: WebSocket): Promise<void> {
     if (this.pendingStop?.ws === ws) {
       return this.pendingStop.promise;
@@ -870,45 +721,25 @@ export class GatewayClient {
   }
 
   async request<T = Record<string, unknown>>(
+=======
+  request<T = Record<string, unknown>>(
+>>>>>>> upstream/main
     method: string,
     params?: unknown,
-    opts?: { expectFinal?: boolean; timeoutMs?: number | null },
+    opts?: GatewayClientRequestOptions,
   ): Promise<T> {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error("gateway not connected");
-    }
-    const id = randomUUID();
-    const frame: RequestFrame = { type: "req", id, method, params };
-    if (!validateRequestFrame(frame)) {
-      throw new Error(
-        `invalid request frame: ${JSON.stringify(validateRequestFrame.errors, null, 2)}`,
-      );
-    }
-    const expectFinal = opts?.expectFinal === true;
-    const timeoutMs =
-      opts?.timeoutMs === null
-        ? null
-        : typeof opts?.timeoutMs === "number" && Number.isFinite(opts.timeoutMs)
-          ? Math.max(1, Math.min(Math.floor(opts.timeoutMs), 2_147_483_647))
-          : expectFinal
-            ? null
-            : this.requestTimeoutMs;
-    const p = new Promise<T>((resolve, reject) => {
-      const timeout =
-        timeoutMs === null
-          ? null
-          : setTimeout(() => {
-              this.pending.delete(id);
-              reject(new Error(`gateway request timeout for ${method}`));
-            }, timeoutMs);
-      this.pending.set(id, {
-        resolve: (value) => resolve(value as T),
-        reject,
-        expectFinal,
-        timeout,
-      });
-    });
-    this.ws.send(JSON.stringify(frame));
-    return p;
+    return this.#client.request<T>(method, params, opts);
+  }
+
+  getConnectionMetadata(): GatewayClientConnectionMetadata {
+    const opts = (this.#client as unknown as { opts: GatewayClientOptions }).opts;
+    return {
+      clientName: opts.clientName,
+      hasDeviceIdentity: Boolean(opts.deviceIdentity),
+      mode: opts.mode,
+      preauthHandshakeTimeoutMs: opts.preauthHandshakeTimeoutMs,
+    };
   }
 }
+
+export type { DeviceIdentity };

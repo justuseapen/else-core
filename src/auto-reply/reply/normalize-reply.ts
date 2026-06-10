@@ -1,11 +1,20 @@
-import { sanitizeUserFacingText } from "../../agents/pi-embedded-helpers.js";
+// Normalizes raw agent output into sendable reply text and metadata.
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { sanitizeUserFacingText } from "../../agents/embedded-agent-helpers/sanitize-user-facing-text.js";
 import { hasReplyPayloadContent } from "../../interactive/payload.js";
 import { stripHeartbeatToken } from "../heartbeat.js";
+import { copyReplyPayloadMetadata } from "../reply-payload.js";
 import {
   HEARTBEAT_TOKEN,
+<<<<<<< HEAD
+=======
+  isInternalFormattingArtifact,
+>>>>>>> upstream/main
   isSilentReplyPayloadText,
   isSilentReplyText,
   SILENT_REPLY_TOKEN,
+  startsWithSilentToken,
+  stripLeadingSilentToken,
   stripSilentToken,
 } from "../tokens.js";
 import type { ReplyPayload } from "../types.js";
@@ -43,7 +52,7 @@ export function normalizeReplyPayload(
         trimText: true,
       },
     );
-  const trimmed = payload.text?.trim() ?? "";
+  const trimmed = normalizeOptionalString(payload.text) ?? "";
   if (!hasContent(trimmed)) {
     opts.onSkip?.("empty");
     return null;
@@ -61,11 +70,17 @@ export function normalizeReplyPayload(
   // Strip NO_REPLY from mixed-content messages (e.g. "😄 NO_REPLY") so the
   // token never leaks to end users.  If stripping leaves nothing, treat it as
   // silent just like the exact-match path above.  (#30916, #30955)
-  if (text && text.includes(silentToken) && !isSilentReplyText(text, silentToken)) {
-    text = stripSilentToken(text, silentToken);
-    if (!hasContent(text)) {
-      opts.onSkip?.("silent");
-      return null;
+  if (text && !isSilentReplyText(text, silentToken)) {
+    const hasLeadingSilentToken = startsWithSilentToken(text, silentToken);
+    if (hasLeadingSilentToken) {
+      text = stripLeadingSilentToken(text, silentToken);
+    }
+    if (hasLeadingSilentToken || text.toLowerCase().includes(silentToken.toLowerCase())) {
+      text = stripSilentToken(text, silentToken);
+      if (!hasContent(text)) {
+        opts.onSkip?.("silent");
+        return null;
+      }
     }
   }
   if (text && !trimmed) {
@@ -86,6 +101,11 @@ export function normalizeReplyPayload(
     text = stripped.text;
   }
 
+  if (text && isInternalFormattingArtifact(text) && !hasContent("")) {
+    opts.onSkip?.("silent");
+    return null;
+  }
+
   if (text) {
     text = sanitizeUserFacingText(text, { errorContext: Boolean(payload.isError) });
   }
@@ -94,9 +114,21 @@ export function normalizeReplyPayload(
     return null;
   }
 
+<<<<<<< HEAD
   let enrichedPayload: ReplyPayload = { ...payload, text };
   if (applyChannelTransforms && opts.transformReplyPayload) {
     enrichedPayload = opts.transformReplyPayload(enrichedPayload) ?? enrichedPayload;
+=======
+  let enrichedPayload: ReplyPayload = copyReplyPayloadMetadata(payload, { ...payload, text });
+  if (applyChannelTransforms && opts.transformReplyPayload) {
+    const transformedPayload = opts.transformReplyPayload(enrichedPayload);
+    if (transformedPayload === null) {
+      return null;
+    }
+    enrichedPayload = transformedPayload
+      ? copyReplyPayloadMetadata(enrichedPayload, transformedPayload)
+      : enrichedPayload;
+>>>>>>> upstream/main
     text = enrichedPayload.text;
   }
 
@@ -114,6 +146,10 @@ export function normalizeReplyPayload(
     text = `${effectivePrefix} ${text}`;
   }
 
+<<<<<<< HEAD
   enrichedPayload = { ...enrichedPayload, text };
+=======
+  enrichedPayload = copyReplyPayloadMetadata(enrichedPayload, { ...enrichedPayload, text });
+>>>>>>> upstream/main
   return enrichedPayload;
 }

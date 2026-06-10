@@ -1,8 +1,16 @@
+<<<<<<< HEAD
 import { vi } from "vitest";
+=======
+// Typed mock facade for session write-lock module tests.
+>>>>>>> upstream/main
 import type * as SessionWriteLockModule from "../agents/session-write-lock.js";
 
 type SessionWriteLockModuleShape = typeof SessionWriteLockModule;
 
+<<<<<<< HEAD
+=======
+/** Creates a session-write-lock module mock while preserving untouched exports. */
+>>>>>>> upstream/main
 export async function buildSessionWriteLockModuleMock(
   loadActual: () => Promise<SessionWriteLockModuleShape>,
   acquireSessionWriteLock: SessionWriteLockModuleShape["acquireSessionWriteLock"],
@@ -13,6 +21,7 @@ export async function buildSessionWriteLockModuleMock(
     acquireSessionWriteLock,
   };
 }
+<<<<<<< HEAD
 
 export function resetModulesWithSessionWriteLockDoMock(
   modulePath: string,
@@ -26,3 +35,5 @@ export function resetModulesWithSessionWriteLockDoMock(
     ),
   );
 }
+=======
+>>>>>>> upstream/main

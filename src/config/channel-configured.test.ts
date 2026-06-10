@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -20,6 +21,15 @@ afterEach(() => {
     }
   }
 });
+=======
+// Covers channel-configured checks from bootstrap and plugin metadata.
+import { describe, expect, it, vi } from "vitest";
+import { isChannelConfigured } from "./channel-configured.js";
+
+vi.mock("../channels/plugins/bootstrap-registry.js", () => ({
+  getBootstrapChannelPlugin: () => undefined,
+}));
+>>>>>>> upstream/main
 
 describe("isChannelConfigured", () => {
   it("detects Telegram env configuration through the package metadata seam", () => {
@@ -60,6 +70,7 @@ describe("isChannelConfigured", () => {
     ).toBe(true);
   });
 
+<<<<<<< HEAD
   it("detects persisted Matrix credentials through package metadata", () => {
     const stateDir = makeTempStateDir();
     fs.mkdirSync(path.join(stateDir, "credentials", "matrix"), { recursive: true });
@@ -74,5 +85,43 @@ describe("isChannelConfigured", () => {
     );
 
     expect(isChannelConfigured({}, "matrix", { OPENCLAW_STATE_DIR: stateDir })).toBe(true);
+=======
+  it("treats explicit enabled channel config as configured state", () => {
+    expect(
+      isChannelConfigured(
+        {
+          channels: {
+            "openclaw-weixin": {
+              enabled: true,
+            },
+          },
+        },
+        "openclaw-weixin",
+        {},
+      ),
+    ).toBe(true);
+  });
+
+  it("does not treat disabled channel config as configured state", () => {
+    expect(
+      isChannelConfigured(
+        {
+          channels: {
+            "openclaw-weixin": {
+              enabled: false,
+            },
+          },
+        },
+        "openclaw-weixin",
+        {},
+      ),
+    ).toBe(false);
+  });
+
+  it("does not treat persisted Matrix credentials as configured channel state", () => {
+    expect(
+      isChannelConfigured({}, "matrix", { OPENCLAW_STATE_DIR: "state-with-matrix-creds" }),
+    ).toBe(false);
+>>>>>>> upstream/main
   });
 });

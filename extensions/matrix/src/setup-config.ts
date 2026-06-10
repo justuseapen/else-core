@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix helper module supports setup config behavior.
+>>>>>>> upstream/main
 import {
   applyAccountNameToChannelSection,
   DEFAULT_ACCOUNT_ID,
@@ -5,6 +9,10 @@ import {
   normalizeSecretInputString,
   type ChannelSetupInput,
 } from "openclaw/plugin-sdk/setup";
+<<<<<<< HEAD
+=======
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import { resolveMatrixEnvAuthReadiness } from "./matrix/client/env-auth.js";
 import { updateMatrixAccountConfig } from "./matrix/config-update.js";
 import { isSupportedMatrixAvatarSource } from "./matrix/profile.js";
@@ -84,7 +92,11 @@ export function moveSingleMatrixAccountConfigToNamedAccount(cfg: CoreConfig): Co
     typeof base.accounts === "object" && base.accounts
       ? (base.accounts as Record<string, Record<string, unknown>>)
       : {};
+<<<<<<< HEAD
   const hasNamedAccounts = Object.keys(accounts).filter(Boolean).length > 0;
+=======
+  const hasNamedAccounts = Object.keys(accounts).some(Boolean);
+>>>>>>> upstream/main
   const keysToMove = Object.entries(base)
     .filter(([key, value]) => {
       if (key === "accounts" || key === "enabled" || value === undefined) {
@@ -109,7 +121,11 @@ export function moveSingleMatrixAccountConfigToNamedAccount(cfg: CoreConfig): Co
   const targetAccountId = resolveSingleAccountPromotionTarget({ channel: base });
   const resolvedTargetAccountId = resolveExistingMatrixAccountKey(accounts, targetAccountId);
 
+<<<<<<< HEAD
   const nextAccount: Record<string, unknown> = { ...(accounts[resolvedTargetAccountId] ?? {}) };
+=======
+  const nextAccount: Record<string, unknown> = { ...accounts[resolvedTargetAccountId] };
+>>>>>>> upstream/main
   for (const key of keysToMove) {
     nextAccount[key] = cloneIfObject(base[key]);
   }
@@ -210,7 +226,11 @@ export function applyMatrixSetupAccountConfig(params: {
         : typeof params.input.allowPrivateNetwork === "boolean"
           ? params.input.allowPrivateNetwork
           : undefined,
+<<<<<<< HEAD
     proxy: params.input.proxy?.trim() || undefined,
+=======
+    proxy: normalizeOptionalString(params.input.proxy),
+>>>>>>> upstream/main
     userId: password && !userId ? null : userId,
     accessToken: accessToken || (password ? null : undefined),
     password: password || (accessToken ? null : undefined),

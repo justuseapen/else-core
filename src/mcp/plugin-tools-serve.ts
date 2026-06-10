@@ -8,6 +8,7 @@
  */
 import { pathToFileURL } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+<<<<<<< HEAD
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import type { AnyAgentTool } from "../agents/tools/common.js";
@@ -29,6 +30,49 @@ function resolveJsonSchemaForTool(tool: AnyAgentTool): Record<string, unknown> {
 function resolveTools(config: OpenClawConfig): AnyAgentTool[] {
   return resolvePluginTools({
     context: { config },
+=======
+import { pickSandboxToolPolicy } from "../agents/sandbox-tool-policy.js";
+import {
+  collectExplicitAllowlist,
+  collectExplicitDenylist,
+  mergeAlsoAllowPolicy,
+  resolveToolProfilePolicy,
+} from "../agents/tool-policy.js";
+import type { AnyAgentTool } from "../agents/tools/common.js";
+import { getRuntimeConfig } from "../config/config.js";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { formatErrorMessage } from "../infra/errors.js";
+import { routeLogsToStderr } from "../logging/console.js";
+import { ensureStandalonePluginToolRegistryLoaded, resolvePluginTools } from "../plugins/tools.js";
+import { connectToolsMcpServerToStdio, createToolsMcpServer } from "./tools-stdio-server.js";
+
+function resolvePluginToolPolicy(config: OpenClawConfig): {
+  toolAllowlist?: string[];
+  toolDenylist?: string[];
+} {
+  const profilePolicy = mergeAlsoAllowPolicy(
+    resolveToolProfilePolicy(config.tools?.profile),
+    config.tools?.alsoAllow,
+  );
+  const globalPolicy = pickSandboxToolPolicy(config.tools);
+  const toolAllowlist = collectExplicitAllowlist([profilePolicy, globalPolicy]);
+  const toolDenylist = collectExplicitDenylist([profilePolicy, globalPolicy]);
+  return {
+    ...(toolAllowlist.length > 0 ? { toolAllowlist } : {}),
+    ...(toolDenylist.length > 0 ? { toolDenylist } : {}),
+  };
+}
+
+function resolveTools(config: OpenClawConfig): AnyAgentTool[] {
+  const pluginToolPolicy = resolvePluginToolPolicy(config);
+  ensureStandalonePluginToolRegistryLoaded({
+    context: { config },
+    ...pluginToolPolicy,
+  });
+  return resolvePluginTools({
+    context: { config },
+    ...pluginToolPolicy,
+>>>>>>> upstream/main
     suppressNameConflicts: true,
   });
 }
@@ -39,6 +83,7 @@ export function createPluginToolsMcpServer(
     tools?: AnyAgentTool[];
   } = {},
 ): Server {
+<<<<<<< HEAD
   const cfg = params.config ?? loadConfig();
   const tools = params.tools ?? resolveTools(cfg);
 
@@ -93,12 +138,26 @@ export async function servePluginToolsMcp(): Promise<void> {
   routeLogsToStderr();
 
   const config = loadConfig();
+=======
+  const cfg = params.config ?? getRuntimeConfig();
+  const tools = params.tools ?? resolveTools(cfg);
+  return createToolsMcpServer({ name: "openclaw-plugin-tools", tools });
+}
+
+export async function servePluginToolsMcp(): Promise<void> {
+  // MCP stdio requires stdout to stay protocol-only, including during plugin
+  // tool discovery before the transport is connected.
+  routeLogsToStderr();
+
+  const config = getRuntimeConfig();
+>>>>>>> upstream/main
   const tools = resolveTools(config);
   const server = createPluginToolsMcpServer({ config, tools });
   if (tools.length === 0) {
     process.stderr.write("plugin-tools-serve: no plugin tools found\n");
   }
 
+<<<<<<< HEAD
   const transport = new StdioServerTransport();
 
   let shuttingDown = false;
@@ -127,6 +186,14 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
     process.stderr.write(
       `plugin-tools-serve: ${err instanceof Error ? err.message : String(err)}\n`,
     );
+=======
+  await connectToolsMcpServerToStdio(server);
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  servePluginToolsMcp().catch((err: unknown) => {
+    process.stderr.write(`plugin-tools-serve: ${formatErrorMessage(err)}\n`);
+>>>>>>> upstream/main
     process.exit(1);
   });
 }

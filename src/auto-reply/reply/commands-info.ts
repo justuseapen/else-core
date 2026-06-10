@@ -1,8 +1,12 @@
+/** Handles informational commands such as /help, /commands, /tools, and exports. */
 import { resolveSessionAgentId } from "../../agents/agent-scope.js";
 import { resolveEffectiveToolInventory } from "../../agents/tools-effective-inventory.js";
 import { getChannelPlugin } from "../../channels/plugins/index.js";
 import { logVerbose } from "../../globals.js";
-import { listSkillCommandsForAgents } from "../skill-commands.js";
+import {
+  listSkillCommandsForAgents,
+  resolveSkillCommandInvocation,
+} from "../../skills/discovery/chat-commands.js";
 import {
   buildCommandsMessage,
   buildCommandsMessagePaginated,
@@ -11,14 +15,42 @@ import {
 } from "../status.js";
 import { buildThreadingToolContext } from "./agent-runner-utils.js";
 import { resolveChannelAccountId } from "./channel-context.js";
+<<<<<<< HEAD
+=======
+import { rejectUnauthorizedCommand } from "./command-gates.js";
+>>>>>>> upstream/main
 import { buildExportSessionReply } from "./commands-export-session.js";
+import { buildExportTrajectoryCommandReply } from "./commands-export-trajectory.js";
 import { buildStatusReply } from "./commands-status.js";
-import type { CommandHandler } from "./commands-types.js";
+import type { CommandHandler, HandleCommandsParams } from "./commands-types.js";
 import { extractExplicitGroupId } from "./group-id.js";
 import { resolveReplyToMode } from "./reply-threading.js";
 export { handleContextCommand } from "./commands-context-command.js";
 export { handleWhoamiCommand } from "./commands-whoami.js";
 
+async function resolveSkillCommands(
+  params: HandleCommandsParams,
+  options?: { requireFullList?: boolean },
+) {
+  if (
+    params.skillCommands !== undefined &&
+    (!options?.requireFullList || params.skillCommands.length > 0 || !params.loadSkillCommands)
+  ) {
+    return params.skillCommands;
+  }
+  if (params.loadSkillCommands) {
+    return params.loadSkillCommands();
+  }
+  const agentId = params.sessionKey
+    ? resolveSessionAgentId({ sessionKey: params.sessionKey, config: params.cfg })
+    : params.agentId;
+  return listSkillCommandsForAgents({
+    cfg: params.cfg,
+    agentIds: agentId ? [agentId] : undefined,
+  });
+}
+
+/** Command handler for /help. */
 export const handleHelpCommand: CommandHandler = async (params, allowTextCommands) => {
   if (!allowTextCommands) {
     return null;
@@ -38,6 +70,7 @@ export const handleHelpCommand: CommandHandler = async (params, allowTextCommand
   };
 };
 
+/** Command handler for /commands. */
 export const handleCommandsListCommand: CommandHandler = async (params, allowTextCommands) => {
   if (!allowTextCommands) {
     return null;
@@ -51,12 +84,10 @@ export const handleCommandsListCommand: CommandHandler = async (params, allowTex
     );
     return { shouldContinue: false };
   }
-  const skillCommands =
-    params.skillCommands ??
-    listSkillCommandsForAgents({
-      cfg: params.cfg,
-      agentIds: params.agentId ? [params.agentId] : undefined,
-    });
+  const agentId = params.sessionKey
+    ? resolveSessionAgentId({ sessionKey: params.sessionKey, config: params.cfg })
+    : params.agentId;
+  const skillCommands = await resolveSkillCommands(params);
   const surface = params.ctx.Surface;
   const commandPlugin = surface ? getChannelPlugin(surface) : null;
   const paginated = buildCommandsMessagePaginated(params.cfg, skillCommands, {
@@ -66,7 +97,11 @@ export const handleCommandsListCommand: CommandHandler = async (params, allowTex
   const channelData = commandPlugin?.commands?.buildCommandsListChannelData?.({
     currentPage: paginated.currentPage,
     totalPages: paginated.totalPages,
+<<<<<<< HEAD
     agentId: params.agentId,
+=======
+    agentId,
+>>>>>>> upstream/main
   });
   if (channelData) {
     return {
@@ -84,12 +119,62 @@ export const handleCommandsListCommand: CommandHandler = async (params, allowTex
   };
 };
 
+function buildSkillCommandUsage(skillCommands: NonNullable<HandleCommandsParams["skillCommands"]>) {
+  const lines = ["Usage: /skill <name> [input]"];
+  if (skillCommands.length > 0) {
+    const names = skillCommands.slice(0, 8).map((command) => command.skillName || command.name);
+    lines.push("", `Available: ${names.join(", ")}`);
+    if (skillCommands.length > names.length) {
+      lines.push(`More: /commands (${skillCommands.length - names.length} more)`);
+    } else {
+      lines.push("More: /commands");
+    }
+  } else {
+    lines.push("", "Use /commands to list available skill commands.");
+  }
+  return lines.join("\n");
+}
+
+/** Command handler for /skill usage help. */
+export const handleSkillCommandUsage: CommandHandler = async (params, allowTextCommands) => {
+  if (!allowTextCommands) {
+    return null;
+  }
+  const normalized = params.command.commandBodyNormalized;
+  if (normalized !== "/skill" && !normalized.startsWith("/skill ")) {
+    return null;
+  }
+  // Bare or unknown /skill commands are deterministic help responses; handling
+  // them here avoids falling through into a full agent/model turn.
+  if (!params.command.isAuthorizedSender) {
+    logVerbose(
+      `Ignoring /skill from unauthorized sender: ${params.command.senderId || "<unknown>"}`,
+    );
+    return { shouldContinue: false };
+  }
+
+  const [, rawName] = normalized.match(/^\/skill(?:\s+([^\s]+))?/u) ?? [];
+  const skillCommands = await resolveSkillCommands(params, { requireFullList: true });
+  if (
+    rawName &&
+    resolveSkillCommandInvocation({ commandBodyNormalized: normalized, skillCommands })
+  ) {
+    return null;
+  }
+  const prefix = rawName ? `Unknown skill: ${rawName}\n\n` : "";
+  return {
+    shouldContinue: false,
+    reply: { text: `${prefix}${buildSkillCommandUsage(skillCommands)}` },
+  };
+};
+
+/** Command handler for /tools. */
 export const handleToolsCommand: CommandHandler = async (params, allowTextCommands) => {
   if (!allowTextCommands) {
     return null;
   }
   const normalized = params.command.commandBodyNormalized;
-  let verbose = false;
+  let verbose;
   if (normalized === "/tools" || normalized === "/tools compact") {
     verbose = false;
   } else if (normalized === "/tools verbose") {
@@ -112,9 +197,17 @@ export const handleToolsCommand: CommandHandler = async (params, allowTextComman
       ctx: params.ctx,
       command: params.command,
     });
+<<<<<<< HEAD
     const agentId =
       params.agentId ??
       resolveSessionAgentId({ sessionKey: params.sessionKey, config: params.cfg });
+=======
+    const targetSessionEntry = params.sessionStore?.[params.sessionKey] ?? params.sessionEntry;
+    const sessionBound = Boolean(params.sessionKey);
+    const agentId = sessionBound
+      ? resolveSessionAgentId({ sessionKey: params.sessionKey, config: params.cfg })
+      : params.agentId;
+>>>>>>> upstream/main
     const threadingContext = buildThreadingToolContext({
       sessionCtx: params.ctx,
       config: params.cfg,
@@ -125,11 +218,10 @@ export const handleToolsCommand: CommandHandler = async (params, allowTextComman
       agentId,
       sessionKey: params.sessionKey,
       workspaceDir: params.workspaceDir,
-      agentDir: params.agentDir,
+      agentDir: sessionBound ? undefined : params.agentDir,
       modelProvider: params.provider,
       modelId: params.model,
       messageProvider: params.command.channel,
-      senderIsOwner: params.command.senderIsOwner,
       senderId: params.command.senderId,
       senderName: params.ctx.SenderName,
       senderUsername: params.ctx.SenderUsername,
@@ -142,10 +234,10 @@ export const handleToolsCommand: CommandHandler = async (params, allowTextComman
           ? String(params.ctx.MessageThreadId)
           : undefined,
       currentMessageId: threadingContext.currentMessageId,
-      groupId: params.sessionEntry?.groupId ?? extractExplicitGroupId(params.ctx.From),
+      groupId: targetSessionEntry?.groupId ?? extractExplicitGroupId(params.ctx.From),
       groupChannel:
-        params.sessionEntry?.groupChannel ?? params.ctx.GroupChannel ?? params.ctx.GroupSubject,
-      groupSpace: params.sessionEntry?.space ?? params.ctx.GroupSpace,
+        targetSessionEntry?.groupChannel ?? params.ctx.GroupChannel ?? params.ctx.GroupSubject,
+      groupSpace: targetSessionEntry?.space ?? params.ctx.GroupSpace,
       replyToMode: resolveReplyToMode(
         params.cfg,
         params.ctx.OriginatingChannel ?? params.ctx.Provider,
@@ -169,6 +261,10 @@ export const handleToolsCommand: CommandHandler = async (params, allowTextComman
   }
 };
 
+<<<<<<< HEAD
+=======
+/** Command handler for /status. */
+>>>>>>> upstream/main
 export const handleStatusCommand: CommandHandler = async (params, allowTextCommands) => {
   if (!allowTextCommands) {
     return null;
@@ -184,17 +280,21 @@ export const handleStatusCommand: CommandHandler = async (params, allowTextComma
     );
     return { shouldContinue: false };
   }
+  const targetSessionEntry = params.sessionStore?.[params.sessionKey] ?? params.sessionEntry;
   const reply = await buildStatusReply({
     cfg: params.cfg,
     command: params.command,
-    sessionEntry: params.sessionEntry,
+    sessionEntry: targetSessionEntry,
     sessionKey: params.sessionKey,
-    parentSessionKey: params.ctx.ParentSessionKey,
+    parentSessionKey: targetSessionEntry?.parentSessionKey ?? params.ctx.ParentSessionKey,
     sessionScope: params.sessionScope,
+    storePath: params.storePath,
     provider: params.provider,
     model: params.model,
     contextTokens: params.contextTokens,
+    workspaceDir: params.workspaceDir,
     resolvedThinkLevel: params.resolvedThinkLevel,
+    resolvedFastMode: params.resolvedFastMode,
     resolvedVerboseLevel: params.resolvedVerboseLevel,
     resolvedReasoningLevel: params.resolvedReasoningLevel,
     resolvedElevatedLevel: params.resolvedElevatedLevel,
@@ -206,6 +306,10 @@ export const handleStatusCommand: CommandHandler = async (params, allowTextComma
   return { shouldContinue: false, reply };
 };
 
+<<<<<<< HEAD
+=======
+/** Command handler for /export-session. */
+>>>>>>> upstream/main
 export const handleExportSessionCommand: CommandHandler = async (params, allowTextCommands) => {
   if (!allowTextCommands) {
     return null;
@@ -227,3 +331,27 @@ export const handleExportSessionCommand: CommandHandler = async (params, allowTe
   }
   return { shouldContinue: false, reply: await buildExportSessionReply(params) };
 };
+<<<<<<< HEAD
+=======
+
+/** Command handler for /export-trajectory. */
+export const handleExportTrajectoryCommand: CommandHandler = async (params, allowTextCommands) => {
+  if (!allowTextCommands) {
+    return null;
+  }
+  const normalized = params.command.commandBodyNormalized;
+  if (
+    normalized !== "/export-trajectory" &&
+    !normalized.startsWith("/export-trajectory ") &&
+    normalized !== "/trajectory" &&
+    !normalized.startsWith("/trajectory ")
+  ) {
+    return null;
+  }
+  const unauthorized = rejectUnauthorizedCommand(params, "/export-trajectory");
+  if (unauthorized) {
+    return unauthorized;
+  }
+  return { shouldContinue: false, reply: await buildExportTrajectoryCommandReply(params) };
+};
+>>>>>>> upstream/main

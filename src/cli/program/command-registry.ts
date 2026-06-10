@@ -1,23 +1,36 @@
+// Program command registry facade: exports core descriptors and registers core plus sub-CLIs.
 import type { Command } from "commander";
+<<<<<<< HEAD
 import { getPrimaryCommand, hasHelpOrVersion } from "../argv.js";
 import { removeCommandByName } from "./command-tree.js";
 import type { ProgramContext } from "./context.js";
+=======
+>>>>>>> upstream/main
 import {
-  type CoreCliCommandDescriptor,
   getCoreCliCommandDescriptors,
+  getCoreCliCommandNames,
   getCoreCliCommandsWithSubcommands,
+<<<<<<< HEAD
 } from "./core-command-descriptors.js";
 import { registerLazyCommand } from "./register-lazy-command.js";
+=======
+  type CommandRegistration,
+  registerCoreCliByName,
+  registerCoreCliCommands,
+} from "./command-registry-core.js";
+import type { ProgramContext } from "./context.js";
+>>>>>>> upstream/main
 import { registerSubCliCommands } from "./register.subclis.js";
 
-export { getCoreCliCommandDescriptors, getCoreCliCommandsWithSubcommands };
-
-type CommandRegisterParams = {
-  program: Command;
-  ctx: ProgramContext;
-  argv: string[];
+export {
+  getCoreCliCommandDescriptors,
+  getCoreCliCommandNames,
+  getCoreCliCommandsWithSubcommands,
+  registerCoreCliByName,
+  registerCoreCliCommands,
 };
 
+<<<<<<< HEAD
 export type CommandRegistration = {
   id: string;
   register: (params: CommandRegisterParams) => void;
@@ -278,7 +291,12 @@ export function registerCoreCliCommands(program: Command, ctx: ProgramContext, a
     }
   }
 }
+=======
+/** Core command registration contract re-exported for program builders and tests. */
+export type { CommandRegistration };
+>>>>>>> upstream/main
 
+/** Register all root-program commands for the current argv shape. */
 export function registerProgramCommands(
   program: Command,
   ctx: ProgramContext,

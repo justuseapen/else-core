@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+<<<<<<< HEAD
 
 VM_NAME="macOS Tahoe"
 SNAPSHOT_HINT="macOS 26.3.1 latest"
@@ -1485,4 +1486,10 @@ fi
 
 if [[ "$FRESH_MAIN_STATUS" == "fail" || "$UPGRADE_STATUS" == "fail" ]]; then
   exit 1
+=======
+cd "$ROOT_DIR"
+if command -v pnpm >/dev/null 2>&1; then
+  exec pnpm exec tsx scripts/e2e/parallels/macos-smoke.ts "$@"
+>>>>>>> upstream/main
 fi
+exec node --import tsx scripts/e2e/parallels/macos-smoke.ts "$@"

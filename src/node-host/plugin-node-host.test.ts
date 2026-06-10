@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+/** Tests plugin node-host command registry loading, listing, and invocation. */
+>>>>>>> upstream/main
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createEmptyPluginRegistry } from "../plugins/registry-empty.js";
 import { resetPluginRuntimeStateForTest, setActivePluginRegistry } from "../plugins/runtime.js";

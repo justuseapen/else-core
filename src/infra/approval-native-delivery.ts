@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type {
   ChannelApprovalKind,
   ChannelApprovalNativeAdapter,
@@ -5,43 +6,77 @@ import type {
   ChannelApprovalNativeTarget,
 } from "../channels/plugins/types.adapters.js";
 import type { OpenClawConfig } from "../config/config.js";
+=======
+// Native delivery contract for approval prompts and responses.
+import type {
+  ChannelApprovalNativeAdapter,
+  ChannelApprovalNativeSurface,
+  ChannelApprovalNativeTarget,
+} from "../channels/plugins/approval-native.types.js";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { buildChannelApprovalNativeTargetKey } from "./approval-native-target-key.js";
+import type { ChannelApprovalKind } from "./approval-types.js";
+>>>>>>> upstream/main
 import type { ExecApprovalRequest } from "./exec-approvals.js";
 import type { PluginApprovalRequest } from "./plugin-approvals.js";
 
 type ApprovalRequest = ExecApprovalRequest | PluginApprovalRequest;
 
+<<<<<<< HEAD
+=======
+/** One native approval delivery target selected by the channel adapter plan. */
+>>>>>>> upstream/main
 export type ChannelApprovalNativePlannedTarget = {
   surface: ChannelApprovalNativeSurface;
   target: ChannelApprovalNativeTarget;
   reason: "preferred" | "fallback";
 };
 
+<<<<<<< HEAD
+=======
+/** Complete native approval routing plan, including optional origin-chat notice state. */
+>>>>>>> upstream/main
 export type ChannelApprovalNativeDeliveryPlan = {
   targets: ChannelApprovalNativePlannedTarget[];
   originTarget: ChannelApprovalNativeTarget | null;
   notifyOriginWhenDmOnly: boolean;
 };
 
+<<<<<<< HEAD
 function buildTargetKey(target: ChannelApprovalNativeTarget): string {
   return `${target.to}:${target.threadId ?? ""}`;
 }
 
+=======
+>>>>>>> upstream/main
 function dedupeTargets(
   targets: ChannelApprovalNativePlannedTarget[],
 ): ChannelApprovalNativePlannedTarget[] {
   const seen = new Set<string>();
   const deduped: ChannelApprovalNativePlannedTarget[] = [];
   for (const target of targets) {
+<<<<<<< HEAD
     const key = buildTargetKey(target.target);
+=======
+    const key = buildChannelApprovalNativeTargetKey(target.target);
+>>>>>>> upstream/main
     if (seen.has(key)) {
       continue;
     }
     seen.add(key);
+<<<<<<< HEAD
+=======
+    // Keep the first surface/reason so origin-preferred plans stay stable when DM targets overlap.
+>>>>>>> upstream/main
     deduped.push(target);
   }
   return deduped;
 }
 
+<<<<<<< HEAD
+=======
+/** Resolves the origin and approver-DM targets a channel should use for native approvals. */
+>>>>>>> upstream/main
 export async function resolveChannelNativeApprovalDeliveryPlan(params: {
   cfg: OpenClawConfig;
   accountId?: string | null;

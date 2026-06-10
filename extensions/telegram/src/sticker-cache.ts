@@ -1,4 +1,4 @@
-import path from "node:path";
+// Telegram plugin module implements sticker cache behavior.
 import { resolveApiKeyForProvider } from "openclaw/plugin-sdk/agent-runtime";
 import type { ModelCatalogEntry } from "openclaw/plugin-sdk/agent-runtime";
 import {
@@ -7,14 +7,19 @@ import {
   modelSupportsVision,
 } from "openclaw/plugin-sdk/agent-runtime";
 import { resolveDefaultModelForAgent } from "openclaw/plugin-sdk/agent-runtime";
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { loadJsonFile, saveJsonFile } from "openclaw/plugin-sdk/json-store";
+=======
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import { resolveAutoImageModel } from "openclaw/plugin-sdk/media-runtime";
 import {
   resolveAutoMediaKeyProviders,
   resolveDefaultMediaModel,
 } from "openclaw/plugin-sdk/media-runtime";
 import { logVerbose } from "openclaw/plugin-sdk/runtime-env";
+<<<<<<< HEAD
 import { STATE_DIR } from "openclaw/plugin-sdk/state-paths";
 import { getTelegramRuntime } from "./runtime.js";
 
@@ -143,9 +148,31 @@ export function getCacheStats(): { count: number; oldestAt?: string; newestAt?: 
     newestAt: sorted[sorted.length - 1]?.cachedAt,
   };
 }
+=======
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { getTelegramRuntime } from "./runtime.js";
+export {
+  cacheSticker,
+  getAllCachedStickers,
+  getCachedSticker,
+  getCacheStats,
+  searchStickers,
+  type CachedSticker,
+} from "./sticker-cache-store.js";
+>>>>>>> upstream/main
 
 const STICKER_DESCRIPTION_PROMPT =
   "Describe this sticker image in 1-2 sentences. Focus on what the sticker depicts (character, object, action, emotion). Be concise and objective.";
+
+function isMinimaxVlmProvider(provider: string): boolean {
+  const normalized = normalizeLowercaseStringOrEmpty(provider);
+  return (
+    normalized === "minimax" ||
+    normalized === "minimax-cn" ||
+    normalized === "minimax-portal" ||
+    normalized === "minimax-portal-cn"
+  );
+}
 
 export interface DescribeStickerParams {
   imagePath: string;
@@ -170,7 +197,17 @@ export async function describeStickerImage(params: DescribeStickerParams): Promi
     const entry = findModelInCatalog(catalog, defaultModel.provider, defaultModel.model);
     const supportsVision = modelSupportsVision(entry);
     if (supportsVision) {
-      activeModel = { provider: defaultModel.provider, model: defaultModel.model };
+      const model = isMinimaxVlmProvider(defaultModel.provider)
+        ? resolveDefaultMediaModel({
+            cfg,
+            providerId: defaultModel.provider,
+            capability: "image",
+            includeConfiguredImageModels: false,
+          })
+        : defaultModel.model;
+      if (model) {
+        activeModel = { provider: defaultModel.provider, model };
+      }
     }
   } catch {
     // Ignore catalog failures; fall back to auto selection.
@@ -193,7 +230,8 @@ export async function describeStickerImage(params: DescribeStickerParams): Promi
   const selectCatalogModel = (provider: string) => {
     const entries = catalog.filter(
       (entry) =>
-        entry.provider.toLowerCase() === provider.toLowerCase() && modelSupportsVision(entry),
+        normalizeLowercaseStringOrEmpty(entry.provider) ===
+          normalizeLowercaseStringOrEmpty(provider) && modelSupportsVision(entry),
     );
     if (entries.length === 0) {
       return undefined;
@@ -202,8 +240,15 @@ export async function describeStickerImage(params: DescribeStickerParams): Promi
       cfg,
       providerId: provider,
       capability: "image",
+<<<<<<< HEAD
+=======
+      includeConfiguredImageModels: !isMinimaxVlmProvider(provider),
+>>>>>>> upstream/main
     });
     const preferred = entries.find((entry) => entry.id === defaultId);
+    if (isMinimaxVlmProvider(provider)) {
+      return preferred;
+    }
     return preferred ?? entries[0];
   };
 

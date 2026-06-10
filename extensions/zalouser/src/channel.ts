@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createScopedDmSecurityResolver } from "openclaw/plugin-sdk/channel-config-helpers";
 import { createChatChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { createAccountStatusSink } from "openclaw/plugin-sdk/channel-lifecycle";
@@ -7,12 +8,18 @@ import {
   createRawChannelSendResultAdapter,
 } from "openclaw/plugin-sdk/channel-send-result";
 import { createStaticReplyToModeResolver } from "openclaw/plugin-sdk/conversation-runtime";
+=======
+// Zalouser plugin module implements channel behavior.
+import { createChatChannelPlugin } from "openclaw/plugin-sdk/channel-core";
+import { createAccountStatusSink } from "openclaw/plugin-sdk/channel-outbound";
+>>>>>>> upstream/main
 import { buildPassiveProbedChannelStatusSummary } from "openclaw/plugin-sdk/extension-shared";
 import { createLazyRuntimeModule } from "openclaw/plugin-sdk/lazy-runtime";
 import {
   createAsyncComputedAccountStatusAdapter,
   createDefaultChannelRuntimeState,
 } from "openclaw/plugin-sdk/status-helpers";
+<<<<<<< HEAD
 import {
   listZalouserAccountIds,
   resolveDefaultZalouserAccountId,
@@ -42,16 +49,34 @@ import { resolveZalouserReactionMessageIds } from "./message-sid.js";
 import type { ZalouserProbeResult } from "./probe.js";
 import { writeQrDataUrlToTempFile } from "./qr-temp-file.js";
 import { getZalouserRuntime } from "./runtime.js";
+=======
 import {
-  normalizeZalouserTarget,
-  parseZalouserDirectoryGroupId,
-  parseZalouserOutboundTarget,
-  resolveZalouserOutboundSessionRoute,
-} from "./session-route.js";
-import { zalouserSetupAdapter } from "./setup-core.js";
-import { zalouserSetupWizard } from "./setup-surface.js";
+  checkZcaAuthenticated,
+  resolveZalouserAccountSync,
+  type ResolvedZalouserAccount,
+} from "./accounts.js";
+import type { ChannelDirectoryEntry, ChannelPlugin } from "./channel-api.js";
+import { DEFAULT_ACCOUNT_ID } from "./channel-api.js";
+>>>>>>> upstream/main
+import {
+  zalouserAuthAdapter,
+  zalouserGroupsAdapter,
+  zalouserMessageAdapter,
+  zalouserMessageActions,
+  zalouserMessagingAdapter,
+  zalouserOutboundAdapter,
+  zalouserPairingTextAdapter,
+  resolveZalouserQrProfile,
+  zalouserResolverAdapter,
+  zalouserSecurityAdapter,
+  zalouserThreadingAdapter,
+} from "./channel.adapters.js";
+import { listZalouserDirectoryGroupMembers } from "./directory.js";
+import type { ZalouserProbeResult } from "./probe.js";
+import { createZalouserSetupWizardProxy, zalouserSetupAdapter } from "./setup-core.js";
 import { createZalouserPluginBase } from "./shared.js";
 import { collectZalouserStatusIssues } from "./status-issues.js";
+<<<<<<< HEAD
 
 const loadZalouserChannelRuntime = createLazyRuntimeModule(() => import("./channel.runtime.js"));
 
@@ -104,6 +129,13 @@ function resolveZalouserOutboundTextChunkLimit(cfg: OpenClawConfig, accountId?: 
     fallbackLimit: ZALOUSER_TEXT_CHUNK_LIMIT,
   });
 }
+=======
+
+const loadZalouserChannelRuntime = createLazyRuntimeModule(() => import("./channel.runtime.js"));
+const zalouserSetupWizardProxy = createZalouserSetupWizardProxy(
+  async () => (await import("./setup-surface.js")).zalouserSetupWizard,
+);
+>>>>>>> upstream/main
 
 function mapUser(params: {
   id: string;
@@ -133,6 +165,7 @@ function mapGroup(params: {
   };
 }
 
+<<<<<<< HEAD
 function resolveZalouserGroupPolicyEntry(params: ChannelGroupContext) {
   const account = resolveZalouserAccountSync({
     cfg: params.cfg,
@@ -246,45 +279,32 @@ const zalouserMessageActions: ChannelMessageActionAdapter = {
   },
 };
 
+=======
+>>>>>>> upstream/main
 export const zalouserPlugin: ChannelPlugin<ResolvedZalouserAccount, ZalouserProbeResult> =
   createChatChannelPlugin({
     base: {
       ...createZalouserPluginBase({
-        setupWizard: zalouserSetupWizard,
+        setupWizard: zalouserSetupWizardProxy,
         setup: zalouserSetupAdapter,
       }),
-      groups: {
-        resolveRequireMention: resolveZalouserRequireMention,
-        resolveToolPolicy: resolveZalouserGroupToolPolicy,
-      },
+      groups: zalouserGroupsAdapter,
       actions: zalouserMessageActions,
-      messaging: {
-        normalizeTarget: (raw) => normalizeZalouserTarget(raw),
-        resolveOutboundSessionRoute: (params) => resolveZalouserOutboundSessionRoute(params),
-        targetResolver: {
-          looksLikeId: (raw) => {
-            const normalized = normalizeZalouserTarget(raw);
-            if (!normalized) {
-              return false;
-            }
-            if (/^group:[^\s]+$/i.test(normalized) || /^user:[^\s]+$/i.test(normalized)) {
-              return true;
-            }
-            return isNumericTargetId(normalized);
-          },
-          hint: "<user:id|group:id>",
-        },
-      },
+      messaging: zalouserMessagingAdapter,
       directory: {
         self: async ({ cfg, accountId }) => {
           const { getZaloUserInfo } = await loadZalouserChannelRuntime();
+<<<<<<< HEAD
           const account = resolveZalouserAccountSync({ cfg: cfg, accountId });
+=======
+          const account = resolveZalouserAccountSync({ cfg, accountId });
+>>>>>>> upstream/main
           const parsed = await getZaloUserInfo(account.profile);
           if (!parsed?.userId) {
             return null;
           }
           return mapUser({
-            id: String(parsed.userId),
+            id: parsed.userId,
             name: parsed.displayName ?? null,
             avatarUrl: parsed.avatar ?? null,
             raw: parsed,
@@ -292,11 +312,15 @@ export const zalouserPlugin: ChannelPlugin<ResolvedZalouserAccount, ZalouserProb
         },
         listPeers: async ({ cfg, accountId, query, limit }) => {
           const { listZaloFriendsMatching } = await loadZalouserChannelRuntime();
+<<<<<<< HEAD
           const account = resolveZalouserAccountSync({ cfg: cfg, accountId });
+=======
+          const account = resolveZalouserAccountSync({ cfg, accountId });
+>>>>>>> upstream/main
           const friends = await listZaloFriendsMatching(account.profile, query);
           const rows = friends.map((friend) =>
             mapUser({
-              id: String(friend.userId),
+              id: friend.userId,
               name: friend.displayName ?? null,
               avatarUrl: friend.avatar ?? null,
               raw: friend,
@@ -306,11 +330,15 @@ export const zalouserPlugin: ChannelPlugin<ResolvedZalouserAccount, ZalouserProb
         },
         listGroups: async ({ cfg, accountId, query, limit }) => {
           const { listZaloGroupsMatching } = await loadZalouserChannelRuntime();
+<<<<<<< HEAD
           const account = resolveZalouserAccountSync({ cfg: cfg, accountId });
+=======
+          const account = resolveZalouserAccountSync({ cfg, accountId });
+>>>>>>> upstream/main
           const groups = await listZaloGroupsMatching(account.profile, query);
           const rows = groups.map((group) =>
             mapGroup({
-              id: `group:${String(group.groupId)}`,
+              id: `group:${group.groupId}`,
               name: group.name ?? null,
               raw: group,
             }),
@@ -319,6 +347,7 @@ export const zalouserPlugin: ChannelPlugin<ResolvedZalouserAccount, ZalouserProb
         },
         listGroupMembers: async ({ cfg, accountId, groupId, limit }) => {
           const { listZaloGroupMembers } = await loadZalouserChannelRuntime();
+<<<<<<< HEAD
           const account = resolveZalouserAccountSync({ cfg: cfg, accountId });
           const normalizedGroupId = parseZalouserDirectoryGroupId(groupId);
           const members = await listZaloGroupMembers(account.profile, normalizedGroupId);
@@ -419,8 +448,22 @@ export const zalouserPlugin: ChannelPlugin<ResolvedZalouserAccount, ZalouserProb
           }
 
           runtime.log(waited.message);
+=======
+          return await listZalouserDirectoryGroupMembers(
+            {
+              cfg,
+              accountId: accountId ?? undefined,
+              groupId,
+              limit: limit ?? undefined,
+            },
+            { listZaloGroupMembers },
+          );
+>>>>>>> upstream/main
         },
       },
+      resolver: zalouserResolverAdapter,
+      auth: zalouserAuthAdapter,
+      message: zalouserMessageAdapter,
       status: createAsyncComputedAccountStatusAdapter<ResolvedZalouserAccount, ZalouserProbeResult>(
         {
           defaultRuntime: createDefaultChannelRuntimeState(DEFAULT_ACCOUNT_ID),
@@ -500,6 +543,7 @@ export const zalouserPlugin: ChannelPlugin<ResolvedZalouserAccount, ZalouserProb
           ).logoutZaloProfile(ctx.account.profile || resolveZalouserQrProfile(ctx.accountId)),
       },
     },
+<<<<<<< HEAD
     security: {
       resolveDmPolicy: resolveZalouserDmPolicy,
       collectAuditFindings: async (params) =>
@@ -538,7 +582,12 @@ export const zalouserPlugin: ChannelPlugin<ResolvedZalouserAccount, ZalouserProb
           emptyResult: createEmptyChannelResult("zalouser"),
         }),
       ...zalouserRawSendResultAdapter,
+=======
+    security: zalouserSecurityAdapter,
+    threading: zalouserThreadingAdapter,
+    pairing: {
+      text: zalouserPairingTextAdapter,
+>>>>>>> upstream/main
     },
+    outbound: zalouserOutboundAdapter,
   });
-
-export type { ResolvedZalouserAccount };

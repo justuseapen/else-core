@@ -1,18 +1,38 @@
+<<<<<<< HEAD
 import type { PluginRegistry } from "./registry.js";
 
 export const PLUGIN_REGISTRY_STATE = Symbol.for("openclaw.pluginRegistryState");
 
 export type RegistrySurfaceState = {
   registry: PluginRegistry | null;
+=======
+// Stores plugin runtime registry state for the current process lifecycle.
+import type { PluginRegistry } from "./registry-types.js";
+
+export const PLUGIN_REGISTRY_STATE = Symbol.for("openclaw.pluginRegistryState");
+
+export type RuntimeTrackedPluginRegistry = PluginRegistry;
+
+export type RegistrySurfaceState = {
+  registry: RuntimeTrackedPluginRegistry | null;
+>>>>>>> upstream/main
   pinned: boolean;
   version: number;
 };
 
 export type RegistryState = {
+<<<<<<< HEAD
   activeRegistry: PluginRegistry | null;
   activeVersion: number;
   httpRoute: RegistrySurfaceState;
   channel: RegistrySurfaceState;
+=======
+  activeRegistry: RuntimeTrackedPluginRegistry | null;
+  activeVersion: number;
+  httpRoute: RegistrySurfaceState;
+  channel: RegistrySurfaceState;
+  agentEventBridgeUnsubscribe?: (() => void) | undefined;
+>>>>>>> upstream/main
   key: string | null;
   workspaceDir: string | null;
   runtimeSubagentMode: "default" | "explicit" | "gateway-bindable";
@@ -27,7 +47,11 @@ export function getPluginRegistryState(): RegistryState | undefined {
   return (globalThis as GlobalRegistryState)[PLUGIN_REGISTRY_STATE];
 }
 
+<<<<<<< HEAD
 export function getActivePluginChannelRegistryFromState(): PluginRegistry | null {
+=======
+export function getActivePluginChannelRegistryFromState(): RuntimeTrackedPluginRegistry | null {
+>>>>>>> upstream/main
   const state = getPluginRegistryState();
   return state?.channel.registry ?? state?.activeRegistry ?? null;
 }

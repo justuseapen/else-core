@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
+=======
+// Lobster plugin module implements lobster runner behavior.
+import { readFileSync } from "node:fs";
+import { stat } from "node:fs/promises";
+>>>>>>> upstream/main
 import { createRequire } from "node:module";
 import path from "node:path";
 import { Readable, Writable } from "node:stream";
 import { pathToFileURL } from "node:url";
+<<<<<<< HEAD
+=======
+import { installLobsterAjvCompileCache } from "./lobster-ajv-cache.js";
+>>>>>>> upstream/main
 
 export type LobsterEnvelope =
   | {
@@ -15,6 +25,10 @@ export type LobsterEnvelope =
         prompt: string;
         items: unknown[];
         resumeToken?: string;
+<<<<<<< HEAD
+=======
+        approvalId?: string;
+>>>>>>> upstream/main
       };
     }
   | {
@@ -27,6 +41,10 @@ export type LobsterRunnerParams = {
   pipeline?: string;
   argsJson?: string;
   token?: string;
+<<<<<<< HEAD
+=======
+  approvalId?: string;
+>>>>>>> upstream/main
   approve?: boolean;
   cwd: string;
   timeoutMs: number;
@@ -52,7 +70,11 @@ type EmbeddedToolContext = {
 type EmbeddedToolEnvelope = {
   protocolVersion?: number;
   ok: boolean;
+<<<<<<< HEAD
   status?: "ok" | "needs_approval" | "cancelled";
+=======
+  status?: "ok" | "needs_approval" | "needs_input" | "cancelled";
+>>>>>>> upstream/main
   output?: unknown[];
   requiresApproval?: {
     type?: "approval_request";
@@ -60,6 +82,17 @@ type EmbeddedToolEnvelope = {
     items: unknown[];
     preview?: string;
     resumeToken?: string;
+<<<<<<< HEAD
+=======
+    approvalId?: string;
+  } | null;
+  requiresInput?: {
+    prompt: string;
+    schema?: unknown;
+    items?: unknown[];
+    resumeToken?: string;
+    approvalId?: string;
+>>>>>>> upstream/main
   } | null;
   error?: {
     type?: string;
@@ -75,12 +108,21 @@ type EmbeddedToolRuntime = {
     ctx?: EmbeddedToolContext;
   }) => Promise<EmbeddedToolEnvelope>;
   resumeToolRequest: (params: {
+<<<<<<< HEAD
     token: string;
     approved: boolean;
+=======
+    token?: string;
+    approvalId?: string;
+    approved?: boolean;
+    response?: unknown;
+    cancel?: boolean;
+>>>>>>> upstream/main
     ctx?: EmbeddedToolContext;
   }) => Promise<EmbeddedToolEnvelope>;
 };
 
+<<<<<<< HEAD
 type ToolRuntimeDeps = {
   createDefaultRegistry: () => unknown;
   parsePipeline: (pipeline: string) => Array<{
@@ -154,6 +196,49 @@ type ApprovalRequestItem = {
   resumeToken?: string;
 };
 
+=======
+type LoadEmbeddedToolRuntime = () => Promise<EmbeddedToolRuntime>;
+
+type LoadEmbeddedToolRuntimeFromPackageOptions = {
+  importModule?: (specifier: string) => Promise<Partial<EmbeddedToolRuntime>>;
+  resolvePackageEntry?: (specifier: string) => string;
+};
+
+const lobsterRequire = createRequire(import.meta.url);
+
+function toEmbeddedToolRuntime(
+  moduleExports: Partial<EmbeddedToolRuntime>,
+  source: string,
+): EmbeddedToolRuntime {
+  const { runToolRequest, resumeToolRequest } = moduleExports;
+  if (typeof runToolRequest === "function" && typeof resumeToolRequest === "function") {
+    return { runToolRequest, resumeToolRequest };
+  }
+  throw new Error(`${source} does not export Lobster embedded runtime functions`);
+}
+
+function findLobsterPackageRoot(resolvedEntryPath: string): string {
+  let dir = path.dirname(resolvedEntryPath);
+  while (true) {
+    const packageJsonPath = path.join(dir, "package.json");
+    try {
+      const parsed = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { name?: string };
+      if (parsed.name === "@clawdbot/lobster") {
+        return dir;
+      }
+    } catch {
+      // Keep walking until the installed package root is found.
+    }
+
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      throw new Error(`Could not locate @clawdbot/lobster package root from ${resolvedEntryPath}`);
+    }
+    dir = parent;
+  }
+}
+
+>>>>>>> upstream/main
 function normalizeForCwdSandbox(p: string): string {
   const normalized = path.normalize(p);
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
@@ -196,6 +281,18 @@ function createLimitedSink(maxBytes: number, label: "stdout" | "stderr") {
 
 function normalizeEnvelope(envelope: EmbeddedToolEnvelope): LobsterEnvelope {
   if (envelope.ok) {
+<<<<<<< HEAD
+=======
+    if (envelope.status === "needs_input") {
+      return {
+        ok: false,
+        error: {
+          type: "unsupported_status",
+          message: "Lobster input requests are not supported by the OpenClaw Lobster tool yet",
+        },
+      };
+    }
+>>>>>>> upstream/main
     return {
       ok: true,
       status: envelope.status ?? "ok",
@@ -208,6 +305,12 @@ function normalizeEnvelope(envelope: EmbeddedToolEnvelope): LobsterEnvelope {
             ...(envelope.requiresApproval.resumeToken
               ? { resumeToken: envelope.requiresApproval.resumeToken }
               : {}),
+<<<<<<< HEAD
+=======
+            ...(envelope.requiresApproval.approvalId
+              ? { approvalId: envelope.requiresApproval.approvalId }
+              : {}),
+>>>>>>> upstream/main
           }
         : null,
     };
@@ -228,6 +331,7 @@ function throwOnErrorEnvelope(envelope: LobsterEnvelope): Extract<LobsterEnvelop
   throw new Error(envelope.error.message);
 }
 
+<<<<<<< HEAD
 function asApprovalRequestItem(item: unknown): ApprovalRequestItem | null {
   if (!item || typeof item !== "object") {
     return null;
@@ -244,6 +348,9 @@ function asApprovalRequestItem(item: unknown): ApprovalRequestItem | null {
 
 async function resolveWorkflowFile(candidate: string, cwd: string) {
   const { stat } = await import("node:fs/promises");
+=======
+async function resolveWorkflowFile(candidate: string, cwd: string) {
+>>>>>>> upstream/main
   const resolved = path.isAbsolute(candidate) ? candidate : path.resolve(cwd, candidate);
   const fileStat = await stat(resolved);
   if (!fileStat.isFile()) {
@@ -307,14 +414,21 @@ async function withTimeout<T>(
         clearTimeout(timer);
         resolve(value);
       },
+<<<<<<< HEAD
       (error) => {
         clearTimeout(timer);
         reject(error);
+=======
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(toLintErrorObject(error, "Non-Error rejection"));
+>>>>>>> upstream/main
       },
     );
   });
 }
 
+<<<<<<< HEAD
 function createFallbackEmbeddedToolRuntime(deps: ToolRuntimeDeps): EmbeddedToolRuntime {
   const createToolContext = (ctx: EmbeddedToolContext = {}) => ({
     cwd: ctx.cwd ?? process.cwd(),
@@ -678,6 +792,41 @@ async function loadEmbeddedToolRuntimeFromPackage(): Promise<EmbeddedToolRuntime
     readStateJson: storeModule.readStateJson,
     writeStateJson: storeModule.writeStateJson,
     deleteStateJson: storeModule.deleteStateJson,
+=======
+export async function loadEmbeddedToolRuntimeFromPackage(
+  options: LoadEmbeddedToolRuntimeFromPackageOptions = {},
+): Promise<EmbeddedToolRuntime> {
+  const importModule =
+    options.importModule ??
+    (async (specifier: string) => (await import(specifier)) as Partial<EmbeddedToolRuntime>);
+  const resolvePackageEntry =
+    options.resolvePackageEntry ?? ((specifier: string) => lobsterRequire.resolve(specifier));
+  const packageEntryPath = resolvePackageEntry("@clawdbot/lobster");
+  await installLobsterAjvCompileCache(packageEntryPath);
+
+  let coreLoadError: unknown;
+  try {
+    const coreSpecifier = ["@clawdbot", "lobster", "core"].join("/");
+    return toEmbeddedToolRuntime(await importModule(coreSpecifier), "@clawdbot/lobster/core");
+  } catch (error) {
+    coreLoadError = error;
+  }
+
+  let fallbackLoadError: unknown;
+  try {
+    const packageRoot = findLobsterPackageRoot(packageEntryPath);
+    const coreRuntimeUrl = pathToFileURL(path.join(packageRoot, "dist/src/core/index.js")).href;
+    return toEmbeddedToolRuntime(await importModule(coreRuntimeUrl), coreRuntimeUrl);
+  } catch (error) {
+    fallbackLoadError = error;
+  }
+
+  throw new Error("Failed to load the Lobster embedded runtime", {
+    cause: new AggregateError(
+      [coreLoadError, fallbackLoadError],
+      "Both Lobster embedded runtime load paths failed",
+    ),
+>>>>>>> upstream/main
   });
 }
 
@@ -686,6 +835,7 @@ export function createEmbeddedLobsterRunner(options?: {
 }): LobsterRunner {
   const loadRuntime = options?.loadRuntime ?? loadEmbeddedToolRuntimeFromPackage;
   let runtimePromise: Promise<EmbeddedToolRuntime> | undefined;
+<<<<<<< HEAD
 
   const getRuntime = () => {
     runtimePromise ??= loadRuntime().catch((error) => {
@@ -698,6 +848,12 @@ export function createEmbeddedLobsterRunner(options?: {
   return {
     async run(params) {
       const runtime = await getRuntime();
+=======
+  return {
+    async run(params) {
+      runtimePromise ??= loadRuntime();
+      const runtime = await runtimePromise;
+>>>>>>> upstream/main
       return await withTimeout(params.timeoutMs, async (signal) => {
         const ctx = createEmbeddedToolContext(params, signal);
 
@@ -729,8 +885,14 @@ export function createEmbeddedLobsterRunner(options?: {
         }
 
         const token = params.token?.trim() ?? "";
+<<<<<<< HEAD
         if (!token) {
           throw new Error("token required");
+=======
+        const approvalId = params.approvalId?.trim() ?? "";
+        if (!token && !approvalId) {
+          throw new Error("token or approvalId required");
+>>>>>>> upstream/main
         }
         if (typeof params.approve !== "boolean") {
           throw new Error("approve required");
@@ -739,7 +901,12 @@ export function createEmbeddedLobsterRunner(options?: {
         return throwOnErrorEnvelope(
           normalizeEnvelope(
             await runtime.resumeToolRequest({
+<<<<<<< HEAD
               token,
+=======
+              ...(token ? { token } : {}),
+              ...(approvalId ? { approvalId } : {}),
+>>>>>>> upstream/main
               approved: params.approve,
               ctx,
             }),
@@ -749,3 +916,20 @@ export function createEmbeddedLobsterRunner(options?: {
     },
   };
 }
+<<<<<<< HEAD
+=======
+
+function toLintErrorObject(value: unknown, fallbackMessage: string): Error {
+  if (value instanceof Error) {
+    return value;
+  }
+  if (typeof value === "string") {
+    return new Error(value);
+  }
+  const error = new Error(fallbackMessage, { cause: value });
+  if ((typeof value === "object" && value !== null) || typeof value === "function") {
+    Object.assign(error, value);
+  }
+  return error;
+}
+>>>>>>> upstream/main

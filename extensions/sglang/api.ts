@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Sglang API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   SGLANG_DEFAULT_API_KEY_ENV_VAR,
   SGLANG_DEFAULT_BASE_URL,

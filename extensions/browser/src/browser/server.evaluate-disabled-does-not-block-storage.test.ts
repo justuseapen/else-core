@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getBrowserTestFetch } from "./test-fetch.js";
+=======
+// Browser tests cover server.evaluate disabled does not block storage plugin behavior.
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import { getFreePort } from "./test-port.js";
+import { getBrowserTestFetch } from "./test-support/fetch.js";
+import "../test-support/browser-security.mock.js";
 
 let testPort = 0;
 let prevGatewayPort: string | undefined;
@@ -37,18 +44,23 @@ const routeCtxMocks = vi.hoisted(() => {
 
 vi.mock("../config/config.js", async () => {
   const actual = await vi.importActual<typeof import("../config/config.js")>("../config/config.js");
+<<<<<<< HEAD
+=======
+  const loadConfig = () => ({
+    browser: {
+      enabled: true,
+      evaluateEnabled: false,
+      defaultProfile: "openclaw",
+      profiles: {
+        openclaw: { cdpPort: testPort + 1, color: "#FF4500" },
+      },
+    },
+  });
+>>>>>>> upstream/main
   return {
     ...actual,
-    loadConfig: () => ({
-      browser: {
-        enabled: true,
-        evaluateEnabled: false,
-        defaultProfile: "openclaw",
-        profiles: {
-          openclaw: { cdpPort: testPort + 1, color: "#FF4500" },
-        },
-      },
-    }),
+    getRuntimeConfig: loadConfig,
+    loadConfig,
     writeConfigFile: vi.fn(async () => {}),
   };
 });
@@ -66,7 +78,11 @@ vi.mock("./server-context.js", async () => {
 });
 
 const { startBrowserControlServerFromConfig, stopBrowserControlServer } =
+<<<<<<< HEAD
   await import("./server.js");
+=======
+  await import("../server.js");
+>>>>>>> upstream/main
 
 describe("browser control evaluate gating", () => {
   beforeEach(async () => {

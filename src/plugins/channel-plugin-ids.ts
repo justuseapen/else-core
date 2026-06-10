@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { listPotentialConfiguredChannelIds } from "../channels/config-presence.js";
 import type { OpenClawConfig } from "../config/config.js";
 import {
@@ -125,3 +126,39 @@ export function resolveGatewayStartupPluginIds(params: {
     })
     .map((plugin) => plugin.id);
 }
+=======
+/** Channel presence and gateway startup plugin id helpers. */
+export {
+  hasConfiguredChannelsForReadOnlyScope,
+  hasExplicitChannelConfig,
+  listConfiguredAnnounceChannelIdsForConfig,
+  listConfiguredChannelIdsForReadOnlyScope,
+  listExplicitConfiguredChannelIdsForConfig,
+  resolveConfiguredChannelPluginIds,
+  resolveConfiguredChannelPresencePolicy,
+  resolveDiscoverableScopedChannelPluginIds,
+  type ConfiguredChannelBlockedReason,
+  type ConfiguredChannelPresencePolicyEntry,
+  type ConfiguredChannelPresenceSource,
+} from "./channel-presence-policy.js";
+
+export {
+  collectConfiguredMemoryEmbeddingProviderIds,
+  collectConfiguredMemoryEmbeddingStartupProviderOwners,
+  collectUnregisteredConfiguredMemoryEmbeddingProviders,
+  resolveChannelPluginIds,
+  resolveChannelPluginIdsFromRegistry,
+  resolveConfiguredDeferredChannelPluginIds,
+  resolveConfiguredDeferredChannelPluginIdsFromRegistry,
+  createConfigValidationMetadataPluginIdScope,
+  createGatewayStartupMetadataPluginIdScope,
+  isMetadataSnapshotScopedForGatewayStartup,
+  resolveConfigValidationMetadataPluginIds,
+  resolveGatewayStartupMetadataPluginIds,
+  loadGatewayStartupPluginPlan,
+  resolveGatewayStartupPluginIds,
+  resolveGatewayStartupPluginPlanFromRegistry,
+  resolveGatewayStartupPluginIdsFromRegistry,
+  type GatewayStartupPluginPlan,
+} from "./gateway-startup-plugin-ids.js";
+>>>>>>> upstream/main

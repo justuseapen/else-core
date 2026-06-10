@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Ollama API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   buildAssistantMessage,
   buildOllamaChatRequest,

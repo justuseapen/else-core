@@ -1,14 +1,14 @@
-import type { AgentToolResult } from "@mariozechner/pi-agent-core";
-import { Type } from "@sinclair/typebox";
-import {
-  type ChannelMessageActionAdapter,
-  type ChannelMessageToolDiscovery,
-} from "openclaw/plugin-sdk/channel-contract";
+// Slack plugin module implements channel actions behavior.
+import type { AgentToolResult } from "openclaw/plugin-sdk/agent-core";
+import type { ChannelMessageActionAdapter } from "openclaw/plugin-sdk/channel-contract";
 import type { SlackActionContext } from "./action-runtime.js";
+<<<<<<< HEAD
 import { isSlackInteractiveRepliesEnabled } from "./interactive-replies.js";
+=======
+>>>>>>> upstream/main
 import { handleSlackMessageAction } from "./message-action-dispatch.js";
-import { extractSlackToolSend, listSlackMessageActions } from "./message-actions.js";
-import { createSlackMessageToolBlocksSchema } from "./message-tool-schema.js";
+import { extractSlackToolSend } from "./message-actions.js";
+import { describeSlackMessageTool } from "./message-tool-api.js";
 import { resolveSlackChannelId } from "./targets.js";
 
 type SlackActionInvoke = (
@@ -24,10 +24,29 @@ async function loadSlackActionRuntime() {
   return await slackActionRuntimePromise;
 }
 
+<<<<<<< HEAD
+=======
+function resolveSlackActionContext(params: {
+  toolContext: unknown;
+  mediaLocalRoots: readonly string[] | undefined;
+  mediaReadFile: ((filePath: string) => Promise<Buffer>) | undefined;
+}): SlackActionContext | undefined {
+  if (!params.toolContext && !params.mediaLocalRoots && !params.mediaReadFile) {
+    return undefined;
+  }
+  return {
+    ...(params.toolContext as SlackActionContext | undefined),
+    ...(params.mediaLocalRoots ? { mediaLocalRoots: params.mediaLocalRoots } : {}),
+    ...(params.mediaReadFile ? { mediaReadFile: params.mediaReadFile } : {}),
+  };
+}
+
+>>>>>>> upstream/main
 export function createSlackActions(
   providerId: string,
   options?: { invoke?: SlackActionInvoke },
 ): ChannelMessageActionAdapter {
+<<<<<<< HEAD
   function describeMessageTool({
     cfg,
     accountId,
@@ -55,15 +74,19 @@ export function createSlackActions(
     };
   }
 
+=======
+>>>>>>> upstream/main
   return {
-    describeMessageTool,
+    describeMessageTool: describeSlackMessageTool,
     extractToolSend: ({ args }) => extractSlackToolSend(args),
+    prepareSendPayload: ({ ctx, payload }) => (ctx.action === "send" ? payload : null),
     handleAction: async (ctx) => {
       return await handleSlackMessageAction({
         providerId,
         ctx,
         normalizeChannelId: resolveSlackChannelId,
         includeReadThreadId: true,
+<<<<<<< HEAD
         invoke: async (action, cfg, toolContext) =>
           await (options?.invoke
             ? options.invoke(action, cfg, toolContext)
@@ -72,6 +95,18 @@ export function createSlackActions(
                 mediaLocalRoots: ctx.mediaLocalRoots,
                 mediaReadFile: ctx.mediaReadFile,
               })),
+=======
+        invoke: async (action, cfg, toolContext) => {
+          const actionContext = resolveSlackActionContext({
+            toolContext,
+            mediaLocalRoots: ctx.mediaLocalRoots,
+            mediaReadFile: ctx.mediaReadFile,
+          });
+          return await (options?.invoke
+            ? options.invoke(action, cfg, actionContext)
+            : (await loadSlackActionRuntime()).handleSlackAction(action, cfg, actionContext));
+        },
+>>>>>>> upstream/main
       });
     },
   };

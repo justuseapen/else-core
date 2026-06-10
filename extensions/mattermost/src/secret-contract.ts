@@ -1,12 +1,22 @@
+<<<<<<< HEAD
+=======
+// Mattermost plugin module implements secret contract behavior.
+>>>>>>> upstream/main
 import {
   collectSimpleChannelFieldAssignments,
   getChannelSurface,
   type ResolverContext,
   type SecretDefaults,
   type SecretTargetRegistryEntry,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/security-runtime";
 
 export const secretTargetRegistryEntries = [
+=======
+} from "openclaw/plugin-sdk/channel-secret-basic-runtime";
+
+export const secretTargetRegistryEntries: SecretTargetRegistryEntry[] = [
+>>>>>>> upstream/main
   {
     id: "channels.mattermost.accounts.*.botToken",
     targetType: "channels.mattermost.accounts.*.botToken",
@@ -29,11 +39,19 @@ export const secretTargetRegistryEntries = [
     includeInConfigure: true,
     includeInAudit: true,
   },
+<<<<<<< HEAD
 ] satisfies SecretTargetRegistryEntry[];
 
 export function collectRuntimeConfigAssignments(params: {
   config: { channels?: Record<string, unknown> };
   defaults: SecretDefaults | undefined;
+=======
+];
+
+export function collectRuntimeConfigAssignments(params: {
+  config: { channels?: Record<string, unknown> };
+  defaults?: SecretDefaults;
+>>>>>>> upstream/main
   context: ResolverContext;
 }): void {
   const resolved = getChannelSurface(params.config, "mattermost");
@@ -52,3 +70,11 @@ export function collectRuntimeConfigAssignments(params: {
     accountInactiveReason: "Mattermost account is disabled.",
   });
 }
+<<<<<<< HEAD
+=======
+
+export const channelSecrets = {
+  secretTargetRegistryEntries,
+  collectRuntimeConfigAssignments,
+};
+>>>>>>> upstream/main

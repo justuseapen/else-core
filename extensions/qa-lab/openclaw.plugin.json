@@ -1,5 +1,11 @@
 {
   "id": "qa-lab",
+<<<<<<< HEAD
+=======
+  "activation": {
+    "onStartup": false
+  },
+>>>>>>> upstream/main
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

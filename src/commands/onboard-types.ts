@@ -1,8 +1,15 @@
-import type { ChannelId } from "../channels/plugins/types.js";
+/**
+ * Shared onboarding option and choice types.
+ *
+ * These types model CLI flags plus plugin-defined dynamic auth options used by
+ * interactive and non-interactive setup.
+ */
+import type { ChannelId } from "../channels/plugins/types.public.js";
 import type { SecretInputMode } from "../plugins/provider-auth-types.js";
 import type { GatewayDaemonRuntime } from "./daemon-runtime.js";
 
 export type OnboardMode = "local" | "remote";
+<<<<<<< HEAD
 export type BuiltInAuthChoice =
   // Legacy alias for `setup-token` (kept for backwards CLI compatibility).
   | "oauth"
@@ -87,20 +94,41 @@ export type BuiltInAuthChoiceGroupId =
   | "byteplus"
   | "custom";
 export type AuthChoiceGroupId = BuiltInAuthChoiceGroupId | (string & {});
+=======
+
+/**
+ * Auth choices are plugin-owned contract ids plus a few legacy aliases that
+ * are normalized elsewhere (for example `oauth` -> `setup-token`).
+ */
+type BuiltInAuthChoice =
+  /** @deprecated Use `setup-token`. */
+  "oauth" | "setup-token" | "token" | "apiKey" | "custom-api-key" | "skip";
+export type AuthChoice = BuiltInAuthChoice | (string & {});
+
+/** Auth choice groups are plugin-owned ids plus the core `custom` bucket. */
+export type AuthChoiceGroupId = "custom" | (string & {});
+>>>>>>> upstream/main
 export type GatewayAuthChoice = "token" | "password";
 export type ResetScope = "config" | "config+creds+sessions" | "full";
 export type GatewayBind = "loopback" | "lan" | "auto" | "custom" | "tailnet";
 export type TailscaleMode = "off" | "serve" | "funnel";
 export type NodeManagerChoice = "npm" | "pnpm" | "bun";
 export type ChannelChoice = ChannelId;
-// Legacy alias (pre-rename).
-export type ProviderChoice = ChannelChoice;
 export type { SecretInputMode } from "../plugins/provider-auth-types.js";
 
-export type OnboardOptions = {
+type OnboardDynamicProviderOptions = {
+  /**
+   * Provider-specific non-interactive auth flags are plugin-owned and keyed by
+   * manifest `providerAuthChoices[].optionKey` values.
+   */
+  [optionKey: string]: unknown;
+};
+
+/** Parsed options accepted by `openclaw onboard`. */
+export type OnboardOptions = OnboardDynamicProviderOptions & {
   mode?: OnboardMode;
   /** "manual" is an alias for "advanced". */
-  flow?: "quickstart" | "advanced" | "manual";
+  flow?: "quickstart" | "advanced" | "manual" | "import";
   workspace?: string;
   nonInteractive?: boolean;
   /** Required for non-interactive setup; skips the interactive risk prompt when true. */
@@ -118,42 +146,16 @@ export type OnboardOptions = {
   tokenExpiresIn?: string;
   /** API key persistence mode for setup flows (default: plaintext). */
   secretInputMode?: SecretInputMode;
-  anthropicApiKey?: string;
-  deepseekApiKey?: string;
-  openaiApiKey?: string;
-  mistralApiKey?: string;
-  openrouterApiKey?: string;
-  kilocodeApiKey?: string;
-  litellmApiKey?: string;
-  aiGatewayApiKey?: string;
+  arceeaiApiKey?: string;
   cloudflareAiGatewayAccountId?: string;
   cloudflareAiGatewayGatewayId?: string;
-  cloudflareAiGatewayApiKey?: string;
-  moonshotApiKey?: string;
-  kimiCodeApiKey?: string;
-  geminiApiKey?: string;
-  zaiApiKey?: string;
-  xiaomiApiKey?: string;
-  minimaxApiKey?: string;
-  syntheticApiKey?: string;
-  veniceApiKey?: string;
-  togetherApiKey?: string;
-  huggingfaceApiKey?: string;
-  opencodeZenApiKey?: string;
-  opencodeGoApiKey?: string;
-  xaiApiKey?: string;
-  volcengineApiKey?: string;
-  byteplusApiKey?: string;
-  qianfanApiKey?: string;
-  modelstudioStandardApiKeyCn?: string;
-  modelstudioStandardApiKey?: string;
-  modelstudioApiKeyCn?: string;
-  modelstudioApiKey?: string;
   customBaseUrl?: string;
   customApiKey?: string;
+  lmstudioApiKey?: string;
   customModelId?: string;
   customProviderId?: string;
-  customCompatibility?: "openai" | "anthropic";
+  customCompatibility?: "openai" | "openai-responses" | "anthropic";
+  customImageInput?: boolean;
   gatewayPort?: number;
   gatewayBind?: GatewayBind;
   gatewayAuth?: GatewayAuthChoice;
@@ -168,11 +170,17 @@ export type OnboardOptions = {
   /** @deprecated Legacy alias for `skipChannels`. */
   skipProviders?: boolean;
   skipSkills?: boolean;
+  skipBootstrap?: boolean;
   skipSearch?: boolean;
   skipHealth?: boolean;
   skipUi?: boolean;
+  suppressGatewayTokenOutput?: boolean;
+  skipHooks?: boolean;
   nodeManager?: NodeManagerChoice;
   remoteUrl?: string;
   remoteToken?: string;
+  importFrom?: string;
+  importSource?: string;
+  importSecrets?: boolean;
   json?: boolean;
 };

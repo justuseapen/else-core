@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 import { describe, expect, it, vi } from "vitest";
 import { createMatrixReplyContextResolver, summarizeMatrixReplyEvent } from "./reply-context.js";
+=======
+// Matrix tests cover reply context plugin behavior.
+import { describe, expect, it, vi } from "vitest";
+import { createMatrixReplyContextResolver, summarizeMatrixReplyEvent } from "./reply-context.js";
+import { createPollStartEvent } from "./test-events.js";
+>>>>>>> upstream/main
 import type { MatrixRawEvent } from "./types.js";
 
 describe("matrix reply context", () => {
@@ -30,9 +37,17 @@ describe("matrix reply context", () => {
         body: longBody,
       },
     } as MatrixRawEvent);
+<<<<<<< HEAD
     expect(result).toBeDefined();
     expect(result!.length).toBeLessThanOrEqual(500);
     expect(result!.endsWith("...")).toBe(true);
+=======
+    if (result === undefined) {
+      throw new Error("expected truncated reply context");
+    }
+    expect(result.length).toBeLessThanOrEqual(500);
+    expect(result.endsWith("...")).toBe(true);
+>>>>>>> upstream/main
   });
 
   it("handles media-only reply events", () => {
@@ -51,6 +66,7 @@ describe("matrix reply context", () => {
   });
 
   it("summarizes poll start events from poll content", () => {
+<<<<<<< HEAD
     expect(
       summarizeMatrixReplyEvent({
         event_id: "$poll",
@@ -70,6 +86,11 @@ describe("matrix reply context", () => {
         },
       } as MatrixRawEvent),
     ).toBe("[Poll]\nLunch?\n\n1. Pizza\n2. Sushi");
+=======
+    expect(summarizeMatrixReplyEvent(createPollStartEvent("$poll"))).toBe(
+      "[Poll]\nLunch?\n\n1. Pizza\n2. Sushi",
+    );
+>>>>>>> upstream/main
   });
 
   it("resolves and caches reply context", async () => {
@@ -129,7 +150,11 @@ describe("matrix reply context", () => {
       eventId: "$missing",
     });
 
+<<<<<<< HEAD
     expect(result).toEqual({});
+=======
+    expect(result).toStrictEqual({});
+>>>>>>> upstream/main
   });
 
   it("returns empty context for redacted events", async () => {
@@ -157,7 +182,11 @@ describe("matrix reply context", () => {
       eventId: "$redacted",
     });
 
+<<<<<<< HEAD
     expect(result).toEqual({});
+=======
+    expect(result).toStrictEqual({});
+>>>>>>> upstream/main
     expect(getMemberDisplayName).not.toHaveBeenCalled();
   });
 
@@ -189,7 +218,11 @@ describe("matrix reply context", () => {
       roomId: "!room:example.org",
       eventId: "$original",
     });
+<<<<<<< HEAD
     expect(first).toEqual({});
+=======
+    expect(first).toStrictEqual({});
+>>>>>>> upstream/main
 
     // Second call succeeds (should retry, not use cached failure)
     const second = await resolveReplyContext({

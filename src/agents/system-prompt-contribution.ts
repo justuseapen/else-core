@@ -1,8 +1,21 @@
+<<<<<<< HEAD
+=======
+/**
+ * Provider-owned system prompt contribution types.
+ * Separates cache-stable prefixes, dynamic suffixes, and section overrides for
+ * runtime prompt assembly.
+ */
+/** Core system-prompt sections that providers may replace. */
+>>>>>>> upstream/main
 export type ProviderSystemPromptSectionId =
   | "interaction_style"
   | "tool_call_style"
   | "execution_bias";
 
+<<<<<<< HEAD
+=======
+/** Provider guidance merged into the assembled agent system prompt. */
+>>>>>>> upstream/main
 export type ProviderSystemPromptContribution = {
   /**
    * Cache-stable provider guidance inserted above the system-prompt cache boundary.

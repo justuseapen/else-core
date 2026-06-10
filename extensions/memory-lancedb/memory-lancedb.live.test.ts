@@ -1,13 +1,20 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+=======
+// Memory Lancedb tests cover memory lancedb plugin behavior.
+import { describe, expect, test } from "vitest";
+import { installTmpDirHarness } from "./test-helpers.js";
+>>>>>>> upstream/main
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? "";
 const HAS_OPENAI_KEY = Boolean(process.env.OPENAI_API_KEY);
 const liveEnabled = HAS_OPENAI_KEY && process.env.OPENCLAW_LIVE_TEST === "1";
 const describeLive = liveEnabled ? describe : describe.skip;
 
+<<<<<<< HEAD
 function installTmpDirHarness(params: { prefix: string }) {
   let tmpDir = "";
   let dbPath = "";
@@ -29,6 +36,8 @@ function installTmpDirHarness(params: { prefix: string }) {
   };
 }
 
+=======
+>>>>>>> upstream/main
 // Live tests that require OpenAI API key and actually use LanceDB
 describeLive("memory plugin live tests", () => {
   const { getDbPath } = installTmpDirHarness({ prefix: "openclaw-memory-live-" });
@@ -38,6 +47,7 @@ describeLive("memory plugin live tests", () => {
     const liveApiKey = OPENAI_API_KEY;
 
     // Mock plugin API
+<<<<<<< HEAD
     // oxlint-disable-next-line typescript/no-explicit-any
     const registeredTools: any[] = [];
     // oxlint-disable-next-line typescript/no-explicit-any
@@ -45,6 +55,11 @@ describeLive("memory plugin live tests", () => {
     // oxlint-disable-next-line typescript/no-explicit-any
     const registeredServices: any[] = [];
     // oxlint-disable-next-line typescript/no-explicit-any
+=======
+    const registeredTools: any[] = [];
+    const registeredClis: any[] = [];
+    const registeredServices: any[] = [];
+>>>>>>> upstream/main
     const registeredHooks: Record<string, any[]> = {};
     const logs: string[] = [];
 
@@ -69,6 +84,7 @@ describeLive("memory plugin live tests", () => {
         error: (msg: string) => logs.push(`[error] ${msg}`),
         debug: (msg: string) => logs.push(`[debug] ${msg}`),
       },
+<<<<<<< HEAD
       // oxlint-disable-next-line typescript/no-explicit-any
       registerTool: (tool: any, opts: any) => {
         registeredTools.push({ tool, opts });
@@ -82,6 +98,17 @@ describeLive("memory plugin live tests", () => {
         registeredServices.push(service);
       },
       // oxlint-disable-next-line typescript/no-explicit-any
+=======
+      registerTool: (tool: any, opts: any) => {
+        registeredTools.push({ tool, opts });
+      },
+      registerCli: (registrar: any, opts: any) => {
+        registeredClis.push({ registrar, opts });
+      },
+      registerService: (service: any) => {
+        registeredServices.push(service);
+      },
+>>>>>>> upstream/main
       on: (hookName: string, handler: any) => {
         if (!registeredHooks[hookName]) {
           registeredHooks[hookName] = [];
@@ -92,7 +119,10 @@ describeLive("memory plugin live tests", () => {
     };
 
     // Register plugin
+<<<<<<< HEAD
     // oxlint-disable-next-line typescript/no-explicit-any
+=======
+>>>>>>> upstream/main
     memoryPlugin.register(mockApi as any);
 
     // Check registration

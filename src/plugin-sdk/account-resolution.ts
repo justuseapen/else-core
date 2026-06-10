@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export type { OpenClawConfig } from "../config/config.js";
 
 export { createAccountActionGate } from "../channels/plugins/account-action-gate.js";
@@ -61,3 +62,9 @@ export function listConfiguredAccountIds(params: {
   }
   return [...ids];
 }
+=======
+/**
+ * Public SDK subpath for account id normalization and account matching helpers.
+ */
+export * from "./account-core.js";
+>>>>>>> upstream/main

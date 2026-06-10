@@ -1,4 +1,6 @@
+// Matrix tests cover thread context plugin behavior.
 import { describe, expect, it, vi } from "vitest";
+import { createPollStartEvent } from "./test-events.js";
 import {
   createMatrixThreadContextResolver,
   summarizeMatrixThreadStarterEvent,
@@ -126,6 +128,7 @@ describe("matrix thread context", () => {
   });
 
   it("summarizes poll start thread roots from poll content", () => {
+<<<<<<< HEAD
     expect(
       summarizeMatrixThreadStarterEvent({
         event_id: "$root",
@@ -145,5 +148,10 @@ describe("matrix thread context", () => {
         },
       } as MatrixRawEvent),
     ).toBe("[Poll]\nLunch?\n\n1. Pizza\n2. Sushi");
+=======
+    expect(summarizeMatrixThreadStarterEvent(createPollStartEvent("$root"))).toBe(
+      "[Poll]\nLunch?\n\n1. Pizza\n2. Sushi",
+    );
+>>>>>>> upstream/main
   });
 });

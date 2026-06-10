@@ -1,4 +1,6 @@
+// Slack plugin module implements room context behavior.
 import { buildUntrustedChannelMetadata } from "openclaw/plugin-sdk/security-runtime";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
 
 export function resolveSlackRoomContextHints(params: {
   isRoomish: boolean;
@@ -17,7 +19,11 @@ export function resolveSlackRoomContextHints(params: {
     : undefined;
 
   const systemPromptParts = [
+<<<<<<< HEAD
     params.isRoomish ? params.channelConfig?.systemPrompt?.trim() || null : null,
+=======
+    params.isRoomish ? (normalizeOptionalString(params.channelConfig?.systemPrompt) ?? null) : null,
+>>>>>>> upstream/main
   ].filter((entry): entry is string => Boolean(entry));
   const groupSystemPrompt =
     systemPromptParts.length > 0 ? systemPromptParts.join("\n\n") : undefined;

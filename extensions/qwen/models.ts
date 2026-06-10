@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Qwen plugin module implements models behavior.
+>>>>>>> upstream/main
 import {
   applyProviderNativeStreamingUsageCompat,
   supportsNativeStreamingUsageCompat,
@@ -13,8 +17,16 @@ export const QWEN_CN_BASE_URL = "https://coding.dashscope.aliyuncs.com/v1";
 export const QWEN_STANDARD_CN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
 export const QWEN_STANDARD_GLOBAL_BASE_URL =
   "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
+<<<<<<< HEAD
 
 export const QWEN_DEFAULT_MODEL_ID = "qwen3.5-plus";
+=======
+export const QWEN_OAUTH_PROVIDER_ID = "qwen-oauth";
+export const QWEN_OAUTH_BASE_URL = "https://portal.qwen.ai/v1";
+
+export const QWEN_DEFAULT_MODEL_ID = "qwen3.5-plus";
+export const QWEN_36_PLUS_MODEL_ID = "qwen3.6-plus";
+>>>>>>> upstream/main
 export const QWEN_DEFAULT_COST = {
   input: 0,
   output: 0,
@@ -22,6 +34,10 @@ export const QWEN_DEFAULT_COST = {
   cacheWrite: 0,
 };
 export const QWEN_DEFAULT_MODEL_REF = `qwen/${QWEN_DEFAULT_MODEL_ID}`;
+<<<<<<< HEAD
+=======
+export const QWEN_OAUTH_DEFAULT_MODEL_REF = `qwen-oauth/${QWEN_DEFAULT_MODEL_ID}`;
+>>>>>>> upstream/main
 
 export const QWEN_MODEL_CATALOG: ReadonlyArray<ModelDefinitionConfig> = [
   {
@@ -34,8 +50,13 @@ export const QWEN_MODEL_CATALOG: ReadonlyArray<ModelDefinitionConfig> = [
     maxTokens: 65_536,
   },
   {
+<<<<<<< HEAD
     id: "qwen3.6-plus",
     name: "qwen3.6-plus",
+=======
+    id: QWEN_36_PLUS_MODEL_ID,
+    name: QWEN_36_PLUS_MODEL_ID,
+>>>>>>> upstream/main
     reasoning: false,
     input: ["text", "image"],
     cost: QWEN_DEFAULT_COST,
@@ -107,6 +128,37 @@ export const QWEN_MODEL_CATALOG: ReadonlyArray<ModelDefinitionConfig> = [
   },
 ];
 
+<<<<<<< HEAD
+=======
+export function isQwenCodingPlanBaseUrl(baseUrl: string | undefined): boolean {
+  const trimmed = baseUrl?.trim();
+  if (!trimmed) {
+    return false;
+  }
+  try {
+    const hostname = new URL(trimmed).hostname.toLowerCase().replace(/\.+$/, "");
+    return (
+      hostname === "coding.dashscope.aliyuncs.com" ||
+      hostname === "coding-intl.dashscope.aliyuncs.com"
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function isQwen36PlusSupportedBaseUrl(baseUrl: string | undefined): boolean {
+  return !isQwenCodingPlanBaseUrl(baseUrl);
+}
+
+export function buildQwenModelCatalogForBaseUrl(
+  baseUrl: string | undefined,
+): ReadonlyArray<ModelDefinitionConfig> {
+  return isQwen36PlusSupportedBaseUrl(baseUrl)
+    ? QWEN_MODEL_CATALOG
+    : QWEN_MODEL_CATALOG.filter((model) => model.id !== QWEN_36_PLUS_MODEL_ID);
+}
+
+>>>>>>> upstream/main
 export function isNativeQwenBaseUrl(baseUrl: string | undefined): boolean {
   return supportsNativeStreamingUsageCompat({
     providerId: "qwen",
@@ -149,6 +201,7 @@ export function buildQwenDefaultModelDefinition(): ModelDefinitionConfig {
   return buildQwenModelDefinition({ id: QWEN_DEFAULT_MODEL_ID });
 }
 
+<<<<<<< HEAD
 // Backward-compatible aliases while `modelstudio` references are still in the wild.
 export const MODELSTUDIO_BASE_URL = QWEN_BASE_URL;
 export const MODELSTUDIO_GLOBAL_BASE_URL = QWEN_GLOBAL_BASE_URL;
@@ -158,6 +211,29 @@ export const MODELSTUDIO_STANDARD_GLOBAL_BASE_URL = QWEN_STANDARD_GLOBAL_BASE_UR
 export const MODELSTUDIO_DEFAULT_MODEL_ID = QWEN_DEFAULT_MODEL_ID;
 export const MODELSTUDIO_DEFAULT_COST = QWEN_DEFAULT_COST;
 export const MODELSTUDIO_DEFAULT_MODEL_REF = `modelstudio/${QWEN_DEFAULT_MODEL_ID}`;
+=======
+export function buildQwenOAuthModelCatalog(): ReadonlyArray<ModelDefinitionConfig> {
+  return QWEN_MODEL_CATALOG.map((model) => ({ ...model, maxTokens: 65_536 }));
+}
+
+/** @deprecated Use QWEN_BASE_URL. */
+export const MODELSTUDIO_BASE_URL = QWEN_BASE_URL;
+/** @deprecated Use QWEN_GLOBAL_BASE_URL. */
+export const MODELSTUDIO_GLOBAL_BASE_URL = QWEN_GLOBAL_BASE_URL;
+/** @deprecated Use QWEN_CN_BASE_URL. */
+export const MODELSTUDIO_CN_BASE_URL = QWEN_CN_BASE_URL;
+/** @deprecated Use QWEN_STANDARD_CN_BASE_URL. */
+export const MODELSTUDIO_STANDARD_CN_BASE_URL = QWEN_STANDARD_CN_BASE_URL;
+/** @deprecated Use QWEN_STANDARD_GLOBAL_BASE_URL. */
+export const MODELSTUDIO_STANDARD_GLOBAL_BASE_URL = QWEN_STANDARD_GLOBAL_BASE_URL;
+/** @deprecated Use QWEN_DEFAULT_MODEL_ID. */
+export const MODELSTUDIO_DEFAULT_MODEL_ID = QWEN_DEFAULT_MODEL_ID;
+/** @deprecated Use QWEN_DEFAULT_COST. */
+export const MODELSTUDIO_DEFAULT_COST = QWEN_DEFAULT_COST;
+/** @deprecated Use qwen/${QWEN_DEFAULT_MODEL_ID}. */
+export const MODELSTUDIO_DEFAULT_MODEL_REF = `modelstudio/${QWEN_DEFAULT_MODEL_ID}`;
+/** @deprecated Use QWEN_MODEL_CATALOG. */
+>>>>>>> upstream/main
 export const MODELSTUDIO_MODEL_CATALOG = QWEN_MODEL_CATALOG;
 export const isNativeModelStudioBaseUrl = isNativeQwenBaseUrl;
 export const applyModelStudioNativeStreamingUsageCompat = applyQwenNativeStreamingUsageCompat;

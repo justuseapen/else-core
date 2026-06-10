@@ -1,13 +1,9 @@
+/**
+ * Inbound channel contract testkit.
+ *
+ * Builds dispatch capture mocks for plugin inbound contract suites.
+ */
 import { vi } from "vitest";
-import type { MsgContext } from "../../../auto-reply/templating.js";
-
-export type InboundContextCapture = {
-  ctx: MsgContext | undefined;
-};
-
-export function createInboundContextCapture(): InboundContextCapture {
-  return { ctx: undefined };
-}
 
 export function buildDispatchInboundCaptureMock<T extends Record<string, unknown>>(
   actual: T,
@@ -25,6 +21,7 @@ export function buildDispatchInboundCaptureMock<T extends Record<string, unknown
     dispatchInboundMessageWithBufferedDispatcher: dispatchInboundMessage,
   };
 }
+<<<<<<< HEAD
 
 export async function buildDispatchInboundContextCapture(
   loadActual: <T extends Record<string, unknown>>() => Promise<T>,
@@ -37,3 +34,5 @@ export async function buildDispatchInboundContextCapture(
 }
 
 export const inboundCtxCapture = createInboundContextCapture();
+=======
+>>>>>>> upstream/main

@@ -1,8 +1,13 @@
+<<<<<<< HEAD
+=======
+// Feishu plugin entrypoint registers its OpenClaw integration.
+>>>>>>> upstream/main
 import {
   defineBundledChannelEntry,
   loadBundledEntryExportSync,
 } from "openclaw/plugin-sdk/channel-entry-contract";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/channel-entry-contract";
+<<<<<<< HEAD
 
 type FeishuSubagentHooksModule = typeof import("./api.js");
 
@@ -21,6 +26,18 @@ function registerFeishuDocTools(api: OpenClawPluginApi) {
   register(api);
 }
 
+=======
+import { registerFeishuSubagentHooks } from "./subagent-hooks-api.js";
+
+function registerFeishuDocTools(api: OpenClawPluginApi) {
+  const register = loadBundledEntryExportSync<(api: OpenClawPluginApi) => void>(import.meta.url, {
+    specifier: "./api.js",
+    exportName: "registerFeishuDocTools",
+  });
+  register(api);
+}
+
+>>>>>>> upstream/main
 function registerFeishuChatTools(api: OpenClawPluginApi) {
   const register = loadBundledEntryExportSync<(api: OpenClawPluginApi) => void>(import.meta.url, {
     specifier: "./api.js",
@@ -67,9 +84,19 @@ export default defineBundledChannelEntry({
   description: "Feishu/Lark channel plugin",
   importMetaUrl: import.meta.url,
   plugin: {
+<<<<<<< HEAD
     specifier: "./api.js",
     exportName: "feishuPlugin",
   },
+=======
+    specifier: "./channel-plugin-api.js",
+    exportName: "feishuPlugin",
+  },
+  secrets: {
+    specifier: "./secret-contract-api.js",
+    exportName: "channelSecrets",
+  },
+>>>>>>> upstream/main
   runtime: {
     specifier: "./runtime-api.js",
     exportName: "setFeishuRuntime",

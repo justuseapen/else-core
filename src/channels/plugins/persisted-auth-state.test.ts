@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Persisted auth state tests cover channel plugin auth state serialization and recovery.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   hasBundledChannelPersistedAuthState,
@@ -6,7 +10,11 @@ import {
 
 describe("bundled channel persisted-auth metadata", () => {
   it("lists shipped persisted-auth metadata channels", () => {
+<<<<<<< HEAD
     expect(listBundledChannelIdsWithPersistedAuthState()).toContain("whatsapp");
+=======
+    expect(listBundledChannelIdsWithPersistedAuthState()).toEqual(["matrix", "whatsapp"]);
+>>>>>>> upstream/main
   });
 
   it("does not report auth state for channels without bundled metadata", () => {

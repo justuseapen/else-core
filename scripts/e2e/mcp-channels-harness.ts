@@ -1,12 +1,30 @@
+<<<<<<< HEAD
 import { randomUUID } from "node:crypto";
+=======
+// Shared MCP-channel Docker E2E harness helpers.
+// The mounted test harness imports packaged dist modules so bridge assertions run
+// against the OpenClaw npm tarball installed in the functional image.
+>>>>>>> upstream/main
 import process from "node:process";
 import { setTimeout as delay } from "node:timers/promises";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+<<<<<<< HEAD
 import { WebSocket } from "ws";
 import { z } from "zod";
 import { PROTOCOL_VERSION } from "../../src/gateway/protocol/index.ts";
 import { rawDataToString } from "../../src/infra/ws.ts";
+=======
+import { z } from "zod";
+import { PROTOCOL_VERSION } from "../../dist/gateway/protocol/index.js";
+import { formatErrorMessage } from "../../dist/infra/errors.js";
+import { readStringValue } from "../../dist/normalization-core/string-coerce.js";
+import { createGatewayWsClient, type GatewayEventFrame } from "../lib/gateway-ws-client.ts";
+import { resolveGatewaySuccessPayload } from "./lib/gateway-frame-payload.mjs";
+import { readMcpChannelLimits } from "./mcp-channel-limits.ts";
+import { createMcpClientTempState, type McpClientTempState } from "./mcp-client-temp-state.ts";
+import { connectMcpWithTimeout } from "./mcp-connect-timeout.ts";
+>>>>>>> upstream/main
 
 export const ClaudeChannelNotificationSchema = z.object({
   method: z.literal("notifications/claude/channel"),
@@ -27,23 +45,53 @@ export const ClaudePermissionNotificationSchema = z.object({
 export type ClaudeChannelNotification = z.infer<typeof ClaudeChannelNotificationSchema>["params"];
 
 export type GatewayRpcClient = {
+<<<<<<< HEAD
   request<T>(method: string, params?: unknown): Promise<T>;
+=======
+  request<T>(method: string, params?: unknown, opts?: { timeoutMs?: number }): Promise<T>;
+>>>>>>> upstream/main
   events: Array<{ event: string; payload: Record<string, unknown> }>;
   close(): Promise<void>;
 };
 
 export type McpClientHandle = {
   client: Client;
+<<<<<<< HEAD
+=======
+  cleanup(): void;
+>>>>>>> upstream/main
   transport: StdioClientTransport;
   rawMessages: unknown[];
 };
 
+<<<<<<< HEAD
+=======
+const GATEWAY_WS_OPEN_TIMEOUT_MS = 45_000;
+const GATEWAY_RPC_TIMEOUT_MS = 60_000;
+const GATEWAY_REQUEST_TIMEOUT_MS = 45_000;
+const GATEWAY_CONNECT_RETRY_WINDOW_MS = 420_000;
+const MCP_CHANNEL_LIMITS = readMcpChannelLimits();
+const MCP_CONNECT_TIMEOUT_MS = MCP_CHANNEL_LIMITS.connectTimeoutMs;
+const GATEWAY_EVENT_RETAIN_LIMIT = MCP_CHANNEL_LIMITS.gatewayEventRetainLimit;
+const MCP_RAW_MESSAGE_RETAIN_LIMIT = MCP_CHANNEL_LIMITS.rawMessageRetainLimit;
+
+>>>>>>> upstream/main
 export function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
     throw new Error(message);
   }
 }
 
+<<<<<<< HEAD
+=======
+function pushBounded<T>(items: T[], item: T, limit: number): void {
+  items.push(item);
+  if (items.length > limit) {
+    items.splice(0, items.length - limit);
+  }
+}
+
+>>>>>>> upstream/main
 export function extractTextFromGatewayPayload(
   payload: Record<string, unknown> | undefined,
 ): string | undefined {
@@ -62,18 +110,30 @@ export function extractTextFromGatewayPayload(
   if (!first || typeof first !== "object") {
     return undefined;
   }
+<<<<<<< HEAD
   const text = (first as { text?: unknown }).text;
   return typeof text === "string" ? text : undefined;
+=======
+  return readStringValue((first as { text?: unknown }).text);
+>>>>>>> upstream/main
 }
 
 export async function waitFor<T>(
   label: string,
+<<<<<<< HEAD
   predicate: () => T | undefined,
+=======
+  predicate: () => Promise<T | undefined> | T | undefined,
+>>>>>>> upstream/main
   timeoutMs = 10_000,
 ): Promise<T> {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
+<<<<<<< HEAD
     const value = predicate();
+=======
+    const value = await predicate();
+>>>>>>> upstream/main
     if (value !== undefined) {
       return value;
     }
@@ -86,6 +146,7 @@ export async function connectGateway(params: {
   url: string;
   token: string;
 }): Promise<GatewayRpcClient> {
+<<<<<<< HEAD
   const ws = new WebSocket(params.url);
   await new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error("gateway ws open timeout")), 10_000);
@@ -280,14 +341,137 @@ export async function connectGateway(params: {
         });
         ws.close();
       });
+=======
+  const startedAt = Date.now();
+  let attempt = 0;
+  let lastError: Error | null = null;
+
+  while (Date.now() - startedAt < GATEWAY_CONNECT_RETRY_WINDOW_MS) {
+    attempt += 1;
+    try {
+      return await connectGatewayOnce(params);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (!isRetryableGatewayConnectError(lastError)) {
+        throw lastError;
+      }
+      await delay(Math.min(500 * attempt, 2_000));
+    }
+  }
+
+  throw lastError ?? new Error("gateway ws open timeout");
+}
+
+async function connectGatewayOnce(params: {
+  url: string;
+  token: string;
+}): Promise<GatewayRpcClient> {
+  const requestedScopes = ["operator.read", "operator.write", "operator.pairing", "operator.admin"];
+  const events: Array<{ event: string; payload: Record<string, unknown> }> = [];
+  const gatewayClient = createGatewayWsClient({
+    handshakeTimeoutMs: GATEWAY_WS_OPEN_TIMEOUT_MS,
+    onEvent(event: GatewayEventFrame) {
+      pushBounded(
+        events,
+        {
+          event: event.event,
+          payload:
+            event.payload && typeof event.payload === "object"
+              ? (event.payload as Record<string, unknown>)
+              : {},
+        },
+        GATEWAY_EVENT_RETAIN_LIMIT,
+      );
+    },
+    openTimeoutMs: GATEWAY_WS_OPEN_TIMEOUT_MS,
+    openTimeoutMessage: "gateway ws open timeout",
+    url: params.url,
+  });
+  await gatewayClient.waitOpen();
+
+  const sendGatewayRequest = <T = unknown>(
+    method: string,
+    requestParams: unknown,
+    timeoutMs: number,
+  ): Promise<T> => {
+    return gatewayClient.request(method, requestParams ?? {}, timeoutMs).then((response) => {
+      if (response.ok) {
+        return resolveGatewaySuccessPayload(response) as T;
+      }
+      throw new Error(
+        response.error && typeof response.error === "object" && "message" in response.error
+          ? String(response.error.message)
+          : "gateway request failed",
+      );
+    });
+  };
+
+  await sendGatewayRequest(
+    "connect",
+    {
+      minProtocol: PROTOCOL_VERSION,
+      maxProtocol: PROTOCOL_VERSION,
+      client: {
+        id: "openclaw-tui",
+        displayName: "docker-mcp-channels",
+        version: "1.0.0",
+        platform: process.platform,
+        mode: "ui",
+      },
+      role: "operator",
+      scopes: requestedScopes,
+      caps: [],
+      auth: { token: params.token },
+    },
+    GATEWAY_RPC_TIMEOUT_MS,
+  );
+
+  await sendGatewayRequest("sessions.subscribe", {}, GATEWAY_RPC_TIMEOUT_MS);
+
+  return {
+    request(method, requestParams, opts) {
+      return sendGatewayRequest(
+        method,
+        requestParams,
+        opts?.timeoutMs ?? GATEWAY_REQUEST_TIMEOUT_MS,
+      );
+    },
+    events,
+    async close() {
+      gatewayClient.close();
+>>>>>>> upstream/main
     },
   };
+}
+
+<<<<<<< HEAD
+export async function connectMcpClient(params: {
+  gatewayUrl: string;
+  gatewayToken: string;
+}): Promise<McpClientHandle> {
+=======
+function isRetryableGatewayConnectError(error: Error): boolean {
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("gateway ws open timeout") ||
+    message.includes("gateway connect timeout") ||
+    message.includes("closed before open") ||
+    message.includes("gateway closed") ||
+    message.includes("gateway websocket closed") ||
+    message.includes("econnrefused") ||
+    message.includes("socket hang up")
+  );
 }
 
 export async function connectMcpClient(params: {
   gatewayUrl: string;
   gatewayToken: string;
+  tempState?: McpClientTempState;
 }): Promise<McpClientHandle> {
+  const ownsTempState = !params.tempState;
+  const tempState =
+    params.tempState ?? createMcpClientTempState({ gatewayToken: params.gatewayToken });
+>>>>>>> upstream/main
   const transport = new StdioClientTransport({
     command: "node",
     args: [
@@ -296,8 +480,13 @@ export async function connectMcpClient(params: {
       "serve",
       "--url",
       params.gatewayUrl,
+<<<<<<< HEAD
       "--token",
       params.gatewayToken,
+=======
+      "--token-file",
+      tempState.tokenFile,
+>>>>>>> upstream/main
       "--claude-channel-mode",
       "on",
     ],
@@ -305,7 +494,11 @@ export async function connectMcpClient(params: {
     env: {
       ...process.env,
       OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: "1",
+<<<<<<< HEAD
       OPENCLAW_STATE_DIR: "/tmp/openclaw-mcp-client",
+=======
+      OPENCLAW_STATE_DIR: tempState.stateDir,
+>>>>>>> upstream/main
     },
     stderr: "pipe",
   });
@@ -313,6 +506,7 @@ export async function connectMcpClient(params: {
     process.stderr.write(`[openclaw mcp] ${String(chunk)}`);
   });
   const rawMessages: unknown[] = [];
+<<<<<<< HEAD
   // The MCP stdio transport here exposes a writable onmessage callback at
   // runtime, not an EventTarget-style addEventListener API.
   // oxlint-disable-next-line unicorn/prefer-add-event-listener
@@ -323,6 +517,28 @@ export async function connectMcpClient(params: {
   const client = new Client({ name: "docker-mcp-channels", version: "1.0.0" });
   await client.connect(transport);
   return { client, transport, rawMessages };
+=======
+  Reflect.set(transport, "onmessage", (message: unknown) => {
+    pushBounded(rawMessages, message, MCP_RAW_MESSAGE_RETAIN_LIMIT);
+  });
+
+  const client = new Client({ name: "docker-mcp-channels", version: "1.0.0" });
+  try {
+    await connectMcpWithTimeout(client, transport, MCP_CONNECT_TIMEOUT_MS);
+    return {
+      client,
+      cleanup: ownsTempState ? tempState.cleanup : () => {},
+      transport,
+      rawMessages,
+    };
+  } catch (error) {
+    await Promise.allSettled([client.close(), transport.close()]);
+    if (ownsTempState) {
+      tempState.cleanup();
+    }
+    throw error;
+  }
+>>>>>>> upstream/main
 }
 
 export async function maybeApprovePendingBridgePairing(
@@ -338,8 +554,16 @@ export async function maybeApprovePendingBridgePairing(
       pending?: Array<{ requestId?: string; role?: string }>;
     }>("device.pair.list", {});
   } catch (error) {
+<<<<<<< HEAD
     const message = error instanceof Error ? error.message : String(error);
     if (message.includes("missing scope: operator.pairing")) {
+=======
+    const message = formatErrorMessage(error);
+    if (
+      message.includes("missing scope: operator.pairing") ||
+      message.includes("device.pair.list")
+    ) {
+>>>>>>> upstream/main
       return false;
     }
     throw error;

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix tests cover crypto node plugin behavior.
+>>>>>>> upstream/main
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -21,7 +25,13 @@ describe("crypto-node runtime bundling", () => {
 
     expect(bundled).toContain('from "node:module"');
     expect(bundled).toContain("createRequire(import.meta.url)");
+<<<<<<< HEAD
     expect(bundled).toMatch(/require\d*\("@matrix-org\/matrix-sdk-crypto-nodejs"\)/);
+=======
+    expect(bundled).toMatch(
+      /function loadMatrixCryptoNodeBindings\(\) \{[\s\S]*require\d*\("@matrix-org\/matrix-sdk-crypto-nodejs"\)/,
+    );
+>>>>>>> upstream/main
     expect(bundled).not.toContain('from "@matrix-org/matrix-sdk-crypto-nodejs"');
   });
 });

@@ -1,8 +1,13 @@
+// Tests Gemini provider usage fetch normalization.
 import { describe, expect, it } from "vitest";
 import { createProviderUsageFetch, makeResponse } from "../test-utils/provider-usage-fetch.js";
 import { fetchGeminiUsage } from "./provider-usage.fetch.gemini.js";
 
+<<<<<<< HEAD
 const usageProvider = "openai-codex" as const;
+=======
+const usageProvider = "openai" as const;
+>>>>>>> upstream/main
 
 describe("fetchGeminiUsage", () => {
   it("returns HTTP errors for failed requests", async () => {
@@ -12,6 +17,14 @@ describe("fetchGeminiUsage", () => {
     const result = await fetchGeminiUsage("token", 5000, mockFetch, usageProvider);
 
     expect(result.error).toBe("HTTP 429");
+    expect(result.windows).toHaveLength(0);
+  });
+
+  it("returns a stable error for malformed successful usage JSON", async () => {
+    const mockFetch = createProviderUsageFetch(async () => makeResponse(200, "{not json"));
+    const result = await fetchGeminiUsage("token", 5000, mockFetch, usageProvider);
+
+    expect(result.error).toBe("Malformed usage response");
     expect(result.windows).toHaveLength(0);
   });
 
@@ -50,7 +63,11 @@ describe("fetchGeminiUsage", () => {
 
     expect(result).toEqual({
       provider: usageProvider,
+<<<<<<< HEAD
       displayName: "Codex",
+=======
+      displayName: "OpenAI",
+>>>>>>> upstream/main
       windows: [],
     });
   });

@@ -1,9 +1,19 @@
 {
   "name": "@openclaw/firecrawl-plugin",
+<<<<<<< HEAD
   "version": "2026.4.5",
+=======
+  "version": "2026.6.2",
+>>>>>>> upstream/main
   "private": true,
   "description": "OpenClaw Firecrawl plugin",
   "type": "module",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
   "openclaw": {
     "extensions": [
       "./index.ts"

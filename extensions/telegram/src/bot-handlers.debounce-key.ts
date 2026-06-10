@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Telegram plugin module implements bot handlersebounce key behavior.
+>>>>>>> upstream/main
 export function buildTelegramInboundDebounceKey(params: {
   accountId?: string | null;
   conversationKey: string;
@@ -7,3 +11,15 @@ export function buildTelegramInboundDebounceKey(params: {
   const resolvedAccountId = params.accountId?.trim() || "default";
   return `telegram:${resolvedAccountId}:${params.conversationKey}:${params.senderId}:${params.debounceLane}`;
 }
+<<<<<<< HEAD
+=======
+
+export function buildTelegramInboundDebounceConversationKey(params: {
+  chatId: number | string;
+  threadId?: number | null;
+}): string {
+  return params.threadId != null
+    ? `${params.chatId}:topic:${params.threadId}`
+    : String(params.chatId);
+}
+>>>>>>> upstream/main

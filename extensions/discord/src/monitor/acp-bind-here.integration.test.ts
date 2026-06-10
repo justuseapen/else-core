@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { ChannelType } from "@buape/carbon";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -14,13 +15,36 @@ vi.mock("openclaw/plugin-sdk/config-runtime", async () => {
 });
 
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Discord tests cover acp bind here.integration plugin behavior.
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ChannelType } from "../internal/discord.js";
+
+const loadConfigMock = vi.hoisted(() => vi.fn());
+
+vi.mock("openclaw/plugin-sdk/runtime-config-snapshot", async () => {
+  const actual = await vi.importActual<
+    typeof import("openclaw/plugin-sdk/runtime-config-snapshot")
+  >("openclaw/plugin-sdk/runtime-config-snapshot");
+  return {
+    ...actual,
+    getRuntimeConfig: () => loadConfigMock(),
+  };
+});
+
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import {
   getSessionBindingService,
   registerSessionBindingAdapter,
   type SessionBindingBindInput,
   type SessionBindingRecord,
 } from "openclaw/plugin-sdk/conversation-runtime";
+<<<<<<< HEAD
 import { __testing as sessionBindingTesting } from "openclaw/plugin-sdk/conversation-runtime";
+=======
+import { testing as sessionBindingTesting } from "openclaw/plugin-sdk/conversation-runtime";
+>>>>>>> upstream/main
 import { preflightDiscordMessage } from "./message-handler.preflight.js";
 import {
   createDiscordMessage,
@@ -156,14 +180,31 @@ describe("Discord ACP bind here end-to-end flow", () => {
     });
 
     expect(adapter.bindings).toHaveLength(1);
+<<<<<<< HEAD
     expect(binding).toMatchObject({
       targetSessionKey: "agent:codex:acp:test-session",
+=======
+    expect(binding).toEqual({
+      bindingId: "discord:default:user:user-1",
+      targetSessionKey: "agent:codex:acp:test-session",
+      targetKind: "session",
+>>>>>>> upstream/main
       conversation: {
         channel: "discord",
         accountId: "default",
         conversationId: "user:user-1",
         parentConversationId: "user:user-1",
       },
+<<<<<<< HEAD
+=======
+      status: "active",
+      boundAt: 1,
+      metadata: {
+        boundBy: "user-1",
+        agentId: "codex",
+        label: "codex",
+      },
+>>>>>>> upstream/main
     });
     expect(
       getSessionBindingService().resolveByConversation({
@@ -171,9 +212,13 @@ describe("Discord ACP bind here end-to-end flow", () => {
         accountId: "default",
         conversationId: "user:user-1",
       }),
+<<<<<<< HEAD
     )?.toMatchObject({
       targetSessionKey: binding.targetSessionKey,
     });
+=======
+    ).toEqual(binding);
+>>>>>>> upstream/main
 
     const message = createDiscordMessage({
       id: "m-followup-1",
@@ -200,11 +245,22 @@ describe("Discord ACP bind here end-to-end flow", () => {
         client: createDmClient("dm-1"),
         botUserId: "bot-1",
       }),
+<<<<<<< HEAD
     });
 
     expect(preflight).not.toBeNull();
     expect(preflight?.boundSessionKey).toBe(binding.targetSessionKey);
     expect(preflight?.route.sessionKey).toBe(binding.targetSessionKey);
     expect(preflight?.route.agentId).toBe("codex");
+=======
+      allowFrom: ["*"],
+    });
+
+    expect(preflight?.boundSessionKey).toBe(binding.targetSessionKey);
+    expect(preflight?.boundAgentId).toBe("codex");
+    expect(preflight?.route.sessionKey).toBe(binding.targetSessionKey);
+    expect(preflight?.route.agentId).toBe("codex");
+    expect(preflight?.threadBinding).toEqual(binding);
+>>>>>>> upstream/main
   });
 });

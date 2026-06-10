@@ -1,14 +1,52 @@
+<<<<<<< HEAD
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createJiti } from "jiti";
+=======
+// Load Channel Config Surface script supports OpenClaw repository automation.
+import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import type { createJiti } from "jiti";
+>>>>>>> upstream/main
 import { buildChannelConfigSchema } from "../src/channels/plugins/config-schema.js";
 import {
   buildPluginLoaderJitiOptions,
   resolvePluginSdkAliasFile,
   resolvePluginSdkScopedAliasMap,
 } from "../src/plugins/sdk-alias.js";
+<<<<<<< HEAD
+=======
+
+type CreateJiti = typeof createJiti;
+
+const jitiFactoryOverrideKey = Symbol.for("openclaw.channelConfigSurfaceJitiFactoryOverride");
+const requireForJiti = createRequire(import.meta.url);
+let createJitiLoaderFactory: CreateJiti | undefined;
+
+function loadCreateJitiLoaderFactory(): CreateJiti {
+  const override = (
+    globalThis as typeof globalThis & {
+      [jitiFactoryOverrideKey]?: CreateJiti;
+    }
+  )[jitiFactoryOverrideKey];
+  if (override) {
+    return override;
+  }
+  if (createJitiLoaderFactory) {
+    return createJitiLoaderFactory;
+  }
+  const loaded = requireForJiti("jiti") as { createJiti?: CreateJiti };
+  if (typeof loaded.createJiti !== "function") {
+    throw new Error("jiti module did not export createJiti");
+  }
+  createJitiLoaderFactory = loaded.createJiti;
+  return createJitiLoaderFactory;
+}
+>>>>>>> upstream/main
 
 function isBuiltChannelConfigSchema(
   value: unknown,
@@ -54,24 +92,11 @@ function resolveRepoRoot(): string {
   return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 }
 
-function resolvePackageRoot(modulePath: string): string {
-  let cursor = path.dirname(path.resolve(modulePath));
-  while (true) {
-    if (fs.existsSync(path.join(cursor, "package.json"))) {
-      return cursor;
-    }
-    const parent = path.dirname(cursor);
-    if (parent === cursor) {
-      throw new Error(`package root not found for ${modulePath}`);
-    }
-    cursor = parent;
-  }
-}
-
-function shouldRetryViaIsolatedCopy(error: unknown): boolean {
+function isMissingExecutableError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
     return false;
   }
+<<<<<<< HEAD
   const code = "code" in error ? error.code : undefined;
   const message = "message" in error && typeof error.message === "string" ? error.message : "";
   return code === "ERR_MODULE_NOT_FOUND" && message.includes(`${path.sep}node_modules${path.sep}`);
@@ -189,6 +214,9 @@ function copyModuleImportGraphWithoutNodeModules(params: {
       fs.rmSync(isolatedRoot, { recursive: true, force: true });
     },
   };
+=======
+  return "code" in error && error.code === "ENOENT";
+>>>>>>> upstream/main
 }
 
 export async function loadChannelConfigSurfaceModule(
@@ -268,7 +296,11 @@ export async function loadChannelConfigSurfaceModule(
         pluginSdkResolution: "src",
       }),
     };
+<<<<<<< HEAD
     const jiti = createJiti(import.meta.url, {
+=======
+    const jiti = loadCreateJitiLoaderFactory()(import.meta.url, {
+>>>>>>> upstream/main
       ...buildPluginLoaderJitiOptions(aliasMap),
       interopDefault: true,
       tryNative: false,
@@ -277,6 +309,7 @@ export async function loadChannelConfigSurfaceModule(
     });
     return jiti(resolvedPath) as Record<string, unknown>;
   };
+<<<<<<< HEAD
   const loadFromPath = (
     candidatePath: string,
   ): { schema: Record<string, unknown>; uiHints?: Record<string, unknown> } | null => {
@@ -299,15 +332,55 @@ export async function loadChannelConfigSurfaceModule(
   } catch (error) {
     if (!shouldRetryViaIsolatedCopy(error)) {
       throw error;
+=======
+  const loadViaNativeImport = async (candidatePath: string) => {
+    const imported = (await import(pathToFileURL(path.resolve(candidatePath)).href)) as Record<
+      string,
+      unknown
+    >;
+    return resolveConfigSchemaExport(imported);
+  };
+  const loadFromPath = async (
+    candidatePath: string,
+  ): Promise<{ schema: Record<string, unknown>; uiHints?: Record<string, unknown> } | null> => {
+    try {
+      const resolved = await loadViaNativeImport(candidatePath);
+      if (resolved) {
+        return resolved;
+      }
+    } catch {
+      // Fall through to the compatibility loaders when the module needs custom
+      // plugin SDK aliasing or cannot be imported by the current Node loader.
+>>>>>>> upstream/main
     }
 
-    const isolatedCopy = copyModuleImportGraphWithoutNodeModules({ modulePath, repoRoot });
     try {
+<<<<<<< HEAD
       return loadFromPath(isolatedCopy.copiedModulePath);
     } finally {
       isolatedCopy.cleanup();
+=======
+      // Prefer the source-aware Jiti path so generated config metadata stays
+      // stable before and after build output exists in the repo.
+      const imported = loadViaJiti(candidatePath);
+      const resolved = resolveConfigSchemaExport(imported);
+      if (resolved) {
+        return resolved;
+      }
+    } catch {
+      // Fall back to Bun below when the source-aware loader cannot resolve the
+      // module graph in the current environment.
+>>>>>>> upstream/main
     }
-  }
+
+    const bunLoaded = loadViaBun(candidatePath);
+    if (bunLoaded && isBuiltChannelConfigSchema(bunLoaded)) {
+      return bunLoaded;
+    }
+    return null;
+  };
+
+  return loadFromPath(modulePath);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {

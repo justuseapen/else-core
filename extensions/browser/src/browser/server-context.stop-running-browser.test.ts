@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Browser tests cover server context.stop running browser plugin behavior.
+>>>>>>> upstream/main
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createBrowserRouteContext } from "./server-context.js";
 import { makeBrowserProfile, makeBrowserServerState } from "./server-context.test-harness.js";

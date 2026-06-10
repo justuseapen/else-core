@@ -1,26 +1,69 @@
 import Foundation
+<<<<<<< HEAD
 import UserNotifications
 
 struct ExecApprovalNotificationPrompt: Sendable, Equatable {
+=======
+@preconcurrency import UserNotifications
+
+struct ExecApprovalNotificationPrompt: Equatable {
+>>>>>>> upstream/main
     let approvalId: String
 }
 
 enum ExecApprovalNotificationBridge {
     static let requestedKind = "exec.approval.requested"
     static let resolvedKind = "exec.approval.resolved"
+<<<<<<< HEAD
 
     private static let localRequestPrefix = "exec.approval."
 
+=======
+    static let categoryIdentifier = "openclaw.exec-approval"
+    static let reviewActionIdentifier = "openclaw.exec-approval.review"
+
+    private static let localRequestPrefix = "exec.approval."
+
+    static func registerCategory(center: UNUserNotificationCenter = .current()) {
+        let category = UNNotificationCategory(
+            identifier: self.categoryIdentifier,
+            actions: [
+                UNNotificationAction(
+                    identifier: self.reviewActionIdentifier,
+                    title: "Review",
+                    options: [.foreground]),
+            ],
+            intentIdentifiers: [],
+            options: [])
+
+        center.getNotificationCategories { categories in
+            var updated = categories
+            updated.update(with: category)
+            center.setNotificationCategories(updated)
+        }
+    }
+
+>>>>>>> upstream/main
     static func shouldPresentNotification(userInfo: [AnyHashable: Any]) -> Bool {
         self.payloadKind(userInfo: userInfo) == self.requestedKind
     }
 
     static func parsePrompt(
         actionIdentifier: String,
+<<<<<<< HEAD
         userInfo: [AnyHashable: Any]
     ) -> ExecApprovalNotificationPrompt?
     {
         guard actionIdentifier == UNNotificationDefaultActionIdentifier else { return nil }
+=======
+        userInfo: [AnyHashable: Any]) -> ExecApprovalNotificationPrompt?
+    {
+        guard actionIdentifier == UNNotificationDefaultActionIdentifier
+            || actionIdentifier == self.reviewActionIdentifier
+        else {
+            return nil
+        }
+>>>>>>> upstream/main
         guard self.payloadKind(userInfo: userInfo) == self.requestedKind else { return nil }
         guard let approvalId = self.approvalID(from: userInfo) else { return nil }
         return ExecApprovalNotificationPrompt(approvalId: approvalId)
@@ -29,8 +72,12 @@ enum ExecApprovalNotificationBridge {
     @MainActor
     static func handleResolvedPushIfNeeded(
         userInfo: [AnyHashable: Any],
+<<<<<<< HEAD
         notificationCenter: NotificationCentering
     ) async -> Bool
+=======
+        notificationCenter: NotificationCentering) async -> Bool
+>>>>>>> upstream/main
     {
         guard self.payloadKind(userInfo: userInfo) == self.resolvedKind,
               let approvalId = self.approvalID(from: userInfo)
@@ -45,8 +92,13 @@ enum ExecApprovalNotificationBridge {
     @MainActor
     static func removeNotifications(
         forApprovalID approvalId: String,
+<<<<<<< HEAD
         notificationCenter: NotificationCentering
     ) async {
+=======
+        notificationCenter: NotificationCentering) async
+    {
+>>>>>>> upstream/main
         let normalizedID = approvalId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedID.isEmpty else { return }
 
@@ -71,7 +123,11 @@ enum ExecApprovalNotificationBridge {
         "\(self.localRequestPrefix)\(approvalId)"
     }
 
+<<<<<<< HEAD
     private static func payloadKind(userInfo: [AnyHashable: Any]) -> String {
+=======
+    static func payloadKind(userInfo: [AnyHashable: Any]) -> String {
+>>>>>>> upstream/main
         let raw = self.openClawPayload(userInfo: userInfo)?["kind"] as? String
         let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return trimmed.isEmpty ? "unknown" : trimmed

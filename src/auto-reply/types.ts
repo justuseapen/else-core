@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { ImageContent } from "@mariozechner/pi-ai";
 import type { InteractiveReply } from "../interactive/payload.js";
 import type { PromptImageOrderEntry } from "../media/prompt-image-order.js";
@@ -192,3 +193,20 @@ export function setReplyPayloadMetadata<T extends object>(
 export function getReplyPayloadMetadata(payload: object): ReplyPayloadMetadata | undefined {
   return replyPayloadMetadata.get(payload);
 }
+=======
+// Public auto-reply types and reply-payload metadata helpers.
+export type {
+  BlockReplyContext,
+  GetReplyOptions,
+  PartialReplyPayload,
+  ReplyThreadingPolicy,
+  TypingPolicy,
+} from "./get-reply-options.types.js";
+export {
+  copyReplyPayloadMetadata,
+  markCommandReplyForDelivery,
+  markReplyPayloadForSourceSuppressionDelivery,
+  setReplyPayloadMetadata,
+} from "./reply-payload.js";
+export type { ReplyPayload } from "./reply-payload.js";
+>>>>>>> upstream/main

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix plugin module implements setup contract behavior.
+>>>>>>> upstream/main
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/routing";
 
 export const matrixSingleAccountKeysToMove = [
@@ -6,6 +10,10 @@ export const matrixSingleAccountKeysToMove = [
   "initialSyncLimit",
   "encryption",
   "allowlistOnly",
+<<<<<<< HEAD
+=======
+  "dangerouslyAllowNameMatching",
+>>>>>>> upstream/main
   "allowBots",
   "blockStreaming",
   "replyToMode",

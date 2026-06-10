@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import { createEmptyPluginRegistry } from "../plugins/registry-empty.js";
@@ -26,6 +27,16 @@ let getSpeechProvider: typeof import("./provider-registry.js").getSpeechProvider
 let listSpeechProviders: typeof import("./provider-registry.js").listSpeechProviders;
 let canonicalizeSpeechProviderId: typeof import("./provider-registry.js").canonicalizeSpeechProviderId;
 let normalizeSpeechProviderId: typeof import("./provider-registry.js").normalizeSpeechProviderId;
+=======
+// TTS provider registry tests cover registration and provider resolution.
+import { beforeEach, describe, expect, it } from "vitest";
+import type { OpenClawConfig } from "../config/types.js";
+import type { SpeechProviderPlugin } from "../plugins/types.js";
+import {
+  createSpeechProviderRegistry,
+  normalizeSpeechProviderId,
+} from "./provider-registry-core.js";
+>>>>>>> upstream/main
 
 function createSpeechProvider(id: string, aliases?: string[]): SpeechProviderPlugin {
   return {
@@ -43,6 +54,7 @@ function createSpeechProvider(id: string, aliases?: string[]): SpeechProviderPlu
 }
 
 describe("speech provider registry", () => {
+<<<<<<< HEAD
   beforeAll(async () => {
     ({
       getSpeechProvider,
@@ -86,8 +98,36 @@ describe("speech provider registry", () => {
       ],
     });
 
-    const cfg = {} as OpenClawConfig;
+=======
+  const getProviderCalls: Array<{ providerId: string; cfg?: OpenClawConfig }> = [];
+  const listProvidersCalls: Array<{ cfg?: OpenClawConfig }> = [];
+  let providers: SpeechProviderPlugin[] = [];
+  let directProvider: SpeechProviderPlugin | undefined;
+  let registry: ReturnType<typeof createSpeechProviderRegistry>;
 
+  beforeEach(() => {
+    providers = [];
+    directProvider = undefined;
+    getProviderCalls.length = 0;
+    listProvidersCalls.length = 0;
+    registry = createSpeechProviderRegistry({
+      getProvider: (providerId, cfg) => {
+        getProviderCalls.push({ providerId, cfg });
+        return directProvider;
+      },
+      listProviders: (cfg) => {
+        listProvidersCalls.push({ cfg });
+        return providers;
+      },
+    });
+  });
+
+  it("lists providers from the speech capability runtime", () => {
+>>>>>>> upstream/main
+    const cfg = {} as OpenClawConfig;
+    providers = [createSpeechProvider("demo-speech")];
+
+<<<<<<< HEAD
     expect(listSpeechProviders(cfg).map((provider) => provider.id)).toEqual(["microsoft"]);
     expect(getSpeechProvider("edge", cfg)?.id).toBe("microsoft");
     expect(resolveRuntimePluginRegistryMock).toHaveBeenCalledWith();
@@ -143,8 +183,32 @@ describe("speech provider registry", () => {
         },
       ],
     });
+=======
+    expect(registry.listSpeechProviders(cfg).map((provider) => provider.id)).toEqual([
+      "demo-speech",
+    ]);
+    expect(listProvidersCalls).toEqual([{ cfg }]);
+  });
+
+  it("gets providers by normalized id through the capability runtime", () => {
+    const cfg = {} as OpenClawConfig;
+    directProvider = createSpeechProvider("microsoft", ["edge"]);
+
+    expect(registry.getSpeechProvider(" MICROSOFT ", cfg)).toBe(directProvider);
+    expect(getProviderCalls).toEqual([{ providerId: "microsoft", cfg }]);
+  });
+
+  it("canonicalizes aliases from listed providers when direct lookup misses", () => {
+    providers = [createSpeechProvider("microsoft", ["edge"])];
+>>>>>>> upstream/main
 
     expect(normalizeSpeechProviderId("edge")).toBe("edge");
-    expect(canonicalizeSpeechProviderId("edge")).toBe("microsoft");
+    expect(registry.canonicalizeSpeechProviderId("edge")).toBe("microsoft");
+  });
+
+  it("returns empty results when the capability runtime has no speech providers", () => {
+    expect(registry.listSpeechProviders()).toStrictEqual([]);
+    expect(registry.getSpeechProvider("demo-speech")).toBeUndefined();
+    expect(registry.canonicalizeSpeechProviderId("demo-speech")).toBe("demo-speech");
   });
 });

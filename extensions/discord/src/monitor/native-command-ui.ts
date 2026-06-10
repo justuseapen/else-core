@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   Button,
   ChannelType,
@@ -1098,3 +1099,32 @@ export function createDiscordModelPickerFallbackSelect(params: {
 }): StringSelectMenu {
   return new DiscordModelPickerFallbackSelect(params);
 }
+=======
+// Discord plugin module implements native command ui behavior.
+export {
+  buildDiscordCommandArgCustomId,
+  buildDiscordCommandArgMenu,
+  createDiscordCommandArgFallbackButton,
+  handleDiscordCommandArgInteraction,
+} from "./native-command-arg-ui.js";
+export {
+  createDiscordModelPickerFallbackButton,
+  createDiscordModelPickerFallbackSelect,
+  handleDiscordModelPickerInteraction,
+} from "./native-command-model-picker-interaction.js";
+export {
+  replyWithDiscordModelPickerProviders,
+  resolveDiscordNativeChoiceContext,
+  shouldOpenDiscordModelPickerFromCommand,
+} from "./native-command-model-picker-ui.js";
+export type {
+  DispatchDiscordCommandInteraction,
+  DispatchDiscordCommandInteractionParams,
+  DispatchDiscordCommandInteractionResult,
+} from "./native-command-dispatch.js";
+export type {
+  DiscordCommandArgContext,
+  DiscordModelPickerContext,
+  SafeDiscordInteractionCall,
+} from "./native-command-ui.types.js";
+>>>>>>> upstream/main

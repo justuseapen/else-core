@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { ChannelApprovalAdapter, ChannelApprovalCapability, ChannelPlugin } from "./types.js";
 
 function buildApprovalCapabilityFromLegacyPlugin(
@@ -56,17 +57,55 @@ export function resolveChannelApprovalCapability(
 
 export function resolveChannelApprovalAdapter(
   plugin?: Pick<ChannelPlugin, "approvalCapability" | "auth" | "approvals"> | null,
+=======
+/**
+ * Channel approval capability adapters.
+ *
+ * Projects plugin approval metadata into runtime approval delivery adapters.
+ */
+import type { ChannelApprovalAdapter, ChannelApprovalCapability } from "./types.adapters.js";
+import type { ChannelPlugin } from "./types.plugin.js";
+
+/**
+ * Returns the approval capability exposed by a channel plugin.
+ */
+export function resolveChannelApprovalCapability(
+  plugin?: Pick<ChannelPlugin, "approvalCapability"> | null,
+): ChannelApprovalCapability | undefined {
+  return plugin?.approvalCapability;
+}
+
+/**
+ * Projects a channel approval capability into the runtime approval adapter shape.
+ */
+export function resolveChannelApprovalAdapter(
+  plugin?: Pick<ChannelPlugin, "approvalCapability"> | null,
+>>>>>>> upstream/main
 ): ChannelApprovalAdapter | undefined {
   const capability = resolveChannelApprovalCapability(plugin);
   if (!capability) {
     return undefined;
   }
+<<<<<<< HEAD
   if (!capability.delivery && !capability.render && !capability.native) {
+=======
+  if (
+    !capability.delivery &&
+    !capability.nativeRuntime &&
+    !capability.render &&
+    !capability.native
+  ) {
+    // Auth-only capabilities are valid plugin metadata but do not form a delivery adapter.
+>>>>>>> upstream/main
     return undefined;
   }
   return {
     describeExecApprovalSetup: capability.describeExecApprovalSetup,
     delivery: capability.delivery,
+<<<<<<< HEAD
+=======
+    nativeRuntime: capability.nativeRuntime,
+>>>>>>> upstream/main
     render: capability.render,
     native: capability.native,
   };

@@ -1,7 +1,13 @@
+<<<<<<< HEAD
+=======
+// Qwen plugin entrypoint registers its OpenClaw integration.
+import { createProviderApiKeyAuthMethod } from "openclaw/plugin-sdk/provider-auth-api-key";
+>>>>>>> upstream/main
 import { defineSingleProviderPluginEntry } from "openclaw/plugin-sdk/provider-entry";
 import { applyQwenNativeStreamingUsageCompat } from "./api.js";
 import { buildQwenMediaUnderstandingProvider } from "./media-understanding-provider.js";
 import {
+<<<<<<< HEAD
   applyQwenConfig,
   applyQwenConfigCn,
   applyQwenStandardConfig,
@@ -12,6 +18,53 @@ import { buildQwenProvider } from "./provider-catalog.js";
 import { buildQwenVideoGenerationProvider } from "./video-generation-provider.js";
 
 const PROVIDER_ID = "qwen";
+=======
+  isQwenCodingPlanBaseUrl,
+  QWEN_36_PLUS_MODEL_ID,
+  QWEN_BASE_URL,
+  QWEN_DEFAULT_MODEL_REF,
+  QWEN_OAUTH_DEFAULT_MODEL_REF,
+  QWEN_OAUTH_PROVIDER_ID,
+} from "./models.js";
+import {
+  applyQwenConfig,
+  applyQwenConfigCn,
+  applyQwenOAuthConfig,
+  applyQwenStandardConfig,
+  applyQwenStandardConfigCn,
+} from "./onboard.js";
+import { buildQwenOAuthProvider, buildQwenProvider } from "./provider-catalog.js";
+import { wrapQwenProviderStream } from "./stream.js";
+import { buildQwenVideoGenerationProvider } from "./video-generation-provider.js";
+
+const PROVIDER_ID = "qwen";
+const LEGACY_PROVIDER_ID = "modelstudio";
+const QWEN_OAUTH_AUTH_PROVIDER_IDS = [QWEN_OAUTH_PROVIDER_ID, "qwen-portal", "qwen-cli"] as const;
+
+function normalizeProviderId(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function resolveConfiguredQwenBaseUrl(
+  config: { models?: { providers?: Record<string, { baseUrl?: string } | undefined> } } | undefined,
+): string | undefined {
+  const providers = config?.models?.providers;
+  if (!providers) {
+    return undefined;
+  }
+  for (const [providerId, provider] of Object.entries(providers)) {
+    const normalized = normalizeProviderId(providerId);
+    if (normalized !== PROVIDER_ID && normalized !== LEGACY_PROVIDER_ID) {
+      continue;
+    }
+    const baseUrl = provider?.baseUrl?.trim();
+    if (baseUrl) {
+      return baseUrl;
+    }
+  }
+  return undefined;
+}
+>>>>>>> upstream/main
 
 export default defineSingleProviderPluginEntry({
   id: PROVIDER_ID,
@@ -82,7 +135,11 @@ export default defineSingleProviderPluginEntry({
           "Manage API keys: https://home.qwencloud.com/api-keys",
           "Docs: https://docs.qwencloud.com/",
           "Endpoint: coding.dashscope.aliyuncs.com",
+<<<<<<< HEAD
           "Models: qwen3.6-plus, glm-5, kimi-k2.5, MiniMax-M2.5, etc.",
+=======
+          "Models: qwen3.5-plus, glm-5, kimi-k2.5, MiniMax-M2.5, etc.",
+>>>>>>> upstream/main
         ].join("\n"),
         noteTitle: "Qwen Cloud Coding Plan (China)",
         wizard: {
@@ -105,7 +162,11 @@ export default defineSingleProviderPluginEntry({
           "Manage API keys: https://home.qwencloud.com/api-keys",
           "Docs: https://docs.qwencloud.com/",
           "Endpoint: coding-intl.dashscope.aliyuncs.com",
+<<<<<<< HEAD
           "Models: qwen3.6-plus, glm-5, kimi-k2.5, MiniMax-M2.5, etc.",
+=======
+          "Models: qwen3.5-plus, glm-5, kimi-k2.5, MiniMax-M2.5, etc.",
+>>>>>>> upstream/main
         ].join("\n"),
         noteTitle: "Qwen Cloud Coding Plan (Global/Intl)",
         wizard: {
@@ -116,6 +177,7 @@ export default defineSingleProviderPluginEntry({
       },
     ],
     catalog: {
+<<<<<<< HEAD
       buildProvider: buildQwenProvider,
       allowExplicitBaseUrl: true,
     },
@@ -123,6 +185,92 @@ export default defineSingleProviderPluginEntry({
       applyQwenNativeStreamingUsageCompat(providerConfig),
   },
   register(api) {
+=======
+      run: async (ctx) => {
+        const apiKey = ctx.resolveProviderApiKey(PROVIDER_ID).apiKey;
+        if (!apiKey) {
+          return null;
+        }
+        const baseUrl = resolveConfiguredQwenBaseUrl(ctx.config) ?? QWEN_BASE_URL;
+        return {
+          provider: {
+            ...buildQwenProvider({ baseUrl }),
+            apiKey,
+          },
+        };
+      },
+    },
+    applyNativeStreamingUsageCompat: ({ providerConfig }) =>
+      applyQwenNativeStreamingUsageCompat(providerConfig),
+    wrapStreamFn: wrapQwenProviderStream,
+    normalizeConfig: ({ providerConfig }) => {
+      if (!isQwenCodingPlanBaseUrl(providerConfig.baseUrl)) {
+        return undefined;
+      }
+      const models = providerConfig.models?.filter((model) => model.id !== QWEN_36_PLUS_MODEL_ID);
+      return models && models.length !== providerConfig.models?.length
+        ? { ...providerConfig, models }
+        : undefined;
+    },
+  },
+  register(api) {
+    api.registerProvider({
+      id: QWEN_OAUTH_PROVIDER_ID,
+      label: "Qwen OAuth",
+      docsPath: "/providers/qwen",
+      aliases: ["qwen-portal", "qwen-cli"],
+      envVars: ["QWEN_API_KEY"],
+      auth: [
+        createProviderApiKeyAuthMethod({
+          providerId: QWEN_OAUTH_PROVIDER_ID,
+          methodId: "api-key",
+          label: "Qwen OAuth token",
+          hint: "Portal token for portal.qwen.ai",
+          optionKey: "qwenOauthToken",
+          flagName: "--qwen-oauth-token",
+          envVar: "QWEN_API_KEY",
+          promptMessage: "Enter Qwen OAuth token",
+          defaultModel: QWEN_OAUTH_DEFAULT_MODEL_REF,
+          applyConfig: (cfg) => applyQwenOAuthConfig(cfg),
+          wizard: {
+            choiceId: QWEN_OAUTH_PROVIDER_ID,
+            choiceLabel: "Qwen OAuth",
+            choiceHint: "Portal token for portal.qwen.ai",
+            groupId: "qwen",
+            groupLabel: "Qwen Cloud",
+            groupHint: "Standard / Coding Plan / OAuth",
+          },
+        }),
+      ],
+      catalog: {
+        order: "simple",
+        run: async (ctx) => {
+          const apiKey = QWEN_OAUTH_AUTH_PROVIDER_IDS.map(
+            (providerId) => ctx.resolveProviderApiKey(providerId).apiKey,
+          ).find(
+            (candidate): candidate is string =>
+              typeof candidate === "string" && candidate.length > 0,
+          );
+          if (!apiKey) {
+            return null;
+          }
+          return {
+            provider: {
+              ...buildQwenOAuthProvider(),
+              apiKey,
+            },
+          };
+        },
+      },
+      staticCatalog: {
+        order: "simple",
+        run: async () => ({
+          provider: buildQwenOAuthProvider(),
+        }),
+      },
+      wrapStreamFn: wrapQwenProviderStream,
+    });
+>>>>>>> upstream/main
     api.registerMediaUnderstandingProvider(buildQwenMediaUnderstandingProvider());
     api.registerVideoGenerationProvider(buildQwenVideoGenerationProvider());
   },

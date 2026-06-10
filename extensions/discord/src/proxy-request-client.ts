@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   DiscordError,
   RateLimitError,
@@ -477,6 +478,14 @@ class ProxyRequestClientCompat {
     return majorParameter ? `${normalizedPath}:${majorParameter}` : normalizedPath;
   }
 }
+=======
+// Discord plugin module implements proxy request client behavior.
+import { RequestClient, type RequestClientOptions } from "./internal/discord.js";
+
+type ProxyRequestClientOptions = RequestClientOptions;
+
+export const DISCORD_REST_TIMEOUT_MS = 15_000;
+>>>>>>> upstream/main
 
 export function createDiscordRequestClient(
   token: string,
@@ -485,5 +494,15 @@ export function createDiscordRequestClient(
   if (!options?.fetch) {
     return new RequestClient(token, options);
   }
+<<<<<<< HEAD
   return new ProxyRequestClientCompat(token, options) as unknown as RequestClient;
+=======
+  return new RequestClient(token, {
+    runtimeProfile: "persistent",
+    maxQueueSize: 1000,
+    timeout: DISCORD_REST_TIMEOUT_MS,
+    ...options,
+    fetch: options.fetch,
+  });
+>>>>>>> upstream/main
 }

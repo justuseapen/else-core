@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// TS topology public fixture barrel re-exports public SDK members.
+>>>>>>> upstream/main
 export {
   aliasedThing,
   sharedThing,

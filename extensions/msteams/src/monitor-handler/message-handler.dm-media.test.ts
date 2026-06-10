@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Msteams tests cover message handlerm media plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { translateMSTeamsDmConversationIdForGraph } from "../inbound.js";
 

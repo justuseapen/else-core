@@ -1,9 +1,14 @@
+<<<<<<< HEAD
+=======
+// Emits reset hooks and cleanup work around session reset commands.
+>>>>>>> upstream/main
 import fs from "node:fs/promises";
 import path from "node:path";
 import { logVerbose } from "../../globals.js";
 import { createInternalHookEvent, triggerInternalHook } from "../../hooks/internal-hooks.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
 import { resolveAgentIdFromSessionKey } from "../../routing/session-key.js";
+<<<<<<< HEAD
 import type { HandleCommandsParams } from "./commands-types.js";
 
 let routeReplyRuntimePromise: Promise<typeof import("./route-reply.runtime.js")> | null = null;
@@ -11,6 +16,15 @@ let routeReplyRuntimePromise: Promise<typeof import("./route-reply.runtime.js")>
 function loadRouteReplyRuntime() {
   routeReplyRuntimePromise ??= import("./route-reply.runtime.js");
   return routeReplyRuntimePromise;
+=======
+import { createLazyImportLoader } from "../../shared/lazy-promise.js";
+import type { HandleCommandsParams } from "./commands-types.js";
+
+const routeReplyRuntimeLoader = createLazyImportLoader(() => import("./route-reply.runtime.js"));
+
+function loadRouteReplyRuntime() {
+  return routeReplyRuntimeLoader.load();
+>>>>>>> upstream/main
 }
 
 export type ResetCommandAction = "new" | "reset";
@@ -104,7 +118,11 @@ export async function emitResetCommandHooks(params: {
   sessionEntry?: HandleCommandsParams["sessionEntry"];
   previousSessionEntry?: HandleCommandsParams["previousSessionEntry"];
   workspaceDir: string;
+<<<<<<< HEAD
 }): Promise<void> {
+=======
+}): Promise<{ routedReply: boolean }> {
+>>>>>>> upstream/main
   const hookEvent = createInternalHookEvent("command", params.action, params.sessionKey ?? "", {
     sessionEntry: params.sessionEntry,
     previousSessionEntry: params.previousSessionEntry,
@@ -116,6 +134,10 @@ export async function emitResetCommandHooks(params: {
   await triggerInternalHook(hookEvent);
   params.command.resetHookTriggered = true;
 
+<<<<<<< HEAD
+=======
+  let routedReply = false;
+>>>>>>> upstream/main
   if (hookEvent.messages.length > 0) {
     const channel = params.ctx.OriginatingChannel || params.command.channel;
     const to = params.ctx.OriginatingTo || params.command.from || params.command.to;
@@ -127,9 +149,21 @@ export async function emitResetCommandHooks(params: {
         to,
         sessionKey: params.sessionKey,
         accountId: params.ctx.AccountId,
+<<<<<<< HEAD
         threadId: params.ctx.MessageThreadId,
         cfg: params.cfg,
       });
+=======
+        requesterSenderId: params.command.senderId,
+        requesterSenderName: params.ctx.SenderName,
+        requesterSenderUsername: params.ctx.SenderUsername,
+        requesterSenderE164: params.ctx.SenderE164,
+        threadId: params.ctx.MessageThreadId,
+        cfg: params.cfg,
+        replyKind: "final",
+      });
+      routedReply = true;
+>>>>>>> upstream/main
     }
   }
 
@@ -156,4 +190,8 @@ export async function emitResetCommandHooks(params: {
       }
     })();
   }
+<<<<<<< HEAD
+=======
+  return { routedReply };
+>>>>>>> upstream/main
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-shared";
 
 export const TOGETHER_BASE_URL = "https://api.together.xyz/v1";
@@ -116,11 +117,27 @@ export const TOGETHER_MODEL_CATALOG: ModelDefinitionConfig[] = [
     },
   },
 ];
+=======
+// Together plugin module implements models behavior.
+import { buildManifestModelProviderConfig } from "openclaw/plugin-sdk/provider-catalog-shared";
+import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-shared";
+import manifest from "./openclaw.plugin.json" with { type: "json" };
+
+const TOGETHER_MANIFEST_PROVIDER = buildManifestModelProviderConfig({
+  providerId: "together",
+  catalog: manifest.modelCatalog.providers.together,
+});
+
+export const TOGETHER_BASE_URL = TOGETHER_MANIFEST_PROVIDER.baseUrl;
+
+export const TOGETHER_MODEL_CATALOG: ModelDefinitionConfig[] = TOGETHER_MANIFEST_PROVIDER.models;
+>>>>>>> upstream/main
 
 export function buildTogetherModelDefinition(
   model: (typeof TOGETHER_MODEL_CATALOG)[number],
 ): ModelDefinitionConfig {
   return {
+<<<<<<< HEAD
     id: model.id,
     name: model.name,
     api: "openai-completions",
@@ -129,5 +146,11 @@ export function buildTogetherModelDefinition(
     cost: model.cost,
     contextWindow: model.contextWindow,
     maxTokens: model.maxTokens,
+=======
+    ...model,
+    api: "openai-completions",
+    input: [...model.input],
+    cost: { ...model.cost },
+>>>>>>> upstream/main
   };
 }

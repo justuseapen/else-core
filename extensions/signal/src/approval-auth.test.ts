@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Signal tests cover approval auth plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { signalApprovalAuth } from "./approval-auth.js";
 

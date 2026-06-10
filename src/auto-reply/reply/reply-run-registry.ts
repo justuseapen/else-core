@@ -1,4 +1,15 @@
+<<<<<<< HEAD
 import { resolveGlobalSingleton } from "../../shared/global-singleton.js";
+=======
+// Tracks active reply runs so stop, queue, and status commands can coordinate.
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import {
+  markDiagnosticEmbeddedRunEnded,
+  markDiagnosticEmbeddedRunStarted,
+} from "../../logging/diagnostic-run-activity.js";
+import { resolveGlobalSingleton } from "../../shared/global-singleton.js";
+import { resolveTimerTimeoutMs } from "../../shared/number-coercion.js";
+>>>>>>> upstream/main
 
 export type ReplyRunKey = string;
 
@@ -44,6 +55,10 @@ export type ReplyOperationResult =
 export type ReplyOperation = {
   readonly key: ReplyRunKey;
   readonly sessionId: string;
+<<<<<<< HEAD
+=======
+  readonly routeThreadId?: string | number;
+>>>>>>> upstream/main
   readonly abortSignal: AbortSignal;
   readonly resetTriggered: boolean;
   readonly phase: ReplyOperationPhase;
@@ -53,6 +68,14 @@ export type ReplyOperation = {
   attachBackend(handle: ReplyBackendHandle): void;
   detachBackend(handle: ReplyBackendHandle): void;
   complete(): void;
+<<<<<<< HEAD
+=======
+  /**
+   * Complete the operation, clear active-run state, then run follow-up work.
+   * Use when the follow-up can create another ReplyOperation for this session.
+   */
+  completeThen(afterClear: () => void): void;
+>>>>>>> upstream/main
   fail(code: Exclude<ReplyOperationFailureCode, "aborted_by_user">, cause?: unknown): void;
   abortByUser(): void;
   abortForRestart(): void;
@@ -63,19 +86,36 @@ export type ReplyRunRegistry = {
     sessionKey: string;
     sessionId: string;
     resetTriggered: boolean;
+<<<<<<< HEAD
+=======
+    routeThreadId?: string | number;
+>>>>>>> upstream/main
     upstreamAbortSignal?: AbortSignal;
   }): ReplyOperation;
   get(sessionKey: string): ReplyOperation | undefined;
   isActive(sessionKey: string): boolean;
   isStreaming(sessionKey: string): boolean;
   abort(sessionKey: string): boolean;
+<<<<<<< HEAD
   waitForIdle(sessionKey: string, timeoutMs?: number): Promise<boolean>;
+=======
+  waitForIdle(
+    sessionKey: string,
+    timeoutMs?: number,
+    opts?: { signal?: AbortSignal },
+  ): Promise<boolean>;
+>>>>>>> upstream/main
   resolveSessionId(sessionKey: string): string | undefined;
 };
 
 type ReplyRunWaiter = {
+<<<<<<< HEAD
   resolve: (ended: boolean) => void;
   timer: NodeJS.Timeout;
+=======
+  finish: (ended: boolean) => void;
+  timer?: NodeJS.Timeout;
+>>>>>>> upstream/main
 };
 
 type ReplyRunState = {
@@ -96,6 +136,11 @@ const replyRunState = resolveGlobalSingleton<ReplyRunState>(REPLY_RUN_STATE_KEY,
   waitersByKey: new Map<string, Set<ReplyRunWaiter>>(),
 }));
 
+<<<<<<< HEAD
+=======
+export const REPLY_RUN_IDLE_SETTLE_TIMEOUT_MS = 15_000;
+
+>>>>>>> upstream/main
 export class ReplyRunAlreadyActiveError extends Error {
   constructor(sessionKey: string) {
     super(`Reply run already active for ${sessionKey}`);
@@ -103,6 +148,7 @@ export class ReplyRunAlreadyActiveError extends Error {
   }
 }
 
+<<<<<<< HEAD
 function normalizeSessionKey(sessionKey: string | undefined): string | undefined {
   const normalized = sessionKey?.trim();
   return normalized || undefined;
@@ -113,6 +159,8 @@ function normalizeSessionId(sessionId: string | undefined): string | undefined {
   return normalized || undefined;
 }
 
+=======
+>>>>>>> upstream/main
 function createUserAbortError(): Error {
   const err = new Error("Reply operation aborted by user");
   err.name = "AbortError";
@@ -138,13 +186,21 @@ function notifyReplyRunEnded(sessionKey: string): void {
   }
   replyRunState.waitersByKey.delete(sessionKey);
   for (const waiter of waiters) {
+<<<<<<< HEAD
     clearTimeout(waiter.timer);
     waiter.resolve(true);
+=======
+    waiter.finish(true);
+>>>>>>> upstream/main
   }
 }
 
 function resolveReplyRunForCurrentSessionId(sessionId: string): ReplyOperation | undefined {
+<<<<<<< HEAD
   const normalizedSessionId = normalizeSessionId(sessionId);
+=======
+  const normalizedSessionId = normalizeOptionalString(sessionId);
+>>>>>>> upstream/main
   if (!normalizedSessionId) {
     return undefined;
   }
@@ -156,7 +212,11 @@ function resolveReplyRunForCurrentSessionId(sessionId: string): ReplyOperation |
 }
 
 function resolveReplyRunWaitKey(sessionId: string): string | undefined {
+<<<<<<< HEAD
   const normalizedSessionId = normalizeSessionId(sessionId);
+=======
+  const normalizedSessionId = normalizeOptionalString(sessionId);
+>>>>>>> upstream/main
   if (!normalizedSessionId) {
     return undefined;
   }
@@ -185,11 +245,15 @@ function getAttachedBackend(operation: ReplyOperation): ReplyBackendHandle | und
 
 function clearReplyRunState(params: { sessionKey: string; sessionId: string }): void {
   replyRunState.activeRunsByKey.delete(params.sessionKey);
+<<<<<<< HEAD
   if (replyRunState.activeSessionIdsByKey.get(params.sessionKey) === params.sessionId) {
     replyRunState.activeSessionIdsByKey.delete(params.sessionKey);
   } else {
     replyRunState.activeSessionIdsByKey.delete(params.sessionKey);
   }
+=======
+  replyRunState.activeSessionIdsByKey.delete(params.sessionKey);
+>>>>>>> upstream/main
   if (replyRunState.activeKeysBySessionId.get(params.sessionId) === params.sessionKey) {
     replyRunState.activeKeysBySessionId.delete(params.sessionId);
   }
@@ -197,14 +261,49 @@ function clearReplyRunState(params: { sessionKey: string; sessionId: string }): 
   notifyReplyRunEnded(params.sessionKey);
 }
 
+<<<<<<< HEAD
+=======
+function replyRunDiagnosticWorkKey(sessionKey: string): string {
+  return `reply:${sessionKey}`;
+}
+
+function markReplyRunDiagnosticWorkStarted(params: {
+  sessionKey: string;
+  sessionId: string;
+}): void {
+  markDiagnosticEmbeddedRunStarted({
+    sessionId: params.sessionId,
+    sessionKey: params.sessionKey,
+    workKey: replyRunDiagnosticWorkKey(params.sessionKey),
+  });
+}
+
+function markReplyRunDiagnosticWorkEnded(params: { sessionKey: string; sessionId: string }): void {
+  markDiagnosticEmbeddedRunEnded({
+    sessionId: params.sessionId,
+    sessionKey: params.sessionKey,
+    workKey: replyRunDiagnosticWorkKey(params.sessionKey),
+    clearRunActivity: false,
+  });
+}
+
+>>>>>>> upstream/main
 export function createReplyOperation(params: {
   sessionKey: string;
   sessionId: string;
   resetTriggered: boolean;
+<<<<<<< HEAD
   upstreamAbortSignal?: AbortSignal;
 }): ReplyOperation {
   const sessionKey = normalizeSessionKey(params.sessionKey);
   const sessionId = normalizeSessionId(params.sessionId);
+=======
+  routeThreadId?: string | number;
+  upstreamAbortSignal?: AbortSignal;
+}): ReplyOperation {
+  const sessionKey = normalizeOptionalString(params.sessionKey);
+  const sessionId = normalizeOptionalString(params.sessionId);
+>>>>>>> upstream/main
   if (!sessionKey) {
     throw new Error("Reply operations require a canonical sessionKey");
   }
@@ -226,6 +325,10 @@ export function createReplyOperation(params: {
       return;
     }
     stateCleared = true;
+<<<<<<< HEAD
+=======
+    markReplyRunDiagnosticWorkEnded({ sessionKey, sessionId: currentSessionId });
+>>>>>>> upstream/main
     clearReplyRunState({
       sessionKey,
       sessionId: currentSessionId,
@@ -272,6 +375,12 @@ export function createReplyOperation(params: {
     get sessionId() {
       return currentSessionId;
     },
+<<<<<<< HEAD
+=======
+    get routeThreadId() {
+      return params.routeThreadId;
+    },
+>>>>>>> upstream/main
     get abortSignal() {
       return controller.signal;
     },
@@ -294,7 +403,11 @@ export function createReplyOperation(params: {
       if (result) {
         return;
       }
+<<<<<<< HEAD
       const normalizedNextSessionId = normalizeSessionId(nextSessionId);
+=======
+      const normalizedNextSessionId = normalizeOptionalString(nextSessionId);
+>>>>>>> upstream/main
       if (!normalizedNextSessionId || normalizedNextSessionId === currentSessionId) {
         return;
       }
@@ -312,6 +425,10 @@ export function createReplyOperation(params: {
       replyRunState.activeSessionIdsByKey.set(sessionKey, currentSessionId);
       replyRunState.activeKeysBySessionId.set(currentSessionId, sessionKey);
       registerWaitSessionId(sessionKey, currentSessionId);
+<<<<<<< HEAD
+=======
+      markReplyRunDiagnosticWorkStarted({ sessionKey, sessionId: currentSessionId });
+>>>>>>> upstream/main
     },
     attachBackend(handle) {
       if (result) {
@@ -341,6 +458,13 @@ export function createReplyOperation(params: {
       }
       clearState();
     },
+<<<<<<< HEAD
+=======
+    completeThen(afterClear) {
+      operation.complete();
+      afterClear();
+    },
+>>>>>>> upstream/main
     fail(code, cause) {
       if (!result) {
         result = { kind: "failed", code, cause };
@@ -372,6 +496,10 @@ export function createReplyOperation(params: {
   replyRunState.activeSessionIdsByKey.set(sessionKey, currentSessionId);
   replyRunState.activeKeysBySessionId.set(currentSessionId, sessionKey);
   registerWaitSessionId(sessionKey, currentSessionId);
+<<<<<<< HEAD
+=======
+  markReplyRunDiagnosticWorkStarted({ sessionKey, sessionId: currentSessionId });
+>>>>>>> upstream/main
 
   return operation;
 }
@@ -381,14 +509,22 @@ export const replyRunRegistry: ReplyRunRegistry = {
     return createReplyOperation(params);
   },
   get(sessionKey) {
+<<<<<<< HEAD
     const normalizedSessionKey = normalizeSessionKey(sessionKey);
+=======
+    const normalizedSessionKey = normalizeOptionalString(sessionKey);
+>>>>>>> upstream/main
     if (!normalizedSessionKey) {
       return undefined;
     }
     return replyRunState.activeRunsByKey.get(normalizedSessionKey);
   },
   isActive(sessionKey) {
+<<<<<<< HEAD
     const normalizedSessionKey = normalizeSessionKey(sessionKey);
+=======
+    const normalizedSessionKey = normalizeOptionalString(sessionKey);
+>>>>>>> upstream/main
     if (!normalizedSessionKey) {
       return false;
     }
@@ -409,6 +545,7 @@ export const replyRunRegistry: ReplyRunRegistry = {
     operation.abortByUser();
     return true;
   },
+<<<<<<< HEAD
   waitForIdle(sessionKey, timeoutMs = 15_000) {
     const normalizedSessionKey = normalizeSessionKey(sessionKey);
     if (!normalizedSessionKey || !replyRunState.activeRunsByKey.has(normalizedSessionKey)) {
@@ -438,11 +575,62 @@ export const replyRunRegistry: ReplyRunRegistry = {
         }
         clearTimeout(waiter.timer);
         resolve(true);
+=======
+  waitForIdle(sessionKey, timeoutMs, opts) {
+    const normalizedSessionKey = normalizeOptionalString(sessionKey);
+    if (!normalizedSessionKey || !replyRunState.activeRunsByKey.has(normalizedSessionKey)) {
+      return Promise.resolve(true);
+    }
+    if (opts?.signal?.aborted) {
+      return Promise.resolve(false);
+    }
+    return new Promise((resolve) => {
+      const waiters = replyRunState.waitersByKey.get(normalizedSessionKey) ?? new Set();
+      let abortHandler: (() => void) | undefined;
+      let settled = false;
+      const waiter: ReplyRunWaiter = {
+        finish: (ended) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          waiters.delete(waiter);
+          if (waiters.size === 0) {
+            replyRunState.waitersByKey.delete(normalizedSessionKey);
+          }
+          if (waiter.timer) {
+            clearTimeout(waiter.timer);
+          }
+          if (abortHandler) {
+            opts?.signal?.removeEventListener("abort", abortHandler);
+          }
+          resolve(ended);
+        },
+      };
+      if (typeof timeoutMs === "number" && Number.isFinite(timeoutMs)) {
+        waiter.timer = setTimeout(
+          () => waiter.finish(false),
+          resolveTimerTimeoutMs(timeoutMs, 100, 100),
+        );
+      }
+      if (opts?.signal) {
+        abortHandler = () => waiter.finish(false);
+        opts.signal.addEventListener("abort", abortHandler, { once: true });
+      }
+      waiters.add(waiter);
+      replyRunState.waitersByKey.set(normalizedSessionKey, waiters);
+      if (!replyRunState.activeRunsByKey.has(normalizedSessionKey)) {
+        waiter.finish(true);
+>>>>>>> upstream/main
       }
     });
   },
   resolveSessionId(sessionKey) {
+<<<<<<< HEAD
     const normalizedSessionKey = normalizeSessionKey(sessionKey);
+=======
+    const normalizedSessionKey = normalizeOptionalString(sessionKey);
+>>>>>>> upstream/main
     if (!normalizedSessionKey) {
       return undefined;
     }
@@ -454,10 +642,25 @@ export function resolveActiveReplyRunSessionId(sessionKey: string): string | und
   return replyRunRegistry.resolveSessionId(sessionKey);
 }
 
+<<<<<<< HEAD
+=======
+export function resolveActiveReplyRunThreadId(sessionKey: string): string | number | undefined {
+  return replyRunRegistry.get(sessionKey)?.routeThreadId;
+}
+
+>>>>>>> upstream/main
 export function isReplyRunActiveForSessionId(sessionId: string): boolean {
   return resolveReplyRunForCurrentSessionId(sessionId) !== undefined;
 }
 
+<<<<<<< HEAD
+=======
+export function isReplyRunAbortableForCompaction(sessionId: string): boolean {
+  const operation = resolveReplyRunForCurrentSessionId(sessionId);
+  return Boolean(operation && operation.phase !== "queued");
+}
+
+>>>>>>> upstream/main
 export function isReplyRunStreamingForSessionId(sessionId: string): boolean {
   const operation = resolveReplyRunForCurrentSessionId(sessionId);
   if (!operation || operation.phase !== "running") {
@@ -488,9 +691,24 @@ export function abortReplyRunBySessionId(sessionId: string): boolean {
   return true;
 }
 
+<<<<<<< HEAD
 export function waitForReplyRunEndBySessionId(
   sessionId: string,
   timeoutMs = 15_000,
+=======
+export function forceClearReplyRunBySessionId(sessionId: string, cause?: unknown): boolean {
+  const operation = resolveReplyRunForCurrentSessionId(sessionId);
+  if (!operation) {
+    return false;
+  }
+  operation.fail("run_failed", cause);
+  return true;
+}
+
+export function waitForReplyRunEndBySessionId(
+  sessionId: string,
+  timeoutMs: number,
+>>>>>>> upstream/main
 ): Promise<boolean> {
   const waitKey = resolveReplyRunWaitKey(sessionId);
   if (!waitKey) {
@@ -519,18 +737,38 @@ export function listActiveReplyRunSessionIds(): string[] {
   return [...replyRunState.activeSessionIdsByKey.values()];
 }
 
+<<<<<<< HEAD
 export const __testing = {
   resetReplyRunRegistry(): void {
+=======
+export function listActiveReplyRunSessionKeys(): string[] {
+  return [...replyRunState.activeSessionIdsByKey.keys()];
+}
+
+export const testing = {
+  resetReplyRunRegistry(): void {
+    for (const [sessionKey, sessionId] of replyRunState.activeSessionIdsByKey) {
+      markReplyRunDiagnosticWorkEnded({ sessionKey, sessionId });
+    }
+>>>>>>> upstream/main
     replyRunState.activeRunsByKey.clear();
     replyRunState.activeSessionIdsByKey.clear();
     replyRunState.activeKeysBySessionId.clear();
     replyRunState.waitKeysBySessionId.clear();
     for (const waiters of replyRunState.waitersByKey.values()) {
       for (const waiter of waiters) {
+<<<<<<< HEAD
         clearTimeout(waiter.timer);
         waiter.resolve(false);
+=======
+        waiter.finish(false);
+>>>>>>> upstream/main
       }
     }
     replyRunState.waitersByKey.clear();
   },
 };
+<<<<<<< HEAD
+=======
+export { testing as __testing };
+>>>>>>> upstream/main

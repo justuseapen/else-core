@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+/**
+ * Shared harness builders for gateway config method tests.
+ */
+>>>>>>> upstream/main
 import { vi, type Mock } from "vitest";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import type { GatewayRequestHandlerOptions } from "./types.js";
@@ -25,6 +31,10 @@ function createGatewayLog(): GatewayLogMocks {
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Creates a complete config snapshot shape for tests that exercise config writes. */
+>>>>>>> upstream/main
 export function createConfigWriteSnapshot(config: OpenClawConfig) {
   return {
     snapshot: {
@@ -46,6 +56,10 @@ export function createConfigWriteSnapshot(config: OpenClawConfig) {
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Builds request-handler options with captured response and gateway log mocks. */
+>>>>>>> upstream/main
 export function createConfigHandlerHarness(args?: {
   method?: string;
   params?: unknown;
@@ -76,6 +90,14 @@ export function createConfigHandlerHarness(args?: {
   };
 }
 
+<<<<<<< HEAD
 export async function flushConfigHandlerMicrotasks() {
   await new Promise<void>((resolve) => queueMicrotask(resolve));
+=======
+/** Allows fire-and-forget config handler microtasks to settle before assertions. */
+export async function flushConfigHandlerMicrotasks() {
+  await new Promise<void>((resolve) => {
+    queueMicrotask(resolve);
+  });
+>>>>>>> upstream/main
 }

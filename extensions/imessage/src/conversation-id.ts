@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Imessage plugin module implements conversation id behavior.
+>>>>>>> upstream/main
 import {
   matchIMessageAcpConversation,
   normalizeIMessageAcpConversationId,

@@ -1,32 +1,21 @@
-import { Type } from "@sinclair/typebox";
-import {
-  buildSearchCacheKey,
-  DEFAULT_SEARCH_COUNT,
-  MAX_SEARCH_COUNT,
-  formatCliCommand,
-  mergeScopedSearchConfig,
-  normalizeFreshness,
-  parseIsoDateRange,
-  readCachedSearchPayload,
-  readConfiguredSecretString,
-  readNumberParam,
-  readProviderEnvValue,
-  readStringParam,
-  resolveProviderWebSearchPluginConfig,
-  resolveSearchCacheTtlMs,
-  resolveSearchCount,
-  resolveSearchTimeoutSeconds,
-  resolveSiteName,
-  setTopLevelCredentialValue,
-  setProviderWebSearchPluginConfigValue,
-  type SearchConfigRecord,
-  type WebSearchProviderPlugin,
-  type WebSearchProviderToolDefinition,
-  withTrustedWebSearchEndpoint,
-  wrapWebContent,
-  writeCachedSearchPayload,
+/**
+ * Brave web-search provider factory. It builds the agent tool definition and
+ * lazy-loads HTTP execution only when a search is run.
+ */
+import { isDiagnosticFlagEnabled } from "openclaw/plugin-sdk/diagnostic-runtime";
+import type {
+  SearchConfigRecord,
+  WebSearchProviderPlugin,
+  WebSearchProviderToolDefinition,
 } from "openclaw/plugin-sdk/provider-web-search";
+import {
+  mergeScopedSearchConfig,
+  resolveProviderWebSearchPluginConfig,
+} from "openclaw/plugin-sdk/provider-web-search-config-contract";
+import { isRecord } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { buildBraveWebSearchProviderBase } from "../web-search-shared.js";
 
+<<<<<<< HEAD
 const BRAVE_SEARCH_ENDPOINT = "https://api.search.brave.com/res/v1/web/search";
 const BRAVE_LLM_CONTEXT_ENDPOINT = "https://api.search.brave.com/res/v1/llm/context";
 // Mirror Brave's documented country enum so unsupported locale guesses can collapse to ALL.
@@ -132,39 +121,67 @@ const BRAVE_SEARCH_LANG_ALIASES: Record<string, string> = {
   "zh-tw": "zh-hant",
 };
 const BRAVE_UI_LANG_LOCALE = /^([a-z]{2})-([a-z]{2})$/i;
+=======
+type BraveWebSearchRuntime = typeof import("./brave-web-search-provider.runtime.js");
+>>>>>>> upstream/main
 
-type BraveConfig = {
-  mode?: string;
-};
+let braveWebSearchRuntimePromise: Promise<BraveWebSearchRuntime> | undefined;
 
-type BraveSearchResult = {
-  title?: string;
-  url?: string;
-  description?: string;
-  age?: string;
-};
-
-type BraveSearchResponse = {
-  web?: {
-    results?: BraveSearchResult[];
-  };
-};
-
-type BraveLlmContextResult = { url: string; title: string; snippets: string[] };
-type BraveLlmContextResponse = {
-  grounding: { generic?: BraveLlmContextResult[] };
-  sources?: { url?: string; hostname?: string; date?: string }[];
-};
-
-function resolveBraveConfig(searchConfig?: SearchConfigRecord): BraveConfig {
-  const brave = searchConfig?.brave;
-  return brave && typeof brave === "object" && !Array.isArray(brave) ? (brave as BraveConfig) : {};
+function loadBraveWebSearchRuntime(): Promise<BraveWebSearchRuntime> {
+  braveWebSearchRuntimePromise ??= import("./brave-web-search-provider.runtime.js");
+  return braveWebSearchRuntimePromise;
 }
 
-function resolveBraveMode(brave?: BraveConfig): "web" | "llm-context" {
+const BraveSearchSchema = {
+  type: "object",
+  properties: {
+    query: { type: "string", description: "Search query string." },
+    count: {
+      type: "integer",
+      description: "Number of results to return (1-10).",
+      minimum: 1,
+      maximum: 10,
+    },
+    country: {
+      type: "string",
+      description:
+        "2-letter country code for region-specific results (e.g., 'DE', 'US', 'ALL'). Default: 'US'.",
+    },
+    language: {
+      type: "string",
+      description: "ISO 639-1 language code for results (e.g., 'en', 'de', 'fr').",
+    },
+    freshness: {
+      type: "string",
+      description: "Filter by time: 'day' (24h), 'week', 'month', or 'year'.",
+    },
+    date_after: {
+      type: "string",
+      description: "Only results published after this date (YYYY-MM-DD).",
+    },
+    date_before: {
+      type: "string",
+      description: "Only results published before this date (YYYY-MM-DD).",
+    },
+    search_lang: {
+      type: "string",
+      description:
+        "Brave language code for search results (e.g., 'en', 'de', 'en-gb', 'zh-hans', 'zh-hant', 'pt-br').",
+    },
+    ui_lang: {
+      type: "string",
+      description:
+        "Locale code for UI elements in language-region format (e.g., 'en-US', 'de-DE', 'fr-FR', 'tr-TR'). Must include region subtag.",
+    },
+  },
+} satisfies Record<string, unknown>;
+
+function resolveBraveMode(searchConfig?: Record<string, unknown>): "web" | "llm-context" {
+  const brave = isRecord(searchConfig?.brave) ? searchConfig.brave : undefined;
   return brave?.mode === "llm-context" ? "llm-context" : "web";
 }
 
+<<<<<<< HEAD
 function resolveBraveApiKey(searchConfig?: SearchConfigRecord): string | undefined {
   return (
     readConfiguredSecretString(searchConfig?.apiKey, "tools.web.search.apiKey") ??
@@ -439,19 +456,23 @@ function missingBraveKeyPayload() {
   };
 }
 
+=======
+>>>>>>> upstream/main
 function createBraveToolDefinition(
   searchConfig?: SearchConfigRecord,
+  config?: Parameters<typeof isDiagnosticFlagEnabled>[1],
 ): WebSearchProviderToolDefinition {
-  const braveConfig = resolveBraveConfig(searchConfig);
-  const braveMode = resolveBraveMode(braveConfig);
+  const braveMode = resolveBraveMode(searchConfig);
+  const diagnosticsEnabled = isDiagnosticFlagEnabled("brave.http", config);
 
   return {
     description:
       braveMode === "llm-context"
         ? "Search the web using Brave Search LLM Context API. Returns pre-extracted page content (text chunks, tables, code blocks) optimized for LLM grounding."
         : "Search the web using Brave Search API. Supports region-specific and localized search via country and language parameters. Returns titles, URLs, and snippets for fast research.",
-    parameters: createBraveSchema(),
+    parameters: BraveSearchSchema,
     execute: async (args) => {
+<<<<<<< HEAD
       const apiKey = resolveBraveApiKey(searchConfig);
       if (!apiKey) {
         return missingBraveKeyPayload();
@@ -624,12 +645,18 @@ function createBraveToolDefinition(
       };
       writeCachedSearchPayload(cacheKey, payload, cacheTtlMs);
       return payload;
+=======
+      const { executeBraveSearch } = await loadBraveWebSearchRuntime();
+      return await executeBraveSearch(args, searchConfig, { diagnosticsEnabled });
+>>>>>>> upstream/main
     },
   };
 }
 
+/** Create the runtime Brave Search provider descriptor. */
 export function createBraveWebSearchProvider(): WebSearchProviderPlugin {
   return {
+<<<<<<< HEAD
     id: "brave",
     label: "Brave Search",
     hint: "Structured results · country/language/time filters",
@@ -649,17 +676,22 @@ export function createBraveWebSearchProvider(): WebSearchProviderPlugin {
     setConfiguredCredentialValue: (configTarget, value) => {
       setProviderWebSearchPluginConfigValue(configTarget, "brave", "apiKey", value);
     },
+=======
+    ...buildBraveWebSearchProviderBase(),
+>>>>>>> upstream/main
     createTool: (ctx) =>
       createBraveToolDefinition(
         mergeScopedSearchConfig(
-          ctx.searchConfig as SearchConfigRecord | undefined,
+          ctx.searchConfig,
           "brave",
           resolveProviderWebSearchPluginConfig(ctx.config, "brave"),
           { mirrorApiKeyToTopLevel: true },
-        ) as SearchConfigRecord | undefined,
+        ),
+        ctx.config,
       ),
   };
 }
+<<<<<<< HEAD
 
 export const __testing = {
   normalizeFreshness,
@@ -668,3 +700,5 @@ export const __testing = {
   resolveBraveMode,
   mapBraveLlmContextResults,
 } as const;
+=======
+>>>>>>> upstream/main

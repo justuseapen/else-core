@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+=======
+// Opencode Go API module exposes the plugin public contract.
+import {
+  applyAgentDefaultModelPrimary,
+  resolveAgentModelPrimaryValue,
+} from "openclaw/plugin-sdk/provider-onboard";
+>>>>>>> upstream/main
 import { OPENCODE_GO_DEFAULT_MODEL_REF } from "./onboard.js";
 
 export {
@@ -6,6 +14,7 @@ export {
   OPENCODE_GO_DEFAULT_MODEL_REF,
 } from "./onboard.js";
 
+<<<<<<< HEAD
 function resolveCurrentPrimaryModel(model: unknown): string | undefined {
   if (typeof model === "string") {
     return model.trim() || undefined;
@@ -20,17 +29,24 @@ function resolveCurrentPrimaryModel(model: unknown): string | undefined {
   return undefined;
 }
 
+=======
+>>>>>>> upstream/main
 export function applyOpencodeGoModelDefault(
   cfg: import("openclaw/plugin-sdk/provider-onboard").OpenClawConfig,
 ): {
   next: import("openclaw/plugin-sdk/provider-onboard").OpenClawConfig;
   changed: boolean;
 } {
+<<<<<<< HEAD
   const current = resolveCurrentPrimaryModel(cfg.agents?.defaults?.model);
+=======
+  const current = resolveAgentModelPrimaryValue(cfg.agents?.defaults?.model);
+>>>>>>> upstream/main
   if (current === OPENCODE_GO_DEFAULT_MODEL_REF) {
     return { next: cfg, changed: false };
   }
   return {
+<<<<<<< HEAD
     next: {
       ...cfg,
       agents: {
@@ -47,6 +63,9 @@ export function applyOpencodeGoModelDefault(
         },
       },
     },
+=======
+    next: applyAgentDefaultModelPrimary(cfg, OPENCODE_GO_DEFAULT_MODEL_REF),
+>>>>>>> upstream/main
     changed: true,
   };
 }

@@ -5,10 +5,13 @@ read_when:
 title: "Podman"
 ---
 
-# Podman
-
 Run the OpenClaw Gateway in a rootless Podman container, managed by your current non-root user.
 
+<<<<<<< HEAD
+Run the OpenClaw Gateway in a rootless Podman container, managed by your current non-root user.
+
+=======
+>>>>>>> upstream/main
 The intended model is:
 
 - Podman runs the gateway container.
@@ -63,8 +66,15 @@ You can also set `OPENCLAW_PODMAN_QUADLET=1`.
 Optional build/setup env vars:
 
 - `OPENCLAW_IMAGE` or `OPENCLAW_PODMAN_IMAGE` -- use an existing/pulled image instead of building `openclaw:local`
+<<<<<<< HEAD
 - `OPENCLAW_DOCKER_APT_PACKAGES` -- install extra apt packages during image build
 - `OPENCLAW_EXTENSIONS` -- pre-install extension dependencies at build time
+=======
+- `OPENCLAW_IMAGE_APT_PACKAGES` -- install extra apt packages during image build (also accepts legacy `OPENCLAW_DOCKER_APT_PACKAGES`)
+- `OPENCLAW_IMAGE_PIP_PACKAGES` -- install extra Python packages during image build; pin versions and use only package indexes you trust
+- `OPENCLAW_EXTENSIONS` -- pre-install plugin dependencies at build time
+- `OPENCLAW_INSTALL_BROWSER` -- pre-install Chromium and Xvfb for browser automation (set to `1` to enable)
+>>>>>>> upstream/main
 
 Container start:
 
@@ -82,6 +92,15 @@ Onboarding:
 
 Then open `http://127.0.0.1:18789/` and use the token from `~/.openclaw/.env`.
 
+<<<<<<< HEAD
+=======
+Model auth in Podman:
+
+- Use OpenClaw-managed auth during setup: Anthropic API keys for Anthropic, or OpenAI Codex browser OAuth/device-code auth for Codex-backed OpenAI.
+- The Podman launcher does not mount host CLI credential homes such as `~/.claude` or `~/.codex` into the setup or gateway container.
+- Existing host CLI logins are same-host convenience paths. For container installs, keep provider auth in the mounted `~/.openclaw` state that setup manages.
+
+>>>>>>> upstream/main
 Host CLI default:
 
 ```bash
@@ -99,11 +118,19 @@ openclaw channels login
 
 On macOS, Podman machine may make the browser appear non-local to the gateway.
 If the Control UI reports device-auth errors after launch, use the Tailscale guidance in
+<<<<<<< HEAD
 [Podman + Tailscale](#podman--tailscale).
 
 <a id="podman--tailscale"></a>
 
 ## Podman + Tailscale
+=======
+[Podman and Tailscale](#podman--tailscale).
+
+<a id="podman--tailscale"></a>
+
+## Podman and Tailscale
+>>>>>>> upstream/main
 
 For HTTPS or remote browser access, follow the main Tailscale docs.
 

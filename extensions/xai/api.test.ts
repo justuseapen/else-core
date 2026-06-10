@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { describe, expect, it } from "vitest";
 import { isXaiModelHint, resolveXaiTransport, shouldContributeXaiCompat } from "./api.js";
+=======
+// Xai tests cover api plugin behavior.
+import { describe, expect, it } from "vitest";
+import { isXaiModelHint, resolveXaiTransport } from "./api.js";
+>>>>>>> upstream/main
 
 describe("xai api helpers", () => {
   it("uses shared endpoint classification for native xAI transports", () => {
@@ -27,6 +33,7 @@ describe("xai api helpers", () => {
     });
   });
 
+<<<<<<< HEAD
   it("contributes compat for native xAI hosts and model hints", () => {
     expect(
       shouldContributeXaiCompat({
@@ -46,6 +53,9 @@ describe("xai api helpers", () => {
         },
       }),
     ).toBe(true);
+=======
+  it("detects xAI model hints", () => {
+>>>>>>> upstream/main
     expect(isXaiModelHint("x-ai/grok-4")).toBe(true);
   });
 });

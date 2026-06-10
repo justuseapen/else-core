@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 export const WHATSAPP_GROUP_INTRO_HINT =
+=======
+// Whatsapp plugin module implements group intro behavior.
+const WHATSAPP_GROUP_INTRO_HINT =
+>>>>>>> upstream/main
   "WhatsApp IDs: SenderId is the participant JID (group participant id).";
 
 export function resolveWhatsAppGroupIntroHint(): string {

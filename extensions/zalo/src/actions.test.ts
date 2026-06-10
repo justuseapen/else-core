@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Zalo tests cover actions plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { zaloMessageActions } from "./actions.js";
 import type { OpenClawConfig } from "./runtime-api.js";

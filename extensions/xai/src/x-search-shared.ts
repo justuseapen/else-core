@@ -1,14 +1,25 @@
+<<<<<<< HEAD
 import { postTrustedWebToolsJson, wrapWebContent } from "openclaw/plugin-sdk/provider-web-search";
 import {
   buildXaiResponsesToolBody,
   resolveXaiResponseTextAndCitations,
   XAI_RESPONSES_ENDPOINT,
+=======
+// Xai plugin module implements x search shared behavior.
+import { readProviderJsonObjectResponse } from "openclaw/plugin-sdk/provider-http";
+import { postTrustedWebToolsJson, wrapWebContent } from "openclaw/plugin-sdk/provider-web-search";
+import {
+  buildXaiResponsesToolBody,
+  requireXaiResponseTextCitationsAndInline,
+  resolveXaiResponsesEndpoint,
+>>>>>>> upstream/main
 } from "./responses-tool-shared.js";
 import {
   coerceXaiToolConfig,
   resolveNormalizedXaiToolModel,
   resolvePositiveIntegerToolConfig,
 } from "./tool-config-shared.js";
+<<<<<<< HEAD
 import { type XaiWebSearchResponse } from "./web-search-shared.js";
 
 export const XAI_X_SEARCH_ENDPOINT = XAI_RESPONSES_ENDPOINT;
@@ -16,6 +27,15 @@ export const XAI_DEFAULT_X_SEARCH_MODEL = "grok-4-1-fast-non-reasoning";
 
 export type XaiXSearchConfig = {
   apiKey?: unknown;
+=======
+import type { XaiWebSearchResponse } from "./web-search-shared.js";
+
+export const XAI_DEFAULT_X_SEARCH_MODEL = "grok-4-1-fast-non-reasoning";
+
+type XaiXSearchConfig = {
+  apiKey?: unknown;
+  baseUrl?: unknown;
+>>>>>>> upstream/main
   model?: unknown;
   inlineCitations?: unknown;
   maxTurns?: unknown;
@@ -31,14 +51,23 @@ export type XaiXSearchOptions = {
   enableVideoUnderstanding?: boolean;
 };
 
+<<<<<<< HEAD
 export type XaiXSearchResult = {
+=======
+type XaiXSearchResult = {
+>>>>>>> upstream/main
   content: string;
   citations: string[];
   inlineCitations?: XaiWebSearchResponse["inline_citations"];
 };
 
+<<<<<<< HEAD
 export function resolveXaiXSearchConfig(config?: Record<string, unknown>): XaiXSearchConfig {
   return coerceXaiToolConfig<XaiXSearchConfig>(config);
+=======
+function resolveXaiXSearchConfig(config?: Record<string, unknown>): XaiXSearchConfig {
+  return coerceXaiToolConfig(config) as XaiXSearchConfig;
+>>>>>>> upstream/main
 }
 
 export function resolveXaiXSearchModel(config?: Record<string, unknown>): string {
@@ -48,6 +77,13 @@ export function resolveXaiXSearchModel(config?: Record<string, unknown>): string
   });
 }
 
+<<<<<<< HEAD
+=======
+export function resolveXaiXSearchEndpoint(config?: Record<string, unknown>): string {
+  return resolveXaiResponsesEndpoint(resolveXaiXSearchConfig(config).baseUrl);
+}
+
+>>>>>>> upstream/main
 export function resolveXaiXSearchInlineCitations(config?: Record<string, unknown>): boolean {
   return resolveXaiXSearchConfig(config).inlineCitations === true;
 }
@@ -106,6 +142,10 @@ export function buildXaiXSearchPayload(params: {
 
 export async function requestXaiXSearch(params: {
   apiKey: string;
+<<<<<<< HEAD
+=======
+  endpoint: string;
+>>>>>>> upstream/main
   model: string;
   timeoutSeconds: number;
   inlineCitations: boolean;
@@ -114,7 +154,11 @@ export async function requestXaiXSearch(params: {
 }): Promise<XaiXSearchResult> {
   return await postTrustedWebToolsJson(
     {
+<<<<<<< HEAD
       url: XAI_X_SEARCH_ENDPOINT,
+=======
+      url: params.endpoint,
+>>>>>>> upstream/main
       timeoutSeconds: params.timeoutSeconds,
       apiKey: params.apiKey,
       body: buildXaiResponsesToolBody({
@@ -126,6 +170,7 @@ export async function requestXaiXSearch(params: {
       errorLabel: "xAI",
     },
     async (response) => {
+<<<<<<< HEAD
       const data = (await response.json()) as XaiWebSearchResponse;
       const { content, citations } = resolveXaiResponseTextAndCitations(data);
       return {
@@ -150,3 +195,17 @@ export const __testing = {
   resolveXaiXSearchModel,
   XAI_DEFAULT_X_SEARCH_MODEL,
 } as const;
+=======
+      const data = (await readProviderJsonObjectResponse(
+        response,
+        "xAI X search failed",
+      )) as XaiWebSearchResponse;
+      return requireXaiResponseTextCitationsAndInline(
+        data,
+        "xAI X search failed",
+        params.inlineCitations,
+      );
+    },
+  );
+}
+>>>>>>> upstream/main

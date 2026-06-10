@@ -1,10 +1,12 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+// Discord tests cover draft chunking plugin behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
 import { describe, expect, it } from "vitest";
 import { resolveDiscordDraftStreamingChunking } from "./draft-chunking.js";
+import { EMPTY_DISCORD_TEST_CONFIG } from "./test-support/config.js";
 
 describe("resolveDiscordDraftStreamingChunking", () => {
   it("returns sane defaults when discord draft chunking is unset", () => {
-    expect(resolveDiscordDraftStreamingChunking(undefined)).toEqual({
+    expect(resolveDiscordDraftStreamingChunking(EMPTY_DISCORD_TEST_CONFIG)).toEqual({
       minChars: 200,
       maxChars: 800,
       breakPreference: "paragraph",

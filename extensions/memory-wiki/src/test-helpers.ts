@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, vi } from "vitest";
 import { createTestPluginApi } from "../../../test/helpers/plugins/plugin-api.js";
+=======
+// Memory Wiki helper module supports test helpers behavior.
+import fs from "node:fs/promises";
+import path from "node:path";
+import type { PluginStateEntry } from "openclaw/plugin-sdk/plugin-state-runtime";
+import { createTestPluginApi } from "openclaw/plugin-sdk/plugin-test-api";
+import { resolvePreferredOpenClawTmpDir } from "openclaw/plugin-sdk/temp-path";
+import { afterEach, vi } from "vitest";
+>>>>>>> upstream/main
 import type { OpenClawPluginApi } from "../api.js";
 import {
   resolveMemoryWikiConfig,
@@ -13,12 +23,20 @@ import { initializeMemoryWikiVault } from "./vault.js";
 
 const MEMORY_WIKI_TEST_HOME = "/Users/tester";
 
+<<<<<<< HEAD
 export type MemoryWikiTestVault = {
+=======
+type MemoryWikiTestVault = {
+>>>>>>> upstream/main
   rootDir: string;
   config: ResolvedMemoryWikiConfig;
 };
 
+<<<<<<< HEAD
 export type MemoryWikiPluginApiHarness = {
+=======
+type MemoryWikiPluginApiHarness = {
+>>>>>>> upstream/main
   api: OpenClawPluginApi;
   registerCli: ReturnType<typeof vi.fn>;
   registerGatewayMethod: ReturnType<typeof vi.fn>;
@@ -27,6 +45,49 @@ export type MemoryWikiPluginApiHarness = {
   registerTool: ReturnType<typeof vi.fn>;
 };
 
+<<<<<<< HEAD
+=======
+function createMemoryKeyedStore<T>() {
+  const values = new Map<string, T>();
+  return {
+    async register(key: string, value: T) {
+      values.set(key, value);
+    },
+    async registerIfAbsent(key: string, value: T) {
+      if (values.has(key)) {
+        return false;
+      }
+      values.set(key, value);
+      return true;
+    },
+    async lookup(key: string) {
+      return values.get(key);
+    },
+    async consume(key: string) {
+      const value = values.get(key);
+      values.delete(key);
+      return value;
+    },
+    async delete(key: string) {
+      return values.delete(key);
+    },
+    async entries() {
+      return [...values.entries()].map(
+        ([key, value]) =>
+          ({
+            key,
+            value,
+            createdAt: 0,
+          }) satisfies PluginStateEntry<T>,
+      );
+    },
+    async clear() {
+      values.clear();
+    },
+  };
+}
+
+>>>>>>> upstream/main
 export function createMemoryWikiTestHarness() {
   const tempDirs: string[] = [];
 
@@ -37,7 +98,11 @@ export function createMemoryWikiTestHarness() {
   });
 
   async function createTempDir(prefix: string): Promise<string> {
+<<<<<<< HEAD
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
+=======
+    const tempDir = await fs.mkdtemp(path.join(resolvePreferredOpenClawTmpDir(), prefix));
+>>>>>>> upstream/main
     tempDirs.push(tempDir);
     return tempDir;
   }
@@ -79,13 +144,25 @@ export function createMemoryWikiTestHarness() {
       name: "Memory Wiki",
       source: "test",
       config: {},
+<<<<<<< HEAD
       runtime: {} as OpenClawPluginApi["runtime"],
+=======
+      runtime: {
+        state: {
+          openKeyedStore: vi.fn(<T>() => createMemoryKeyedStore<T>()),
+        },
+      } as unknown as OpenClawPluginApi["runtime"],
+>>>>>>> upstream/main
       registerCli,
       registerGatewayMethod,
       registerMemoryCorpusSupplement,
       registerMemoryPromptSupplement,
       registerTool,
+<<<<<<< HEAD
     }) as OpenClawPluginApi;
+=======
+    });
+>>>>>>> upstream/main
 
     return {
       api,

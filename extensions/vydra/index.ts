@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Vydra plugin entrypoint registers its OpenClaw integration.
+>>>>>>> upstream/main
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { createProviderApiKeyAuthMethod } from "openclaw/plugin-sdk/provider-auth-api-key";
 import { buildVydraImageGenerationProvider } from "./image-generation-provider.js";

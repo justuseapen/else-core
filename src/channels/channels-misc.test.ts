@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+// Channels misc tests cover small channel helper contracts that do not need dedicated files.
+import { describe, expect, it } from "vitest";
 import { normalizeChatType } from "./chat-type.js";
 
 describe("normalizeChatType", () => {
@@ -26,6 +27,7 @@ describe("normalizeChatType", () => {
     });
   });
 });
+<<<<<<< HEAD
 
 describe("WA_WEB_AUTH_DIR", () => {
   afterEach(() => {
@@ -66,3 +68,5 @@ describe("WA_WEB_AUTH_DIR", () => {
     expect(resolveWebChannelAuthDir).toHaveBeenCalledTimes(1);
   });
 });
+=======
+>>>>>>> upstream/main

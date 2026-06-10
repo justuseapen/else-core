@@ -1,8 +1,13 @@
+// Microsoft Foundry provider module implements model/runtime integration.
 import type { ProviderNormalizeResolvedModelContext } from "openclaw/plugin-sdk/core";
 import type {
   ModelProviderConfig,
   ProviderPlugin,
 } from "openclaw/plugin-sdk/provider-model-shared";
+<<<<<<< HEAD
+=======
+import { OPENAI_RESPONSES_STREAM_HOOKS } from "openclaw/plugin-sdk/provider-stream-family";
+>>>>>>> upstream/main
 import { apiKeyAuthMethod, entraIdAuthMethod } from "./auth.js";
 import { prepareFoundryRuntimeAuth } from "./runtime.js";
 import {
@@ -13,10 +18,47 @@ import {
   extractFoundryEndpoint,
   isFoundryProviderApi,
   normalizeFoundryEndpoint,
+<<<<<<< HEAD
   resolveFoundryApi,
+=======
+>>>>>>> upstream/main
   resolveFoundryModelCapabilities,
   resolveFoundryTargetProfileId,
 } from "./shared.js";
+
+type FoundryProviderHooks = Pick<ProviderPlugin, "wrapStreamFn">;
+
+const wrapOpenAIResponsesStreamFn = OPENAI_RESPONSES_STREAM_HOOKS.wrapStreamFn;
+
+const wrapMicrosoftFoundryStreamFn: NonNullable<FoundryProviderHooks["wrapStreamFn"]> = (ctx) => {
+  if (ctx.model?.api !== "openai-responses") {
+    return ctx.streamFn ?? null;
+  }
+
+  const baseStreamFn = ctx.streamFn;
+  if (!baseStreamFn) {
+    return wrapOpenAIResponsesStreamFn?.(ctx) ?? null;
+  }
+
+  const streamFnWithResponsesReplayIds: NonNullable<typeof ctx.streamFn> = (
+    model,
+    context,
+    options,
+  ) =>
+    baseStreamFn(model, context, {
+      ...options,
+      // Foundry validates encrypted reasoning replay against the original item id,
+      // even though its Responses endpoint does not support persisted `store`.
+      replayResponsesItemIds: true,
+    } as typeof options & { replayResponsesItemIds: true });
+
+  return (
+    wrapOpenAIResponsesStreamFn?.({
+      ...ctx,
+      streamFn: streamFnWithResponsesReplayIds,
+    }) ?? streamFnWithResponsesReplayIds
+  );
+};
 
 export function buildMicrosoftFoundryProvider(): ProviderPlugin {
   return {
@@ -27,11 +69,17 @@ export function buildMicrosoftFoundryProvider(): ProviderPlugin {
     auth: [entraIdAuthMethod, apiKeyAuthMethod],
     onModelSelected: async (ctx) => {
       const providerConfig = ctx.config.models?.providers?.[PROVIDER_ID];
-      if (!providerConfig || !ctx.model.startsWith(`${PROVIDER_ID}/`)) {
+      if (
+        !providerConfig ||
+        !providerConfig.baseUrl?.trim() ||
+        !Array.isArray(providerConfig.models) ||
+        !ctx.model.startsWith(`${PROVIDER_ID}/`)
+      ) {
         return;
       }
       const selectedModelId = ctx.model.slice(`${PROVIDER_ID}/`.length);
-      const existingModel = providerConfig.models.find(
+      const configuredModels = providerConfig.models ?? [];
+      const existingModel = configuredModels.find(
         (model: { id: string }) => model.id === selectedModelId,
       );
       const selectedModelCapabilities = resolveFoundryModelCapabilities(
@@ -46,6 +94,7 @@ export function buildMicrosoftFoundryProvider(): ProviderPlugin {
       const selectedModelApi = isFoundryProviderApi(existingModel?.api)
         ? existingModel.api
         : providerConfig.api;
+<<<<<<< HEAD
       const nextModels = providerConfig.models.map((model) =>
         model.id === selectedModelId
           ? {
@@ -59,12 +108,60 @@ export function buildMicrosoftFoundryProvider(): ProviderPlugin {
             }
           : model,
       );
+=======
+      const nextModels = configuredModels.map((model) => {
+        if (model.id !== selectedModelId) {
+          return model;
+        }
+        const nextModel = Object.assign({}, model, {
+          name: selectedModelCapabilities.modelName,
+          api: selectedModelCapabilities.api,
+          reasoning: selectedModelCapabilities.reasoning || model.reasoning,
+          thinkingLevelMap: selectedModelCapabilities.thinkingLevelMap ?? model.thinkingLevelMap,
+          input: selectedModelCapabilities.input,
+        });
+        if (selectedModelCapabilities.compat) {
+          const explicitSupportsReasoningEffort =
+            typeof model.compat?.supportsReasoningEffort === "boolean"
+              ? model.compat.supportsReasoningEffort
+              : undefined;
+          const preserveExplicitReasoningEffort =
+            !selectedModelCapabilities.reasoning &&
+            model.reasoning &&
+            explicitSupportsReasoningEffort !== false;
+          const explicitMaxTokensField =
+            typeof model.compat?.maxTokensField === "string"
+              ? model.compat.maxTokensField
+              : preserveExplicitReasoningEffort
+                ? "max_completion_tokens"
+                : undefined;
+          nextModel.compat = {
+            ...model.compat,
+            ...selectedModelCapabilities.compat,
+            ...(explicitSupportsReasoningEffort !== undefined
+              ? { supportsReasoningEffort: explicitSupportsReasoningEffort }
+              : preserveExplicitReasoningEffort
+                ? { supportsReasoningEffort: true }
+                : undefined),
+            ...(explicitMaxTokensField ? { maxTokensField: explicitMaxTokensField } : {}),
+          };
+        }
+        return nextModel;
+      });
+>>>>>>> upstream/main
       if (!nextModels.some((model) => model.id === selectedModelId)) {
         nextModels.push({
           id: selectedModelId,
           name: selectedModelCapabilities.modelName,
           api: selectedModelCapabilities.api,
+<<<<<<< HEAD
           reasoning: false,
+=======
+          reasoning: selectedModelCapabilities.reasoning,
+          ...(selectedModelCapabilities.thinkingLevelMap
+            ? { thinkingLevelMap: selectedModelCapabilities.thinkingLevelMap }
+            : {}),
+>>>>>>> upstream/main
           input: selectedModelCapabilities.input,
           cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
           contextWindow: 128_000,
@@ -90,7 +187,7 @@ export function buildMicrosoftFoundryProvider(): ProviderPlugin {
       applyFoundryProviderConfig(ctx.config, nextProviderConfig);
     },
     normalizeResolvedModel: ({ modelId, model }: ProviderNormalizeResolvedModelContext) => {
-      const endpoint = extractFoundryEndpoint(String(model.baseUrl ?? ""));
+      const endpoint = extractFoundryEndpoint(model.baseUrl ?? "");
       if (!endpoint) {
         return model;
       }
@@ -100,10 +197,41 @@ export function buildMicrosoftFoundryProvider(): ProviderPlugin {
         isFoundryProviderApi(model.api) ? model.api : undefined,
         model.input,
       );
+<<<<<<< HEAD
+=======
+      const explicitSupportsReasoningEffort =
+        typeof model.compat?.supportsReasoningEffort === "boolean"
+          ? model.compat.supportsReasoningEffort
+          : undefined;
+      const preserveExplicitReasoningEffort = !capabilities.reasoning && model.reasoning;
+      const explicitMaxTokensField =
+        typeof model.compat?.maxTokensField === "string"
+          ? model.compat.maxTokensField
+          : preserveExplicitReasoningEffort
+            ? "max_completion_tokens"
+            : undefined;
+      const compat = capabilities.compat
+        ? {
+            ...model.compat,
+            ...capabilities.compat,
+            ...(explicitSupportsReasoningEffort !== undefined
+              ? { supportsReasoningEffort: explicitSupportsReasoningEffort }
+              : preserveExplicitReasoningEffort
+                ? { supportsReasoningEffort: true }
+                : undefined),
+            ...(explicitMaxTokensField ? { maxTokensField: explicitMaxTokensField } : {}),
+          }
+        : undefined;
+>>>>>>> upstream/main
       return {
         ...model,
         name: capabilities.modelName,
         api: capabilities.api,
+<<<<<<< HEAD
+=======
+        reasoning: capabilities.reasoning || model.reasoning,
+        thinkingLevelMap: capabilities.thinkingLevelMap ?? model.thinkingLevelMap,
+>>>>>>> upstream/main
         input: capabilities.input,
         baseUrl: buildFoundryProviderBaseUrl(
           endpoint,
@@ -111,9 +239,14 @@ export function buildMicrosoftFoundryProvider(): ProviderPlugin {
           capabilities.modelName,
           capabilities.api,
         ),
+<<<<<<< HEAD
         ...(capabilities.compat ? { compat: capabilities.compat } : {}),
+=======
+        ...(compat ? { compat } : {}),
+>>>>>>> upstream/main
       };
     },
+    wrapStreamFn: wrapMicrosoftFoundryStreamFn,
     prepareRuntimeAuth: prepareFoundryRuntimeAuth,
   };
 }

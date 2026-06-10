@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Legacy X search migration tests cover doctor repair of old X search config.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../../../config/config.js";
 import {
@@ -80,6 +84,45 @@ describe("legacy x_search config migration", () => {
     });
   });
 
+<<<<<<< HEAD
+=======
+  it("moves legacy x_search SecretRefs into the xai plugin auth slot unchanged", () => {
+    const res = migrateLegacyXSearchConfig({
+      tools: {
+        web: {
+          x_search: {
+            apiKey: {
+              source: "env",
+              provider: "default",
+              id: "X_SEARCH_KEY_REF",
+            },
+            enabled: true,
+          },
+        } as Record<string, unknown>,
+      },
+    } as OpenClawConfig);
+
+    expect((res.config.tools?.web as Record<string, unknown> | undefined)?.x_search).toEqual({
+      enabled: true,
+    });
+    expect(res.config.plugins?.entries?.xai).toEqual({
+      enabled: true,
+      config: {
+        webSearch: {
+          apiKey: {
+            source: "env",
+            provider: "default",
+            id: "X_SEARCH_KEY_REF",
+          },
+        },
+      },
+    });
+    expect(res.changes).toEqual([
+      "Moved tools.web.x_search.apiKey → plugins.entries.xai.config.webSearch.apiKey.",
+    ]);
+  });
+
+>>>>>>> upstream/main
   it("does nothing for knob-only x_search config without a legacy apiKey", () => {
     const config = {
       tools: {
@@ -95,7 +138,11 @@ describe("legacy x_search config migration", () => {
     const res = migrateLegacyXSearchConfig(config);
 
     expect(res.config).toEqual(config);
+<<<<<<< HEAD
     expect(res.changes).toEqual([]);
+=======
+    expect(res.changes).toStrictEqual([]);
+>>>>>>> upstream/main
     expect(res.config.plugins?.entries?.xai).toBeUndefined();
   });
 

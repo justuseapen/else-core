@@ -1,9 +1,16 @@
+// Whatsapp tests cover accounts.whatsapp auth plugin behavior.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+<<<<<<< HEAD
 import { captureEnv } from "openclaw/plugin-sdk/testing";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { hasAnyWhatsAppAuth, listWhatsAppAuthDirs } from "./accounts.js";
+=======
+import { captureEnv } from "openclaw/plugin-sdk/test-env";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { hasAnyWhatsAppAuth, listWhatsAppAuthDirs, resolveWhatsAppAuthDir } from "./accounts.js";
+>>>>>>> upstream/main
 
 describe("hasAnyWhatsAppAuth", () => {
   let envSnapshot: ReturnType<typeof captureEnv>;
@@ -35,6 +42,40 @@ describe("hasAnyWhatsAppAuth", () => {
   it("returns true when legacy auth exists", () => {
     fs.writeFileSync(path.join(tempOauthDir ?? "", "creds.json"), JSON.stringify({ me: {} }));
     expect(hasAnyWhatsAppAuth({})).toBe(true);
+  });
+
+  it.runIf(process.platform !== "win32")("ignores symlinked legacy creds", () => {
+    const targetPath = path.join(tempOauthDir ?? "", "target-creds.json");
+    const credsPath = path.join(tempOauthDir ?? "", "creds.json");
+    fs.writeFileSync(targetPath, JSON.stringify({ me: {} }));
+    fs.symlinkSync(targetPath, credsPath);
+
+    expect(hasAnyWhatsAppAuth({})).toBe(false);
+    expect(resolveWhatsAppAuthDir({ cfg: {}, accountId: "default" })).toEqual({
+      authDir: path.join(tempOauthDir ?? "", "whatsapp", "default"),
+      isLegacy: false,
+    });
+  });
+
+  it("selects legacy auth when legacy creds are truncated so backup recovery can run", () => {
+    fs.writeFileSync(path.join(tempOauthDir ?? "", "creds.json"), "{");
+
+    expect(resolveWhatsAppAuthDir({ cfg: {}, accountId: "default" })).toEqual({
+      authDir: tempOauthDir,
+      isLegacy: true,
+    });
+  });
+
+  it("does not fall back to legacy auth when default creds are truncated", () => {
+    const defaultAuthDir = path.join(tempOauthDir ?? "", "whatsapp", "default");
+    fs.mkdirSync(defaultAuthDir, { recursive: true });
+    fs.writeFileSync(path.join(tempOauthDir ?? "", "creds.json"), JSON.stringify({ me: {} }));
+    fs.writeFileSync(path.join(defaultAuthDir, "creds.json"), "{");
+
+    expect(resolveWhatsAppAuthDir({ cfg: {}, accountId: "default" })).toEqual({
+      authDir: defaultAuthDir,
+      isLegacy: false,
+    });
   });
 
   it("returns true when non-default auth exists", () => {

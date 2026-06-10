@@ -1,17 +1,26 @@
-# Canvas Skill
+---
+name: canvas
+description: "Present HTML on connected OpenClaw node canvases, navigate/eval/snapshot, and debug canvas host URLs."
+metadata: { "openclaw": { "emoji": "🖼️" } }
+---
 
-Display HTML content on connected OpenClaw nodes (Mac app, iOS, Android).
+# Canvas
 
-## Overview
+Use canvas to show HTML on connected Mac/iOS/Android nodes.
 
-The canvas tool lets you present web content on any connected node's canvas view. Great for:
+## Model
 
-- Displaying games, visualizations, dashboards
-- Showing generated HTML content
-- Interactive demos
+- Canvas host serves files from `plugins.entries.canvas.config.host.root`.
+- Canvas routes live on the Gateway HTTP port (`gateway.port`, default `18789`).
+- Node bridge sends canvas URLs to connected node apps.
+- Node apps render URLs in a WebView.
+- Host name follows `gateway.bind`: loopback local only, LAN IP for LAN, Tailscale host for tailnet, auto picks best route.
+- Localhost URLs only work for a node on the same machine.
+- Paired nodes normally receive node-scoped `pluginSurfaceUrls.canvas` capability URLs; prefer those when available.
 
-## How It Works
+## Config
 
+<<<<<<< HEAD
 ### Architecture
 
 ```
@@ -58,53 +67,58 @@ This is why localhost URLs don't work - the node receives the Tailscale hostname
 ## Configuration
 
 In the active OpenClaw config file (`$OPENCLAW_CONFIG_PATH`, default `~/.openclaw/openclaw.json`):
+=======
+Active config: `$OPENCLAW_CONFIG_PATH` or `~/.openclaw/openclaw.json`.
+>>>>>>> upstream/main
 
 ```json
 {
-  "canvasHost": {
-    "enabled": true,
-    "port": 18793,
-    "root": "/Users/you/clawd/canvas",
-    "liveReload": true
+  "plugins": {
+    "entries": {
+      "canvas": {
+        "config": {
+          "host": {
+            "enabled": true,
+            "root": "~/.openclaw/canvas",
+            "liveReload": true
+          }
+        }
+      }
+    }
   },
-  "gateway": {
-    "bind": "auto"
-  }
+  "gateway": { "bind": "auto" }
 }
 ```
 
-### Live Reload
+## Actions
 
-When `liveReload: true` (default), the canvas host:
-
-- Watches the root directory for changes (via chokidar)
-- Injects a WebSocket client into HTML files
-- Automatically reloads connected canvases when files change
-
-Great for development!
+- `present`: show canvas, optional URL.
+- `hide`: hide canvas.
+- `navigate`: open new URL.
+- `eval`: run JavaScript in current canvas.
+- `snapshot`: capture screenshot.
 
 ## Workflow
 
-### 1. Create HTML content
+1. Ensure Canvas plugin host is enabled.
+2. Put HTML/CSS/JS under `plugins.entries.canvas.config.host.root` or the default state canvas dir.
+3. Use a route reachable by the target node.
+4. Present the hosted URL: `/__openclaw__/canvas/<file>.html`.
+5. Use `snapshot` when the user needs proof.
 
-Place files in the canvas root directory (default `~/clawd/canvas/`):
+## URL shape
 
-```bash
-cat > ~/clawd/canvas/my-game.html << 'HTML'
-<!DOCTYPE html>
-<html>
-<head><title>My Game</title></head>
-<body>
-  <h1>Hello Canvas!</h1>
-</body>
-</html>
-HTML
+```text
+http://<gateway-host>:<gateway.port>/__openclaw__/canvas/index.html
+http://<gateway-host>:<gateway.port>/__openclaw__/canvas/games/snake.html
 ```
 
-### 2. Find your canvas host URL
+Path mapping:
 
-Check how your gateway is bound:
+- `/__openclaw__/canvas/index.html` -> `<canvas host root>/index.html`
+- `/__openclaw__/canvas/games/snake.html` -> `<canvas host root>/games/snake.html`
 
+<<<<<<< HEAD
 ```bash
 CONFIG_PATH="${OPENCLAW_CONFIG_PATH:-${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/openclaw.json}"
 cat "$CONFIG_PATH" | jq '.gateway.bind'
@@ -197,3 +211,12 @@ The `/__openclaw__/canvas/` prefix is defined by `CANVAS_HOST_PATH` constant.
 - The canvas persists until you `hide` it or navigate away
 - Live reload makes development fast - just save and it updates!
 - A2UI JSON push is WIP - use HTML files for now
+=======
+## Troubleshooting
+
+- Node sees localhost but is remote: fix `gateway.bind` or public URL, regenerate URL.
+- LAN node cannot load: verify same network, firewall, Gateway port, and auth/capability URL.
+- Tailnet node cannot load: verify Tailscale status and advertised host.
+- Blank page: open URL locally, check browser console, then snapshot node.
+- Live reload missing: verify `liveReload` and file write under root.
+>>>>>>> upstream/main

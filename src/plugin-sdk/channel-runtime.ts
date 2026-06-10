@@ -7,7 +7,11 @@
 export * from "../channels/chat-type.js";
 export * from "../channels/reply-prefix.js";
 export * from "../channels/typing.js";
+<<<<<<< HEAD
 export type * from "../channels/plugins/types.js";
+=======
+export type * from "../channels/plugins/types.public.js";
+>>>>>>> upstream/main
 export { normalizeChannelId } from "../channels/plugins/registry.js";
 export * from "../channels/plugins/outbound/interactive.js";
 export * from "../polls.js";

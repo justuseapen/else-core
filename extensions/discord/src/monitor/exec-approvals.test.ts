@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import type { ButtonInteraction, ComponentData } from "@buape/carbon";
 import { Routes } from "discord-api-types/v10";
@@ -59,14 +60,42 @@ const mockCreateOperatorApprovalsGatewayClient = vi.hoisted(() => vi.fn());
 
 vi.mock("../send.shared.js", async () => {
   const actual = await vi.importActual<typeof import("../send.shared.js")>("../send.shared.js");
+=======
+// Discord tests cover exec approvals plugin behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ButtonInteraction, ComponentData } from "../internal/discord.js";
+
+const resolveApprovalOverGatewayMock = vi.hoisted(() => vi.fn());
+
+vi.mock("openclaw/plugin-sdk/approval-gateway-runtime", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("openclaw/plugin-sdk/approval-gateway-runtime")>();
+>>>>>>> upstream/main
   return {
     ...actual,
-    createDiscordClient: () => ({
-      rest: {
-        post: mockRestPost,
-        patch: mockRestPatch,
-        delete: mockRestDelete,
+    resolveApprovalOverGateway: resolveApprovalOverGatewayMock,
+  };
+});
+
+import {
+  ExecApprovalButton,
+  buildExecApprovalCustomId,
+  createDiscordExecApprovalButtonContext,
+  extractDiscordChannelId,
+  parseExecApprovalData,
+} from "./exec-approvals.js";
+
+function buildConfig(
+  execApprovals?: NonNullable<NonNullable<OpenClawConfig["channels"]>["discord"]>["execApprovals"],
+): OpenClawConfig {
+  return {
+    channels: {
+      discord: {
+        token: "discord-token",
+        execApprovals,
       },
+<<<<<<< HEAD
       request: (_fn: () => Promise<unknown>, _label: string) => _fn(),
     }),
   };
@@ -82,31 +111,42 @@ vi.mock("openclaw/plugin-sdk/config-runtime", async () => {
     resolveStorePath: () => STORE_PATH,
   };
 });
+=======
+    },
+  } as OpenClawConfig;
+}
+>>>>>>> upstream/main
 
-vi.mock("../../../../src/gateway/operator-approvals-client.js", () => ({
-  createOperatorApprovalsGatewayClient: async (params: {
-    config?: unknown;
-    gatewayUrl?: string;
-    clientDisplayName?: string;
-    onEvent?: unknown;
-    onHelloOk?: unknown;
-    onConnectError?: unknown;
-    onClose?: unknown;
-  }) => {
-    mockCreateOperatorApprovalsGatewayClient(params);
-    const envUrl = process.env.OPENCLAW_GATEWAY_URL?.trim();
-    const gatewayUrl = params.gatewayUrl?.trim() || envUrl || "ws://127.0.0.1:18789";
-    const urlOverrideSource = params.gatewayUrl?.trim() ? "cli" : envUrl ? "env" : undefined;
-    const auth = await mockResolveGatewayConnectionAuth({
-      config: params.config,
-      env: process.env,
-      ...(urlOverrideSource
-        ? {
-            urlOverride: gatewayUrl,
-            urlOverrideSource,
-          }
-        : {}),
+function createInteraction(overrides?: Partial<ButtonInteraction>): ButtonInteraction {
+  return {
+    userId: "123",
+    reply: vi.fn(),
+    acknowledge: vi.fn(),
+    followUp: vi.fn(),
+    ...overrides,
+  } as unknown as ButtonInteraction;
+}
+
+describe("discord exec approval monitor helpers", () => {
+  beforeEach(() => {
+    resolveApprovalOverGatewayMock.mockReset();
+  });
+
+  it("encodes approval ids into custom ids", () => {
+    expect(buildExecApprovalCustomId("abc-123", "allow-once")).toBe(
+      "execapproval:id=abc-123;action=allow-once",
+    );
+    expect(buildExecApprovalCustomId("abc=123;test", "deny")).toBe(
+      "execapproval:id=abc%3D123%3Btest;action=deny",
+    );
+  });
+
+  it("parses valid button data and rejects invalid payloads", () => {
+    expect(parseExecApprovalData({ id: "abc-123", action: "allow-once" })).toEqual({
+      approvalId: "abc-123",
+      action: "allow-once",
     });
+<<<<<<< HEAD
     const clientParams = {
       url: gatewayUrl,
       token: auth?.token,
@@ -334,16 +374,29 @@ describe("parseExecApprovalData", () => {
   it("parses encoded data", () => {
     const result = parseExecApprovalData({
       id: "abc%3D123%3Btest",
+=======
+    expect(
+      parseExecApprovalData({
+        id: "abc%3D123%3Btest",
+        action: "allow-always",
+      }),
+    ).toEqual({
+      approvalId: "abc=123;test",
+>>>>>>> upstream/main
       action: "allow-always",
     });
-    expect(result).toEqual({ approvalId: "abc=123;test", action: "allow-always" });
+    expect(parseExecApprovalData({ id: "abc", action: "invalid" })).toBeNull();
+    expect(parseExecApprovalData({ action: "deny" } as ComponentData)).toBeNull();
   });
 
-  it("rejects invalid action", () => {
-    const result = parseExecApprovalData({ id: "abc-123", action: "invalid" });
-    expect(result).toBeNull();
+  it("extracts discord channel ids from session keys", () => {
+    expect(extractDiscordChannelId("agent:main:discord:channel:123456789")).toBe("123456789");
+    expect(extractDiscordChannelId("agent:main:discord:group:222333444")).toBe("222333444");
+    expect(extractDiscordChannelId("agent:main:telegram:channel:123456789")).toBeNull();
+    expect(extractDiscordChannelId("")).toBeNull();
   });
 
+<<<<<<< HEAD
   it("rejects missing id", () => {
     const result = parseExecApprovalData({ action: "deny" });
     expect(result).toBeNull();
@@ -476,27 +529,18 @@ describe("DiscordExecApprovalHandler.shouldHandle", () => {
       enabled: true,
       approvers: ["123"],
       agentFilter: ["allowed-agent"],
+=======
+  it("rejects invalid approval button payloads", async () => {
+    const interaction = createInteraction();
+    const button = new ExecApprovalButton({
+      getApprovers: () => ["123"],
+      resolveApproval: async () => ({ ok: true }),
+>>>>>>> upstream/main
     });
-    expect(handler.shouldHandle(createRequest({ agentId: "allowed-agent" }))).toBe(true);
-    expect(handler.shouldHandle(createRequest({ agentId: "other-agent" }))).toBe(false);
-    expect(handler.shouldHandle(createRequest({ agentId: null }))).toBe(false);
-  });
 
-  it("filters by session key substring", () => {
-    const handler = createHandler({
-      enabled: true,
-      approvers: ["123"],
-      sessionFilter: ["discord"],
-    });
-    expect(handler.shouldHandle(createRequest({ sessionKey: "agent:test:discord:123" }))).toBe(
-      true,
-    );
-    expect(handler.shouldHandle(createRequest({ sessionKey: "agent:test:telegram:123" }))).toBe(
-      false,
-    );
-    expect(handler.shouldHandle(createRequest({ sessionKey: null }))).toBe(false);
-  });
+    await button.run(interaction, { id: "", action: "" });
 
+<<<<<<< HEAD
   it("filters by session key regex", () => {
     const handler = createHandler({
       enabled: true,
@@ -774,111 +818,85 @@ describe("ExecApprovalButton", () => {
     await button.run(interaction, data);
 
     expect(reply).toHaveBeenCalledWith({
+=======
+    expect(interaction["reply"]).toHaveBeenCalledWith({
+>>>>>>> upstream/main
       content: "This approval is no longer valid.",
       ephemeral: true,
     });
-    expect(acknowledge).not.toHaveBeenCalled();
-    // oxlint-disable-next-line typescript/unbound-method -- vi.fn() mock
-    expect(handler.resolveApproval).not.toHaveBeenCalled();
   });
 
-  it("follows up with error when resolve fails", async () => {
-    const handler = createMockHandler(["111"]);
-    handler.resolveApproval = vi.fn().mockResolvedValue(false);
-    const ctx: ExecApprovalButtonContext = { handler };
-    const button = new ExecApprovalButton(ctx);
+  it("blocks non-approvers from approving", async () => {
+    const interaction = createInteraction({ userId: "999" });
+    const button = new ExecApprovalButton({
+      getApprovers: () => ["123"],
+      resolveApproval: async () => ({ ok: true }),
+    });
 
-    const { interaction, followUp } = createMockInteraction("111");
-    const data: ComponentData = { id: "test-approval", action: "allow-once" };
+    await button.run(interaction, { id: "abc", action: "allow-once" });
 
-    await button.run(interaction, data);
-
-    expect(followUp).toHaveBeenCalledWith({
-      content:
-        "Failed to submit approval decision for **Allowed (once)**. The request may have expired or already been resolved.",
+    expect(interaction["reply"]).toHaveBeenCalledWith({
+      content: "⛔ You are not authorized to approve exec requests.",
       ephemeral: true,
     });
   });
 
-  it("matches approvers with string coercion", async () => {
-    // Approvers might be numbers in config
-    const handler = createHandler({
-      enabled: true,
-      approvers: [111 as unknown as string],
+  it("acknowledges and resolves valid approval clicks", async () => {
+    const interaction = createInteraction();
+    const resolveApproval = vi.fn(async () => ({ ok: true }) as const);
+    const button = new ExecApprovalButton({
+      getApprovers: () => ["123"],
+      resolveApproval,
     });
-    handler.resolveApproval = vi.fn().mockResolvedValue(true);
-    const ctx: ExecApprovalButtonContext = { handler };
-    const button = new ExecApprovalButton(ctx);
 
-    const { interaction, acknowledge, reply } = createMockInteraction("111");
-    const data: ComponentData = { id: "test-approval", action: "allow-once" };
+    await button.run(interaction, { id: "abc", action: "allow-once" });
 
-    await button.run(interaction, data);
-
-    // Should match because getApprovers returns [111] and button does String(id) === userId
-    expect(reply).not.toHaveBeenCalled();
-    expect(acknowledge).toHaveBeenCalled();
-  });
-});
-
-// ─── Target routing (handler config) ──────────────────────────────────────────
-
-describe("DiscordExecApprovalHandler target config", () => {
-  beforeEach(() => {
-    mockRestPost.mockClear().mockResolvedValue({ id: "mock-message", channel_id: "mock-channel" });
-    mockRestPatch.mockClear().mockResolvedValue({});
-    mockRestDelete.mockClear().mockResolvedValue({});
+    expect(interaction["acknowledge"]).toHaveBeenCalled();
+    expect(resolveApproval).toHaveBeenCalledWith("abc", "allow-once");
+    expect(interaction["followUp"]).not.toHaveBeenCalled();
   });
 
-  it("accepts all target modes and defaults to dm when target is omitted", () => {
-    const cases = [
-      {
-        name: "default target",
-        config: { enabled: true, approvers: ["123"] } as DiscordExecApprovalConfig,
-        expectedTarget: undefined,
-      },
-      {
-        name: "channel target",
-        config: {
-          enabled: true,
-          approvers: ["123"],
-          target: "channel",
-        } as DiscordExecApprovalConfig,
-      },
-      {
-        name: "both target",
-        config: {
-          enabled: true,
-          approvers: ["123"],
-          target: "both",
-        } as DiscordExecApprovalConfig,
-      },
-      {
-        name: "dm target",
-        config: {
-          enabled: true,
-          approvers: ["123"],
-          target: "dm",
-        } as DiscordExecApprovalConfig,
-      },
-    ] as const;
+  it("shows a follow-up when gateway resolution fails", async () => {
+    const interaction = createInteraction();
+    const button = new ExecApprovalButton({
+      getApprovers: () => ["123"],
+      resolveApproval: async () => ({ ok: false, reason: "error" }),
+    });
 
-    for (const testCase of cases) {
-      if ("expectedTarget" in testCase) {
-        expect(testCase.config.target, testCase.name).toBe(testCase.expectedTarget);
-      }
-      const handler = createHandler(testCase.config);
-      expect(handler.shouldHandle(createRequest()), testCase.name).toBe(true);
-    }
+    await button.run(interaction, { id: "abc", action: "deny" });
+
+    expect(interaction["followUp"]).toHaveBeenCalledWith({
+      content:
+        "Failed to submit approval decision for **Denied**. The request may have expired or already been resolved.",
+      ephemeral: true,
+    });
   });
-});
 
-describe("DiscordExecApprovalHandler gateway auth", () => {
-  it("passes the shared gateway token from config into GatewayClient", async () => {
-    const handler = new DiscordExecApprovalHandler({
-      token: "discord-bot-token",
+  it("shows a follow-up for already-resolved approval clicks", async () => {
+    const interaction = createInteraction();
+    const button = new ExecApprovalButton({
+      getApprovers: () => ["123"],
+      resolveApproval: async () => ({ ok: false, reason: "not-found" }),
+    });
+
+    await button.run(interaction, { id: "abc", action: "allow-once" });
+
+    expect(interaction["acknowledge"]).toHaveBeenCalled();
+    expect(interaction["followUp"]).toHaveBeenCalledWith({
+      content:
+        "That approval request is no longer pending. It may have expired or already been resolved.",
+      ephemeral: true,
+    });
+  });
+
+  it("builds button context from config and routes resolution over gateway", async () => {
+    const cfg = buildConfig({ enabled: true, approvers: ["123"] });
+    resolveApprovalOverGatewayMock.mockResolvedValue(undefined);
+    const ctx = createDiscordExecApprovalButtonContext({
+      cfg,
       accountId: "default",
       config: { enabled: true, approvers: ["123"] },
+<<<<<<< HEAD
       cfg: {
         gateway: {
           mode: "local",
@@ -886,25 +904,29 @@ describe("DiscordExecApprovalHandler gateway auth", () => {
           auth: { mode: "token", token: "shared-gateway-token" },
         },
       },
+=======
+      gatewayUrl: "ws://127.0.0.1:18789",
+>>>>>>> upstream/main
     });
 
-    await handler.start();
-
-    expect(gatewayClientStarts).toHaveBeenCalledTimes(1);
-    expect(gatewayClientParams[0]).toMatchObject({
-      url: "ws://127.0.0.1:18789",
-      token: "shared-gateway-token",
-      password: undefined,
-      scopes: ["operator.approvals"],
+    expect(ctx.getApprovers()).toEqual(["123"]);
+    await expect(ctx.resolveApproval("abc", "allow-once")).resolves.toEqual({ ok: true });
+    expect(resolveApprovalOverGatewayMock).toHaveBeenCalledWith({
+      cfg,
+      approvalId: "abc",
+      decision: "allow-once",
+      gatewayUrl: "ws://127.0.0.1:18789",
+      clientDisplayName: "Discord approval (default)",
     });
   });
 
-  it("prefers OPENCLAW_GATEWAY_TOKEN when config token is missing", async () => {
-    vi.stubEnv("OPENCLAW_GATEWAY_TOKEN", "env-gateway-token");
-    const handler = new DiscordExecApprovalHandler({
-      token: "discord-bot-token",
+  it("returns false when gateway resolution throws", async () => {
+    resolveApprovalOverGatewayMock.mockRejectedValue(new Error("boom"));
+    const ctx = createDiscordExecApprovalButtonContext({
+      cfg: buildConfig({ enabled: true, approvers: ["123"] }),
       accountId: "default",
       config: { enabled: true, approvers: ["123"] },
+<<<<<<< HEAD
       cfg: {
         gateway: {
           mode: "local",
@@ -912,22 +934,17 @@ describe("DiscordExecApprovalHandler gateway auth", () => {
           auth: { mode: "token" },
         },
       },
+=======
+>>>>>>> upstream/main
     });
 
-    try {
-      await handler.start();
-    } finally {
-      vi.unstubAllEnvs();
-    }
-
-    expect(gatewayClientStarts).toHaveBeenCalledTimes(1);
-    expect(gatewayClientParams[0]).toMatchObject({
-      token: "env-gateway-token",
-      password: undefined,
+    await expect(ctx.resolveApproval("abc", "allow-once")).resolves.toEqual({
+      ok: false,
+      reason: "error",
     });
   });
-});
 
+<<<<<<< HEAD
 // ─── Timeout cleanup ─────────────────────────────────────────────────────────
 
 describe("DiscordExecApprovalHandler timeout cleanup", () => {
@@ -1145,23 +1162,31 @@ describe("DiscordExecApprovalHandler gateway auth resolution", () => {
     });
     const handler = new DiscordExecApprovalHandler({
       token: "test-token",
+=======
+  it("classifies structured approval-not-found gateway errors as stale clicks", async () => {
+    const err = Object.assign(new Error("unknown or expired approval id"), {
+      gatewayCode: "INVALID_REQUEST",
+      details: { reason: "APPROVAL_NOT_FOUND" },
+    });
+    resolveApprovalOverGatewayMock.mockRejectedValue(err);
+    const ctx = createDiscordExecApprovalButtonContext({
+      cfg: buildConfig({ enabled: true, approvers: ["123"] }),
+>>>>>>> upstream/main
       accountId: "default",
-      gatewayUrl: "wss://override.example/ws",
       config: { enabled: true, approvers: ["123"] },
+<<<<<<< HEAD
       cfg: { session: { store: STORE_PATH } },
+=======
+>>>>>>> upstream/main
     });
 
-    await expectGatewayAuthStart({
-      handler,
-      expectedUrl: "wss://override.example/ws",
-      expectedSource: "cli",
-      expectedToken: "resolved-token",
-      expectedPassword: "resolved-password", // pragma: allowlist secret
+    await expect(ctx.resolveApproval("abc", "allow-once")).resolves.toEqual({
+      ok: false,
+      reason: "not-found",
     });
-
-    await handler.stop();
   });
 
+<<<<<<< HEAD
   it("passes env URL overrides to shared gateway auth resolver", async () => {
     const previousGatewayUrl = process.env.OPENCLAW_GATEWAY_URL;
     try {
@@ -1172,20 +1197,19 @@ describe("DiscordExecApprovalHandler gateway auth resolution", () => {
         config: { enabled: true, approvers: ["123"] },
         cfg: { session: { store: STORE_PATH } },
       });
+=======
+  it("keeps message-only approval-not-found errors visible", async () => {
+    resolveApprovalOverGatewayMock.mockRejectedValue(new Error("unknown or expired approval id"));
+    const ctx = createDiscordExecApprovalButtonContext({
+      cfg: buildConfig({ enabled: true, approvers: ["123"] }),
+      accountId: "default",
+      config: { enabled: true, approvers: ["123"] },
+    });
+>>>>>>> upstream/main
 
-      await expectGatewayAuthStart({
-        handler,
-        expectedUrl: "wss://gateway-from-env.example/ws",
-        expectedSource: "env",
-      });
-
-      await handler.stop();
-    } finally {
-      if (typeof previousGatewayUrl === "string") {
-        process.env.OPENCLAW_GATEWAY_URL = previousGatewayUrl;
-      } else {
-        delete process.env.OPENCLAW_GATEWAY_URL;
-      }
-    }
+    await expect(ctx.resolveApproval("abc", "allow-once")).resolves.toEqual({
+      ok: false,
+      reason: "error",
+    });
   });
 });

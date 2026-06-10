@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Verifies task executor delivery policy and terminal message formatting.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   formatTaskBlockedFollowupMessage,
@@ -7,6 +11,10 @@ import {
   shouldAutoDeliverTaskStateChange,
   shouldAutoDeliverTaskTerminalUpdate,
   shouldSuppressDuplicateTerminalDelivery,
+<<<<<<< HEAD
+=======
+  shouldUseParentReviewTaskTerminalMessage,
+>>>>>>> upstream/main
 } from "./task-executor-policy.js";
 import type { TaskEventRecord, TaskRecord } from "./task-registry.types.js";
 
@@ -38,6 +46,15 @@ describe("task-executor-policy", () => {
   });
 
   it("formats terminal, followup, and progress messages", () => {
+<<<<<<< HEAD
+=======
+    const succeededTask = createTask({
+      status: "succeeded",
+      terminalSummary: "Imported 12 rows.",
+      runId: "run-0234567890",
+      label: "ACP import",
+    });
+>>>>>>> upstream/main
     const blockedTask = createTask({
       status: "succeeded",
       terminalOutcome: "blocked",
@@ -51,6 +68,15 @@ describe("task-executor-policy", () => {
       summary: "No output for 60s.",
     };
 
+<<<<<<< HEAD
+=======
+    expect(formatTaskTerminalMessage(succeededTask, { surface: "parent_session" })).toBe(
+      "Background task ready for review: ACP import (run run-0234). Imported 12 rows. Next: parent will review/verify before calling it done.",
+    );
+    expect(formatTaskTerminalMessage(succeededTask)).toBe(
+      "Background task done: ACP import (run run-0234). Imported 12 rows.",
+    );
+>>>>>>> upstream/main
     expect(formatTaskTerminalMessage(blockedTask)).toBe(
       "Background task blocked: ACP import (run run-1234). Needs login.",
     );
@@ -183,5 +209,26 @@ describe("task-executor-policy", () => {
         preferredTaskId: undefined,
       }),
     ).toBe(false);
+<<<<<<< HEAD
+=======
+    expect(
+      shouldUseParentReviewTaskTerminalMessage(
+        createTask({
+          runtime: "acp",
+          childSessionKey: "agent:main:acp:child",
+          status: "succeeded",
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      shouldUseParentReviewTaskTerminalMessage(
+        createTask({
+          runtime: "acp",
+          taskKind: "context_engine_turn_maintenance",
+          status: "succeeded",
+        }),
+      ),
+    ).toBe(false);
+>>>>>>> upstream/main
   });
 });

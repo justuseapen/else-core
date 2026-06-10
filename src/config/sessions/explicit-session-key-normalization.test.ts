@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { MsgContext } from "../../auto-reply/templating.js";
 import type { ChannelPlugin } from "../../channels/plugins/types.js";
@@ -6,16 +7,14 @@ import {
   createChannelTestPluginBase,
   createTestRegistry,
 } from "../../test-utils/channel-plugins.js";
+=======
+// Explicit session key tests cover normalization of caller-provided session keys.
+import { describe, expect, it } from "vitest";
+>>>>>>> upstream/main
 import { normalizeExplicitSessionKey } from "./explicit-session-key-normalization.js";
+import { installDiscordSessionKeyNormalizerFixture, makeCtx } from "./session-key.test-helpers.js";
 
-function makeCtx(overrides: Partial<MsgContext>): MsgContext {
-  return {
-    Body: "",
-    From: "",
-    To: "",
-    ...overrides,
-  } as MsgContext;
-}
+installDiscordSessionKeyNormalizerFixture();
 
 beforeEach(() => {
   const discordPlugin: ChannelPlugin = {
@@ -116,5 +115,20 @@ describe("normalizeExplicitSessionKey", () => {
         }),
       ),
     ).toBe("agent:fina:slack:dm:abc");
+  });
+
+  it("preserves Signal group ids when explicit session keys are canonicalized", () => {
+    const mixedGroupId = "VWATodkf2hc8zdOS76q9Tb0+5Bi522E03qLdaQ/9ypg=";
+    expect(
+      normalizeExplicitSessionKey(
+        `Agent:Main:Signal:Group:${mixedGroupId}`,
+        makeCtx({
+          Provider: "signal",
+          ChatType: "group",
+          From: `signal:group:${mixedGroupId}`,
+          OriginatingTo: `signal:group:${mixedGroupId}`,
+        }),
+      ),
+    ).toBe(`agent:main:signal:group:${mixedGroupId}`);
   });
 });

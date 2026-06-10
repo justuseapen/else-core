@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Googlechat tests cover approval auth plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { googleChatApprovalAuth } from "./approval-auth.js";
 

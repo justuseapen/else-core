@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Venice API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   buildVeniceModelDefinition,
   discoverVeniceModels,

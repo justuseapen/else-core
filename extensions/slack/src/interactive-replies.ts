@@ -1,5 +1,16 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import type { ReplyPayload } from "openclaw/plugin-sdk/reply-runtime";
+=======
+// Slack plugin module implements interactive replies behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import type { ReplyPayload } from "openclaw/plugin-sdk/reply-runtime";
+import {
+  normalizeLowercaseStringOrEmpty,
+  normalizeStringEntries,
+  normalizeStringEntriesLower,
+} from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import { resolveDefaultSlackAccountId, resolveSlackAccount } from "./accounts.js";
 
 const SLACK_BUTTON_MAX_ITEMS = 5;
@@ -36,10 +47,14 @@ function parseChoice(raw: string, options?: { allowStyle?: boolean }): SlackChoi
   if (options?.allowStyle) {
     const styleDelimiter = value.lastIndexOf(":");
     if (styleDelimiter !== -1) {
+<<<<<<< HEAD
       const maybeStyle = value
         .slice(styleDelimiter + 1)
         .trim()
         .toLowerCase();
+=======
+      const maybeStyle = normalizeLowercaseStringOrEmpty(value.slice(styleDelimiter + 1));
+>>>>>>> upstream/main
       if (
         maybeStyle === "primary" ||
         maybeStyle === "secondary" ||
@@ -88,21 +103,34 @@ function buildButtonsBlock(
   }
   return {
     type: "buttons",
+<<<<<<< HEAD
     buttons: choices.map((choice) => ({
       label: choice.label,
       value: choice.value,
       ...(choice.style ? { style: choice.style } : {}),
     })),
+=======
+    buttons: choices.map((choice) =>
+      Object.assign(
+        { label: choice.label, value: choice.value },
+        choice.style ? { style: choice.style } : {},
+      ),
+    ),
+>>>>>>> upstream/main
   };
 }
 
 function buildSelectBlock(
   raw: string,
 ): NonNullable<ReplyPayload["interactive"]>["blocks"][number] | null {
+<<<<<<< HEAD
   const parts = raw
     .split("|")
     .map((entry) => entry.trim())
     .filter(Boolean);
+=======
+  const parts = normalizeStringEntries(raw.split("|"));
+>>>>>>> upstream/main
   if (parts.length === 0) {
     return null;
   }
@@ -128,17 +156,25 @@ function hasSlackBlocks(payload: ReplyPayload): boolean {
 }
 
 function parseSimpleSlackOptions(raw: string): SlackChoice[] | null {
+<<<<<<< HEAD
   const entries = raw
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
+=======
+  const entries = normalizeStringEntries(raw.split(","));
+>>>>>>> upstream/main
   if (entries.length < 2 || entries.length > SLACK_AUTO_SELECT_MAX_ITEMS) {
     return null;
   }
   if (!entries.every((entry) => SLACK_SIMPLE_OPTION_RE.test(entry))) {
     return null;
   }
+<<<<<<< HEAD
   const deduped = new Set(entries.map((entry) => entry.toLowerCase()));
+=======
+  const deduped = new Set(normalizeStringEntriesLower(entries));
+>>>>>>> upstream/main
   if (deduped.size !== entries.length) {
     return null;
   }
@@ -154,7 +190,7 @@ function resolveInteractiveRepliesFromCapabilities(capabilities: unknown): boole
   }
   if (Array.isArray(capabilities)) {
     return capabilities.some(
-      (entry) => String(entry).trim().toLowerCase() === "interactivereplies",
+      (entry) => normalizeLowercaseStringOrEmpty(String(entry)) === "interactivereplies",
     );
   }
   if (typeof capabilities === "object") {
@@ -163,6 +199,9 @@ function resolveInteractiveRepliesFromCapabilities(capabilities: unknown): boole
   return false;
 }
 
+/**
+ * @deprecated Only needed for legacy Slack reply directives. New producers should emit presentation payloads.
+ */
 export function isSlackInteractiveRepliesEnabled(params: {
   cfg: OpenClawConfig;
   accountId?: string | null;
@@ -174,6 +213,12 @@ export function isSlackInteractiveRepliesEnabled(params: {
   return resolveInteractiveRepliesFromCapabilities(account.config.capabilities);
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * @deprecated Slack reply directives are legacy. New producers should emit presentation payloads.
+ */
+>>>>>>> upstream/main
 export function compileSlackInteractiveReplies(payload: ReplyPayload): ReplyPayload {
   const text = payload.text;
   if (!text) {
@@ -200,7 +245,11 @@ export function compileSlackInteractiveReplies(payload: ReplyPayload): ReplyPayl
       generatedBlocks.push(section);
     }
     const block =
+<<<<<<< HEAD
       directiveType.toLowerCase() === "slack_buttons"
+=======
+      normalizeLowercaseStringOrEmpty(directiveType) === "slack_buttons"
+>>>>>>> upstream/main
         ? buildButtonsBlock(body)
         : buildSelectBlock(body);
     if (block) {
@@ -231,6 +280,12 @@ export function compileSlackInteractiveReplies(payload: ReplyPayload): ReplyPayl
   };
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * @deprecated Legacy Slack directive fallback. New producers should emit presentation payloads.
+ */
+>>>>>>> upstream/main
 export function parseSlackOptionsLine(payload: ReplyPayload): ReplyPayload {
   const text = payload.text;
   if (!text || payload.interactive?.blocks?.length || hasSlackBlocks(payload)) {

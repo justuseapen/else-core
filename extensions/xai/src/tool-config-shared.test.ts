@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Xai tests cover tool config shared plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   coerceXaiToolConfig,
@@ -7,8 +11,13 @@ import {
 
 describe("xai tool config helpers", () => {
   it("coerces non-record config to an empty object", () => {
+<<<<<<< HEAD
     expect(coerceXaiToolConfig(undefined)).toEqual({});
     expect(coerceXaiToolConfig([] as unknown as Record<string, unknown>)).toEqual({});
+=======
+    expect(coerceXaiToolConfig(undefined)).toStrictEqual({});
+    expect(coerceXaiToolConfig([] as unknown as Record<string, unknown>)).toStrictEqual({});
+>>>>>>> upstream/main
   });
 
   it("normalizes configured model ids and falls back to the default model", () => {

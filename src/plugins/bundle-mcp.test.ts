@@ -1,15 +1,23 @@
+// Verifies bundled MCP plugin metadata and package output.
 import fs from "node:fs/promises";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import { isRecord } from "../utils.js";
+import { loadEnabledBundleLspConfig } from "./bundle-lsp.js";
 import { loadEnabledBundleMcpConfig } from "./bundle-mcp.js";
 import {
   createEnabledPluginEntries,
   createBundleMcpTempHarness,
   createBundleProbePlugin,
   withBundleHomeEnv,
+<<<<<<< HEAD
   writeClaudeBundleManifest,
+=======
+  writeBundleTextFiles,
+  writeClaudeBundleManifest,
+  resolveBundlePluginRoot,
+>>>>>>> upstream/main
 } from "./bundle-mcp.test-support.js";
 
 function getServerArgs(value: unknown): unknown[] | undefined {
@@ -34,7 +42,11 @@ async function expectResolvedPathEqual(actual: unknown, expected: string): Promi
 }
 
 function expectNoDiagnostics(diagnostics: unknown[]) {
+<<<<<<< HEAD
   expect(diagnostics).toEqual([]);
+=======
+  expect(diagnostics).toStrictEqual([]);
+>>>>>>> upstream/main
 }
 
 const tempHarness = createBundleMcpTempHarness();
@@ -114,7 +126,10 @@ describe("loadEnabledBundleMcpConfig", () => {
         expectNoDiagnostics(loaded.diagnostics);
         expect(isRecord(loadedServer) ? loadedServer.command : undefined).toBe("node");
         expect(loadedArgs).toHaveLength(1);
+<<<<<<< HEAD
         expect(loadedServerPath).toBeDefined();
+=======
+>>>>>>> upstream/main
         if (!loadedServerPath) {
           throw new Error("expected bundled MCP args to include the server path");
         }
@@ -124,6 +139,43 @@ describe("loadEnabledBundleMcpConfig", () => {
         await expectResolvedPathEqual(loadedServer.cwd, resolvedPluginRoot);
       },
     );
+<<<<<<< HEAD
+=======
+  });
+
+  it("uses a provided manifest registry instead of rediscovering bundle plugins", async () => {
+    const homeDir = await tempHarness.createTempDir("openclaw-bundle-mcp-home-");
+    const workspaceDir = await tempHarness.createTempDir("openclaw-bundle-mcp-workspace-");
+    const { pluginRoot } = await createBundleProbePlugin(homeDir);
+
+    const loaded = loadEnabledBundleMcpConfig({
+      workspaceDir,
+      cfg: createEnabledBundleConfig(["bundle-probe"]),
+      manifestRegistry: {
+        plugins: [
+          {
+            id: "bundle-probe",
+            origin: "global",
+            format: "bundle",
+            bundleFormat: "claude",
+            channels: [],
+            providers: [],
+            cliBackends: [],
+            skills: [],
+            hooks: [],
+            rootDir: await fs.realpath(pluginRoot),
+            source: "test",
+            manifestPath: path.join(pluginRoot, ".claude-plugin", "plugin.json"),
+          },
+        ],
+      },
+    });
+
+    expectNoDiagnostics(loaded.diagnostics);
+    expect(loaded.config.mcpServers.bundleProbe).toMatchObject({
+      command: "node",
+    });
+>>>>>>> upstream/main
   });
 
   it("merges inline bundle MCP servers and skips disabled bundles", async () => {
@@ -170,7 +222,19 @@ describe("loadEnabledBundleMcpConfig", () => {
           },
         });
 
+<<<<<<< HEAD
         expect(loaded.config.mcpServers.enabledProbe).toBeDefined();
+=======
+        const enabledProbe = loaded.config.mcpServers.enabledProbe;
+        const enabledArgs = getServerArgs(enabledProbe);
+        expect(isRecord(enabledProbe) ? enabledProbe.command : undefined).toBe("node");
+        expect(enabledArgs).toHaveLength(1);
+        expect(typeof enabledArgs?.[0]).toBe("string");
+        if (typeof enabledArgs?.[0] !== "string") {
+          throw new Error("expected inline MCP enabledProbe args to include enabled.mjs");
+        }
+        expect(enabledArgs[0]).toContain("enabled.mjs");
+>>>>>>> upstream/main
         expect(loaded.config.mcpServers.disabledProbe).toBeUndefined();
       },
     );
@@ -204,6 +268,7 @@ describe("loadEnabledBundleMcpConfig", () => {
           cfg: createEnabledBundleConfig(["inline-claude"]),
         });
         const loadedServer = loaded.config.mcpServers.inlineProbe;
+<<<<<<< HEAD
 
         expectNoDiagnostics(loaded.diagnostics);
         await expectInlineBundleMcpServer({
@@ -215,6 +280,122 @@ describe("loadEnabledBundleMcpConfig", () => {
             normalizePathForAssertion("local-probe.mjs")!,
           ],
         });
+=======
+
+        expectNoDiagnostics(loaded.diagnostics);
+        await expectInlineBundleMcpServer({
+          loadedServer,
+          pluginRoot,
+          commandRelativePath: path.join("bin", "server.sh"),
+          argRelativePaths: [
+            normalizePathForAssertion(path.join("servers", "probe.mjs"))!,
+            normalizePathForAssertion("local-probe.mjs")!,
+          ],
+        });
+      },
+    );
+  });
+
+  it("loads Link-style Codex bundle MCP config", async () => {
+    await withBundleHomeEnv(
+      tempHarness,
+      "openclaw-bundle-link",
+      async ({ homeDir, workspaceDir }) => {
+        const pluginRoot = resolveBundlePluginRoot(homeDir, "link");
+        await writeBundleTextFiles(pluginRoot, {
+          ".codex-plugin/plugin.json": `${JSON.stringify(
+            {
+              name: "link",
+              skills: "./skills/",
+              mcpServers: "./.mcp.json",
+            },
+            null,
+            2,
+          )}\n`,
+          ".mcp.json": `${JSON.stringify(
+            {
+              mcpServers: {
+                link: {
+                  command: "pnpx",
+                  args: ["@stripe/link-cli", "--mcp"],
+                },
+              },
+            },
+            null,
+            2,
+          )}\n`,
+        });
+
+        const loaded = loadEnabledBundleMcpConfig({
+          workspaceDir,
+          cfg: createEnabledBundleConfig(["link"]),
+        });
+        const loadedServer = loaded.config.mcpServers.link;
+
+        expectNoDiagnostics(loaded.diagnostics);
+        expect(isRecord(loadedServer) ? loadedServer.command : undefined).toBe("pnpx");
+        expect(getServerArgs(loadedServer)).toEqual(["@stripe/link-cli", "--mcp"]);
+        await expectResolvedPathEqual(
+          isRecord(loadedServer) ? loadedServer.cwd : undefined,
+          pluginRoot,
+        );
+      },
+    );
+  });
+
+  it("reports malformed file-backed MCP configs instead of silently dropping servers", async () => {
+    await withBundleHomeEnv(
+      tempHarness,
+      "openclaw-bundle-malformed-mcp",
+      async ({ homeDir, workspaceDir }) => {
+        const pluginRoot = await writeClaudeBundleManifest({
+          homeDir,
+          pluginId: "malformed-mcp",
+          manifest: {
+            name: "malformed-mcp",
+            mcpServers: ".mcp.json",
+          },
+        });
+        await fs.writeFile(path.join(pluginRoot, ".mcp.json"), "{", "utf-8");
+
+        const loaded = loadEnabledBundleMcpConfig({
+          workspaceDir,
+          cfg: createEnabledBundleConfig(["malformed-mcp"]),
+        });
+
+        expect(loaded.config.mcpServers).toStrictEqual({});
+        expect(loaded.diagnostics).toHaveLength(1);
+        expect(loaded.diagnostics[0]?.pluginId).toBe("malformed-mcp");
+        expect(loaded.diagnostics[0]?.message).toContain("unable to read .mcp.json");
+      },
+    );
+  });
+
+  it("reports malformed file-backed LSP configs instead of silently dropping servers", async () => {
+    await withBundleHomeEnv(
+      tempHarness,
+      "openclaw-bundle-malformed-lsp",
+      async ({ homeDir, workspaceDir }) => {
+        const pluginRoot = await writeClaudeBundleManifest({
+          homeDir,
+          pluginId: "malformed-lsp",
+          manifest: {
+            name: "malformed-lsp",
+            lspServers: ".lsp.json",
+          },
+        });
+        await fs.writeFile(path.join(pluginRoot, ".lsp.json"), "{", "utf-8");
+
+        const loaded = loadEnabledBundleLspConfig({
+          workspaceDir,
+          cfg: createEnabledBundleConfig(["malformed-lsp"]),
+        });
+
+        expect(loaded.config.lspServers).toStrictEqual({});
+        expect(loaded.diagnostics).toHaveLength(1);
+        expect(loaded.diagnostics[0]?.pluginId).toBe("malformed-lsp");
+        expect(loaded.diagnostics[0]?.message).toContain("unable to read .lsp.json");
+>>>>>>> upstream/main
       },
     );
   });

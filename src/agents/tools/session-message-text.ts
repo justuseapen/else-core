@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { extractTextFromChatContent } from "../../shared/chat-content.js";
 import { sanitizeUserFacingText } from "../pi-embedded-helpers.js";
 import {
@@ -48,3 +49,12 @@ export function extractAssistantText(message: unknown): string | undefined {
 
   return joined ? sanitizeUserFacingText(joined, { errorContext }) : undefined;
 }
+=======
+/**
+ * Session message text extraction barrel.
+ *
+ * Session tools import this narrow surface for assistant/user text extraction
+ * without reaching into chat-history helper internals.
+ */
+export { extractAssistantText, sanitizeTextContent } from "./chat-history-text.js";
+>>>>>>> upstream/main

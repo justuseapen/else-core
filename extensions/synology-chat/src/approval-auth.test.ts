@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Synology Chat tests cover approval auth plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { synologyChatApprovalAuth } from "./approval-auth.js";
 

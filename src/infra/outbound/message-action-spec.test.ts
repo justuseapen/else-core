@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
+// Verifies message-action target requirements and alias detection, including
+// plugin aliases only when non-standard params are present.
+import { describe, expect, it, vi } from "vitest";
 import { actionHasTarget, actionRequiresTarget } from "./message-action-spec.js";
+
+vi.mock("../../channels/plugins/bootstrap-registry.js", async () => ({
+  getBootstrapChannelPlugin: (
+    await import("./message-action-test-fixtures.js")
+  ).createPinboardMessageActionBootstrapRegistryMock(),
+}));
 
 describe("actionRequiresTarget", () => {
   it.each([
@@ -20,48 +28,85 @@ describe("actionHasTarget", () => {
     {
       action: "read",
       params: { messageId: "msg_123" },
+<<<<<<< HEAD
       ctx: { channel: "feishu" },
+=======
+      ctx: { channel: "pinboard" },
+>>>>>>> upstream/main
       expected: true,
     },
     { action: "edit", params: { messageId: "  msg_123  " }, expected: true },
     {
       action: "pin",
       params: { messageId: "msg_123" },
+<<<<<<< HEAD
       ctx: { channel: "feishu" },
+=======
+      ctx: { channel: "pinboard" },
+>>>>>>> upstream/main
       expected: true,
     },
     {
       action: "unpin",
       params: { messageId: "msg_123" },
+<<<<<<< HEAD
       ctx: { channel: "feishu" },
+=======
+      ctx: { channel: "pinboard" },
+>>>>>>> upstream/main
       expected: true,
     },
     {
       action: "list-pins",
       params: { chatId: "oc_123" },
+<<<<<<< HEAD
       ctx: { channel: "feishu" },
+=======
+      ctx: { channel: "pinboard" },
+>>>>>>> upstream/main
       expected: true,
     },
     {
       action: "channel-info",
       params: { chatId: "oc_123" },
+<<<<<<< HEAD
       ctx: { channel: "feishu" },
+=======
+      ctx: { channel: "pinboard" },
+>>>>>>> upstream/main
       expected: true,
     },
     { action: "react", params: { chatGuid: "chat-guid" }, expected: true },
     { action: "react", params: { chatIdentifier: "chat-id" }, expected: true },
     { action: "react", params: { chatId: 42 }, expected: true },
+<<<<<<< HEAD
+=======
+    {
+      action: "upload-file",
+      params: { chatIdentifier: "chat-id" },
+      ctx: { channel: "imessage" },
+      expected: true,
+    },
+>>>>>>> upstream/main
     { action: "read", params: { messageId: "msg_123" }, expected: false },
     {
       action: "pin",
       params: { messageId: "msg_123" },
+<<<<<<< HEAD
       ctx: { channel: "slack" },
+=======
+      ctx: { channel: "workspace" },
+>>>>>>> upstream/main
       expected: false,
     },
     {
       action: "channel-info",
       params: { chatId: "oc_123" },
+<<<<<<< HEAD
       ctx: { channel: "discord" },
+=======
+      ctx: { channel: "richchat" },
+>>>>>>> upstream/main
       expected: false,
     },
     { action: "edit", params: { messageId: "   " }, expected: false },

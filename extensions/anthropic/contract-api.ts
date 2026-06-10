@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+=======
+/**
+ * Contract API barrel for Anthropic stream wrapper helpers. Tests and contract
+ * checks import this lightweight path instead of the full provider entry.
+ */
+>>>>>>> upstream/main
 export {
   createAnthropicBetaHeadersWrapper,
   createAnthropicFastModeWrapper,

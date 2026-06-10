@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Slack plugin module implements secret contract behavior.
+>>>>>>> upstream/main
 import {
   collectConditionalChannelFieldAssignments,
   collectSimpleChannelFieldAssignments,
@@ -5,6 +9,7 @@ import {
   hasOwnProperty,
   type ResolverContext,
   type SecretDefaults,
+<<<<<<< HEAD
   type SecretTargetRegistryEntry,
 } from "openclaw/plugin-sdk/security-runtime";
 
@@ -102,6 +107,105 @@ export const secretTargetRegistryEntries = [
 export function collectRuntimeConfigAssignments(params: {
   config: { channels?: Record<string, unknown> };
   defaults: SecretDefaults | undefined;
+=======
+} from "openclaw/plugin-sdk/channel-secret-basic-runtime";
+
+export const secretTargetRegistryEntries: import("openclaw/plugin-sdk/channel-secret-basic-runtime").SecretTargetRegistryEntry[] =
+  [
+    {
+      id: "channels.slack.accounts.*.appToken",
+      targetType: "channels.slack.accounts.*.appToken",
+      configFile: "openclaw.json",
+      pathPattern: "channels.slack.accounts.*.appToken",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.slack.accounts.*.botToken",
+      targetType: "channels.slack.accounts.*.botToken",
+      configFile: "openclaw.json",
+      pathPattern: "channels.slack.accounts.*.botToken",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.slack.accounts.*.signingSecret",
+      targetType: "channels.slack.accounts.*.signingSecret",
+      configFile: "openclaw.json",
+      pathPattern: "channels.slack.accounts.*.signingSecret",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.slack.accounts.*.userToken",
+      targetType: "channels.slack.accounts.*.userToken",
+      configFile: "openclaw.json",
+      pathPattern: "channels.slack.accounts.*.userToken",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.slack.appToken",
+      targetType: "channels.slack.appToken",
+      configFile: "openclaw.json",
+      pathPattern: "channels.slack.appToken",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.slack.botToken",
+      targetType: "channels.slack.botToken",
+      configFile: "openclaw.json",
+      pathPattern: "channels.slack.botToken",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.slack.signingSecret",
+      targetType: "channels.slack.signingSecret",
+      configFile: "openclaw.json",
+      pathPattern: "channels.slack.signingSecret",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.slack.userToken",
+      targetType: "channels.slack.userToken",
+      configFile: "openclaw.json",
+      pathPattern: "channels.slack.userToken",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+  ];
+
+export function collectRuntimeConfigAssignments(params: {
+  config: { channels?: Record<string, unknown> };
+  defaults?: SecretDefaults;
+>>>>>>> upstream/main
   context: ResolverContext;
 }): void {
   const resolved = getChannelSurface(params.config, "slack");
@@ -156,3 +260,11 @@ export function collectRuntimeConfigAssignments(params: {
     accountInactiveReason: "Slack account is disabled or not running in HTTP mode.",
   });
 }
+<<<<<<< HEAD
+=======
+
+export const channelSecrets = {
+  secretTargetRegistryEntries,
+  collectRuntimeConfigAssignments,
+};
+>>>>>>> upstream/main

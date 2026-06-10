@@ -1,8 +1,16 @@
+<<<<<<< HEAD
+=======
+// Produces task-flow registry audit summaries for diagnostics and maintenance.
+>>>>>>> upstream/main
 import { listTasksForFlowId } from "./runtime-internal.js";
 import { getTaskFlowRegistryRestoreFailure, listTaskFlowRecords } from "./task-flow-registry.js";
 import type { TaskFlowRecord } from "./task-flow-registry.types.js";
 import type { TaskRecord } from "./task-registry.types.js";
 
+<<<<<<< HEAD
+=======
+/** Severity used by task-flow registry audit findings. */
+>>>>>>> upstream/main
 export type TaskFlowAuditSeverity = "warn" | "error";
 export type TaskFlowAuditCode =
   | "restore_failed"

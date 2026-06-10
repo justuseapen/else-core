@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Whatsapp API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export { getChatChannelMeta, type ChannelPlugin } from "openclaw/plugin-sdk/core";
 export { buildChannelConfigSchema, WhatsAppConfigSchema } from "../config-api.js";
 export { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
@@ -14,11 +18,19 @@ export {
   ToolAuthorizationError,
 } from "openclaw/plugin-sdk/channel-actions";
 export { normalizeE164 } from "openclaw/plugin-sdk/account-resolution";
+<<<<<<< HEAD
 export type { DmPolicy, GroupPolicy } from "openclaw/plugin-sdk/config-runtime";
 import type { OpenClawConfig as RuntimeOpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 
 export { type ChannelMessageActionName } from "openclaw/plugin-sdk/channel-contract";
 import { loadWebMedia } from "openclaw/plugin-sdk/web-media";
+=======
+export type { DmPolicy, GroupPolicy } from "openclaw/plugin-sdk/config-contracts";
+import type { OpenClawConfig as RuntimeOpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+
+export { type ChannelMessageActionName } from "openclaw/plugin-sdk/channel-contract";
+export { loadOutboundMediaFromUrl } from "./outbound-media.runtime.js";
+>>>>>>> upstream/main
 export {
   resolveWhatsAppGroupRequireMention,
   resolveWhatsAppGroupToolPolicy,
@@ -27,7 +39,10 @@ export {
   resolveWhatsAppGroupIntroHint,
   resolveWhatsAppMentionStripRegexes,
 } from "./group-intro.js";
+<<<<<<< HEAD
 export { resolveWhatsAppHeartbeatRecipients } from "./heartbeat-recipients.js";
+=======
+>>>>>>> upstream/main
 export { createWhatsAppOutboundBase } from "./outbound-base.js";
 export {
   isWhatsAppGroupJid,
@@ -41,9 +56,13 @@ export { resolveWhatsAppOutboundTarget } from "./resolve-outbound-target.js";
 export { resolveWhatsAppReactionLevel } from "./reaction-level.js";
 
 export type OpenClawConfig = RuntimeOpenClawConfig;
+<<<<<<< HEAD
 export type WhatsAppAccountConfig = NonNullable<
   NonNullable<NonNullable<RuntimeOpenClawConfig["channels"]>["whatsapp"]>["accounts"]
 >[string];
+=======
+export type { WhatsAppAccountConfig } from "./account-types.js";
+>>>>>>> upstream/main
 
 type MonitorWebChannel = typeof import("./channel.runtime.js").monitorWebChannel;
 
@@ -57,6 +76,7 @@ function loadChannelRuntime() {
 export async function monitorWebChannel(
   ...args: Parameters<MonitorWebChannel>
 ): ReturnType<MonitorWebChannel> {
+<<<<<<< HEAD
   const { monitorWebChannel } = await loadChannelRuntime();
   return await monitorWebChannel(...args);
 }
@@ -94,4 +114,8 @@ export async function loadOutboundMediaFromUrl(
           ...(localRoots ? { localRoots } : {}),
         },
   );
+=======
+  const { monitorWebChannel: monitorWebChannelLocal } = await loadChannelRuntime();
+  return await monitorWebChannelLocal(...args);
+>>>>>>> upstream/main
 }

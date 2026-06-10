@@ -1,18 +1,91 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import path from "node:path";
 import { resolvePreferredOpenClawTmpDir } from "../infra/tmp-openclaw-dir.js";
 import { runExec } from "../process/exec.js";
+=======
+// Image operation helpers normalize image transforms and adapter calls.
+import {
+  createRastermill,
+  isRastermillUnavailableError,
+  RastermillError,
+  RastermillUnavailableError,
+  readImageProbeFromHeader as readRastermillImageProbeFromHeader,
+  readImageMetadataFromHeader as readRastermillImageMetadataFromHeader,
+  type ImageProbe,
+  type ImageMetadata,
+} from "rastermill";
+import { resolveSystemBin } from "../infra/resolve-system-bin.js";
+import { resolvePreferredOpenClawTmpDir } from "../infra/tmp-openclaw-dir.js";
+>>>>>>> upstream/main
 
-type Sharp = typeof import("sharp");
+export type { ImageMetadata, ImageProbe };
 
-export type ImageMetadata = {
-  width: number;
-  height: number;
+/** OpenClaw-facing image backend availability error, preserving the failed operation and causes. */
+export class ImageProcessorUnavailableError extends Error {
+  readonly code = "IMAGE_PROCESSOR_UNAVAILABLE";
+  readonly operation: string;
+  readonly causes: unknown[];
+
+  constructor(operation: string, message?: string, causes: unknown[] = []) {
+    super(message ?? `Image processor unavailable for ${operation}`, {
+      cause: causes.find((cause): cause is Error => cause instanceof Error),
+    });
+    this.name = "ImageProcessorUnavailableError";
+    this.operation = operation;
+    this.causes = causes;
+  }
+}
+
+/** JPEG resize request passed through the media-runtime/plugin SDK surface. */
+export type ResizeToJpegParams = {
+  buffer: Buffer;
+  maxSide: number;
+  quality: number;
+  withoutEnlargement?: boolean;
 };
 
+<<<<<<< HEAD
 export const IMAGE_REDUCE_QUALITY_STEPS = [85, 75, 65, 55, 45, 35] as const;
 export const MAX_IMAGE_INPUT_PIXELS = 25_000_000;
+=======
+/** PNG resize request passed through the media-runtime/plugin SDK surface. */
+export type ResizeToPngParams = {
+  buffer: Buffer;
+  maxSide: number;
+  compressionLevel?: number;
+  withoutEnlargement?: boolean;
+};
+>>>>>>> upstream/main
 
+/** Ordered JPEG quality ladder used when shrinking generated or attached images. */
+export const IMAGE_REDUCE_QUALITY_STEPS = [85, 75, 65, 55, 45, 35] as const;
+/** Shared input/output pixel cap for Rastermill-backed image operations. */
+export const MAX_IMAGE_INPUT_PIXELS = 25_000_000;
+
+/** Creates a Rastermill processor with OpenClaw temp-dir, pixel-limit, and command trust policy. */
+export function createImageProcessor() {
+  return createRastermill({
+    execution: "auto",
+    limits: {
+      inputPixels: MAX_IMAGE_INPUT_PIXELS,
+      outputPixels: MAX_IMAGE_INPUT_PIXELS,
+    },
+    temp: {
+      rootDir: resolvePreferredOpenClawTmpDir(),
+      prefix: "openclaw-img-",
+    },
+    commandResolver: (command) =>
+      resolveSystemBin(command, { trust: command === "powershell" ? "strict" : "standard" }),
+  });
+}
+
+/** Detects either OpenClaw's wrapper error or Rastermill's native unavailable error. */
+export function isImageProcessorUnavailableError(err: unknown): boolean {
+  return err instanceof ImageProcessorUnavailableError || isRastermillUnavailableError(err);
+}
+
+/** Builds a descending, de-duplicated max-side search grid for iterative image resizing. */
 export function buildImageResizeSideGrid(maxSide: number, sideStart: number): number[] {
   return [sideStart, 1800, 1600, 1400, 1200, 1000, 800]
     .map((value) => Math.min(maxSide, value))
@@ -20,17 +93,17 @@ export function buildImageResizeSideGrid(maxSide: number, sideStart: number): nu
     .toSorted((a, b) => b - a);
 }
 
-function isBun(): boolean {
-  return typeof (process.versions as { bun?: unknown }).bun === "string";
+/** Reads dimensions from image header bytes without invoking a full image decode. */
+export function readImageMetadataFromHeader(buffer: Buffer): ImageMetadata | null {
+  return readRastermillImageMetadataFromHeader(buffer);
 }
 
-function prefersSips(): boolean {
-  return (
-    process.env.OPENCLAW_IMAGE_BACKEND === "sips" ||
-    (process.env.OPENCLAW_IMAGE_BACKEND !== "sharp" && isBun() && process.platform === "darwin")
-  );
+/** Reads image probe data from header bytes without invoking a full image decode. */
+export function readImageProbeFromHeader(buffer: Buffer): ImageProbe | null {
+  return readRastermillImageProbeFromHeader(buffer);
 }
 
+<<<<<<< HEAD
 async function loadSharp(): Promise<(buffer: Buffer) => ReturnType<Sharp>> {
   const mod = (await import("sharp")) as unknown as { default?: Sharp };
   const sharp = mod.default ?? (mod as unknown as Sharp);
@@ -387,9 +460,18 @@ async function sipsConvertToJpeg(buffer: Buffer): Promise<Buffer> {
     });
     return await fs.readFile(output);
   });
+=======
+function wrapRastermillUnavailable(operation: string, error: unknown): never {
+  if (error instanceof RastermillUnavailableError) {
+    throw new ImageProcessorUnavailableError(operation, error.message, error.causes);
+  }
+  throw error;
+>>>>>>> upstream/main
 }
 
+/** Fully probes image dimensions through Rastermill when header-only metadata is insufficient. */
 export async function getImageMetadata(buffer: Buffer): Promise<ImageMetadata | null> {
+<<<<<<< HEAD
   const metadataForLimit = await readImageMetadataForLimit(buffer).catch(() => null);
   if (metadataForLimit) {
     try {
@@ -418,60 +500,15 @@ export async function getImageMetadata(buffer: Buffer): Promise<ImageMetadata | 
   } catch {
     return null;
   }
+=======
+  const info = await createImageProcessor().probe(buffer);
+  return info ? { width: info.width, height: info.height } : null;
+>>>>>>> upstream/main
 }
 
-/**
- * Applies rotation/flip to image buffer using sips based on EXIF orientation.
- */
-async function sipsApplyOrientation(buffer: Buffer, orientation: number): Promise<Buffer> {
-  // Map EXIF orientation to sips operations
-  // sips -r rotates clockwise, -f flips (horizontal/vertical)
-  const ops: string[] = [];
-  switch (orientation) {
-    case 2: // Flip horizontal
-      ops.push("-f", "horizontal");
-      break;
-    case 3: // Rotate 180
-      ops.push("-r", "180");
-      break;
-    case 4: // Flip vertical
-      ops.push("-f", "vertical");
-      break;
-    case 5: // Rotate 270 CW + flip horizontal
-      ops.push("-r", "270", "-f", "horizontal");
-      break;
-    case 6: // Rotate 90 CW
-      ops.push("-r", "90");
-      break;
-    case 7: // Rotate 90 CW + flip horizontal
-      ops.push("-r", "90", "-f", "horizontal");
-      break;
-    case 8: // Rotate 270 CW
-      ops.push("-r", "270");
-      break;
-    default:
-      // Orientation 1 or unknown - no change needed
-      return buffer;
-  }
-
-  return await withTempDir(async (dir) => {
-    const input = path.join(dir, "in.jpg");
-    const output = path.join(dir, "out.jpg");
-    await fs.writeFile(input, buffer);
-    await runExec("/usr/bin/sips", [...ops, input, "--out", output], {
-      timeoutMs: 20_000,
-      maxBuffer: 1024 * 1024,
-    });
-    return await fs.readFile(output);
-  });
-}
-
-/**
- * Normalizes EXIF orientation in an image buffer.
- * Returns the buffer with correct pixel orientation (rotated if needed).
- * Falls back to original buffer if normalization fails.
- */
+/** Normalizes EXIF orientation when possible while leaving bytes unchanged if the backend is unavailable. */
 export async function normalizeExifOrientation(buffer: Buffer): Promise<Buffer> {
+<<<<<<< HEAD
   await assertImagePixelLimit(buffer);
 
   if (prefersSips()) {
@@ -521,57 +558,84 @@ export async function resizeToJpeg(params: {
           });
         }
       }
+=======
+  try {
+    const rastermill = createImageProcessor();
+    const info = await rastermill.probe(buffer);
+    if (!info) {
+      return (await rastermill.encode(buffer, { format: "jpeg", autoOrient: true })).data;
     }
-    return await sipsResizeToJpeg({
-      buffer: normalized,
-      maxSide: params.maxSide,
-      quality: params.quality,
-    });
+    if (!info?.orientation || info.orientation === 1) {
+      return buffer;
+    }
+    return (await rastermill.encode(buffer, { format: "jpeg", autoOrient: true })).data;
+  } catch (error) {
+    if (isImageProcessorUnavailableError(error)) {
+      return buffer;
+>>>>>>> upstream/main
+    }
+    throw error;
   }
-
-  const sharp = await loadSharp();
-  // Use .rotate() BEFORE .resize() to auto-rotate based on EXIF orientation
-  return await sharp(params.buffer)
-    .rotate() // Auto-rotate based on EXIF before resizing
-    .resize({
-      width: params.maxSide,
-      height: params.maxSide,
-      fit: "inside",
-      withoutEnlargement: params.withoutEnlargement !== false,
-    })
-    .jpeg({ quality: params.quality, mozjpeg: true })
-    .toBuffer();
 }
 
+/** Resizes or encodes image bytes as JPEG through the shared image processor. */
+export async function resizeToJpeg(params: ResizeToJpegParams): Promise<Buffer> {
+  try {
+    return (
+      await createImageProcessor().encode(params.buffer, {
+        format: "jpeg",
+        resize: {
+          maxSide: params.maxSide,
+          enlarge: params.withoutEnlargement === false,
+        },
+        quality: params.quality,
+      })
+    ).data;
+  } catch (error) {
+    return wrapRastermillUnavailable("resizeToJpeg", error);
+  }
+}
+
+/** Converts HEIC/HEIF-like image bytes into JPEG through the shared image processor. */
 export async function convertHeicToJpeg(buffer: Buffer): Promise<Buffer> {
+<<<<<<< HEAD
   await assertImagePixelLimit(buffer);
 
   if (prefersSips()) {
     return await sipsConvertToJpeg(buffer);
+=======
+  try {
+    return (await createImageProcessor().encode(buffer, { format: "jpeg" })).data;
+  } catch (error) {
+    return wrapRastermillUnavailable("convertHeicToJpeg", error);
+>>>>>>> upstream/main
   }
-  const sharp = await loadSharp();
-  return await sharp(buffer).jpeg({ quality: 90, mozjpeg: true }).toBuffer();
 }
 
-/**
- * Checks if an image has an alpha channel (transparency).
- * Returns true if the image has alpha, false otherwise.
- */
+/** Detects alpha support using a full transparency probe, falling back to trusted header metadata. */
 export async function hasAlphaChannel(buffer: Buffer): Promise<boolean> {
   await assertImagePixelLimit(buffer);
 
   try {
-    const sharp = await loadSharp();
-    const meta = await sharp(buffer).metadata();
-    // Check if the image has an alpha channel
-    // PNG color types with alpha: 4 (grayscale+alpha), 6 (RGBA)
-    // Sharp reports this via 'channels' (4 = RGBA) or 'hasAlpha'
-    return meta.hasAlpha || meta.channels === 4;
-  } catch {
-    return false;
+    return (await createImageProcessor().transparency(buffer)).hasAlphaChannel;
+  } catch (error) {
+    // Some callers only need the header-declared alpha bit; keep that usable when decode fails.
+    const headerHasAlpha = readRastermillImageProbeFromHeader(buffer)?.hasAlpha === true;
+    if (isRastermillUnavailableError(error)) {
+      return headerHasAlpha;
+    }
+    if (
+      error instanceof RastermillError &&
+      error.code === "RASTERMILL_UNDECODABLE" &&
+      readRastermillImageProbeFromHeader(buffer)
+    ) {
+      return headerHasAlpha;
+    }
+    throw error;
   }
 }
 
+<<<<<<< HEAD
 /**
  * Resizes an image to PNG format, preserving alpha channel (transparency).
  * Falls back to sharp only (no sips fallback for PNG with alpha).
@@ -598,79 +662,53 @@ export async function resizeToPng(params: {
     })
     .png({ compressionLevel })
     .toBuffer();
+=======
+/** Resizes or encodes image bytes as PNG through the shared image processor. */
+export async function resizeToPng(params: ResizeToPngParams): Promise<Buffer> {
+  try {
+    return (
+      await createImageProcessor().encode(params.buffer, {
+        format: "png",
+        resize: {
+          maxSide: params.maxSide,
+          enlarge: params.withoutEnlargement === false,
+        },
+        ...(params.compressionLevel === undefined
+          ? {}
+          : { compressionLevel: params.compressionLevel }),
+      })
+    ).data;
+  } catch (error) {
+    return wrapRastermillUnavailable("resizeToPng", error);
+  }
+>>>>>>> upstream/main
 }
 
+/** Optimizes PNG bytes under a target size and returns the chosen search parameters. */
 export async function optimizeImageToPng(
   buffer: Buffer,
   maxBytes: number,
+  options?: { sides?: readonly number[] },
 ): Promise<{
   buffer: Buffer;
   optimizedSize: number;
   resizeSide: number;
   compressionLevel: number;
 }> {
-  // Try a grid of sizes/compression levels until under the limit.
-  // PNG uses compression levels 0-9 (higher = smaller but slower).
-  const sides = [2048, 1536, 1280, 1024, 800];
-  const compressionLevels = [6, 7, 8, 9];
-  let smallest: {
-    buffer: Buffer;
-    size: number;
-    resizeSide: number;
-    compressionLevel: number;
-  } | null = null;
-
-  for (const side of sides) {
-    for (const compressionLevel of compressionLevels) {
-      try {
-        const out = await resizeToPng({
-          buffer,
-          maxSide: side,
-          compressionLevel,
-          withoutEnlargement: true,
-        });
-        const size = out.length;
-        if (!smallest || size < smallest.size) {
-          smallest = { buffer: out, size, resizeSide: side, compressionLevel };
-        }
-        if (size <= maxBytes) {
-          return {
-            buffer: out,
-            optimizedSize: size,
-            resizeSide: side,
-            compressionLevel,
-          };
-        }
-      } catch {
-        // Continue trying other size/compression combinations.
-      }
-    }
-  }
-
-  if (smallest) {
-    return {
-      buffer: smallest.buffer,
-      optimizedSize: smallest.size,
-      resizeSide: smallest.resizeSide,
-      compressionLevel: smallest.compressionLevel,
-    };
-  }
-
-  throw new Error("Failed to optimize PNG image");
-}
-
-/**
- * Internal sips-only EXIF normalization (no sharp fallback).
- * Used by resizeToJpeg to normalize before sips resize.
- */
-async function normalizeExifOrientationSips(buffer: Buffer): Promise<Buffer> {
+  let out;
   try {
-    const orientation = readJpegExifOrientation(buffer);
-    if (!orientation || orientation === 1) {
-      return buffer;
-    }
-    return await sipsApplyOrientation(buffer, orientation);
-  } catch {
-    return buffer;
+    out = await createImageProcessor().encode(buffer, {
+      format: "png",
+      maxBytes,
+      search: options?.sides === undefined ? {} : { maxSide: options.sides },
+    });
+  } catch (error) {
+    wrapRastermillUnavailable("optimizeImageToPng", error);
   }
+  return {
+    buffer: out.data,
+    optimizedSize: out.bytes,
+    resizeSide: out.chosen.maxSide ?? out.width,
+    compressionLevel: out.chosen.compressionLevel ?? 6,
+  };
 }

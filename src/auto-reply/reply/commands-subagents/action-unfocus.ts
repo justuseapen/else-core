@@ -1,3 +1,6 @@
+// Clears active subagent focus for a session or scoped target.
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { normalizeConversationRef } from "../../../infra/outbound/session-binding-normalization.js";
 import { getSessionBindingService } from "../../../infra/outbound/session-binding-service.js";
 import type { CommandHandlerResult } from "../commands-types.js";
 import { resolveConversationBindingContextFromAcpCommand } from "../conversation-binding-input.js";
@@ -13,6 +16,7 @@ export async function handleSubagentsUnfocusAction(
     return stopWithText("⚠️ /unfocus must be run inside a focused conversation.");
   }
 
+<<<<<<< HEAD
   const binding = bindingService.resolveByConversation({
     channel: bindingContext.channel,
     accountId: bindingContext.accountId,
@@ -22,13 +26,22 @@ export async function handleSubagentsUnfocusAction(
       ? { parentConversationId: bindingContext.parentConversationId }
       : {}),
   });
+=======
+  const binding = bindingService.resolveByConversation(
+    normalizeConversationRef({
+      channel: bindingContext.channel,
+      accountId: bindingContext.accountId,
+      conversationId: bindingContext.conversationId,
+      parentConversationId: bindingContext.parentConversationId,
+    }),
+  );
+>>>>>>> upstream/main
   if (!binding) {
     return stopWithText("ℹ️ This conversation is not currently focused.");
   }
 
-  const senderId = params.command.senderId?.trim() || "";
-  const boundBy =
-    typeof binding.metadata?.boundBy === "string" ? binding.metadata.boundBy.trim() : "";
+  const senderId = normalizeOptionalString(params.command.senderId) ?? "";
+  const boundBy = normalizeOptionalString(binding.metadata?.boundBy) ?? "";
   if (boundBy && boundBy !== "system" && senderId && senderId !== boundBy) {
     return stopWithText(`⚠️ Only ${boundBy} can unfocus this conversation.`);
   }

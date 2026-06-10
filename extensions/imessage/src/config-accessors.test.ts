@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Imessage tests cover config accessors plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   resolveIMessageConfigAllowFrom,

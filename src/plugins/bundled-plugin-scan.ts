@@ -1,11 +1,22 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import path from "node:path";
 
 const PUBLIC_SURFACE_SOURCE_EXTENSIONS = [".ts", ".mts", ".js", ".mjs", ".cts", ".cjs"] as const;
+=======
+/** Scans bundled plugin source/build roots and derives public/runtime artifacts from manifests. */
+import fs from "node:fs";
+import path from "node:path";
+import { normalizeOptionalString } from "../../packages/normalization-core/src/string-coerce.js";
+import { normalizeTrimmedStringList } from "../../packages/normalization-core/src/string-normalization.js";
+import { PUBLIC_SURFACE_SOURCE_EXTENSIONS } from "./public-surface-runtime.js";
+
+>>>>>>> upstream/main
 const RUNTIME_SIDECAR_ARTIFACTS = new Set([
   "helper-api.js",
   "light-runtime-api.js",
   "runtime-api.js",
+<<<<<<< HEAD
   "thread-bindings-runtime.js",
 ]);
 
@@ -14,6 +25,23 @@ function trimString(value: unknown): string | undefined {
 }
 
 function rewriteEntryToBuiltPath(entry: string | undefined): string | undefined {
+=======
+  "runtime-setter-api.js",
+  "thread-bindings-runtime.js",
+]);
+
+export { normalizeOptionalString as trimBundledPluginString };
+
+/** Normalizes string-list manifest fields found while scanning bundled plugin files. */
+export function normalizeBundledPluginStringList(value: unknown): string[] {
+  return normalizeTrimmedStringList(value);
+}
+
+/** Converts a source entry path to its built JavaScript artifact path. */
+export function rewriteBundledPluginEntryToBuiltPath(
+  entry: string | undefined,
+): string | undefined {
+>>>>>>> upstream/main
   if (!entry) {
     return undefined;
   }
@@ -41,6 +69,10 @@ function isTopLevelPublicSurfaceSource(name: string): boolean {
   return !/(\.test|\.spec)(\.[cm]?[jt]s)$/u.test(name);
 }
 
+<<<<<<< HEAD
+=======
+/** Derives a stable id hint for bundled plugins with one or more extension entrypoints. */
+>>>>>>> upstream/main
 export function deriveBundledPluginIdHint(params: {
   entryPath: string;
   manifestId: string;
@@ -51,7 +83,11 @@ export function deriveBundledPluginIdHint(params: {
   if (!params.hasMultipleExtensions) {
     return params.manifestId;
   }
+<<<<<<< HEAD
   const packageName = trimString(params.packageName);
+=======
+  const packageName = normalizeOptionalString(params.packageName);
+>>>>>>> upstream/main
   if (!packageName) {
     return `${params.manifestId}/${base}`;
   }
@@ -61,15 +97,25 @@ export function deriveBundledPluginIdHint(params: {
   return `${unscoped}/${base}`;
 }
 
+<<<<<<< HEAD
+=======
+/** Lists top-level public surface artifacts that should be copied with bundled plugin runtime. */
+>>>>>>> upstream/main
 export function collectBundledPluginPublicSurfaceArtifacts(params: {
   pluginDir: string;
   sourceEntry: string;
   setupEntry?: string;
 }): readonly string[] | undefined {
   const excluded = new Set(
+<<<<<<< HEAD
     [params.sourceEntry, params.setupEntry]
       .filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0)
       .map((entry) => path.basename(entry)),
+=======
+    normalizeTrimmedStringList([params.sourceEntry, params.setupEntry]).map((entry) =>
+      path.basename(entry),
+    ),
+>>>>>>> upstream/main
   );
   const artifacts = fs
     .readdirSync(params.pluginDir, { withFileTypes: true })
@@ -77,12 +123,20 @@ export function collectBundledPluginPublicSurfaceArtifacts(params: {
     .map((entry) => entry.name)
     .filter(isTopLevelPublicSurfaceSource)
     .filter((entry) => !excluded.has(entry))
+<<<<<<< HEAD
     .map((entry) => rewriteEntryToBuiltPath(entry))
+=======
+    .map((entry) => rewriteBundledPluginEntryToBuiltPath(entry))
+>>>>>>> upstream/main
     .filter((entry): entry is string => typeof entry === "string" && entry.length > 0)
     .toSorted((left, right) => left.localeCompare(right));
   return artifacts.length > 0 ? artifacts : undefined;
 }
 
+<<<<<<< HEAD
+=======
+/** Filters public artifacts down to runtime sidecars needed by bundled plugin execution. */
+>>>>>>> upstream/main
 export function collectBundledPluginRuntimeSidecarArtifacts(
   publicSurfaceArtifacts: readonly string[] | undefined,
 ): readonly string[] | undefined {
@@ -95,6 +149,10 @@ export function collectBundledPluginRuntimeSidecarArtifacts(
   return artifacts.length > 0 ? artifacts : undefined;
 }
 
+<<<<<<< HEAD
+=======
+/** Chooses the source or built extension directory appropriate for the current package layout. */
+>>>>>>> upstream/main
 export function resolveBundledPluginScanDir(params: {
   packageRoot: string;
   runningFromBuiltArtifact: boolean;

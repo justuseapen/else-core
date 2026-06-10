@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { isCommandFlagEnabled } from "../../config/commands.js";
 import type { OpenClawConfig } from "../../config/config.js";
@@ -5,6 +6,19 @@ import type { MsgContext } from "../templating.js";
 import { handleBashChatCommand } from "./bash-command.js";
 import { handleConfigCommand, handleDebugCommand } from "./commands-config.js";
 import type { HandleCommandsParams } from "./commands-types.js";
+=======
+// Tests command gating rules for ownership, channel, and active session state.
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { isCommandFlagEnabled } from "../../config/commands.js";
+import type { OpenClawConfig } from "../../config/config.js";
+import { REDACTED_SENTINEL } from "../../config/redact-snapshot.js";
+import type { MsgContext } from "../templating.js";
+import { handleBashChatCommand } from "./bash-command.js";
+import { requireGatewayClientScope } from "./command-gates.js";
+import { handleConfigCommand, handleDebugCommand } from "./commands-config.js";
+import type { HandleCommandsParams } from "./commands-types.js";
+import type { ConfigSnapshotMock } from "./commands.test-harness.js";
+>>>>>>> upstream/main
 import { parseInlineDirectives } from "./directive-handling.parse.js";
 
 const readConfigFileSnapshotMock = vi.hoisted(() =>
@@ -17,12 +31,23 @@ const validateConfigObjectWithPluginsMock = vi.hoisted(() =>
     issues: [],
   })),
 );
+<<<<<<< HEAD
 const writeConfigFileMock = vi.hoisted(() => vi.fn(async () => undefined));
+=======
+const replaceConfigFileMock = vi.hoisted(() => vi.fn(async (_params: unknown) => undefined));
+>>>>>>> upstream/main
 const getConfigOverridesMock = vi.hoisted(() => vi.fn(() => ({})));
 const getConfigValueAtPathMock = vi.hoisted(() => vi.fn());
 const parseConfigPathMock = vi.hoisted(() => vi.fn());
 const setConfigValueAtPathMock = vi.hoisted(() => vi.fn());
+<<<<<<< HEAD
 const resolveConfigWriteDeniedTextMock = vi.hoisted(() => vi.fn(() => undefined));
+=======
+const unsetConfigValueAtPathMock = vi.hoisted(() => vi.fn(() => true));
+const resolveConfigWriteDeniedTextMock = vi.hoisted(() =>
+  vi.fn<(...args: never[]) => string | null>(() => null),
+);
+>>>>>>> upstream/main
 const isInternalMessageChannelMock = vi.hoisted(() => vi.fn(() => false));
 
 vi.mock("../../agents/agent-scope.js", () => ({
@@ -64,6 +89,10 @@ vi.mock("../../channels/plugins/config-writes.js", () => ({
 }));
 
 vi.mock("../../channels/registry.js", () => ({
+<<<<<<< HEAD
+=======
+  normalizeAnyChannelId: vi.fn((value?: string) => value),
+>>>>>>> upstream/main
   normalizeChannelId: vi.fn((value?: string) => value),
 }));
 
@@ -71,13 +100,57 @@ vi.mock("../../config/config-paths.js", () => ({
   getConfigValueAtPath: getConfigValueAtPathMock,
   parseConfigPath: parseConfigPathMock,
   setConfigValueAtPath: setConfigValueAtPathMock,
+<<<<<<< HEAD
   unsetConfigValueAtPath: vi.fn(() => true),
+=======
+  unsetConfigValueAtPath: unsetConfigValueAtPathMock,
+>>>>>>> upstream/main
 }));
 
 vi.mock("../../config/config.js", () => ({
   readConfigFileSnapshot: readConfigFileSnapshotMock,
   validateConfigObjectWithPlugins: validateConfigObjectWithPluginsMock,
+<<<<<<< HEAD
   writeConfigFile: writeConfigFileMock,
+=======
+  replaceConfigFile: replaceConfigFileMock,
+  transformConfigFileWithRetry: async (params: {
+    afterWrite?: unknown;
+    transform: (
+      currentConfig: OpenClawConfig,
+      context: { snapshot: ConfigSnapshotMock; previousHash: string | null; attempt: number },
+    ) =>
+      | Promise<{ nextConfig: OpenClawConfig; result?: unknown }>
+      | {
+          nextConfig: OpenClawConfig;
+          result?: unknown;
+        };
+  }) => {
+    const snapshot = (await readConfigFileSnapshotMock()) as ConfigSnapshotMock;
+    const previousHash = snapshot.hash ?? null;
+    const currentConfig = structuredClone(
+      snapshot.sourceConfig ?? snapshot.resolved ?? snapshot.runtimeConfig ?? snapshot.parsed ?? {},
+    );
+    const transformed = await params.transform(currentConfig, {
+      snapshot,
+      previousHash,
+      attempt: 0,
+    });
+    const afterWrite = params.afterWrite ?? { mode: "auto" };
+    await replaceConfigFileMock({ nextConfig: transformed.nextConfig, afterWrite });
+    return {
+      path: snapshot.path ?? "/tmp/openclaw.json",
+      previousHash,
+      persistedHash: "persisted-hash",
+      snapshot,
+      nextConfig: transformed.nextConfig,
+      result: transformed.result,
+      attempts: 1,
+      afterWrite,
+      followUp: { action: "none" },
+    };
+  },
+>>>>>>> upstream/main
 }));
 
 vi.mock("../../config/runtime-overrides.js", () => ({
@@ -87,6 +160,17 @@ vi.mock("../../config/runtime-overrides.js", () => ({
   unsetConfigOverride: vi.fn(() => ({ ok: true, removed: true })),
 }));
 
+<<<<<<< HEAD
+=======
+vi.mock("../../config/runtime-schema.js", async () => {
+  const actual =
+    await vi.importActual<typeof import("../../config/schema.js")>("../../config/schema.js");
+  return {
+    loadGatewayRuntimeConfigSchema: () => actual.buildConfigSchema(),
+  };
+});
+
+>>>>>>> upstream/main
 vi.mock("../../utils/message-channel.js", () => ({
   isInternalMessageChannel: isInternalMessageChannelMock,
 }));
@@ -216,6 +300,10 @@ describe("command gating", () => {
         }
       },
     );
+<<<<<<< HEAD
+=======
+    unsetConfigValueAtPathMock.mockReturnValue(true);
+>>>>>>> upstream/main
   });
 
   it("blocks disabled bash", async () => {
@@ -311,6 +399,172 @@ describe("command gating", () => {
     expect(debugResult?.reply?.text).toContain("Debug overrides");
   });
 
+<<<<<<< HEAD
+=======
+  it("redacts secret-shaped fields from full /config show replies", async () => {
+    readConfigFileSnapshotMock.mockResolvedValueOnce({
+      valid: true,
+      parsed: {
+        gateway: {
+          auth: {
+            mode: "token",
+            token: "OPENCLAW_CONFIG_SHOW_CANARY_TOKEN_65623",
+            password: "OPENCLAW_CONFIG_SHOW_CANARY_PASSWORD_65623",
+          },
+          bind: "127.0.0.1",
+          port: 3210,
+        },
+        models: {
+          providers: {
+            openai: {
+              apiKey: "OPENCLAW_CONFIG_SHOW_CANARY_API_KEY_65623",
+              baseUrl: "https://api.example.test",
+              models: [{ id: "gpt-test", name: "gpt-test" }],
+            },
+          },
+        },
+        browser: {
+          cdpUrl:
+            "wss://chrome.example.test/devtools?token=OPENCLAW_CONFIG_SHOW_CANARY_CDP_TOKEN_65623&apiKey=OPENCLAW_CONFIG_SHOW_CANARY_CDP_API_KEY_65623",
+          profiles: {
+            local: {
+              cdpUrl: "ws://localhost:9222",
+            },
+            remote: {
+              cdpUrl:
+                "wss://chrome.remote.example.test/devtools?apiKey=OPENCLAW_CONFIG_SHOW_CANARY_CDP_PROFILE_API_KEY_65623",
+            },
+          },
+        },
+        talk: {
+          providers: {
+            openai: {
+              apiKey: "OPENCLAW_CONFIG_SHOW_CANARY_API_KEY_65623",
+              baseUrl: "https://api.example.test",
+              model: "gpt-test",
+            },
+          },
+        },
+        channels: {
+          telegram: {
+            botToken: "1234567890TELEGRAM_BOT_TOKEN",
+            enabled: true,
+          },
+          slack: {
+            token: {
+              source: "env",
+              provider: "default",
+              id: "SLACK_BOT_TOKEN",
+            },
+          },
+        },
+      },
+    });
+    const params = buildParams("/config show", {
+      commands: { config: true, text: true },
+      channels: { whatsapp: { allowFrom: ["*"] } },
+    } as OpenClawConfig);
+    params.command.senderIsOwner = true;
+
+    const result = await handleConfigCommand(params, true);
+    const output = result?.reply?.text ?? "";
+
+    expect(output).toContain("gateway");
+    expect(output).toContain("token");
+    expect(output).toContain("password");
+    expect(output).toContain("apiKey");
+    expect(output).toContain("browser");
+    expect(output).toContain("cdpUrl");
+    expect(output).toContain(REDACTED_SENTINEL);
+    expect(output).not.toContain("OPENCLAW_CONFIG_SHOW_CANARY_TOKEN_65623");
+    expect(output).not.toContain("OPENCLAW_CONFIG_SHOW_CANARY_PASSWORD_65623");
+    expect(output).not.toContain("OPENCLAW_CONFIG_SHOW_CANARY_API_KEY_65623");
+    expect(output).not.toContain("OPENCLAW_CONFIG_SHOW_CANARY_CDP_TOKEN_65623");
+    expect(output).not.toContain("OPENCLAW_CONFIG_SHOW_CANARY_CDP_API_KEY_65623");
+    expect(output).not.toContain("OPENCLAW_CONFIG_SHOW_CANARY_CDP_PROFILE_API_KEY_65623");
+    expect(output).toContain('"mode": "token"');
+    expect(output).toContain('"bind": "127.0.0.1"');
+    expect(output).toContain('"port": 3210');
+    expect(output).toContain('"enabled": true');
+    expect(output).toContain('"model": "gpt-test"');
+    expect(output).toContain('"baseUrl": "https://api.example.test"');
+    expect(output).toContain('"cdpUrl": "ws://localhost:9222"');
+  });
+
+  it("redacts secret-shaped values from path-specific /config show replies", async () => {
+    readConfigFileSnapshotMock.mockResolvedValueOnce({
+      valid: true,
+      parsed: {
+        gateway: {
+          auth: {
+            mode: "token",
+            token: "OPENCLAW_CONFIG_SHOW_CANARY_TOKEN_65623",
+          },
+        },
+      },
+    });
+    const params = buildParams("/config show gateway.auth.token", {
+      commands: { config: true, text: true },
+      channels: { whatsapp: { allowFrom: ["*"] } },
+    } as OpenClawConfig);
+    params.command.senderIsOwner = true;
+
+    const result = await handleConfigCommand(params, true);
+    const output = result?.reply?.text ?? "";
+
+    expect(output).toContain("Config gateway.auth.token");
+    expect(output).toContain(REDACTED_SENTINEL);
+    expect(output).not.toContain("OPENCLAW_CONFIG_SHOW_CANARY_TOKEN_65623");
+  });
+
+  it("redacts browser cdpUrl query secrets from path-specific /config show replies", async () => {
+    readConfigFileSnapshotMock.mockResolvedValueOnce({
+      valid: true,
+      parsed: {
+        browser: {
+          cdpUrl:
+            "wss://chrome.example.test/devtools?token=OPENCLAW_CONFIG_SHOW_CANARY_CDP_TOKEN_65623&apiKey=OPENCLAW_CONFIG_SHOW_CANARY_CDP_API_KEY_65623",
+        },
+      },
+    });
+    const params = buildParams("/config show browser.cdpUrl", {
+      commands: { config: true, text: true },
+      channels: { whatsapp: { allowFrom: ["*"] } },
+    } as OpenClawConfig);
+    params.command.senderIsOwner = true;
+
+    const result = await handleConfigCommand(params, true);
+    const output = result?.reply?.text ?? "";
+
+    expect(output).toContain("Config browser.cdpUrl");
+    expect(output).toContain(REDACTED_SENTINEL);
+    expect(output).not.toContain("OPENCLAW_CONFIG_SHOW_CANARY_CDP_TOKEN_65623");
+    expect(output).not.toContain("OPENCLAW_CONFIG_SHOW_CANARY_CDP_API_KEY_65623");
+  });
+
+  it("redacts secret-shaped values from /config set acknowledgements", async () => {
+    readConfigFileSnapshotMock.mockResolvedValue({
+      valid: true,
+      parsed: { gateway: { auth: { mode: "token" } } },
+    });
+    const params = buildParams(
+      '/config set gateway.auth.token="OPENCLAW_CONFIG_SET_CANARY_TOKEN_65623"',
+      {
+        commands: { config: true, text: true },
+        channels: { whatsapp: { allowFrom: ["*"] } },
+      } as OpenClawConfig,
+    );
+    params.command.senderIsOwner = true;
+
+    const result = await handleConfigCommand(params, true);
+    const output = result?.reply?.text ?? "";
+
+    expect(output).toContain("Config updated: gateway.auth.token=");
+    expect(output).toContain(REDACTED_SENTINEL);
+    expect(output).not.toContain("OPENCLAW_CONFIG_SET_CANARY_TOKEN_65623");
+  });
+
+>>>>>>> upstream/main
   it("returns explicit unauthorized replies for native privileged commands", async () => {
     const configParams = buildParams("/config show", {
       commands: { config: true, text: true },
@@ -416,11 +670,19 @@ describe("command gating", () => {
     ] as const;
 
     for (const testCase of cases) {
+<<<<<<< HEAD
       const previousWriteCount = writeConfigFileMock.mock.calls.length;
       const result = await handleConfigCommand(testCase.params, true);
       expect(result?.shouldContinue).toBe(false);
       expect(result?.reply?.text).toContain(testCase.expectedText);
       expect(writeConfigFileMock.mock.calls.length).toBe(previousWriteCount);
+=======
+      const previousWriteCount = replaceConfigFileMock.mock.calls.length;
+      const result = await handleConfigCommand(testCase.params, true);
+      expect(result?.shouldContinue).toBe(false);
+      expect(result?.reply?.text).toContain(testCase.expectedText);
+      expect(replaceConfigFileMock.mock.calls.length).toBe(previousWriteCount);
+>>>>>>> upstream/main
     }
   });
 
@@ -447,12 +709,90 @@ describe("command gating", () => {
     params.command.surface = "telegram";
     params.command.senderIsOwner = true;
 
+<<<<<<< HEAD
     const previousWriteCount = writeConfigFileMock.mock.calls.length;
+=======
+    const previousWriteCount = replaceConfigFileMock.mock.calls.length;
+>>>>>>> upstream/main
     const result = await handleConfigCommand(params, true);
 
     expect(result?.shouldContinue).toBe(false);
     expect(result?.reply?.text).toContain("channels.telegram.accounts.work.configWrites=true");
+<<<<<<< HEAD
     expect(writeConfigFileMock.mock.calls.length).toBe(previousWriteCount);
+=======
+    expect(replaceConfigFileMock.mock.calls.length).toBe(previousWriteCount);
+  });
+
+  it("enforces gateway client permissions when the command channel is external", () => {
+    const result = requireGatewayClientScope(
+      {
+        ctx: {
+          Provider: "internal",
+          OriginatingChannel: "telegram",
+          GatewayClientScopes: ["operator.write"],
+        },
+        command: {
+          channel: "telegram",
+        },
+      } as unknown as HandleCommandsParams,
+      {
+        label: "/config write",
+        allowedScopes: ["operator.admin"],
+        missingText: "/config set|unset requires operator.admin for gateway clients.",
+      },
+    );
+
+    expect(result?.shouldContinue).toBe(false);
+    expect(result?.reply?.text).toContain("requires operator.admin");
+    expect(isInternalMessageChannelMock).not.toHaveBeenCalled();
+  });
+
+  it("enforces gateway client permissions when the scope list is empty", () => {
+    const result = requireGatewayClientScope(
+      {
+        ctx: {
+          Provider: "internal",
+          OriginatingChannel: "telegram",
+          GatewayClientScopes: [],
+        },
+        command: {
+          channel: "telegram",
+        },
+      } as unknown as HandleCommandsParams,
+      {
+        label: "/config write",
+        allowedScopes: ["operator.admin"],
+        missingText: "/config set|unset requires operator.admin for gateway clients.",
+      },
+    );
+
+    expect(result?.shouldContinue).toBe(false);
+    expect(result?.reply?.text).toContain("requires operator.admin");
+    expect(isInternalMessageChannelMock).not.toHaveBeenCalled();
+  });
+
+  it("does not require gateway client permissions when scopes are absent", () => {
+    const result = requireGatewayClientScope(
+      {
+        ctx: {
+          Provider: "telegram",
+          OriginatingChannel: "telegram",
+        },
+        command: {
+          channel: "telegram",
+        },
+      } as unknown as HandleCommandsParams,
+      {
+        label: "/config write",
+        allowedScopes: ["operator.admin"],
+        missingText: "/config set|unset requires operator.admin for gateway clients.",
+      },
+    );
+
+    expect(result).toBeNull();
+    expect(isInternalMessageChannelMock).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 
   it("enforces gateway client permissions for /config commands", async () => {
@@ -466,7 +806,10 @@ describe("command gating", () => {
     blockedParams.command.channelId = "webchat";
     blockedParams.command.surface = "webchat";
     blockedParams.command.senderIsOwner = true;
+<<<<<<< HEAD
     isInternalMessageChannelMock.mockReturnValueOnce(true);
+=======
+>>>>>>> upstream/main
     const blockedResult = await handleConfigCommand(blockedParams, true);
     expect(blockedResult?.shouldContinue).toBe(false);
     expect(blockedResult?.reply?.text).toContain("requires operator.admin");
@@ -482,7 +825,11 @@ describe("command gating", () => {
     showParams.command.channel = "webchat";
     showParams.command.channelId = "webchat";
     showParams.command.surface = "webchat";
+<<<<<<< HEAD
     isInternalMessageChannelMock.mockReturnValueOnce(true);
+=======
+    showParams.command.senderIsOwner = true;
+>>>>>>> upstream/main
     const showResult = await handleConfigCommand(showParams, true);
     expect(showResult?.shouldContinue).toBe(false);
     expect(showResult?.reply?.text).toContain("Config messages.ackReaction");
@@ -499,10 +846,40 @@ describe("command gating", () => {
     setParams.command.channelId = "webchat";
     setParams.command.surface = "webchat";
     setParams.command.senderIsOwner = true;
+<<<<<<< HEAD
     isInternalMessageChannelMock.mockReturnValueOnce(true);
     const setResult = await handleConfigCommand(setParams, true);
     expect(setResult?.shouldContinue).toBe(false);
     expect(setResult?.reply?.text).toContain("Config updated");
     expect(writeConfigFileMock).toHaveBeenCalled();
+=======
+    const setResult = await handleConfigCommand(setParams, true);
+    expect(setResult?.shouldContinue).toBe(false);
+    expect(setResult?.reply?.text).toContain("Config updated");
+    expect(replaceConfigFileMock).toHaveBeenCalledTimes(1);
+    expect(replaceConfigFileMock).toHaveBeenCalledWith({
+      nextConfig: {},
+      afterWrite: { mode: "auto" },
+    });
+  });
+
+  it("does not write config when /config unset misses", async () => {
+    unsetConfigValueAtPathMock.mockReturnValue(false);
+    readConfigFileSnapshotMock.mockResolvedValue({
+      valid: true,
+      parsed: { messages: {} },
+    });
+    const params = buildParams("/config unset messages.missing", {
+      commands: { config: true, text: true },
+    } as OpenClawConfig);
+    params.ctx.GatewayClientScopes = ["operator.admin"];
+    params.command.senderIsOwner = true;
+
+    const result = await handleConfigCommand(params, true);
+
+    expect(result?.shouldContinue).toBe(false);
+    expect(result?.reply?.text).toContain("No config value found");
+    expect(replaceConfigFileMock).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 });

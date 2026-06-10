@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { MAX_IMAGE_BYTES } from "openclaw/plugin-sdk/media-runtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -23,6 +24,27 @@ describe("tlon monitor media", () => {
     };
   }
 
+=======
+// Tlon tests cover media plugin behavior.
+import {
+  readRemoteMediaBuffer,
+  MAX_IMAGE_BYTES,
+  saveRemoteMedia,
+} from "openclaw/plugin-sdk/media-runtime";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { downloadMedia, extractImageBlocks } from "./media.js";
+
+vi.mock("openclaw/plugin-sdk/media-runtime", () => ({
+  MAX_IMAGE_BYTES: 6 * 1024 * 1024,
+  readRemoteMediaBuffer: vi.fn(),
+  saveRemoteMedia: vi.fn(),
+}));
+
+const readRemoteMediaBufferMock = vi.mocked(readRemoteMediaBuffer);
+const saveRemoteMediaMock = vi.mocked(saveRemoteMedia);
+
+describe("tlon monitor media", () => {
+>>>>>>> upstream/main
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -33,8 +55,12 @@ describe("tlon monitor media", () => {
     vi.restoreAllMocks();
   });
 
+<<<<<<< HEAD
   it("caps extracted images at eight per message", async () => {
     const { extractImageBlocks } = await loadMediaModule();
+=======
+  it("caps extracted images at eight per message", () => {
+>>>>>>> upstream/main
     const content = Array.from({ length: 10 }, (_, index) => ({
       block: { image: { src: `https://example.com/${index}.png`, alt: `image-${index}` } },
     }));
@@ -48,6 +74,7 @@ describe("tlon monitor media", () => {
   });
 
   it("stores fetched media through the shared inbound media store with the image cap", async () => {
+<<<<<<< HEAD
     const { downloadMedia, fetchRemoteMedia, saveMediaBuffer } = await loadMediaModule();
 
     fetchRemoteMedia.mockResolvedValue({
@@ -56,6 +83,9 @@ describe("tlon monitor media", () => {
       fileName: "photo.png",
     });
     saveMediaBuffer.mockResolvedValue({
+=======
+    saveRemoteMediaMock.mockResolvedValue({
+>>>>>>> upstream/main
       id: "photo---uuid.png",
       path: "/tmp/openclaw/media/inbound/photo---uuid.png",
       size: "image-data".length,
@@ -64,6 +94,7 @@ describe("tlon monitor media", () => {
 
     const result = await downloadMedia("https://example.com/photo.png");
 
+<<<<<<< HEAD
     expect(fetchRemoteMedia).toHaveBeenCalledWith(
       expect.objectContaining({
         url: "https://example.com/photo.png",
@@ -79,6 +110,17 @@ describe("tlon monitor media", () => {
       MAX_IMAGE_BYTES,
       "photo.png",
     );
+=======
+    expect(readRemoteMediaBufferMock).not.toHaveBeenCalled();
+    expect(saveRemoteMediaMock).toHaveBeenCalledTimes(1);
+    expect(saveRemoteMediaMock).toHaveBeenCalledWith({
+      url: "https://example.com/photo.png",
+      maxBytes: MAX_IMAGE_BYTES,
+      readIdleTimeoutMs: 30_000,
+      ssrfPolicy: undefined,
+      requestInit: { method: "GET" },
+    });
+>>>>>>> upstream/main
     expect(result).toEqual({
       localPath: "/tmp/openclaw/media/inbound/photo---uuid.png",
       contentType: "image/png",
@@ -87,9 +129,13 @@ describe("tlon monitor media", () => {
   });
 
   it("returns null when the fetch exceeds the image cap", async () => {
+<<<<<<< HEAD
     const { downloadMedia, fetchRemoteMedia, saveMediaBuffer } = await loadMediaModule();
 
     fetchRemoteMedia.mockRejectedValue(
+=======
+    saveRemoteMediaMock.mockRejectedValue(
+>>>>>>> upstream/main
       new Error(
         `Failed to fetch media from https://example.com/photo.png: payload exceeds maxBytes ${MAX_IMAGE_BYTES}`,
       ),
@@ -98,6 +144,10 @@ describe("tlon monitor media", () => {
     const result = await downloadMedia("https://example.com/photo.png");
 
     expect(result).toBeNull();
+<<<<<<< HEAD
     expect(saveMediaBuffer).not.toHaveBeenCalled();
+=======
+    expect(readRemoteMediaBufferMock).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 });

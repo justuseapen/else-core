@@ -1,5 +1,10 @@
+// Covers Copilot token exchange, cache shape, and proxy-derived API host behavior.
 import { describe, expect, it, vi } from "vitest";
+<<<<<<< HEAD
 import { buildCopilotIdeHeaders } from "./copilot-dynamic-headers.js";
+=======
+import { COPILOT_INTEGRATION_ID, buildCopilotIdeHeaders } from "./copilot-dynamic-headers.js";
+>>>>>>> upstream/main
 import {
   deriveCopilotApiBaseUrlFromToken,
   resolveCopilotApiToken,
@@ -7,6 +12,11 @@ import {
 
 describe("resolveCopilotApiToken", () => {
   it("derives native Copilot base URLs from Copilot proxy hints", () => {
+<<<<<<< HEAD
+=======
+    // Native Copilot tokens advertise proxy hosts; the chat endpoint lives on
+    // the sibling api host and ignores proxy ports.
+>>>>>>> upstream/main
     expect(
       deriveCopilotApiBaseUrlFromToken(
         "copilot-token;proxy-ep=https://proxy.individual.githubcopilot.com;",
@@ -47,7 +57,11 @@ describe("resolveCopilotApiToken", () => {
     expect(result.expiresAt).toBe(12_345_678_901_000);
   });
 
+<<<<<<< HEAD
   it("sends IDE headers when exchanging the GitHub token", async () => {
+=======
+  it("sends IDE and integration headers when exchanging the GitHub token", async () => {
+>>>>>>> upstream/main
     const fetchImpl = vi.fn(async () => ({
       ok: true,
       json: async () => ({
@@ -64,6 +78,7 @@ describe("resolveCopilotApiToken", () => {
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
 
+<<<<<<< HEAD
     expect(fetchImpl).toHaveBeenCalledWith(
       "https://api.github.com/copilot_internal/v2/token",
       expect.objectContaining({
@@ -75,5 +90,57 @@ describe("resolveCopilotApiToken", () => {
         }),
       }),
     );
+=======
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchImpl.mock.calls.at(0) as unknown as [string, RequestInit];
+    expect(url).toBe("https://api.github.com/copilot_internal/v2/token");
+    expect(init.method).toBe("GET");
+    expect(init.headers).toEqual({
+      Accept: "application/json",
+      Authorization: "Bearer github-token",
+      "Copilot-Integration-Id": COPILOT_INTEGRATION_ID,
+      ...buildCopilotIdeHeaders({ includeApiVersion: true }),
+    });
+  });
+
+  it("refreshes legacy cached tokens without the vscode-chat integration identity", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-02T03:04:05.000Z"));
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        token: "fresh-copilot-token",
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+      }),
+    }));
+    const saveJsonFileImpl = vi.fn();
+
+    try {
+      // The integration id is part of Copilot's routing contract. Legacy cache
+      // entries without it must be refreshed even if the token is not expired.
+      const result = await resolveCopilotApiToken({
+        githubToken: "github-token",
+        cachePath: "/tmp/github-copilot-token-test.json",
+        loadJsonFileImpl: () => ({
+          token: "legacy-copilot-token",
+          expiresAt: Date.now() + 60 * 60 * 1000,
+          updatedAt: Date.now(),
+        }),
+        saveJsonFileImpl,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      });
+
+      expect(result.token).toBe("fresh-copilot-token");
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      expect(saveJsonFileImpl).toHaveBeenCalledWith("/tmp/github-copilot-token-test.json", {
+        token: "fresh-copilot-token",
+        expiresAt: 1_767_326_645_000,
+        updatedAt: 1_767_323_045_000,
+        integrationId: COPILOT_INTEGRATION_ID,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+>>>>>>> upstream/main
   });
 });

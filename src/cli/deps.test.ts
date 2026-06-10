@@ -1,5 +1,10 @@
+// Dependency tests cover CLI dependency imports and cold-start safety.
+import { importFreshModule } from "openclaw/plugin-sdk/test-fixtures";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+<<<<<<< HEAD
 import { importFreshModule } from "../../test/helpers/import-fresh.ts";
+=======
+>>>>>>> upstream/main
 import type { ChannelPlugin } from "../channels/plugins/types.js";
 
 const runtimeFactories = vi.hoisted(() => ({
@@ -85,9 +90,24 @@ describe("createDefaultDeps", () => {
     expectUnusedRuntimeFactoriesNotLoaded("telegram");
   });
 
+<<<<<<< HEAD
   it("reuses cached runtime send surfaces after first lazy load", async () => {
     const createDefaultDeps = await loadCreateDefaultDeps("module-cache");
     const deps = createDefaultDeps();
+=======
+  it("does not create channel senders for Discord voice helper keys", async () => {
+    const createDefaultDeps = await loadCreateDefaultDeps("discord-voice-helper");
+    const deps = createDefaultDeps();
+
+    expect(deps.discordVoice).toBeUndefined();
+    expect(deps.sendDiscordVoice).toBeUndefined();
+    expect(runtimeFactories.discord).not.toHaveBeenCalled();
+  });
+
+  it("reuses cached runtime send surfaces after first lazy load", async () => {
+    const createDefaultDeps = await loadCreateDefaultDeps("module-cache");
+    const deps = createDefaultDeps();
+>>>>>>> upstream/main
     const sendDiscord = deps.discord as (...args: unknown[]) => Promise<unknown>;
 
     await sendDiscord("channel", "first", { verbose: false });

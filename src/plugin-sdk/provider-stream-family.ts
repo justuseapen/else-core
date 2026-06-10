@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   createGoogleThinkingPayloadWrapper,
   sanitizeGoogleThinkingPayload,
@@ -164,3 +165,9 @@ export {
   createToolStreamWrapper,
   createZaiToolStreamWrapper,
 } from "../agents/pi-embedded-runner/zai-stream-wrappers.js";
+=======
+/**
+ * Public SDK subpath for provider stream event and family helpers.
+ */
+export * from "./provider-stream.js";
+>>>>>>> upstream/main

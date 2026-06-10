@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type {
   BlockStreamingChunkConfig,
   BlockStreamingCoalesceConfig,
@@ -99,3 +100,7 @@ export function resolveChannelStreamingNativeTransport(
   const config = getChannelStreamingConfigObject(entry);
   return asBoolean(config?.nativeTransport) ?? asBoolean(entry?.nativeStreaming);
 }
+=======
+/** @deprecated Compatibility subpath. Use `openclaw/plugin-sdk/channel-outbound`. */
+export * from "../channels/streaming.js";
+>>>>>>> upstream/main

@@ -1,3 +1,4 @@
+/** Tests plugin slot normalization and exclusive slot selection behavior. */
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import {
@@ -58,6 +59,7 @@ describe("applyExclusiveSlotSelection", () => {
   function expectSelectionWarnings(
     warnings: string[],
     params: {
+<<<<<<< HEAD
       contains?: readonly string[];
       excludes?: readonly string[];
     },
@@ -68,6 +70,12 @@ describe("applyExclusiveSlotSelection", () => {
     for (const warning of params.excludes ?? []) {
       expect(warnings).not.toEqual(expect.arrayContaining([warning]));
     }
+=======
+      expected: readonly string[];
+    },
+  ) {
+    expect(warnings).toEqual([...params.expected]);
+>>>>>>> upstream/main
   }
 
   function expectUnchangedSelection(result: ReturnType<typeof applyExclusiveSlotSelection>) {
@@ -109,8 +117,12 @@ describe("applyExclusiveSlotSelection", () => {
     selectedId?: string;
     expectedDisabled?: boolean;
     warningChecks: {
+<<<<<<< HEAD
       contains?: readonly string[];
       excludes?: readonly string[];
+=======
+      expected: readonly string[];
+>>>>>>> upstream/main
     };
   }) {
     const result = runMemorySelection(params.config, params.selectedId);
@@ -134,7 +146,11 @@ describe("applyExclusiveSlotSelection", () => {
       }),
       expectedDisabled: false,
       warningChecks: {
+<<<<<<< HEAD
         contains: [
+=======
+        expected: [
+>>>>>>> upstream/main
           'Exclusive slot "memory" switched from "memory-core" to "memory".',
           'Disabled other "memory" slot plugins: memory-core.',
         ],
@@ -144,7 +160,14 @@ describe("applyExclusiveSlotSelection", () => {
       name: "warns when the slot falls back to a default",
       config: createMemoryConfig(),
       warningChecks: {
+<<<<<<< HEAD
         contains: ['Exclusive slot "memory" switched from "memory-core" to "memory".'],
+=======
+        expected: [
+          'Exclusive slot "memory" switched from "memory-core" to "memory".',
+          'Disabled other "memory" slot plugins: memory-core.',
+        ],
+>>>>>>> upstream/main
       },
     },
     {
@@ -156,8 +179,12 @@ describe("applyExclusiveSlotSelection", () => {
       }),
       expectedDisabled: false,
       warningChecks: {
+<<<<<<< HEAD
         contains: ['Exclusive slot "memory" switched from "memory-core" to "memory".'],
         excludes: ['Disabled other "memory" slot plugins: memory-core.'],
+=======
+        expected: ['Exclusive slot "memory" switched from "memory-core" to "memory".'],
+>>>>>>> upstream/main
       },
     },
   ] as const)("$name", ({ config, expectedDisabled, warningChecks }) => {
@@ -271,7 +298,11 @@ describe("applyExclusiveSlotSelection", () => {
 
 describe("normalizeKinds", () => {
   it("returns empty array for undefined", () => {
+<<<<<<< HEAD
     expect(normalizeKinds(undefined)).toEqual([]);
+=======
+    expect(normalizeKinds(undefined)).toStrictEqual([]);
+>>>>>>> upstream/main
   });
 
   it("wraps a single kind in an array", () => {
@@ -301,7 +332,11 @@ describe("hasKind", () => {
 
 describe("slotKeysForPluginKind", () => {
   it("returns empty for undefined", () => {
+<<<<<<< HEAD
     expect(slotKeysForPluginKind(undefined)).toEqual([]);
+=======
+    expect(slotKeysForPluginKind(undefined)).toStrictEqual([]);
+>>>>>>> upstream/main
   });
 
   it("returns single slot key for single kind", () => {

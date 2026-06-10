@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix plugin module implements reply context behavior.
+>>>>>>> upstream/main
 import type { MatrixClient } from "../sdk.js";
 import { summarizeMatrixMessageContextEvent, trimMatrixMaybeString } from "./context-summary.js";
 import type { MatrixRawEvent } from "./types.js";
@@ -5,7 +9,11 @@ import type { MatrixRawEvent } from "./types.js";
 const MAX_CACHED_REPLY_CONTEXTS = 256;
 const MAX_REPLY_BODY_LENGTH = 500;
 
+<<<<<<< HEAD
 export type MatrixReplyContext = {
+=======
+type MatrixReplyContext = {
+>>>>>>> upstream/main
   replyToBody?: string;
   replyToSender?: string;
   replyToSenderId?: string;
@@ -56,12 +64,23 @@ export function createMatrixReplyContextResolver(params: {
       return cached;
     }
 
+<<<<<<< HEAD
     const event = await params.client.getEvent(input.roomId, input.eventId).catch((err) => {
       params.logVerboseMessage(
         `matrix: failed resolving reply context room=${input.roomId} id=${input.eventId}: ${String(err)}`,
       );
       return null;
     });
+=======
+    const event = await params.client
+      .getEvent(input.roomId, input.eventId)
+      .catch((err: unknown) => {
+        params.logVerboseMessage(
+          `matrix: failed resolving reply context room=${input.roomId} id=${input.eventId}: ${String(err)}`,
+        );
+        return null;
+      });
+>>>>>>> upstream/main
     if (!event) {
       // Do not cache failures so transient errors can be retried on the next
       // message that references the same event.

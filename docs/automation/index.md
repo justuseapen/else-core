@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 summary: "Overview of automation mechanisms: tasks, cron, hooks, standing orders, and Task Flow"
 read_when:
   - Deciding how to automate work with OpenClaw
@@ -10,6 +11,20 @@ title: "Automation & Tasks"
 # Automation & Tasks
 
 OpenClaw runs work in the background through tasks, scheduled jobs, event hooks, and standing instructions. This page helps you choose the right mechanism and understand how they fit together.
+=======
+doc-schema-version: 1
+summary: "Overview of automation mechanisms: tasks, cron, hooks, standing orders, and Task Flow"
+read_when:
+  - Deciding how to automate work with OpenClaw
+  - Choosing between heartbeat, cron, commitments, hooks, and standing orders
+  - Looking for the right automation entry point
+title: "Automation"
+---
+
+OpenClaw runs work in the background through tasks, scheduled jobs, inferred
+commitments, event hooks, and standing instructions. This page helps you choose
+the right mechanism and understand how they fit together.
+>>>>>>> upstream/main
 
 ## Quick decision guide
 
@@ -20,6 +35,10 @@ flowchart TD
     START --> Q3{Orchestrate multi-step flows?}
     START --> Q4{React to lifecycle events?}
     START --> Q5{Give the agent persistent instructions?}
+<<<<<<< HEAD
+=======
+    START --> Q6{Remember a natural follow-up?}
+>>>>>>> upstream/main
 
     Q1 -->|Yes| Q1a{Exact timing or flexible?}
     Q1a -->|Exact| CRON["Scheduled Tasks (Cron)"]
@@ -29,6 +48,10 @@ flowchart TD
     Q3 -->|Yes| FLOW[Task Flow]
     Q4 -->|Yes| HOOKS[Hooks]
     Q5 -->|Yes| SO[Standing Orders]
+<<<<<<< HEAD
+=======
+    Q6 -->|Yes| COMMITMENTS[Inferred Commitments]
+>>>>>>> upstream/main
 ```
 
 | Use case                                | Recommended            | Why                                              |
@@ -38,11 +61,20 @@ flowchart TD
 | Run weekly deep analysis                | Scheduled Tasks (Cron) | Standalone task, can use different model         |
 | Check inbox every 30 min                | Heartbeat              | Batches with other checks, context-aware         |
 | Monitor calendar for upcoming events    | Heartbeat              | Natural fit for periodic awareness               |
+<<<<<<< HEAD
+=======
+| Check in after a mentioned interview    | Inferred Commitments   | Memory-like follow-up, no exact reminder request |
+| Gentle care check-in after user context | Inferred Commitments   | Scoped to the same agent and channel             |
+>>>>>>> upstream/main
 | Inspect status of a subagent or ACP run | Background Tasks       | Tasks ledger tracks all detached work            |
 | Audit what ran and when                 | Background Tasks       | `openclaw tasks list` and `openclaw tasks audit` |
 | Multi-step research then summarize      | Task Flow              | Durable orchestration with revision tracking     |
 | Run a script on session reset           | Hooks                  | Event-driven, fires on lifecycle events          |
+<<<<<<< HEAD
 | Execute code on every tool call         | Hooks                  | Hooks can filter by event type                   |
+=======
+| Execute code on every tool call         | Plugin hooks           | In-process hooks can intercept tool calls        |
+>>>>>>> upstream/main
 | Always check compliance before replying | Standing Orders        | Injected into every session automatically        |
 
 ### Scheduled Tasks (Cron) vs Heartbeat
@@ -71,6 +103,18 @@ The background task ledger tracks all detached work: ACP runs, subagent spawns, 
 
 See [Background Tasks](/automation/tasks).
 
+<<<<<<< HEAD
+=======
+### Inferred commitments
+
+Commitments are opt-in, short-lived follow-up memories. OpenClaw infers them
+from normal conversations, scopes them to the same agent and channel, and
+delivers due check-ins through heartbeat. Exact user-requested reminders still
+belong to cron.
+
+See [Inferred Commitments](/concepts/commitments).
+
+>>>>>>> upstream/main
 ### Task Flow
 
 Task Flow is the flow orchestration substrate above background tasks. It manages durable multi-step flows with managed and mirrored sync modes, revision tracking, and `openclaw tasks flow list|show|cancel` for inspection.
@@ -85,13 +129,25 @@ See [Standing Orders](/automation/standing-orders).
 
 ### Hooks
 
+<<<<<<< HEAD
 Hooks are event-driven scripts triggered by agent lifecycle events (`/new`, `/reset`, `/stop`), session compaction, gateway startup, message flow, and tool calls. Hooks are automatically discovered from directories and can be managed with `openclaw hooks`.
+=======
+Internal hooks are event-driven scripts triggered by agent lifecycle events
+(`/new`, `/reset`, `/stop`), session compaction, gateway startup, and message
+flow. They are automatically discovered from directories and can be managed
+with `openclaw hooks`. For in-process tool-call interception, use
+[Plugin hooks](/plugins/hooks).
+>>>>>>> upstream/main
 
 See [Hooks](/automation/hooks).
 
 ### Heartbeat
 
+<<<<<<< HEAD
 Heartbeat is a periodic main-session turn (default every 30 minutes). It batches multiple checks (inbox, calendar, notifications) in one agent turn with full session context. Heartbeat turns do not create task records. Use `HEARTBEAT.md` for a small checklist, or a `tasks:` block when you want due-only periodic checks inside heartbeat itself. Empty heartbeat files skip as `empty-heartbeat-file`; due-only task mode skips as `no-tasks-due`.
+=======
+Heartbeat is a periodic main-session turn (default every 30 minutes). It batches multiple checks (inbox, calendar, notifications) in one agent turn with full session context. Heartbeat turns do not create task records and do not extend daily/idle session reset freshness. Use `HEARTBEAT.md` for a small checklist, or a `tasks:` block when you want due-only periodic checks inside heartbeat itself. Empty heartbeat files skip as `empty-heartbeat-file`; due-only task mode skips as `no-tasks-due`. Heartbeats defer while cron work is active or queued, and `heartbeat.skipWhenBusy` can also defer an agent while that same agent's session-keyed subagent or nested lanes are busy.
+>>>>>>> upstream/main
 
 See [Heartbeat](/gateway/heartbeat).
 
@@ -99,7 +155,11 @@ See [Heartbeat](/gateway/heartbeat).
 
 - **Cron** handles precise schedules (daily reports, weekly reviews) and one-shot reminders. All cron executions create task records.
 - **Heartbeat** handles routine monitoring (inbox, calendar, notifications) in one batched turn every 30 minutes.
+<<<<<<< HEAD
 - **Hooks** react to specific events (tool calls, session resets, compaction) with custom scripts.
+=======
+- **Hooks** react to specific events (session resets, compaction, message flow) with custom scripts. Plugin hooks cover tool calls.
+>>>>>>> upstream/main
 - **Standing orders** give the agent persistent context and authority boundaries.
 - **Task Flow** coordinates multi-step flows above individual tasks.
 - **Tasks** automatically track all detached work so you can inspect and audit it.
@@ -107,9 +167,17 @@ See [Heartbeat](/gateway/heartbeat).
 ## Related
 
 - [Scheduled Tasks](/automation/cron-jobs) — precise scheduling and one-shot reminders
+<<<<<<< HEAD
 - [Background Tasks](/automation/tasks) — task ledger for all detached work
 - [Task Flow](/automation/taskflow) — durable multi-step flow orchestration
 - [Hooks](/automation/hooks) — event-driven lifecycle scripts
+=======
+- [Inferred Commitments](/concepts/commitments) — memory-like follow-up check-ins
+- [Background Tasks](/automation/tasks) — task ledger for all detached work
+- [Task Flow](/automation/taskflow) — durable multi-step flow orchestration
+- [Hooks](/automation/hooks) — event-driven lifecycle scripts
+- [Plugin hooks](/plugins/hooks) — in-process tool, prompt, message, and lifecycle hooks
+>>>>>>> upstream/main
 - [Standing Orders](/automation/standing-orders) — persistent agent instructions
 - [Heartbeat](/gateway/heartbeat) — periodic main-session turns
 - [Configuration Reference](/gateway/configuration-reference) — all config keys

@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { isApprovalNotFoundError } from "openclaw/plugin-sdk/error-runtime";
 import { createOperatorApprovalsGatewayClient } from "openclaw/plugin-sdk/gateway-runtime";
 import type { ExecApprovalReplyDecision } from "openclaw/plugin-sdk/infra-runtime";
+=======
+// Telegram plugin module implements exec approval resolver behavior.
+import { resolveApprovalOverGateway } from "openclaw/plugin-sdk/approval-gateway-runtime";
+import type { ExecApprovalReplyDecision } from "openclaw/plugin-sdk/approval-reply-runtime";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 
 export type ResolveTelegramExecApprovalParams = {
   cfg: OpenClawConfig;
@@ -15,6 +22,7 @@ export type ResolveTelegramExecApprovalParams = {
 export async function resolveTelegramExecApproval(
   params: ResolveTelegramExecApprovalParams,
 ): Promise<void> {
+<<<<<<< HEAD
   let readySettled = false;
   let resolveReady!: () => void;
   let rejectReady!: (err: unknown) => void;
@@ -80,4 +88,15 @@ export async function resolveTelegramExecApproval(
       gatewayClient.stop();
     });
   }
+=======
+  await resolveApprovalOverGateway({
+    cfg: params.cfg,
+    approvalId: params.approvalId,
+    decision: params.decision,
+    senderId: params.senderId,
+    gatewayUrl: params.gatewayUrl,
+    allowPluginFallback: params.allowPluginFallback,
+    clientDisplayName: `Telegram approval (${params.senderId?.trim() || "unknown"})`,
+  });
+>>>>>>> upstream/main
 }

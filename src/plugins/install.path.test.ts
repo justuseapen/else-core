@@ -1,9 +1,18 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import path from "node:path";
 import * as tar from "tar";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCommandWithTimeout } from "../process/exec.js";
 import { expectSingleNpmInstallIgnoreScriptsCall } from "../test-utils/exec-assertions.js";
+=======
+// Covers plugin install path validation and normalization.
+import fs from "node:fs";
+import path from "node:path";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { runCommandWithTimeout } from "../process/exec.js";
+>>>>>>> upstream/main
 import { initializeGlobalHookRunner, resetGlobalHookRunner } from "./hook-runner-global.js";
 import { createMockPluginRegistry } from "./hooks.test-helpers.js";
 import {
@@ -11,6 +20,10 @@ import {
   installPluginFromPath,
   PLUGIN_INSTALL_ERROR_CODE,
 } from "./install.js";
+<<<<<<< HEAD
+=======
+import { packToArchive } from "./test-helpers/archive-fixtures.js";
+>>>>>>> upstream/main
 import { createSuiteTempRootTracker } from "./test-helpers/fs-fixtures.js";
 
 vi.mock("../process/exec.js", () => ({
@@ -18,6 +31,7 @@ vi.mock("../process/exec.js", () => ({
 }));
 
 const suiteTempRootTracker = createSuiteTempRootTracker("openclaw-plugin-install-path");
+<<<<<<< HEAD
 
 async function packToArchive(params: {
   pkgDir: string;
@@ -38,6 +52,13 @@ async function packToArchive(params: {
   );
   return dest;
 }
+=======
+let dualFormatArchiveCase: {
+  nodeModulesExists: boolean;
+  result: Awaited<ReturnType<typeof installPluginFromPath>>;
+  runCalls: unknown[][];
+};
+>>>>>>> upstream/main
 
 function setupBundleInstallFixture(params: {
   bundleFormat: "codex" | "claude" | "cursor";
@@ -125,13 +146,48 @@ function setupDualFormatInstallFixture(params: { bundleFormat: "codex" | "claude
   return { pluginDir, extensionsDir: path.join(stateDir, "extensions") };
 }
 
+<<<<<<< HEAD
 async function installFromFileWithWarnings(params: {
+=======
+function setupNativePluginInstallFixture() {
+  const caseDir = suiteTempRootTracker.makeTempDir();
+  const stateDir = path.join(caseDir, "state");
+  const pluginDir = path.join(caseDir, "plugin-src");
+  fs.mkdirSync(path.join(pluginDir, "dist"), { recursive: true });
+  fs.writeFileSync(
+    path.join(pluginDir, "package.json"),
+    JSON.stringify({
+      name: "symlink-plugin",
+      version: "1.0.0",
+      openclaw: { extensions: ["./dist/index.js"] },
+    }),
+    "utf-8",
+  );
+  fs.writeFileSync(
+    path.join(pluginDir, "openclaw.plugin.json"),
+    JSON.stringify({
+      id: "symlink-plugin",
+      configSchema: { type: "object", properties: {} },
+    }),
+    "utf-8",
+  );
+  fs.writeFileSync(path.join(pluginDir, "dist", "index.js"), "export {};\n", "utf-8");
+  return { caseDir, pluginDir, extensionsDir: path.join(stateDir, "extensions") };
+}
+
+async function installFromFileWithWarnings(params: {
+  config?: OpenClawConfig;
+>>>>>>> upstream/main
   extensionsDir: string;
   filePath: string;
   dangerouslyForceUnsafeInstall?: boolean;
 }) {
   const warnings: string[] = [];
   const result = await installPluginFromFile({
+<<<<<<< HEAD
+=======
+    config: params.config,
+>>>>>>> upstream/main
     dangerouslyForceUnsafeInstall: params.dangerouslyForceUnsafeInstall,
     filePath: params.filePath,
     extensionsDir: params.extensionsDir,
@@ -147,6 +203,43 @@ afterAll(() => {
   suiteTempRootTracker.cleanup();
 });
 
+<<<<<<< HEAD
+=======
+beforeAll(async () => {
+  const { pluginDir, extensionsDir } = setupDualFormatInstallFixture({
+    bundleFormat: "claude",
+  });
+  const archivePath = path.join(suiteTempRootTracker.makeTempDir(), "dual-format.tgz");
+
+  await packToArchive({
+    pkgDir: pluginDir,
+    outDir: path.dirname(archivePath),
+    outName: path.basename(archivePath),
+  });
+
+  const run = vi.mocked(runCommandWithTimeout);
+  run.mockReset();
+  run.mockResolvedValue({
+    code: 0,
+    stdout: "",
+    stderr: "",
+    signal: null,
+    killed: false,
+    termination: "exit",
+  });
+
+  const result = await installPluginFromPath({
+    path: archivePath,
+    extensionsDir,
+  });
+  dualFormatArchiveCase = {
+    nodeModulesExists: result.ok && fs.existsSync(path.join(result.targetDir, "node_modules")),
+    result,
+    runCalls: [...run.mock.calls],
+  };
+});
+
+>>>>>>> upstream/main
 beforeEach(() => {
   resetGlobalHookRunner();
   vi.clearAllMocks();
@@ -182,7 +275,12 @@ describe("installPluginFromPath", () => {
 
     expect(result.ok).toBe(true);
     expect(handler).toHaveBeenCalledTimes(1);
+<<<<<<< HEAD
     expect(handler.mock.calls[0]?.[0]).toMatchObject({
+=======
+    const [installContext, installMetadata] = handler.mock.calls[0] ?? [];
+    expect(installContext).toEqual({
+>>>>>>> upstream/main
       targetName: "payload",
       targetType: "plugin",
       origin: "plugin-file",
@@ -195,6 +293,14 @@ describe("installPluginFromPath", () => {
       },
       builtinScan: {
         status: "ok",
+<<<<<<< HEAD
+=======
+        scannedFiles: 0,
+        critical: 0,
+        warn: 0,
+        info: 0,
+        findings: [],
+>>>>>>> upstream/main
       },
       plugin: {
         contentType: "file",
@@ -202,14 +308,22 @@ describe("installPluginFromPath", () => {
         extensions: ["payload.js"],
       },
     });
+<<<<<<< HEAD
     expect(handler.mock.calls[0]?.[1]).toEqual({
+=======
+    expect(installMetadata).toEqual({
+>>>>>>> upstream/main
       origin: "plugin-file",
       targetType: "plugin",
       requestKind: "plugin-file",
     });
   });
 
+<<<<<<< HEAD
   it("blocks plain file installs when the scanner finds dangerous code patterns", async () => {
+=======
+  it("allows plain file installs with dangerous code patterns without built-in scanner blocking", async () => {
+>>>>>>> upstream/main
     const baseDir = suiteTempRootTracker.makeTempDir();
     const extensionsDir = path.join(baseDir, "extensions");
     fs.mkdirSync(extensionsDir, { recursive: true });
@@ -222,6 +336,7 @@ describe("installPluginFromPath", () => {
       extensionsDir,
     });
 
+<<<<<<< HEAD
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.code).toBe(PLUGIN_INSTALL_ERROR_CODE.SECURITY_SCAN_BLOCKED);
@@ -231,6 +346,85 @@ describe("installPluginFromPath", () => {
   });
 
   it("allows plain file installs with dangerous code patterns when forced unsafe install is set", async () => {
+=======
+    expect(result.ok).toBe(true);
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it("runs install policy before dry-run file install returns", async () => {
+    const baseDir = suiteTempRootTracker.makeTempDir();
+    const extensionsDir = path.join(baseDir, "extensions");
+    fs.mkdirSync(extensionsDir, { recursive: true });
+
+    const sourcePath = path.join(baseDir, "payload.js");
+    fs.writeFileSync(sourcePath, "console.log('SAFE');\n", "utf-8");
+    const config = {
+      security: {
+        installPolicy: {
+          enabled: true,
+          exec: {
+            source: "exec",
+            command: process.execPath,
+            args: [
+              "-e",
+              'process.stdin.resume();process.stdin.on("end",()=>{process.stdout.write(JSON.stringify({protocolVersion:1,decision:"block",reason:"blocked file plugin"}));});',
+            ],
+            allowInsecurePath: true,
+          },
+        },
+      },
+    } satisfies OpenClawConfig;
+
+    const result = await installPluginFromFile({
+      config,
+      filePath: sourcePath,
+      extensionsDir,
+      dryRun: true,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe(PLUGIN_INSTALL_ERROR_CODE.SECURITY_SCAN_BLOCKED);
+      expect(result.error).toContain("blocked by install policy: blocked file plugin");
+    }
+  });
+
+  it("logs locationless install policy warnings without undefined locations", async () => {
+    const baseDir = suiteTempRootTracker.makeTempDir();
+    const extensionsDir = path.join(baseDir, "extensions");
+    fs.mkdirSync(extensionsDir, { recursive: true });
+
+    const sourcePath = path.join(baseDir, "payload.js");
+    fs.writeFileSync(sourcePath, "console.log('SAFE');\n", "utf-8");
+    const config = {
+      security: {
+        installPolicy: {
+          enabled: true,
+          exec: {
+            source: "exec",
+            command: process.execPath,
+            args: [
+              "-e",
+              'process.stdin.resume();process.stdin.on("end",()=>{process.stdout.write(JSON.stringify({protocolVersion:1,decision:"allow",findings:[{ruleId:"registry-review",severity:"warn",message:"Registry requires review."}]}));});',
+            ],
+            allowInsecurePath: true,
+          },
+        },
+      },
+    } satisfies OpenClawConfig;
+
+    const { result, warnings } = await installFromFileWithWarnings({
+      config,
+      filePath: sourcePath,
+      extensionsDir,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(warnings).toEqual(["Install policy: Registry requires review."]);
+  });
+
+  it("treats dangerouslyForceUnsafeInstall as a no-op for plain file installs", async () => {
+>>>>>>> upstream/main
     const baseDir = suiteTempRootTracker.makeTempDir();
     const extensionsDir = path.join(baseDir, "extensions");
     fs.mkdirSync(extensionsDir, { recursive: true });
@@ -245,6 +439,7 @@ describe("installPluginFromPath", () => {
     });
 
     expect(result.ok).toBe(true);
+<<<<<<< HEAD
     expect(
       warnings.some((warning) =>
         warning.includes(
@@ -252,6 +447,32 @@ describe("installPluginFromPath", () => {
         ),
       ),
     ).toBe(true);
+=======
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it("rejects managed plain file plugin installs through path install", async () => {
+    const baseDir = suiteTempRootTracker.makeTempDir();
+    const extensionsDir = path.join(baseDir, "extensions");
+    fs.mkdirSync(extensionsDir, { recursive: true });
+
+    const sourcePath = path.join(baseDir, "payload.js");
+    fs.writeFileSync(sourcePath, "console.log('SAFE');\n", "utf-8");
+
+    const result = await installPluginFromPath({
+      path: sourcePath,
+      extensionsDir,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(result.code).toBe(PLUGIN_INSTALL_ERROR_CODE.UNSUPPORTED_PLAIN_FILE_PLUGIN);
+    expect(result.error).toBe(
+      "Plain file plugin installs are not supported. Install a plugin directory or archive that contains openclaw.plugin.json, or list standalone plugin files in plugins.load.paths.",
+    );
+>>>>>>> upstream/main
   });
 
   it("blocks hardlink alias overwrites when installing a plain file plugin", async () => {
@@ -269,8 +490,13 @@ describe("installPluginFromPath", () => {
     const targetPath = path.join(extensionsDir, "payload.js");
     fs.linkSync(victimPath, targetPath);
 
+<<<<<<< HEAD
     const result = await installPluginFromPath({
       path: sourcePath,
+=======
+    const result = await installPluginFromFile({
+      filePath: sourcePath,
+>>>>>>> upstream/main
       extensionsDir,
       mode: "update",
     });
@@ -283,6 +509,34 @@ describe("installPluginFromPath", () => {
     expect(fs.readFileSync(victimPath, "utf-8")).toBe("ORIGINAL");
   });
 
+<<<<<<< HEAD
+=======
+  it.runIf(process.platform !== "win32")(
+    "installs local plugin directories when the managed extensions root is a symlink",
+    async () => {
+      const { caseDir, pluginDir, extensionsDir } = setupNativePluginInstallFixture();
+      const realExtensionsDir = path.join(caseDir, "data", "extensions");
+      fs.mkdirSync(realExtensionsDir, { recursive: true });
+      fs.mkdirSync(path.dirname(extensionsDir), { recursive: true });
+      fs.symlinkSync(realExtensionsDir, extensionsDir, "dir");
+
+      const result = await installPluginFromPath({
+        path: pluginDir,
+        extensionsDir,
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) {
+        return;
+      }
+      expect(result.targetDir).toBe(path.join(extensionsDir, "symlink-plugin"));
+      expect(fs.existsSync(path.join(realExtensionsDir, "symlink-plugin", "package.json"))).toBe(
+        true,
+      );
+    },
+  );
+
+>>>>>>> upstream/main
   it("installs Claude bundles from an archive path", async () => {
     const { pluginDir, extensionsDir } = setupBundleInstallFixture({
       bundleFormat: "claude",
@@ -308,6 +562,7 @@ describe("installPluginFromPath", () => {
     expect(fs.existsSync(path.join(result.targetDir, ".claude-plugin", "plugin.json"))).toBe(true);
   });
 
+<<<<<<< HEAD
   it("prefers native package installs over bundle installs for dual-format archives", async () => {
     const { pluginDir, extensionsDir } = setupDualFormatInstallFixture({
       bundleFormat: "claude",
@@ -334,15 +589,26 @@ describe("installPluginFromPath", () => {
       path: archivePath,
       extensionsDir,
     });
+=======
+  it("prefers native package metadata without installing dependencies for dual-format archives", async () => {
+    const { nodeModulesExists, result, runCalls } = dualFormatArchiveCase;
+
+>>>>>>> upstream/main
     expect(result.ok).toBe(true);
     if (!result.ok) {
       return;
     }
     expect(result.pluginId).toBe("native-dual");
+<<<<<<< HEAD
     expect(result.targetDir).toBe(path.join(extensionsDir, "native-dual"));
     expectSingleNpmInstallIgnoreScriptsCall({
       calls: run.mock.calls as Array<[unknown, { cwd?: string } | undefined]>,
       expectedTargetDir: result.targetDir,
     });
+=======
+    expect(path.basename(result.targetDir)).toBe("native-dual");
+    expect(runCalls).toHaveLength(0);
+    expect(nodeModulesExists).toBe(false);
+>>>>>>> upstream/main
   });
 });

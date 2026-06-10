@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Session id resolution tests cover resolving aliases and explicit ids.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import type { SessionEntry } from "../config/sessions/types.js";
 import {

@@ -1,10 +1,30 @@
+// Matrix plugin module implements legacy crypto behavior.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { writeJsonFileAtomically as writeJsonFileAtomicallyImpl } from "openclaw/plugin-sdk/json-store";
 import { resolveStateDir } from "openclaw/plugin-sdk/state-paths";
 import { resolveConfiguredMatrixAccountIds } from "./account-selection.js";
+=======
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { loadJsonFile } from "openclaw/plugin-sdk/json-store";
+import { resolveStateDir } from "openclaw/plugin-sdk/state-paths";
+import { resolveConfiguredMatrixAccountIds } from "./account-selection.js";
+import { isMatrixLegacyCryptoInspectorAvailable } from "./legacy-crypto-inspector-availability.js";
+import {
+  migrateLegacyMatrixLegacyCryptoMigrationFileToStore,
+  migrateLegacyMatrixRecoveryKeyFileToStore,
+  readMatrixLegacyCryptoMigrationState,
+  readMatrixRecoveryKeyState,
+  writeMatrixLegacyCryptoMigrationState,
+  writeMatrixRecoveryKeyState,
+  type MatrixLegacyCryptoMigrationState,
+} from "./matrix/crypto-state-store.js";
+import { formatMatrixErrorMessage } from "./matrix/errors.js";
+import type { MatrixStoredRecoveryKey } from "./matrix/sdk/types.js";
+>>>>>>> upstream/main
 import {
   resolveLegacyMatrixFlatStoreTarget,
   resolveMatrixMigrationAccountTarget,
@@ -26,22 +46,6 @@ type MatrixLegacyCryptoSummary = {
   decryptionKeyBase64: string | null;
 };
 
-type MatrixLegacyCryptoMigrationState = {
-  version: 1;
-  source: "matrix-bot-sdk-rust";
-  accountId: string;
-  deviceId: string | null;
-  roomKeyCounts: MatrixLegacyCryptoCounts | null;
-  backupVersion: string | null;
-  decryptionKeyImported: boolean;
-  restoreStatus: "pending" | "completed" | "manual-action-required";
-  detectedAt: string;
-  restoredAt?: string;
-  importedCount?: number;
-  totalCount?: number;
-  lastError?: string | null;
-};
-
 type MatrixLegacyCryptoPlan = {
   accountId: string;
   rootDir: string;
@@ -55,6 +59,7 @@ type MatrixLegacyCryptoPlan = {
 };
 
 type MatrixLegacyCryptoDetection = {
+  inspectorAvailable: boolean;
   plans: MatrixLegacyCryptoPlan[];
   warnings: string[];
 };
@@ -67,7 +72,6 @@ type MatrixLegacyCryptoPreparationResult = {
 
 type MatrixLegacyCryptoPrepareDeps = {
   inspectLegacyStore: MatrixLegacyCryptoInspector;
-  writeJsonFileAtomically: typeof writeJsonFileAtomicallyImpl;
 };
 
 type MatrixLegacyCryptoInspectorParams = {
@@ -95,17 +99,10 @@ type MatrixLegacyBotSdkMetadata = {
   deviceId: string | null;
 };
 
-type MatrixStoredRecoveryKey = {
-  version: 1;
-  createdAt: string;
-  keyId?: string | null;
-  encodedPrivateKey?: string;
-  privateKeyBase64: string;
-  keyInfo?: {
-    passphrase?: unknown;
-    name?: string;
-  };
-};
+async function loadMatrixLegacyCryptoInspector(): Promise<MatrixLegacyCryptoInspector> {
+  const module = await import("./matrix/legacy-crypto-inspector.js");
+  return module.inspectLegacyMatrixCryptoStore as MatrixLegacyCryptoInspector;
+}
 
 function isMatrixLegacyCryptoInspectorAvailable(): boolean {
   return true;
@@ -209,26 +206,19 @@ function resolveLegacyMatrixFlatStorePlan(params: {
 function loadLegacyBotSdkMetadata(cryptoRootDir: string): MatrixLegacyBotSdkMetadata {
   const metadataPath = path.join(cryptoRootDir, "bot-sdk.json");
   const fallback: MatrixLegacyBotSdkMetadata = { deviceId: null };
-  try {
-    if (!fs.existsSync(metadataPath)) {
-      return fallback;
-    }
-    const parsed = JSON.parse(fs.readFileSync(metadataPath, "utf8")) as {
-      deviceId?: unknown;
-    };
-    return {
-      deviceId:
-        typeof parsed.deviceId === "string" && parsed.deviceId.trim() ? parsed.deviceId : null,
-    };
-  } catch {
-    return fallback;
-  }
+  const parsed = loadJsonFile<{ deviceId?: unknown }>(metadataPath);
+  return {
+    deviceId:
+      typeof parsed?.deviceId === "string" && parsed.deviceId.trim()
+        ? parsed.deviceId
+        : fallback.deviceId,
+  };
 }
 
 function resolveMatrixLegacyCryptoPlans(params: {
   cfg: OpenClawConfig;
   env: NodeJS.ProcessEnv;
-}): MatrixLegacyCryptoDetection {
+}): Omit<MatrixLegacyCryptoDetection, "inspectorAvailable"> {
   const warnings: string[] = [];
   const plans: MatrixLegacyCryptoPlan[] = [];
 
@@ -288,36 +278,6 @@ function resolveMatrixLegacyCryptoPlans(params: {
   return { plans, warnings };
 }
 
-function loadStoredRecoveryKey(filePath: string): MatrixStoredRecoveryKey | null {
-  try {
-    if (!fs.existsSync(filePath)) {
-      return null;
-    }
-    return JSON.parse(fs.readFileSync(filePath, "utf8")) as MatrixStoredRecoveryKey;
-  } catch {
-    return null;
-  }
-}
-
-function loadLegacyCryptoMigrationState(filePath: string): MatrixLegacyCryptoMigrationState | null {
-  try {
-    if (!fs.existsSync(filePath)) {
-      return null;
-    }
-    return JSON.parse(fs.readFileSync(filePath, "utf8")) as MatrixLegacyCryptoMigrationState;
-  } catch {
-    return null;
-  }
-}
-
-async function persistLegacyMigrationState(params: {
-  filePath: string;
-  state: MatrixLegacyCryptoMigrationState;
-  writeJsonFileAtomically: typeof writeJsonFileAtomicallyImpl;
-}): Promise<void> {
-  await params.writeJsonFileAtomically(params.filePath, params.state);
-}
-
 export function detectLegacyMatrixCrypto(params: {
   cfg: OpenClawConfig;
   env?: NodeJS.ProcessEnv;
@@ -326,13 +286,24 @@ export function detectLegacyMatrixCrypto(params: {
     cfg: params.cfg,
     env: params.env ?? process.env,
   });
+<<<<<<< HEAD
   if (detection.plans.length > 0 && !isMatrixLegacyCryptoInspectorAvailable()) {
+=======
+  const inspectorAvailable =
+    detection.plans.length === 0 || isMatrixLegacyCryptoInspectorAvailable();
+  if (!inspectorAvailable && detection.plans.length > 0) {
+>>>>>>> upstream/main
     return {
+      inspectorAvailable,
       plans: detection.plans,
       warnings: [...detection.warnings, MATRIX_LEGACY_CRYPTO_INSPECTOR_UNAVAILABLE_MESSAGE],
     };
   }
-  return detection;
+  return {
+    inspectorAvailable,
+    plans: detection.plans,
+    warnings: detection.warnings,
+  };
 }
 
 export async function autoPrepareLegacyMatrixCrypto(params: {
@@ -345,10 +316,15 @@ export async function autoPrepareLegacyMatrixCrypto(params: {
   const detection = params.deps?.inspectLegacyStore
     ? resolveMatrixLegacyCryptoPlans({ cfg: params.cfg, env })
     : detectLegacyMatrixCrypto({ cfg: params.cfg, env });
+  const inspectorAvailable =
+    "inspectorAvailable" in detection ? detection.inspectorAvailable : true;
   const warnings = [...detection.warnings];
   const changes: string[] = [];
+<<<<<<< HEAD
   const writeJsonFileAtomically =
     params.deps?.writeJsonFileAtomically ?? writeJsonFileAtomicallyImpl;
+=======
+>>>>>>> upstream/main
   if (detection.plans.length === 0) {
     if (warnings.length > 0) {
       params.log?.warn?.(
@@ -361,13 +337,28 @@ export async function autoPrepareLegacyMatrixCrypto(params: {
       warnings,
     };
   }
+<<<<<<< HEAD
+=======
+  if (!params.deps?.inspectLegacyStore && !inspectorAvailable) {
+    if (warnings.length > 0) {
+      params.log?.warn?.(
+        `matrix: legacy encrypted-state warnings:\n${warnings.map((entry) => `- ${entry}`).join("\n")}`,
+      );
+    }
+    return {
+      migrated: false,
+      changes,
+      warnings,
+    };
+  }
+>>>>>>> upstream/main
 
   let inspectLegacyStore = params.deps?.inspectLegacyStore;
   if (!inspectLegacyStore) {
     try {
       inspectLegacyStore = await loadMatrixLegacyCryptoInspector();
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message = formatMatrixErrorMessage(err);
       if (!warnings.includes(message)) {
         warnings.push(message);
       }
@@ -392,7 +383,15 @@ export async function autoPrepareLegacyMatrixCrypto(params: {
   }
 
   for (const plan of detection.plans) {
-    const existingState = loadLegacyCryptoMigrationState(plan.statePath);
+    try {
+      migrateLegacyMatrixLegacyCryptoMigrationFileToStore(plan.rootDir);
+      migrateLegacyMatrixRecoveryKeyFileToStore(plan.rootDir);
+    } catch (err) {
+      warnings.push(
+        `Failed migrating Matrix crypto sidecar state for account "${plan.accountId}" (${plan.rootDir}): ${String(err)}`,
+      );
+    }
+    const existingState = readMatrixLegacyCryptoMigrationState(plan.rootDir);
     if (existingState?.version === 1) {
       continue;
     }
@@ -421,13 +420,13 @@ export async function autoPrepareLegacyMatrixCrypto(params: {
 
     let decryptionKeyImported = false;
     if (summary.decryptionKeyBase64) {
-      const existingRecoveryKey = loadStoredRecoveryKey(plan.recoveryKeyPath);
+      const existingRecoveryKey = readMatrixRecoveryKeyState(plan.rootDir);
       if (
         existingRecoveryKey?.privateKeyBase64 &&
         existingRecoveryKey.privateKeyBase64 !== summary.decryptionKeyBase64
       ) {
         warnings.push(
-          `Legacy Matrix backup key was found for account "${plan.accountId}", but ${plan.recoveryKeyPath} already contains a different recovery key. Leaving the existing file unchanged.`,
+          `Legacy Matrix backup key was found for account "${plan.accountId}", but Matrix SQLite state already contains a different recovery key. Leaving the existing state unchanged.`,
         );
       } else if (!existingRecoveryKey?.privateKeyBase64) {
         const payload: MatrixStoredRecoveryKey = {
@@ -437,14 +436,17 @@ export async function autoPrepareLegacyMatrixCrypto(params: {
           privateKeyBase64: summary.decryptionKeyBase64,
         };
         try {
-          await writeJsonFileAtomically(plan.recoveryKeyPath, payload);
+          writeMatrixRecoveryKeyState({
+            storageRootDir: plan.rootDir,
+            payload,
+          });
           changes.push(
-            `Imported Matrix legacy backup key for account "${plan.accountId}": ${plan.recoveryKeyPath}`,
+            `Imported Matrix legacy backup key for account "${plan.accountId}" into SQLite`,
           );
           decryptionKeyImported = true;
         } catch (err) {
           warnings.push(
-            `Failed writing Matrix recovery key for account "${plan.accountId}" (${plan.recoveryKeyPath}): ${String(err)}`,
+            `Failed writing Matrix recovery key for account "${plan.accountId}" to SQLite: ${String(err)}`,
           );
         }
       } else {
@@ -477,7 +479,7 @@ export async function autoPrepareLegacyMatrixCrypto(params: {
     if (
       summary.decryptionKeyBase64 &&
       !decryptionKeyImported &&
-      !loadStoredRecoveryKey(plan.recoveryKeyPath)
+      !readMatrixRecoveryKeyState(plan.rootDir)
     ) {
       continue;
     }
@@ -495,17 +497,16 @@ export async function autoPrepareLegacyMatrixCrypto(params: {
       lastError: null,
     };
     try {
-      await persistLegacyMigrationState({
-        filePath: plan.statePath,
+      writeMatrixLegacyCryptoMigrationState({
+        storageRootDir: plan.rootDir,
         state,
-        writeJsonFileAtomically,
       });
       changes.push(
-        `Prepared Matrix legacy encrypted-state migration for account "${plan.accountId}": ${plan.statePath}`,
+        `Prepared Matrix legacy encrypted-state migration for account "${plan.accountId}" in SQLite`,
       );
     } catch (err) {
       warnings.push(
-        `Failed writing Matrix legacy encrypted-state migration record for account "${plan.accountId}" (${plan.statePath}): ${String(err)}`,
+        `Failed writing Matrix legacy encrypted-state migration record for account "${plan.accountId}" to SQLite: ${String(err)}`,
       );
     }
   }

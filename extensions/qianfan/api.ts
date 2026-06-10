@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Qianfan API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   QIANFAN_BASE_URL,
   QIANFAN_DEFAULT_MODEL_ID,

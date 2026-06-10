@@ -1,11 +1,22 @@
+<<<<<<< HEAD
 import { getChannelPlugin } from "../channels/plugins/index.js";
+=======
+// Stores plugin command registry state for the current process lifecycle.
+import { normalizeOptionalLowercaseString } from "@openclaw/normalization-core/string-coerce";
+>>>>>>> upstream/main
 import { resolveGlobalSingleton } from "../shared/global-singleton.js";
-import type { OpenClawPluginCommandDefinition } from "./types.js";
+import { normalizeAgentPromptSurfaceKind } from "./agent-prompt-surface-kind.js";
+import type {
+  AgentPromptGuidance,
+  AgentPromptSurfaceKind,
+  OpenClawPluginCommandDefinition,
+} from "./types.js";
 
 export type RegisteredPluginCommand = OpenClawPluginCommandDefinition & {
   pluginId: string;
   pluginName?: string;
   pluginRoot?: string;
+  trustedOwnerStatusExposure?: true;
 };
 
 type PluginCommandState = {
@@ -50,22 +61,11 @@ export function clearPluginCommandsForPlugin(pluginId: string): void {
   }
 }
 
-function resolvePluginNativeName(
-  command: OpenClawPluginCommandDefinition,
-  provider?: string,
-): string {
-  const providerName = provider?.trim().toLowerCase();
-  const providerOverride = providerName ? command.nativeNames?.[providerName] : undefined;
-  if (typeof providerOverride === "string" && providerOverride.trim()) {
-    return providerOverride.trim();
-  }
-  const defaultOverride = command.nativeNames?.default;
-  if (typeof defaultOverride === "string" && defaultOverride.trim()) {
-    return defaultOverride.trim();
-  }
-  return command.name;
+export function isTrustedReservedCommandOwner(command: RegisteredPluginCommand): boolean {
+  return command.ownership === "reserved";
 }
 
+<<<<<<< HEAD
 export function getPluginCommandSpecs(provider?: string): Array<{
   name: string;
   description: string;
@@ -83,4 +83,68 @@ export function getPluginCommandSpecs(provider?: string): Array<{
     description: cmd.description,
     acceptsArgs: cmd.acceptsArgs ?? false,
   }));
+=======
+export function canExposeSenderIsOwner(command: RegisteredPluginCommand): boolean {
+  return (
+    (Array.isArray(command.requiredScopes) && command.requiredScopes.length > 0) ||
+    command.trustedOwnerStatusExposure === true
+  );
+}
+
+export function listRegisteredPluginCommands(): RegisteredPluginCommand[] {
+  return Array.from(pluginCommands.values());
+}
+
+export function listRegisteredPluginAgentPromptGuidance(params?: {
+  surface?: AgentPromptSurfaceKind;
+  includeLegacyGlobalGuidance?: boolean;
+}): string[] {
+  const lines: string[] = [];
+  const seen = new Set<string>();
+  for (const command of pluginCommands.values()) {
+    for (const entry of command.agentPromptGuidance ?? []) {
+      const trimmed = resolveAgentPromptGuidanceTextForSurface(entry, {
+        surface: params?.surface ? normalizeAgentPromptSurfaceKind(params.surface) : undefined,
+        includeLegacyGlobalGuidance: params?.includeLegacyGlobalGuidance ?? true,
+      });
+      if (!trimmed || seen.has(trimmed)) {
+        continue;
+      }
+      seen.add(trimmed);
+      lines.push(trimmed);
+    }
+  }
+  return lines;
+}
+
+function resolveAgentPromptGuidanceTextForSurface(
+  entry: AgentPromptGuidance,
+  params: {
+    surface?: AgentPromptSurfaceKind;
+    includeLegacyGlobalGuidance: boolean;
+  },
+): string | undefined {
+  if (typeof entry === "string") {
+    return params.includeLegacyGlobalGuidance ? entry.trim() : undefined;
+  }
+  const text = entry.text.trim();
+  if (!params.surface) {
+    return text;
+  }
+  if (!entry.surfaces || entry.surfaces.length === 0) {
+    return params.includeLegacyGlobalGuidance ? text : undefined;
+  }
+  return entry.surfaces.includes(params.surface) ? text : undefined;
+}
+
+export function restorePluginCommands(commands: readonly RegisteredPluginCommand[]): void {
+  pluginCommands.clear();
+  for (const command of commands) {
+    const name = normalizeOptionalLowercaseString(command.name);
+    if (!name) {
+      continue;
+    }
+    pluginCommands.set(`/${name}`, command);
+  }
+>>>>>>> upstream/main
 }

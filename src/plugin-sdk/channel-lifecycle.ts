@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 export * from "./channel-lifecycle.core.js";
+=======
+/** @deprecated Compatibility subpath. Use `openclaw/plugin-sdk/channel-outbound`. */
+export * from "./channel-lifecycle.core.js";
+export * from "../channels/draft-preview-finalizer.js";
+>>>>>>> upstream/main
 export * from "../channels/draft-stream-controls.js";
 export * from "../channels/draft-stream-loop.js";
 export { createRunStateMachine } from "../channels/run-state-machine.js";

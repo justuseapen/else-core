@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Slack API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
 export {
   PAIRING_APPROVED_MESSAGE,
@@ -5,7 +9,11 @@ export {
   resolveConfiguredFromRequiredCredentialStatuses,
 } from "openclaw/plugin-sdk/channel-status";
 export type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
+<<<<<<< HEAD
 export type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+export type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 export { looksLikeSlackTargetId, normalizeSlackMessagingTarget } from "./target-parsing.js";
 
 const SLACK_CHANNEL_META = {

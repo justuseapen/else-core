@@ -1,8 +1,18 @@
+<<<<<<< HEAD
+=======
+// Detects approval-not-found errors across gateway response shapes.
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+
+>>>>>>> upstream/main
 const INVALID_REQUEST = "INVALID_REQUEST";
 const APPROVAL_NOT_FOUND = "APPROVAL_NOT_FOUND";
 
 function readErrorCode(value: unknown): string | null {
+<<<<<<< HEAD
   return typeof value === "string" && value.trim() ? value : null;
+=======
+  return typeof value === "string" ? (normalizeOptionalString(value) ?? null) : null;
+>>>>>>> upstream/main
 }
 
 function readApprovalNotFoundDetailsReason(value: unknown): string | null {
@@ -10,9 +20,19 @@ function readApprovalNotFoundDetailsReason(value: unknown): string | null {
     return null;
   }
   const reason = (value as { reason?: unknown }).reason;
+<<<<<<< HEAD
   return typeof reason === "string" && reason.trim() ? reason : null;
 }
 
+=======
+  return typeof reason === "string" ? (normalizeOptionalString(reason) ?? null) : null;
+}
+
+/**
+ * Detects approval-not-found failures across gateway error shapes.
+ * Kept broad enough for legacy message-only errors emitted before structured codes.
+ */
+>>>>>>> upstream/main
 export function isApprovalNotFoundError(err: unknown): boolean {
   if (!(err instanceof Error)) {
     return false;

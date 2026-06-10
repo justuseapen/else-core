@@ -1,6 +1,17 @@
+<<<<<<< HEAD
 import { describe, expect, it } from "vitest";
 import {
   escapeInternalRuntimeContextDelimiters,
+=======
+/**
+ * Regression coverage for internal runtime-context stripping and extraction.
+ * Verifies protected delimiters, legacy blocks, and custom-message filtering.
+ */
+import { describe, expect, it } from "vitest";
+import {
+  escapeInternalRuntimeContextDelimiters,
+  extractInternalRuntimeContext,
+>>>>>>> upstream/main
   hasInternalRuntimeContext,
   INTERNAL_RUNTIME_CONTEXT_BEGIN,
   INTERNAL_RUNTIME_CONTEXT_END,
@@ -34,6 +45,43 @@ describe("internal runtime context codec", () => {
     expect(stripInternalRuntimeContext(input)).toBe("Visible intro\n\nVisible outro");
   });
 
+<<<<<<< HEAD
+=======
+  it("extracts marked internal runtime blocks and preserves surrounding text", () => {
+    const first = [
+      INTERNAL_RUNTIME_CONTEXT_BEGIN,
+      "first secret",
+      INTERNAL_RUNTIME_CONTEXT_END,
+    ].join("\n");
+    const second = [
+      INTERNAL_RUNTIME_CONTEXT_BEGIN,
+      "second secret",
+      INTERNAL_RUNTIME_CONTEXT_END,
+    ].join("\n");
+    const input = ["Visible intro", "", first, "", "Visible middle", "", second].join("\n");
+
+    expect(extractInternalRuntimeContext(input)).toEqual({
+      text: "Visible intro\n\nVisible middle",
+      runtimeContext: [first, "", second].join("\n"),
+    });
+  });
+
+  it("fails closed when extracting malformed marked internal runtime blocks", () => {
+    const input = [
+      "Visible intro",
+      "",
+      INTERNAL_RUNTIME_CONTEXT_BEGIN,
+      "secret runtime context",
+      "",
+      "Visible-looking tail",
+    ].join("\n");
+
+    expect(extractInternalRuntimeContext(input)).toEqual({
+      text: "Visible intro",
+    });
+  });
+
+>>>>>>> upstream/main
   it("detects canonical runtime context and ignores inline marker mentions", () => {
     expect(
       hasInternalRuntimeContext(

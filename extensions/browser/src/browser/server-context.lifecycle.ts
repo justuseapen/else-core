@@ -1,6 +1,18 @@
+<<<<<<< HEAD
 import type { ResolvedBrowserProfile } from "./config.js";
 import { getBrowserProfileCapabilities } from "./profile-capabilities.js";
 
+=======
+/**
+ * Browser profile lifecycle helpers shared by availability, reset, and runtime
+ * teardown.
+ */
+import type { ResolvedBrowserProfile } from "./config.js";
+import { getBrowserProfileCapabilities } from "./profile-capabilities.js";
+import { getPwAiModule } from "./pw-ai-module.js";
+
+/** Resolves how an idle stop should behave for local, remote, or attach-only profiles. */
+>>>>>>> upstream/main
 export function resolveIdleProfileStopOutcome(profile: ResolvedBrowserProfile): {
   stopped: boolean;
   closePlaywright: boolean;
@@ -18,10 +30,18 @@ export function resolveIdleProfileStopOutcome(profile: ResolvedBrowserProfile): 
   };
 }
 
+<<<<<<< HEAD
 export async function closePlaywrightBrowserConnectionForProfile(cdpUrl?: string): Promise<void> {
   try {
     const mod = await import("./pw-ai.js");
     await mod.closePlaywrightBrowserConnection(cdpUrl ? { cdpUrl } : undefined);
+=======
+/** Closes cached Playwright CDP connections for one profile without requiring the module. */
+export async function closePlaywrightBrowserConnectionForProfile(cdpUrl?: string): Promise<void> {
+  try {
+    const mod = await getPwAiModule({ mode: "soft" });
+    await mod?.closePlaywrightBrowserConnection(cdpUrl ? { cdpUrl } : undefined);
+>>>>>>> upstream/main
   } catch {
     // ignore
   }

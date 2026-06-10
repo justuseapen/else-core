@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { ToolDisplaySpec as ToolDisplaySpecBase } from "./tool-display-common.js";
 
 export type ToolDisplaySpec = ToolDisplaySpecBase & {
@@ -5,11 +6,30 @@ export type ToolDisplaySpec = ToolDisplaySpecBase & {
 };
 
 export type ToolDisplayConfig = {
+=======
+/**
+ * Tool display metadata registry.
+ *
+ * Agent UIs use this config to map tool names/actions to stable titles,
+ * icons, and detail keys without embedding presentation data in tool handlers.
+ */
+import type { ToolDisplaySpec as ToolDisplaySpecBase } from "./tool-display-common.js";
+
+type ToolDisplaySpec = ToolDisplaySpecBase & {
+  emoji?: string;
+};
+
+type ToolDisplayConfig = {
+>>>>>>> upstream/main
   version: number;
   fallback: ToolDisplaySpec;
   tools: Record<string, ToolDisplaySpec>;
 };
 
+<<<<<<< HEAD
+=======
+/** Static display metadata for known tools plus fallback detail-key selection. */
+>>>>>>> upstream/main
 export const TOOL_DISPLAY_CONFIG: ToolDisplayConfig = {
   version: 1,
   fallback: {
@@ -249,11 +269,37 @@ export const TOOL_DISPLAY_CONFIG: ToolDisplayConfig = {
         },
       },
     },
+<<<<<<< HEAD
+=======
+    get_goal: {
+      emoji: "🎯",
+      title: "Get Goal",
+      detailKeys: [],
+    },
+    create_goal: {
+      emoji: "🎯",
+      title: "Create Goal",
+      detailKeys: ["objective", "token_budget"],
+    },
+    update_goal: {
+      emoji: "🎯",
+      title: "Update Goal",
+      detailKeys: ["status"],
+    },
+>>>>>>> upstream/main
     update_plan: {
       emoji: "🗺️",
       title: "Update Plan",
       detailKeys: ["explanation", "plan.0.step"],
     },
+<<<<<<< HEAD
+=======
+    skill_workshop: {
+      emoji: "🧰",
+      title: "Skill Workshop",
+      detailKeys: ["action", "name", "proposal_id"],
+    },
+>>>>>>> upstream/main
     gateway: {
       emoji: "🔌",
       title: "Gateway",
@@ -264,6 +310,7 @@ export const TOOL_DISPLAY_CONFIG: ToolDisplayConfig = {
         },
       },
     },
+<<<<<<< HEAD
     whatsapp_login: {
       emoji: "🟢",
       title: "WhatsApp Login",
@@ -398,6 +445,8 @@ export const TOOL_DISPLAY_CONFIG: ToolDisplayConfig = {
         },
       },
     },
+=======
+>>>>>>> upstream/main
     exec: {
       emoji: "🛠️",
       title: "Exec",
@@ -421,7 +470,21 @@ export const TOOL_DISPLAY_CONFIG: ToolDisplayConfig = {
     sessions_list: {
       emoji: "🗂️",
       title: "Sessions",
+<<<<<<< HEAD
       detailKeys: ["kinds", "limit", "activeMinutes", "messageLimit"],
+=======
+      detailKeys: [
+        "kinds",
+        "label",
+        "agentId",
+        "search",
+        "limit",
+        "activeMinutes",
+        "includeDerivedTitles",
+        "includeLastMessage",
+        "messageLimit",
+      ],
+>>>>>>> upstream/main
     },
     sessions_send: {
       emoji: "📨",
@@ -433,6 +496,42 @@ export const TOOL_DISPLAY_CONFIG: ToolDisplayConfig = {
       title: "Session History",
       detailKeys: ["sessionKey", "limit", "includeTools"],
     },
+<<<<<<< HEAD
+=======
+    transcripts: {
+      emoji: "🎙️",
+      title: "Transcripts",
+      actions: {
+        start: {
+          label: "start",
+          detailKeys: [
+            "sessionId",
+            "title",
+            "providerId",
+            "accountId",
+            "guildId",
+            "channelId",
+            "meetingUrl",
+          ],
+        },
+        stop: {
+          label: "stop",
+          detailKeys: ["sessionId"],
+        },
+        status: {
+          label: "status",
+        },
+        import: {
+          label: "import",
+          detailKeys: ["sessionId", "title", "providerId", "meetingUrl", "speakerLabel"],
+        },
+        summarize: {
+          label: "summarize",
+          detailKeys: ["sessionId"],
+        },
+      },
+    },
+>>>>>>> upstream/main
     sessions_spawn: {
       emoji: "🧑‍🔧",
       title: "Sub-agent",
@@ -693,9 +792,12 @@ export const TOOL_DISPLAY_CONFIG: ToolDisplayConfig = {
     },
   },
 };
+<<<<<<< HEAD
 
 export function serializeToolDisplayConfig(
   config: ToolDisplayConfig = TOOL_DISPLAY_CONFIG,
 ): string {
   return `${JSON.stringify(config, null, 2)}\n`;
 }
+=======
+>>>>>>> upstream/main

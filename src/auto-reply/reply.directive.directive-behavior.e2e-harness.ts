@@ -1,23 +1,31 @@
-import path from "node:path";
-import { afterEach, beforeEach, expect, vi } from "vitest";
-import { withTempHome as withTempHomeBase } from "../../test/helpers/temp-home.js";
+/** E2E harness for reply directive behavior tests. */
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
+import { afterEach, beforeEach, vi } from "vitest";
 import { clearRuntimeAuthProfileStoreSnapshots } from "../agents/auth-profiles.js";
-import { resetSkillsRefreshForTest } from "../agents/skills/refresh.js";
-import { clearSessionStoreCacheForTest, loadSessionStore } from "../config/sessions.js";
+import { clearSessionStoreCacheForTest } from "../config/sessions.js";
 import { resetSystemEventsForTest } from "../infra/system-events.js";
 import { createEmptyPluginRegistry } from "../plugins/registry-empty.js";
 import type { PluginProviderRegistration } from "../plugins/registry.js";
 import { resetPluginRuntimeStateForTest, setActivePluginRegistry } from "../plugins/runtime.js";
 import type { ProviderPlugin } from "../plugins/types.js";
+<<<<<<< HEAD
+=======
+import { resetSkillsRefreshForTest } from "../skills/runtime/refresh.js";
+>>>>>>> upstream/main
 import {
+  clearSessionAuthProfileOverrideMock,
+  compactEmbeddedAgentSessionMock,
   loadModelCatalogMock,
-  runEmbeddedPiAgentMock,
+  resolveCommandSecretRefsViaGatewayMock,
+  resolveSessionAuthProfileOverrideMock,
+  runDirectiveBehaviorReplyAgent,
+  runEmbeddedAgentMock,
+  runDirectiveBehaviorPreparedReply,
+  runPreparedReplyMock,
+  runReplyAgentMock,
 } from "./reply.directive.directive-behavior.e2e-mocks.js";
 
-export const MAIN_SESSION_KEY = "agent:main:main";
-type RunPreparedReply = typeof import("./reply/get-reply-run.js").runPreparedReply;
-
-export const DEFAULT_TEST_MODEL_CATALOG: Array<{
+const DEFAULT_TEST_MODEL_CATALOG: Array<{
   id: string;
   name: string;
   provider: string;
@@ -28,13 +36,26 @@ export const DEFAULT_TEST_MODEL_CATALOG: Array<{
   { id: "gpt-5.4-pro", name: "GPT-5.4 Pro", provider: "openai" },
   { id: "gpt-5.4-mini", name: "GPT-5.4 Mini", provider: "openai" },
   { id: "gpt-5.4-nano", name: "GPT-5.4 Nano", provider: "openai" },
+<<<<<<< HEAD
   { id: "gpt-5.4", name: "GPT-5.4 (Codex)", provider: "openai-codex" },
   { id: "gpt-5.4-mini", name: "GPT-5.4 Mini (Codex)", provider: "openai-codex" },
+=======
+  { id: "gpt-5.4", name: "GPT-5.4 (Codex)", provider: "openai" },
+  { id: "gpt-5.4-pro", name: "GPT-5.4 Pro (Codex)", provider: "openai" },
+  { id: "gpt-5.4-mini", name: "GPT-5.4 Mini (Codex)", provider: "openai" },
+>>>>>>> upstream/main
   { id: "gpt-4.1-mini", name: "GPT-4.1 Mini", provider: "openai" },
 ];
 
-export type ReplyPayloadText = { text?: string | null } | null | undefined;
+const OPENAI_XHIGH_MODEL_IDS = [
+  "gpt-5.4",
+  "gpt-5.4-pro",
+  "gpt-5.4-mini",
+  "gpt-5.4-nano",
+  "gpt-5.2",
+] as const;
 
+<<<<<<< HEAD
 const OPENAI_XHIGH_MODEL_IDS = [
   "gpt-5.4",
   "gpt-5.4-pro",
@@ -45,12 +66,18 @@ const OPENAI_XHIGH_MODEL_IDS = [
 
 const OPENAI_CODEX_XHIGH_MODEL_IDS = [
   "gpt-5.4",
+=======
+const OPENAI_CODEX_XHIGH_MODEL_IDS = [
+  "gpt-5.4",
+  "gpt-5.4-pro",
+>>>>>>> upstream/main
   "gpt-5.4-mini",
   "gpt-5.3-codex",
   "gpt-5.3-codex-spark",
   "gpt-5.2-codex",
   "gpt-5.1-codex",
 ] as const;
+<<<<<<< HEAD
 
 function createThinkingPolicyProvider(
   providerId: string,
@@ -90,40 +117,38 @@ export function replyText(res: ReplyPayloadText | ReplyPayloadText[]): string | 
   }
   return typeof res?.text === "string" ? res.text : undefined;
 }
+=======
+>>>>>>> upstream/main
 
-export function replyTexts(res: ReplyPayloadText | ReplyPayloadText[]): string[] {
-  const payloads = Array.isArray(res) ? res : [res];
-  return payloads
-    .map((entry) => (typeof entry?.text === "string" ? entry.text : undefined))
-    .filter((value): value is string => Boolean(value));
-}
-
-export function makeEmbeddedTextResult(text = "done") {
+function createThinkingPolicyProvider(
+  providerId: string,
+  xhighModelIds: readonly string[],
+): ProviderPlugin {
   return {
-    payloads: [{ text }],
-    meta: {
-      durationMs: 5,
-      agentMeta: { sessionId: "s", provider: "p", model: "m" },
-    },
+    id: providerId,
+    label: providerId,
+    auth: [],
+    supportsXHighThinking: ({ modelId }) =>
+      xhighModelIds.includes(normalizeLowercaseStringOrEmpty(modelId)),
   };
 }
 
-export function mockEmbeddedTextResult(text = "done") {
-  runEmbeddedPiAgentMock.mockResolvedValue(makeEmbeddedTextResult(text));
-}
-
-export async function withTempHome<T>(fn: (home: string) => Promise<T>): Promise<T> {
-  return withTempHomeBase(
-    async (home) => {
-      return await fn(home);
+function createDirectiveBehaviorProviderRegistry(): ReturnType<typeof createEmptyPluginRegistry> {
+  const registry = createEmptyPluginRegistry();
+  const providers: PluginProviderRegistration[] = [
+    {
+      pluginId: "openai",
+      pluginName: "OpenAI Provider",
+      source: "test",
+      provider: createThinkingPolicyProvider("openai", OPENAI_XHIGH_MODEL_IDS),
     },
     {
-      env: {
-        OPENCLAW_AGENT_DIR: (home) => path.join(home, ".openclaw", "agent"),
-        PI_CODING_AGENT_DIR: (home) => path.join(home, ".openclaw", "agent"),
-      },
-      prefix: "openclaw-reply-",
+      pluginId: "openai",
+      pluginName: "OpenAI Provider",
+      source: "test",
+      provider: createThinkingPolicyProvider("openai", OPENAI_CODEX_XHIGH_MODEL_IDS),
     },
+<<<<<<< HEAD
   );
 }
 
@@ -192,6 +217,11 @@ export function assertElevatedOffStatusReply(text: string | undefined) {
   const optionsLine = text?.split("\n").find((line) => line.trim().startsWith("⚙️"));
   expect(optionsLine).toBeTruthy();
   expect(optionsLine).not.toContain("elevated");
+=======
+  ];
+  registry.providers.push(...providers);
+  return registry;
+>>>>>>> upstream/main
 }
 
 export function installDirectiveBehaviorE2EHooks() {
@@ -202,9 +232,30 @@ export function installDirectiveBehaviorE2EHooks() {
     resetSystemEventsForTest();
     resetPluginRuntimeStateForTest();
     setActivePluginRegistry(createDirectiveBehaviorProviderRegistry());
+<<<<<<< HEAD
     runEmbeddedPiAgentMock.mockReset();
+=======
+    compactEmbeddedAgentSessionMock.mockReset();
+    compactEmbeddedAgentSessionMock.mockResolvedValue({ payloads: [], meta: {} });
+    runEmbeddedAgentMock.mockReset();
+>>>>>>> upstream/main
     loadModelCatalogMock.mockReset();
     loadModelCatalogMock.mockResolvedValue(DEFAULT_TEST_MODEL_CATALOG);
+    resolveCommandSecretRefsViaGatewayMock.mockReset();
+    resolveCommandSecretRefsViaGatewayMock.mockImplementation(async ({ config }) => ({
+      resolvedConfig: config,
+      diagnostics: [],
+      targetStatesByPath: {},
+      hadUnresolvedTargets: false,
+    }));
+    clearSessionAuthProfileOverrideMock.mockReset();
+    clearSessionAuthProfileOverrideMock.mockResolvedValue(undefined);
+    resolveSessionAuthProfileOverrideMock.mockReset();
+    resolveSessionAuthProfileOverrideMock.mockResolvedValue(undefined);
+    runReplyAgentMock.mockReset();
+    runReplyAgentMock.mockImplementation(runDirectiveBehaviorReplyAgent);
+    runPreparedReplyMock.mockReset();
+    runPreparedReplyMock.mockImplementation(runDirectiveBehaviorPreparedReply);
   });
 
   afterEach(async () => {
@@ -216,6 +267,7 @@ export function installDirectiveBehaviorE2EHooks() {
     vi.restoreAllMocks();
   });
 }
+<<<<<<< HEAD
 
 export function installFreshDirectiveBehaviorReplyMocks(params?: {
   onActualRunPreparedReply?: (runPreparedReply: RunPreparedReply) => void;
@@ -272,3 +324,5 @@ export function makeRestrictedElevatedDisabledConfig(home: string) {
     session: { store: path.join(home, "sessions.json") },
   } as const;
 }
+=======
+>>>>>>> upstream/main

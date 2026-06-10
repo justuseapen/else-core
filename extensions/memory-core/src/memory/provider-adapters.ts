@@ -1,7 +1,7 @@
-import fsSync from "node:fs";
+// Memory Core provider module implements model/runtime integration.
 import {
-  DEFAULT_GEMINI_EMBEDDING_MODEL,
   DEFAULT_LOCAL_MODEL,
+<<<<<<< HEAD
   DEFAULT_MISTRAL_EMBEDDING_MODEL,
   DEFAULT_OPENAI_EMBEDDING_MODEL,
   DEFAULT_VOYAGE_EMBEDDING_MODEL,
@@ -165,102 +165,28 @@ const openAiAdapter: MemoryEmbeddingProviderAdapter = {
       },
     };
   },
+=======
+  listMemoryEmbeddingProviders,
+  listRegisteredMemoryEmbeddingProviderAdapters,
+  type MemoryEmbeddingProviderAdapter,
+} from "openclaw/plugin-sdk/memory-core-host-embedding-registry";
+import { getProviderEnvVars } from "openclaw/plugin-sdk/provider-env-vars";
+import { filterUnregisteredMemoryEmbeddingProviderAdapters } from "./provider-adapter-registration.js";
+
+export type BuiltinMemoryEmbeddingProviderDoctorMetadata = {
+  providerId: string;
+  authProviderId: string;
+  envVars: string[];
+  transport: "local" | "remote";
+  autoSelectPriority?: number;
+>>>>>>> upstream/main
 };
 
-const geminiAdapter: MemoryEmbeddingProviderAdapter = {
-  id: "gemini",
-  defaultModel: DEFAULT_GEMINI_EMBEDDING_MODEL,
-  transport: "remote",
-  autoSelectPriority: 30,
-  allowExplicitWhenConfiguredAuto: true,
-  supportsMultimodalEmbeddings: ({ model }) => supportsGeminiMultimodalEmbeddings(model),
-  shouldContinueAutoSelection: isMissingApiKeyError,
-  create: async (options) => {
-    const { provider, client } = await createGeminiEmbeddingProvider({
-      ...options,
-      provider: "gemini",
-      fallback: "none",
-    });
-    return {
-      provider,
-      runtime: {
-        id: "gemini",
-        cacheKeyData: {
-          provider: "gemini",
-          baseUrl: client.baseUrl,
-          model: client.model,
-          outputDimensionality: client.outputDimensionality,
-          headers: sanitizeHeaders(client.headers, ["authorization", "x-goog-api-key"]),
-        },
-        batchEmbed: async (batch) => {
-          if (batch.chunks.some((chunk) => hasNonTextEmbeddingParts(chunk.embeddingInput))) {
-            return null;
-          }
-          const byCustomId = await runGeminiEmbeddingBatches({
-            gemini: client,
-            agentId: batch.agentId,
-            requests: batch.chunks.map((chunk, index) => ({
-              custom_id: String(index),
-              request: buildGeminiEmbeddingRequest({
-                input: chunk.embeddingInput ?? { text: chunk.text },
-                taskType: "RETRIEVAL_DOCUMENT",
-                modelPath: client.modelPath,
-                outputDimensionality: client.outputDimensionality,
-              }),
-            })),
-            wait: batch.wait,
-            concurrency: batch.concurrency,
-            pollIntervalMs: batch.pollIntervalMs,
-            timeoutMs: batch.timeoutMs,
-            debug: batch.debug,
-          });
-          return mapBatchEmbeddingsByIndex(byCustomId, batch.chunks.length);
-        },
-      },
-    };
-  },
-};
+const builtinMemoryEmbeddingProviderAdapters = [] as const;
 
-const voyageAdapter: MemoryEmbeddingProviderAdapter = {
-  id: "voyage",
-  defaultModel: DEFAULT_VOYAGE_EMBEDDING_MODEL,
-  transport: "remote",
-  autoSelectPriority: 40,
-  allowExplicitWhenConfiguredAuto: true,
-  shouldContinueAutoSelection: isMissingApiKeyError,
-  create: async (options) => {
-    const { provider, client } = await createVoyageEmbeddingProvider({
-      ...options,
-      provider: "voyage",
-      fallback: "none",
-    });
-    return {
-      provider,
-      runtime: {
-        id: "voyage",
-        batchEmbed: async (batch) => {
-          const byCustomId = await runVoyageEmbeddingBatches({
-            client,
-            agentId: batch.agentId,
-            requests: batch.chunks.map((chunk, index) => ({
-              custom_id: String(index),
-              body: {
-                input: chunk.text,
-              },
-            })),
-            wait: batch.wait,
-            concurrency: batch.concurrency,
-            pollIntervalMs: batch.pollIntervalMs,
-            timeoutMs: batch.timeoutMs,
-            debug: batch.debug,
-          });
-          return mapBatchEmbeddingsByIndex(byCustomId, batch.chunks.length);
-        },
-      },
-    };
-  },
-};
+export { DEFAULT_LOCAL_MODEL };
 
+<<<<<<< HEAD
 const mistralAdapter: MemoryEmbeddingProviderAdapter = {
   id: "mistral",
   defaultModel: DEFAULT_MISTRAL_EMBEDDING_MODEL,
@@ -326,9 +252,12 @@ const builtinMemoryEmbeddingProviderAdapterById = new Map(
 );
 
 export function getBuiltinMemoryEmbeddingProviderAdapter(
+=======
+function getBuiltinMemoryEmbeddingProviderAdapter(
+>>>>>>> upstream/main
   id: string,
 ): MemoryEmbeddingProviderAdapter | undefined {
-  return builtinMemoryEmbeddingProviderAdapterById.get(id);
+  return listMemoryEmbeddingProviders().find((adapter) => adapter.id === id);
 }
 
 export function registerBuiltInMemoryEmbeddingProviders(register: {
@@ -337,6 +266,7 @@ export function registerBuiltInMemoryEmbeddingProviders(register: {
   // Only inspect providers already registered in the current load. Falling back
   // to capability discovery here can recursively trigger plugin loading while
   // memory-core itself is still registering.
+<<<<<<< HEAD
   const existingIds = new Set(
     listRegisteredMemoryEmbeddingProviderAdapters().map((adapter) => adapter.id),
   );
@@ -344,6 +274,12 @@ export function registerBuiltInMemoryEmbeddingProviders(register: {
     if (existingIds.has(adapter.id)) {
       continue;
     }
+=======
+  for (const adapter of filterUnregisteredMemoryEmbeddingProviderAdapters({
+    builtinAdapters: builtinMemoryEmbeddingProviderAdapters,
+    registeredAdapters: listRegisteredMemoryEmbeddingProviderAdapters(),
+  })) {
+>>>>>>> upstream/main
     register.registerMemoryEmbeddingProvider(adapter);
   }
 }
@@ -355,7 +291,11 @@ export function getBuiltinMemoryEmbeddingProviderDoctorMetadata(
   if (!adapter) {
     return null;
   }
+<<<<<<< HEAD
   const authProviderId = resolveMemoryEmbeddingAuthProviderId(adapter.id);
+=======
+  const authProviderId = adapter.authProviderId ?? adapter.id;
+>>>>>>> upstream/main
   return {
     providerId: adapter.id,
     authProviderId,
@@ -366,6 +306,7 @@ export function getBuiltinMemoryEmbeddingProviderDoctorMetadata(
 }
 
 export function listBuiltinAutoSelectMemoryEmbeddingProviderDoctorMetadata(): Array<BuiltinMemoryEmbeddingProviderDoctorMetadata> {
+<<<<<<< HEAD
   return builtinMemoryEmbeddingProviderAdapters
     .filter((adapter) => typeof adapter.autoSelectPriority === "number")
     .toSorted((a, b) => (a.autoSelectPriority ?? 0) - (b.autoSelectPriority ?? 0))
@@ -388,3 +329,19 @@ export {
   formatLocalSetupError,
   isMissingApiKeyError,
 };
+=======
+  return listMemoryEmbeddingProviders()
+    .filter((adapter) => typeof adapter.autoSelectPriority === "number")
+    .toSorted((a, b) => (a.autoSelectPriority ?? 0) - (b.autoSelectPriority ?? 0))
+    .map((adapter) => {
+      const authProviderId = adapter.authProviderId ?? adapter.id;
+      return {
+        providerId: adapter.id,
+        authProviderId,
+        envVars: getProviderEnvVars(authProviderId),
+        transport: adapter.transport === "local" ? "local" : "remote",
+        autoSelectPriority: adapter.autoSelectPriority,
+      };
+    });
+}
+>>>>>>> upstream/main

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Browser config tests cover plugin browser configuration defaults and overrides.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import type { BrowserControlAuth } from "./browser-config.js";
 import {

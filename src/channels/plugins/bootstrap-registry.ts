@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { listBundledChannelPluginIds } from "./bundled-ids.js";
 import { getBundledChannelPlugin, getBundledChannelSetupPlugin } from "./bundled.js";
 import type { ChannelId, ChannelPlugin } from "./types.js";
@@ -9,6 +10,28 @@ type CachedBootstrapPlugins = {
 };
 
 let cachedBootstrapPlugins: CachedBootstrapPlugins | null = null;
+=======
+/**
+ * Bundled channel bootstrap registry.
+ *
+ * Provides channel plugin metadata before the full runtime registry is installed.
+ */
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { listBundledChannelPluginIdsForRoot } from "./bundled-ids.js";
+import { resolveBundledChannelRootScope } from "./bundled-root.js";
+import {
+  getBundledChannelPlugin,
+  getBundledChannelSecrets,
+  getBundledChannelSetupPlugin,
+  getBundledChannelSetupSecrets,
+} from "./bundled.js";
+import type { ChannelPlugin } from "./types.plugin.js";
+import type { ChannelId } from "./types.public.js";
+
+function resolveBootstrapChannelId(id: ChannelId): string {
+  return normalizeOptionalString(id) ?? "";
+}
+>>>>>>> upstream/main
 
 function mergePluginSection<T>(
   runtimeValue: T | undefined,
@@ -20,9 +43,24 @@ function mergePluginSection<T>(
     typeof runtimeValue === "object" &&
     typeof setupValue === "object"
   ) {
+<<<<<<< HEAD
     return {
       ...(runtimeValue as Record<string, unknown>),
       ...(setupValue as Record<string, unknown>),
+=======
+    // Setup artifacts can add lightweight setup/docs/secrets fields on top of
+    // runtime artifacts; undefined setup values should not erase runtime data.
+    const merged = {
+      ...(runtimeValue as Record<string, unknown>),
+    };
+    for (const [key, value] of Object.entries(setupValue as Record<string, unknown>)) {
+      if (value !== undefined) {
+        merged[key] = value;
+      }
+    }
+    return {
+      ...merged,
+>>>>>>> upstream/main
     } as T;
   }
   return setupValue ?? runtimeValue;
@@ -48,6 +86,7 @@ function mergeBootstrapPlugin(
   } as ChannelPlugin;
 }
 
+<<<<<<< HEAD
 function buildBootstrapPlugins(): CachedBootstrapPlugins {
   return {
     sortedIds: listBundledChannelPluginIds(),
@@ -65,6 +104,19 @@ export function listBootstrapChannelPluginIds(): readonly string[] {
   return getBootstrapPlugins().sortedIds;
 }
 
+=======
+/**
+ * Lists bundled channel ids visible to bootstrap for the current root scope.
+ */
+export function listBootstrapChannelPluginIds(): readonly string[] {
+  const rootScope = resolveBundledChannelRootScope();
+  return listBundledChannelPluginIdsForRoot(rootScope.cacheKey);
+}
+
+/**
+ * Iterates bundled bootstrap channel plugins that can be loaded successfully.
+ */
+>>>>>>> upstream/main
 export function* iterateBootstrapChannelPlugins(): IterableIterator<ChannelPlugin> {
   for (const id of listBootstrapChannelPluginIds()) {
     const plugin = getBootstrapChannelPlugin(id);
@@ -74,6 +126,7 @@ export function* iterateBootstrapChannelPlugins(): IterableIterator<ChannelPlugi
   }
 }
 
+<<<<<<< HEAD
 export function listBootstrapChannelPlugins(): readonly ChannelPlugin[] {
   return [...iterateBootstrapChannelPlugins()];
 }
@@ -93,10 +146,31 @@ export function getBootstrapChannelPlugin(id: ChannelId): ChannelPlugin | undefi
   }
   const runtimePlugin = getBundledChannelPlugin(resolvedId);
   const setupPlugin = getBundledChannelSetupPlugin(resolvedId);
+=======
+/**
+ * Loads a bundled channel plugin for bootstrap, merging runtime and setup artifacts.
+ */
+export function getBootstrapChannelPlugin(id: ChannelId): ChannelPlugin | undefined {
+  const resolvedId = resolveBootstrapChannelId(id);
+  if (!resolvedId) {
+    return undefined;
+  }
+  let runtimePlugin: ChannelPlugin | undefined;
+  let setupPlugin: ChannelPlugin | undefined;
+  try {
+    runtimePlugin = getBundledChannelPlugin(resolvedId);
+    setupPlugin = getBundledChannelSetupPlugin(resolvedId);
+  } catch {
+    // Bootstrap discovery treats broken/missing bundled channel artifacts as
+    // absent so install/doctor flows can continue scanning other channels.
+    return undefined;
+  }
+>>>>>>> upstream/main
   const merged =
     runtimePlugin && setupPlugin
       ? mergeBootstrapPlugin(runtimePlugin, setupPlugin)
       : (setupPlugin ?? runtimePlugin);
+<<<<<<< HEAD
   if (!merged) {
     registry.missingIds.add(resolvedId);
     return undefined;
@@ -107,4 +181,24 @@ export function getBootstrapChannelPlugin(id: ChannelId): ChannelPlugin | undefi
 
 export function clearBootstrapChannelPluginCache(): void {
   cachedBootstrapPlugins = null;
+=======
+  return merged;
+}
+
+/**
+ * Loads bootstrap secret metadata from bundled runtime and setup artifacts.
+ */
+export function getBootstrapChannelSecrets(id: ChannelId): ChannelPlugin["secrets"] | undefined {
+  const resolvedId = resolveBootstrapChannelId(id);
+  if (!resolvedId) {
+    return undefined;
+  }
+  try {
+    const runtimeSecrets = getBundledChannelSecrets(resolvedId);
+    const setupSecrets = getBundledChannelSetupSecrets(resolvedId);
+    return mergePluginSection(runtimeSecrets, setupSecrets);
+  } catch {
+    return undefined;
+  }
+>>>>>>> upstream/main
 }

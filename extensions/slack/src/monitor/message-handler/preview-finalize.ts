@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import type { Block, KnownBlock, WebClient } from "@slack/web-api";
 import { logVerbose } from "openclaw/plugin-sdk/runtime-env";
 import { editSlackMessage } from "../../actions.js";
 import { buildSlackBlocksFallbackText } from "../../blocks-fallback.js";
+=======
+// Slack plugin module implements preview finalize behavior.
+import type { Block, KnownBlock, WebClient } from "@slack/web-api";
+import { logVerbose } from "openclaw/plugin-sdk/runtime-env";
+import { editSlackMessage } from "../../actions.js";
+import { buildSlackEditTextPayload } from "../../edit-text.js";
+>>>>>>> upstream/main
 import { normalizeSlackOutboundText } from "../../format.js";
 
 type SlackReadbackMessage = {
@@ -14,6 +22,7 @@ function buildExpectedSlackEditText(params: {
   text: string;
   blocks?: (Block | KnownBlock)[];
 }): string {
+<<<<<<< HEAD
   const trimmed = normalizeSlackOutboundText(params.text.trim());
   if (trimmed) {
     return trimmed;
@@ -22,6 +31,9 @@ function buildExpectedSlackEditText(params: {
     return buildSlackBlocksFallbackText(params.blocks);
   }
   return " ";
+=======
+  return buildSlackEditTextPayload(params.text, params.blocks);
+>>>>>>> upstream/main
 }
 
 function blocksMatch(expected?: (Block | KnownBlock)[], actual?: unknown[]): boolean {
@@ -112,7 +124,10 @@ export async function finalizeSlackPreviewEdit(params: {
       client: params.client,
       ...(params.blocks?.length ? { blocks: params.blocks } : {}),
     });
+<<<<<<< HEAD
     return;
+=======
+>>>>>>> upstream/main
   } catch (err) {
     try {
       const applied = await didSlackPreviewEditApplyAfterError({
@@ -137,9 +152,17 @@ export async function finalizeSlackPreviewEdit(params: {
   }
 }
 
+<<<<<<< HEAD
 export const __testing = {
+=======
+export const testing = {
+>>>>>>> upstream/main
   buildExpectedSlackEditText,
   blocksMatch,
   didSlackPreviewEditApplyAfterError,
   readSlackMessageAfterEditError,
 };
+<<<<<<< HEAD
+=======
+export { testing as __testing };
+>>>>>>> upstream/main

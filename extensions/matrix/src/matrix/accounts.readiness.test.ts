@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix tests cover accounts.readiness plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { installMatrixTestRuntime } from "../test-runtime.js";
 import type { CoreConfig } from "../types.js";

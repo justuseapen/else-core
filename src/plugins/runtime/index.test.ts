@@ -1,13 +1,33 @@
+// Plugin runtime index tests cover runtime entrypoint exports and registry setup.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../../agents/defaults.js";
+import {
+  resetConfigRuntimeState,
+  setRuntimeConfigSnapshot,
+  type OpenClawConfig,
+} from "../../config/config.js";
 import { onAgentEvent } from "../../infra/agent-events.js";
-import { requestHeartbeatNow } from "../../infra/heartbeat-wake.js";
+import {
+  requestHeartbeat,
+  resetHeartbeatWakeStateForTests,
+  setHeartbeatWakeHandler,
+} from "../../infra/heartbeat-wake.js";
 import * as execModule from "../../process/exec.js";
 import { onSessionTranscriptUpdate } from "../../sessions/transcript-events.js";
 import { VERSION } from "../../version.js";
+
+const runtimeModelAuthMocks = vi.hoisted(() => ({
+  getApiKeyForModel: vi.fn(),
+  getRuntimeAuthForModel: vi.fn(),
+  resolveApiKeyForProvider: vi.fn(),
+}));
+
+vi.mock("./runtime-model-auth.runtime.js", () => runtimeModelAuthMocks);
+
 import {
   clearGatewaySubagentRuntime,
   createPluginRuntime,
+  setGatewayNodesRuntime,
   setGatewaySubagentRuntime,
 } from "./index.js";
 
@@ -79,9 +99,15 @@ function createGatewaySubagentRunFixture(params?: { allowGatewaySubagentBinding?
 }
 
 function expectFunctionKeys(value: Record<string, unknown>, keys: readonly string[]) {
+<<<<<<< HEAD
   keys.forEach((key) => {
     expect(typeof value[key]).toBe("function");
   });
+=======
+  for (const key of keys) {
+    expect(typeof value[key]).toBe("function");
+  }
+>>>>>>> upstream/main
 }
 
 function expectRunCommandOutcome(params: {
@@ -101,6 +127,10 @@ function expectRunCommandOutcome(params: {
 describe("plugin runtime command execution", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    runtimeModelAuthMocks.getApiKeyForModel.mockReset();
+    runtimeModelAuthMocks.getRuntimeAuthForModel.mockReset();
+    runtimeModelAuthMocks.resolveApiKeyForProvider.mockReset();
+    resetConfigRuntimeState();
     clearGatewaySubagentRuntime();
   });
 
@@ -142,10 +172,23 @@ describe("plugin runtime command execution", () => {
       expected: onSessionTranscriptUpdate,
     },
     {
+<<<<<<< HEAD
       name: "exposes runtime.system.requestHeartbeatNow",
       readValue: (runtime: ReturnType<typeof createPluginRuntime>) =>
         runtime.system.requestHeartbeatNow,
       expected: requestHeartbeatNow,
+=======
+      name: "exposes runtime.system.requestHeartbeat",
+      readValue: (runtime: ReturnType<typeof createPluginRuntime>) =>
+        runtime.system.requestHeartbeat,
+      expected: requestHeartbeat,
+    },
+    {
+      name: "exposes deprecated runtime.system.requestHeartbeatNow",
+      readValue: (runtime: ReturnType<typeof createPluginRuntime>) =>
+        typeof runtime.system.requestHeartbeatNow,
+      expected: "function",
+>>>>>>> upstream/main
     },
     {
       name: "exposes runtime.version from the shared VERSION constant",
@@ -156,6 +199,63 @@ describe("plugin runtime command execution", () => {
     expectRuntimeValue(readValue, expected);
   });
 
+<<<<<<< HEAD
+=======
+  it("maps deprecated runtime.system.requestHeartbeatNow to an immediate compatibility wake", async () => {
+    vi.useFakeTimers();
+    resetHeartbeatWakeStateForTests();
+    const handler = vi.fn(async (_request: Parameters<typeof requestHeartbeat>[0]) => ({
+      status: "skipped" as const,
+      reason: "disabled",
+    }));
+    setHeartbeatWakeHandler(handler);
+    try {
+      createPluginRuntime().system.requestHeartbeatNow({
+        reason: "legacy-plugin",
+        coalesceMs: 0,
+      });
+      await vi.advanceTimersByTimeAsync(1);
+      const request = handler.mock.calls[0]?.[0] as
+        | { source?: string; intent?: string; reason?: string }
+        | undefined;
+      expect(request?.source).toBe("other");
+      expect(request?.intent).toBe("immediate");
+      expect(request?.reason).toBe("legacy-plugin");
+    } finally {
+      resetHeartbeatWakeStateForTests();
+      vi.useRealTimers();
+    }
+  });
+
+  it("resolves thinking policy with configured model compat from runtime config", () => {
+    setRuntimeConfigSnapshot({
+      models: {
+        providers: {
+          gmn: {
+            baseUrl: "https://gmn.example.com/v1",
+            models: [
+              {
+                id: "gpt-5.4",
+                name: "GPT 5.4 via GMN",
+                reasoning: true,
+                compat: { supportedReasoningEfforts: ["low", "medium", "high", "xhigh"] },
+              },
+            ],
+          },
+        },
+      },
+    } as unknown as OpenClawConfig);
+
+    const runtime = createPluginRuntime();
+    const policy = runtime.agent.resolveThinkingPolicy({
+      provider: "gmn",
+      model: "gpt-5.4",
+    });
+
+    expect(policy.levels.map((level) => level.id)).toContain("xhigh");
+  });
+
+>>>>>>> upstream/main
   it.each([
     {
       name: "exposes runtime.mediaUnderstanding helpers and keeps stt as an alias",
@@ -164,6 +264,10 @@ describe("plugin runtime command execution", () => {
           "runFile",
           "describeImageFile",
           "describeImageFileWithModel",
+<<<<<<< HEAD
+=======
+          "extractStructuredWithModel",
+>>>>>>> upstream/main
           "describeVideoFile",
         ]);
         expect(runtime.mediaUnderstanding.transcribeAudioFile).toBe(
@@ -190,7 +294,11 @@ describe("plugin runtime command execution", () => {
       },
     },
     {
+<<<<<<< HEAD
       name: "exposes canonical runtime.tasks.runs and runtime.tasks.flows while keeping legacy TaskFlow aliases",
+=======
+      name: "exposes canonical runtime.tasks task runtimes while keeping legacy TaskFlow aliases",
+>>>>>>> upstream/main
       assert: (runtime: ReturnType<typeof createPluginRuntime>) => {
         expectFunctionKeys(runtime.tasks.runs as Record<string, unknown>, [
           "bindSession",
@@ -200,11 +308,23 @@ describe("plugin runtime command execution", () => {
           "bindSession",
           "fromToolContext",
         ]);
+<<<<<<< HEAD
+=======
+        expectFunctionKeys(runtime.tasks.managedFlows as Record<string, unknown>, [
+          "bindSession",
+          "fromToolContext",
+        ]);
+>>>>>>> upstream/main
         expectFunctionKeys(runtime.tasks.flow as Record<string, unknown>, [
           "bindSession",
           "fromToolContext",
         ]);
+<<<<<<< HEAD
         expect(runtime.taskFlow).toBe(runtime.tasks.flow);
+=======
+        expect(runtime.tasks.managedFlows).toBe(runtime.tasks.flow);
+        expect(runtime.taskFlow).toBe(runtime.tasks.managedFlows);
+>>>>>>> upstream/main
       },
     },
     {
@@ -215,20 +335,45 @@ describe("plugin runtime command execution", () => {
           provider: DEFAULT_PROVIDER,
         });
         expectFunctionKeys(runtime.agent as Record<string, unknown>, [
+<<<<<<< HEAD
           "runEmbeddedPiAgent",
           "resolveAgentDir",
         ]);
         expectFunctionKeys(runtime.agent.session as Record<string, unknown>, [
+=======
+          "runEmbeddedAgent",
+          "runEmbeddedPiAgent",
+          "normalizeThinkingLevel",
+          "resolveThinkingPolicy",
+          "resolveAgentDir",
+        ]);
+        expect(runtime.agent.runEmbeddedPiAgent).toBe(runtime.agent.runEmbeddedAgent);
+        expectFunctionKeys(runtime.agent.session as Record<string, unknown>, [
+          "getSessionEntry",
+          "listSessionEntries",
+          "patchSessionEntry",
+          "upsertSessionEntry",
+          "updateSessionStore",
+          "updateSessionStoreEntry",
+>>>>>>> upstream/main
           "resolveSessionFilePath",
         ]);
       },
     },
     {
+<<<<<<< HEAD
       name: "exposes runtime.modelAuth with getApiKeyForModel and resolveApiKeyForProvider",
       assert: (runtime: ReturnType<typeof createPluginRuntime>) => {
         expect(runtime.modelAuth).toBeDefined();
         expectFunctionKeys(runtime.modelAuth as Record<string, unknown>, [
           "getApiKeyForModel",
+=======
+      name: "exposes runtime.modelAuth with raw and runtime-ready auth helpers",
+      assert: (runtime: ReturnType<typeof createPluginRuntime>) => {
+        expectFunctionKeys(runtime.modelAuth, [
+          "getApiKeyForModel",
+          "getRuntimeAuthForModel",
+>>>>>>> upstream/main
           "resolveApiKeyForProvider",
         ]);
       },
@@ -247,9 +392,65 @@ describe("plugin runtime command execution", () => {
     expect(runtime.modelAuth.getApiKeyForModel).not.toBe(rawGetApiKey);
   });
 
+<<<<<<< HEAD
   it("keeps subagent unavailable by default even after gateway initialization", async () => {
     const { runtime } = createGatewaySubagentRunFixture();
 
+=======
+  it("modelAuth wrappers preserve workspace scope while stripping credential steering", async () => {
+    const runtime = createPluginRuntime();
+    const model = {
+      id: "workspace-cloud/model",
+      provider: "workspace-cloud",
+      api: "openai-responses",
+      baseUrl: "https://workspace-cloud.example/v1",
+    };
+    const cfg = { plugins: { allow: ["workspace-cloud"] } } as OpenClawConfig;
+    runtimeModelAuthMocks.getApiKeyForModel.mockResolvedValue({
+      apiKey: "model-key",
+      source: "workspace cloud credentials",
+      mode: "api-key",
+    });
+    runtimeModelAuthMocks.resolveApiKeyForProvider.mockResolvedValue({
+      apiKey: "provider-key",
+      source: "workspace cloud credentials",
+      mode: "api-key",
+    });
+
+    const modelAuth = await runtime.modelAuth.getApiKeyForModel({
+      model: model as never,
+      cfg,
+      workspaceDir: "/tmp/workspace",
+      agentDir: "/tmp/agent",
+      store: { version: 1, profiles: {} },
+    } as never);
+    expect(modelAuth.apiKey).toBe("model-key");
+
+    const providerAuth = await runtime.modelAuth.resolveApiKeyForProvider({
+      provider: "workspace-cloud",
+      cfg,
+      workspaceDir: "/tmp/workspace",
+      agentDir: "/tmp/agent",
+      store: { version: 1, profiles: {} },
+    } as never);
+    expect(providerAuth.apiKey).toBe("provider-key");
+
+    expect(runtimeModelAuthMocks.getApiKeyForModel).toHaveBeenCalledWith({
+      model,
+      cfg,
+      workspaceDir: "/tmp/workspace",
+    });
+    expect(runtimeModelAuthMocks.resolveApiKeyForProvider).toHaveBeenCalledWith({
+      provider: "workspace-cloud",
+      cfg,
+      workspaceDir: "/tmp/workspace",
+    });
+  });
+
+  it("keeps subagent unavailable by default even after gateway initialization", () => {
+    const { runtime } = createGatewaySubagentRunFixture();
+
+>>>>>>> upstream/main
     expectGatewaySubagentRunFailure(runtime, { sessionKey: "s-1", message: "hello" });
   });
 
@@ -265,4 +466,36 @@ describe("plugin runtime command execution", () => {
     });
     expect(run).toHaveBeenCalledWith({ sessionKey: "s-2", message: "hello" });
   });
+<<<<<<< HEAD
+=======
+
+  it("uses explicit nodes runtime when provided", async () => {
+    const nodes = {
+      list: vi.fn().mockResolvedValue({ nodes: [] }),
+      invoke: vi.fn().mockResolvedValue({ ok: true }),
+    };
+    const runtime = createPluginRuntime({ nodes });
+
+    await expect(runtime.nodes.list({ connected: true })).resolves.toEqual({ nodes: [] });
+    await expect(
+      runtime.nodes.invoke({ nodeId: "node-1", command: "browser.proxy" }),
+    ).resolves.toEqual({ ok: true });
+    expect(nodes.list).toHaveBeenCalledWith({ connected: true });
+    expect(nodes.invoke).toHaveBeenCalledWith({ nodeId: "node-1", command: "browser.proxy" });
+  });
+
+  it("late-binds to gateway nodes when explicitly enabled", async () => {
+    const nodes = {
+      list: vi.fn().mockResolvedValue({ nodes: [{ nodeId: "node-1" }] }),
+      invoke: vi.fn().mockResolvedValue({ ok: true }),
+    };
+    const runtime = createPluginRuntime({ allowGatewaySubagentBinding: true });
+    setGatewayNodesRuntime(nodes);
+
+    await expect(runtime.nodes.list({ connected: true })).resolves.toEqual({
+      nodes: [{ nodeId: "node-1" }],
+    });
+    expect(nodes.list).toHaveBeenCalledWith({ connected: true });
+  });
+>>>>>>> upstream/main
 });

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { WebFetchProviderPlugin } from "openclaw/plugin-sdk/provider-web-fetch";
 import { enablePluginInConfig } from "openclaw/plugin-sdk/provider-web-fetch";
 import { runFirecrawlScrape } from "./firecrawl-client.js";
@@ -63,6 +64,18 @@ export function createFirecrawlWebFetchProvider(): WebFetchProviderPlugin {
           : ((pluginConfig.webFetch = {}), pluginConfig.webFetch as Record<string, unknown>);
       webFetch.apiKey = value;
     },
+=======
+// Firecrawl provider module implements model/runtime integration.
+import { readPositiveIntegerParam } from "openclaw/plugin-sdk/param-readers";
+import type { WebFetchProviderPlugin } from "openclaw/plugin-sdk/provider-web-fetch";
+import { enablePluginInConfig } from "openclaw/plugin-sdk/provider-web-fetch";
+import { runFirecrawlScrape } from "./firecrawl-client.js";
+import { FIRECRAWL_WEB_FETCH_PROVIDER_SHARED } from "./firecrawl-fetch-provider-shared.js";
+
+export function createFirecrawlWebFetchProvider(): WebFetchProviderPlugin {
+  return {
+    ...FIRECRAWL_WEB_FETCH_PROVIDER_SHARED,
+>>>>>>> upstream/main
     applySelectionConfig: (config) => enablePluginInConfig(config, "firecrawl").config,
     createTool: ({ config }) => ({
       description: "Fetch a page using Firecrawl.",
@@ -70,10 +83,14 @@ export function createFirecrawlWebFetchProvider(): WebFetchProviderPlugin {
       execute: async (args) => {
         const url = typeof args.url === "string" ? args.url : "";
         const extractMode = args.extractMode === "text" ? "text" : "markdown";
+<<<<<<< HEAD
         const maxChars =
           typeof args.maxChars === "number" && Number.isFinite(args.maxChars)
             ? Math.floor(args.maxChars)
             : undefined;
+=======
+        const maxChars = readPositiveIntegerParam(args, "maxChars");
+>>>>>>> upstream/main
         const proxy =
           args.proxy === "basic" || args.proxy === "stealth" || args.proxy === "auto"
             ? args.proxy

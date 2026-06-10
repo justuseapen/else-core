@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../../config/config.js";
 import {
   isCommandEnabled,
@@ -21,13 +22,38 @@ function resolveFirstContextText(
 
 function resolveCommandCandidateText(ctx: FinalizedMsgContext): string {
   return resolveFirstContextText(ctx, ["CommandBody", "BodyForCommands", "RawBody", "Body"]).trim();
+=======
+// Detects ACP commands that should bypass normal agent dispatch.
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
+import { hasControlCommand } from "../command-detection.js";
+import { isCommandEnabled } from "../commands-registry-list.js";
+import { maybeResolveTextAlias } from "../commands-registry-normalize.js";
+import { shouldHandleTextCommands } from "../commands-text-routing.js";
+import type { FinalizedMsgContext } from "../templating.js";
+import { resolveCommandContextText } from "./context-text.js";
+
+function isResetCommandCandidate(text: string): boolean {
+  return /^\/(?:new|reset)(?:\s|$)/i.test(text);
+}
+
+function isAcpCommandCandidate(text: string): boolean {
+  return /^\/acp(?:\s|$)/i.test(text);
+}
+
+function isLocalCommandCandidate(text: string, cfg: OpenClawConfig): boolean {
+  return hasControlCommand(text, cfg);
+>>>>>>> upstream/main
 }
 
 export function shouldBypassAcpDispatchForCommand(
   ctx: FinalizedMsgContext,
   cfg: OpenClawConfig,
 ): boolean {
+<<<<<<< HEAD
   const candidate = resolveCommandCandidateText(ctx);
+=======
+  const candidate = resolveCommandContextText(ctx);
+>>>>>>> upstream/main
   if (!candidate) {
     return false;
   }
@@ -41,6 +67,21 @@ export function shouldBypassAcpDispatchForCommand(
     return allowTextCommands;
   }
 
+<<<<<<< HEAD
+=======
+  if (isResetCommandCandidate(normalized)) {
+    return true;
+  }
+
+  if (isAcpCommandCandidate(normalized)) {
+    return true;
+  }
+
+  if (isLocalCommandCandidate(normalized, cfg)) {
+    return allowTextCommands;
+  }
+
+>>>>>>> upstream/main
   if (!normalized.startsWith("!")) {
     return false;
   }

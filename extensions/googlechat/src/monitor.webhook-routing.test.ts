@@ -1,13 +1,26 @@
+// Googlechat tests cover monitor.webhook routing plugin behavior.
 import { EventEmitter } from "node:events";
 import type { IncomingMessage } from "node:http";
+<<<<<<< HEAD
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createEmptyPluginRegistry } from "../../../src/plugins/registry-empty.js";
 import { setActivePluginRegistry } from "../../../src/plugins/runtime.js";
 import { createMockServerResponse } from "../../../test/helpers/plugins/mock-http-response.js";
+=======
+import {
+  createEmptyPluginRegistry,
+  setActivePluginRegistry,
+} from "openclaw/plugin-sdk/plugin-test-runtime";
+import { createMockServerResponse } from "openclaw/plugin-sdk/test-env";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import type { OpenClawConfig, PluginRuntime } from "../runtime-api.js";
 import type { ResolvedGoogleChatAccount } from "./accounts.js";
 import { verifyGoogleChatRequest } from "./auth.js";
-import { handleGoogleChatWebhookRequest, registerGoogleChatWebhookTarget } from "./monitor.js";
+import {
+  handleGoogleChatWebhookRequest,
+  registerGoogleChatWebhookTarget,
+} from "./monitor-routing.js";
 
 vi.mock("./auth.js", () => ({
   verifyGoogleChatRequest: vi.fn(),
@@ -85,13 +98,15 @@ const baseAccount = (accountId: string) =>
 function registerTwoTargets() {
   const sinkA = vi.fn();
   const sinkB = vi.fn();
+  const logA = vi.fn();
+  const logB = vi.fn();
   const core = {} as PluginRuntime;
   const config = {} as OpenClawConfig;
 
   const unregisterA = registerGoogleChatWebhookTarget({
     account: baseAccount("A"),
     config,
-    runtime: {},
+    runtime: { log: logA },
     core,
     path: "/googlechat",
     statusSink: sinkA,
@@ -100,7 +115,7 @@ function registerTwoTargets() {
   const unregisterB = registerGoogleChatWebhookTarget({
     account: baseAccount("B"),
     config,
-    runtime: {},
+    runtime: { log: logB },
     core,
     path: "/googlechat",
     statusSink: sinkB,
@@ -108,6 +123,8 @@ function registerTwoTargets() {
   });
 
   return {
+    logA,
+    logB,
     sinkA,
     sinkB,
     unregister: () => {
@@ -150,6 +167,14 @@ describe("Google Chat webhook routing", () => {
     setActivePluginRegistry(createEmptyPluginRegistry());
   });
 
+<<<<<<< HEAD
+=======
+  afterAll(() => {
+    vi.doUnmock("./auth.js");
+    vi.resetModules();
+  });
+
+>>>>>>> upstream/main
   it("rejects ambiguous routing when multiple targets on the same path verify successfully", async () => {
     vi.mocked(verifyGoogleChatRequest).mockResolvedValue({ ok: true });
 
@@ -174,7 +199,7 @@ describe("Google Chat webhook routing", () => {
   it("routes to the single verified target when earlier targets fail verification", async () => {
     mockSecondVerifierSuccess();
 
-    const { sinkA, sinkB, unregister } = registerTwoTargets();
+    const { logA, logB, sinkA, sinkB, unregister } = registerTwoTargets();
 
     try {
       await expectVerifiedRoute({
@@ -187,6 +212,8 @@ describe("Google Chat webhook routing", () => {
         sinkB,
         expectedSink: "B",
       });
+      expect(logA).not.toHaveBeenCalled();
+      expect(logB).not.toHaveBeenCalled();
     } finally {
       unregister();
     }
@@ -203,7 +230,7 @@ describe("Google Chat webhook routing", () => {
       const onSpy = vi.spyOn(req, "on");
       const res = await dispatchWebhookRequest(req);
       expect(res.statusCode).toBe(401);
-      expect(onSpy).not.toHaveBeenCalledWith("data", expect.any(Function));
+      expect(onSpy.mock.calls.map(([event]) => event)).not.toContain("data");
     } finally {
       unregister();
     }

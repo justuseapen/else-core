@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Minimax API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export { buildMinimaxPortalProvider, buildMinimaxProvider } from "./provider-catalog.js";
 export {
   buildMinimaxApiModelDefinition,

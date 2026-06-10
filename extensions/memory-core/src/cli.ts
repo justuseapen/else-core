@@ -1,13 +1,25 @@
+// Memory Core plugin module implements cli behavior.
 import type { Command } from "commander";
 import {
   formatDocsLink,
   formatHelpExamples,
   theme,
 } from "openclaw/plugin-sdk/memory-core-host-runtime-cli";
+<<<<<<< HEAD
+=======
+import {
+  parseStrictNonNegativeInteger,
+  parseStrictPositiveInteger,
+} from "openclaw/plugin-sdk/number-runtime";
+>>>>>>> upstream/main
 import type {
   MemoryCommandOptions,
   MemoryPromoteCommandOptions,
   MemoryPromoteExplainOptions,
+<<<<<<< HEAD
+=======
+  MemoryRemBackfillOptions,
+>>>>>>> upstream/main
   MemoryRemHarnessOptions,
   MemorySearchCommandOptions,
 } from "./cli.types.js";
@@ -25,6 +37,8 @@ async function loadMemoryCliRuntime(): Promise<MemoryCliRuntime> {
   memoryCliRuntimePromise ??= import("./cli.runtime.js");
   return await memoryCliRuntimePromise;
 }
+
+const DECIMAL_NUMBER_RE = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/;
 
 export async function runMemoryStatus(opts: MemoryCommandOptions) {
   const runtime = await loadMemoryCliRuntime();
@@ -59,6 +73,48 @@ async function runMemoryRemHarness(opts: MemoryRemHarnessOptions) {
   await runtime.runMemoryRemHarness(opts);
 }
 
+<<<<<<< HEAD
+=======
+async function runMemoryRemBackfill(opts: MemoryRemBackfillOptions) {
+  const runtime = await loadMemoryCliRuntime();
+  await runtime.runMemoryRemBackfill(opts);
+}
+
+function invalidCliArgument(message: string): Error & { code: string; exitCode: number } {
+  const error = new Error(message) as Error & { code: string; exitCode: number };
+  error.name = "InvalidArgumentError";
+  // Commander recognizes parser failures by code; keep the import type-only for bundled plugin deps.
+  error.code = "commander.invalidArgument";
+  error.exitCode = 1;
+  return error;
+}
+
+function parseMemoryCliNumberOption(value: string, flag: string): number {
+  const trimmed = value.trim();
+  const parsed = DECIMAL_NUMBER_RE.test(trimmed) ? Number(trimmed) : Number.NaN;
+  if (!Number.isFinite(parsed)) {
+    throw invalidCliArgument(`${flag} must be a finite number.`);
+  }
+  return parsed;
+}
+
+function parseMemoryCliPositiveIntegerOption(value: string, flag: string): number {
+  const parsed = parseStrictPositiveInteger(value);
+  if (parsed === undefined) {
+    throw invalidCliArgument(`${flag} must be a positive integer.`);
+  }
+  return parsed;
+}
+
+function parseMemoryCliNonNegativeIntegerOption(value: string, flag: string): number {
+  const parsed = parseStrictNonNegativeInteger(value);
+  if (parsed === undefined) {
+    throw invalidCliArgument(`${flag} must be a non-negative integer.`);
+  }
+  return parsed;
+}
+
+>>>>>>> upstream/main
 export function registerMemoryCli(program: Command) {
   const memory = program
     .command("memory")
@@ -95,6 +151,17 @@ export function registerMemoryCli(program: Command) {
             "openclaw memory rem-harness --json",
             "Preview REM reflections, candidate truths, and deep promotion output.",
           ],
+<<<<<<< HEAD
+=======
+          [
+            "openclaw memory rem-backfill --path ./memory",
+            "Write grounded historical REM entries into DREAMS.md for UI review.",
+          ],
+          [
+            "openclaw memory rem-backfill --path ./memory --stage-short-term",
+            "Also seed durable grounded candidates into the live short-term promotion store.",
+          ],
+>>>>>>> upstream/main
           ["openclaw memory status --json", "Output machine-readable JSON (good for scripts)."],
         ])}\n\n${theme.muted("Docs:")} ${formatDocsLink("/cli/memory", "docs.openclaw.ai/cli/memory")}\n`,
     );
@@ -128,8 +195,12 @@ export function registerMemoryCli(program: Command) {
     .argument("[query]", "Search query")
     .option("--query <text>", "Search query (alternative to positional argument)")
     .option("--agent <id>", "Agent id (default: default agent)")
-    .option("--max-results <n>", "Max results", (value: string) => Number(value))
-    .option("--min-score <n>", "Minimum score", (value: string) => Number(value))
+    .option("--max-results <n>", "Max results", (value: string) =>
+      parseMemoryCliPositiveIntegerOption(value, "--max-results"),
+    )
+    .option("--min-score <n>", "Minimum score", (value: string) =>
+      parseMemoryCliNumberOption(value, "--min-score"),
+    )
     .option("--json", "Print JSON")
     .action(async (queryArg: string | undefined, opts: MemorySearchCommandOptions) => {
       await runMemorySearch(queryArg, opts);
@@ -139,21 +210,39 @@ export function registerMemoryCli(program: Command) {
     .command("promote")
     .description("Rank short-term recalls and optionally append top entries to MEMORY.md")
     .option("--agent <id>", "Agent id (default: default agent)")
+<<<<<<< HEAD
     .option("--limit <n>", "Max candidates", (value: string) => Number(value))
     .option(
       "--min-score <n>",
       `Minimum weighted score (default: ${DEFAULT_PROMOTION_MIN_SCORE})`,
       (value: string) => Number(value),
+=======
+    .option("--limit <n>", "Max candidates", (value: string) =>
+      parseMemoryCliPositiveIntegerOption(value, "--limit"),
+    )
+    .option(
+      "--min-score <n>",
+      `Minimum weighted score (default: ${DEFAULT_PROMOTION_MIN_SCORE})`,
+      (value: string) => parseMemoryCliNumberOption(value, "--min-score"),
+>>>>>>> upstream/main
     )
     .option(
       "--min-recall-count <n>",
       `Minimum recall count (default: ${DEFAULT_PROMOTION_MIN_RECALL_COUNT})`,
+<<<<<<< HEAD
       (value: string) => Number(value),
+=======
+      (value: string) => parseMemoryCliNonNegativeIntegerOption(value, "--min-recall-count"),
+>>>>>>> upstream/main
     )
     .option(
       "--min-unique-queries <n>",
       `Minimum distinct query count (default: ${DEFAULT_PROMOTION_MIN_UNIQUE_QUERIES})`,
+<<<<<<< HEAD
       (value: string) => Number(value),
+=======
+      (value: string) => parseMemoryCliNonNegativeIntegerOption(value, "--min-unique-queries"),
+>>>>>>> upstream/main
     )
     .option("--apply", "Append selected candidates to MEMORY.md", false)
     .option("--include-promoted", "Include already promoted candidates", false)
@@ -177,9 +266,43 @@ export function registerMemoryCli(program: Command) {
     .command("rem-harness")
     .description("Preview REM reflections, candidate truths, and deep promotions without writing")
     .option("--agent <id>", "Agent id (default: default agent)")
+<<<<<<< HEAD
+=======
+    .option("--path <file-or-dir>", "Seed the harness from historical daily memory file(s)")
+    .option("--grounded", "Also render a grounded day-level REM preview")
+>>>>>>> upstream/main
     .option("--include-promoted", "Include already promoted deep candidates", false)
     .option("--json", "Print JSON")
     .action(async (opts: MemoryRemHarnessOptions) => {
       await runMemoryRemHarness(opts);
     });
+<<<<<<< HEAD
+=======
+
+  memory
+    .command("rem-backfill")
+    .description("Write grounded historical REM summaries into DREAMS.md for UI review")
+    .option("--agent <id>", "Agent id (default: default agent)")
+    .option("--path <file-or-dir>", "Historical daily memory file(s) or directory")
+    .option("--rollback", "Remove previously written grounded REM backfill entries", false)
+    .option(
+      "--stage-short-term",
+      "Also seed grounded durable candidates into the short-term promotion store",
+      false,
+    )
+    .option(
+      "--rollback-short-term",
+      "Remove previously seeded grounded short-term candidates",
+      false,
+    )
+    .option("--json", "Print JSON")
+    .action(async (opts: MemoryRemBackfillOptions) => {
+      await runMemoryRemBackfill(opts);
+    });
+
+  memory.action(() => {
+    memory.outputHelp();
+    process.exitCode = 0;
+  });
+>>>>>>> upstream/main
 }

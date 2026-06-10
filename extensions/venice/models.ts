@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-shared";
 import { createSubsystemLogger, retryAsync } from "openclaw/plugin-sdk/runtime-env";
 
@@ -8,6 +9,32 @@ export const VENICE_DEFAULT_MODEL_ID = "kimi-k2-5";
 export const VENICE_DEFAULT_MODEL_REF = `venice/${VENICE_DEFAULT_MODEL_ID}`;
 
 export const VENICE_DEFAULT_COST = {
+=======
+// Venice plugin module implements models behavior.
+import {
+  getCachedLiveProviderModelRows,
+  LiveModelCatalogHttpError,
+} from "openclaw/plugin-sdk/provider-catalog-live-runtime";
+import { buildManifestModelProviderConfig } from "openclaw/plugin-sdk/provider-catalog-shared";
+import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-shared";
+import { createSubsystemLogger, retryAsync } from "openclaw/plugin-sdk/runtime-env";
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+import manifest from "./openclaw.plugin.json" with { type: "json" };
+
+const log = createSubsystemLogger("venice-models");
+
+const VENICE_MANIFEST_PROVIDER = buildManifestModelProviderConfig({
+  providerId: "venice",
+  catalog: manifest.modelCatalog.providers.venice,
+});
+
+export const VENICE_BASE_URL = VENICE_MANIFEST_PROVIDER.baseUrl;
+const VENICE_DEFAULT_MODEL_ID = "kimi-k2-5";
+export const VENICE_DEFAULT_MODEL_REF = `venice/${VENICE_DEFAULT_MODEL_ID}`;
+const VENICE_ALLOWED_HOSTNAMES = ["api.venice.ai"];
+
+const VENICE_DEFAULT_COST = {
+>>>>>>> upstream/main
   input: 0,
   output: 0,
   cacheRead: 0,
@@ -18,6 +45,10 @@ const VENICE_DEFAULT_CONTEXT_WINDOW = 128_000;
 const VENICE_DEFAULT_MAX_TOKENS = 4096;
 const VENICE_DISCOVERY_HARD_MAX_TOKENS = 131_072;
 const VENICE_DISCOVERY_TIMEOUT_MS = 10_000;
+<<<<<<< HEAD
+=======
+const VENICE_DISCOVERY_CACHE_TTL_MS = 60_000;
+>>>>>>> upstream/main
 const VENICE_DISCOVERY_RETRYABLE_HTTP_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 const VENICE_DISCOVERY_RETRYABLE_NETWORK_CODES = new Set([
   "ECONNABORTED",
@@ -35,6 +66,7 @@ const VENICE_DISCOVERY_RETRYABLE_NETWORK_CODES = new Set([
   "UND_ERR_SOCKET",
 ]);
 
+<<<<<<< HEAD
 export const VENICE_MODEL_CATALOG = [
   {
     id: "llama-3.3-70b",
@@ -411,6 +443,11 @@ export const VENICE_MODEL_CATALOG = [
 ] as const;
 
 export type VeniceCatalogEntry = (typeof VENICE_MODEL_CATALOG)[number];
+=======
+export const VENICE_MODEL_CATALOG: ModelDefinitionConfig[] = VENICE_MANIFEST_PROVIDER.models;
+
+type VeniceCatalogEntry = ModelDefinitionConfig;
+>>>>>>> upstream/main
 
 export function buildVeniceModelDefinition(entry: VeniceCatalogEntry): ModelDefinitionConfig {
   return {
@@ -423,7 +460,11 @@ export function buildVeniceModelDefinition(entry: VeniceCatalogEntry): ModelDefi
     maxTokens: entry.maxTokens,
     compat: {
       supportsUsageInStreaming: false,
+<<<<<<< HEAD
       ...("supportsTools" in entry && !entry.supportsTools ? { supportsTools: false } : {}),
+=======
+      ...entry.compat,
+>>>>>>> upstream/main
     },
   };
 }
@@ -445,6 +486,7 @@ interface VeniceModel {
   model_spec?: VeniceModelSpec;
 }
 
+<<<<<<< HEAD
 interface VeniceModelsResponse {
   data: VeniceModel[];
 }
@@ -459,6 +501,8 @@ class VeniceDiscoveryHttpError extends Error {
   }
 }
 
+=======
+>>>>>>> upstream/main
 function staticVeniceModelDefinitions(): ModelDefinitionConfig[] {
   return VENICE_MODEL_CATALOG.map(buildVeniceModelDefinition);
 }
@@ -498,13 +542,22 @@ function hasRetryableNetworkCode(err: unknown): boolean {
 }
 
 function isRetryableVeniceDiscoveryError(err: unknown): boolean {
+<<<<<<< HEAD
   if (err instanceof VeniceDiscoveryHttpError) {
     return true;
+=======
+  if (err instanceof LiveModelCatalogHttpError) {
+    return VENICE_DISCOVERY_RETRYABLE_HTTP_STATUS.has(err.status);
+>>>>>>> upstream/main
   }
   if (err instanceof Error && err.name === "AbortError") {
     return true;
   }
+<<<<<<< HEAD
   if (err instanceof TypeError && err.message.toLowerCase() === "fetch failed") {
+=======
+  if (err instanceof TypeError && normalizeLowercaseStringOrEmpty(err.message) === "fetch failed") {
+>>>>>>> upstream/main
     return true;
   }
   return hasRetryableNetworkCode(err);
@@ -540,12 +593,23 @@ function resolveApiSupportsTools(apiModel: VeniceModel): boolean | undefined {
   return typeof supportsFunctionCalling === "boolean" ? supportsFunctionCalling : undefined;
 }
 
+<<<<<<< HEAD
 export async function discoverVeniceModels(): Promise<ModelDefinitionConfig[]> {
+=======
+type VeniceModelDiscoveryOptions = {
+  retryDelayMs?: number;
+};
+
+export async function discoverVeniceModels(
+  options: VeniceModelDiscoveryOptions = {},
+): Promise<ModelDefinitionConfig[]> {
+>>>>>>> upstream/main
   if (process.env.NODE_ENV === "test" || process.env.VITEST) {
     return staticVeniceModelDefinitions();
   }
 
   try {
+<<<<<<< HEAD
     const response = await retryAsync(
       async () => {
         const currentResponse = await fetch(`${VENICE_BASE_URL}/models`, {
@@ -567,11 +631,29 @@ export async function discoverVeniceModels(): Promise<ModelDefinitionConfig[]> {
         minDelayMs: 300,
         maxDelayMs: 2000,
         jitter: 0.2,
+=======
+    const data = await retryAsync(
+      async () =>
+        await getCachedLiveProviderModelRows({
+          providerId: "venice",
+          endpoint: `${VENICE_BASE_URL}/models`,
+          timeoutMs: VENICE_DISCOVERY_TIMEOUT_MS,
+          ttlMs: VENICE_DISCOVERY_CACHE_TTL_MS,
+          policy: { allowedHostnames: VENICE_ALLOWED_HOSTNAMES },
+          auditContext: "venice-model-discovery",
+        }),
+      {
+        attempts: 3,
+        minDelayMs: options.retryDelayMs ?? 300,
+        maxDelayMs: options.retryDelayMs ?? 2000,
+        jitter: options.retryDelayMs === undefined ? 0.2 : 0,
+>>>>>>> upstream/main
         label: "venice-model-discovery",
         shouldRetry: isRetryableVeniceDiscoveryError,
       },
     );
 
+<<<<<<< HEAD
     if (!response.ok) {
       log.warn(`Failed to discover models: HTTP ${response.status}, using static catalog`);
       return staticVeniceModelDefinitions();
@@ -579,6 +661,9 @@ export async function discoverVeniceModels(): Promise<ModelDefinitionConfig[]> {
 
     const data = (await response.json()) as VeniceModelsResponse;
     if (!Array.isArray(data.data) || data.data.length === 0) {
+=======
+    if (data.length === 0) {
+>>>>>>> upstream/main
       log.warn("No models found from API, using static catalog");
       return staticVeniceModelDefinitions();
     }
@@ -588,7 +673,11 @@ export async function discoverVeniceModels(): Promise<ModelDefinitionConfig[]> {
     );
     const models: ModelDefinitionConfig[] = [];
 
+<<<<<<< HEAD
     for (const apiModel of data.data) {
+=======
+    for (const apiModel of data as VeniceModel[]) {
+>>>>>>> upstream/main
       const catalogEntry = catalogById.get(apiModel.id);
       const apiMaxTokens = resolveApiMaxCompletionTokens({
         apiModel,
@@ -609,11 +698,20 @@ export async function discoverVeniceModels(): Promise<ModelDefinitionConfig[]> {
         models.push(definition);
       } else {
         const apiSpec = apiModel.model_spec;
+<<<<<<< HEAD
         const isReasoning =
           apiSpec?.capabilities?.supportsReasoning ||
           apiModel.id.toLowerCase().includes("thinking") ||
           apiModel.id.toLowerCase().includes("reason") ||
           apiModel.id.toLowerCase().includes("r1");
+=======
+        const lowerModelId = normalizeLowercaseStringOrEmpty(apiModel.id);
+        const isReasoning =
+          apiSpec?.capabilities?.supportsReasoning ||
+          lowerModelId.includes("thinking") ||
+          lowerModelId.includes("reason") ||
+          lowerModelId.includes("r1");
+>>>>>>> upstream/main
 
         const hasVision = apiSpec?.capabilities?.supportsVision === true;
 
@@ -636,7 +734,11 @@ export async function discoverVeniceModels(): Promise<ModelDefinitionConfig[]> {
 
     return models.length > 0 ? models : staticVeniceModelDefinitions();
   } catch (error) {
+<<<<<<< HEAD
     if (error instanceof VeniceDiscoveryHttpError) {
+=======
+    if (error instanceof LiveModelCatalogHttpError) {
+>>>>>>> upstream/main
       log.warn(`Failed to discover models: HTTP ${error.status}, using static catalog`);
       return staticVeniceModelDefinitions();
     }

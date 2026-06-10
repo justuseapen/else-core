@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// Docker backend manager tests cover runtime image matching and removal error
+// handling for sandbox and browser containers.
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
 
@@ -116,6 +121,11 @@ describe("docker sandbox backend manager", () => {
   });
 
   it("defaults docker-backed runtime matching to sandbox.docker.image when label kind is missing", async () => {
+<<<<<<< HEAD
+=======
+    // Older registry entries did not record configLabelKind; keep ordinary
+    // sandbox matching stable for those existing containers.
+>>>>>>> upstream/main
     dockerMocks.execDocker.mockResolvedValueOnce({
       code: 0,
       stdout: "openclaw-sandbox:bookworm-slim\n",
@@ -142,4 +152,55 @@ describe("docker sandbox backend manager", () => {
       configLabelMatch: true,
     });
   });
+<<<<<<< HEAD
+=======
+
+  it("reports Docker runtime removal failures", async () => {
+    dockerMocks.execDocker.mockResolvedValueOnce({
+      code: 1,
+      stdout: "",
+      stderr: "permission denied",
+    });
+
+    await expect(
+      dockerSandboxBackendManager.removeRuntime({
+        entry: {
+          containerName: "sandbox-1",
+          backendId: "docker",
+          runtimeLabel: "sandbox-1",
+          sessionKey: "agent:coder:main",
+          createdAtMs: 1,
+          lastUsedAtMs: 1,
+          image: "openclaw-sandbox:bookworm-slim",
+        },
+        config: createConfig(),
+      }),
+    ).rejects.toThrow("Failed to remove Docker sandbox runtime sandbox-1: permission denied");
+  });
+
+  it("treats already-missing Docker runtimes as removed", async () => {
+    // Prune/remove flows are idempotent; Docker may have already removed the
+    // container by the time the manager runs.
+    dockerMocks.execDocker.mockResolvedValueOnce({
+      code: 1,
+      stdout: "",
+      stderr: "Error response from daemon: No such container: sandbox-1",
+    });
+
+    await expect(
+      dockerSandboxBackendManager.removeRuntime({
+        entry: {
+          containerName: "sandbox-1",
+          backendId: "docker",
+          runtimeLabel: "sandbox-1",
+          sessionKey: "agent:coder:main",
+          createdAtMs: 1,
+          lastUsedAtMs: 1,
+          image: "openclaw-sandbox:bookworm-slim",
+        },
+        config: createConfig(),
+      }),
+    ).resolves.toBeUndefined();
+  });
+>>>>>>> upstream/main
 });

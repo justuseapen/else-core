@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type {
   ProviderResolveDynamicModelContext,
   ProviderRuntimeModel,
@@ -9,6 +10,18 @@ import {
   DEFAULT_CONTEXT_TOKENS,
   normalizeModelCompat,
 } from "openclaw/plugin-sdk/provider-model-shared";
+=======
+// Fireworks plugin entrypoint registers its OpenClaw integration.
+import type { ProviderResolveDynamicModelContext } from "openclaw/plugin-sdk/plugin-entry";
+import { defineSingleProviderPluginEntry } from "openclaw/plugin-sdk/provider-entry";
+import {
+  cloneFirstTemplateModel,
+  DEFAULT_CONTEXT_TOKENS,
+  normalizeModelCompat,
+  OPENAI_COMPATIBLE_REPLAY_HOOKS,
+} from "openclaw/plugin-sdk/provider-model-shared";
+import { isFireworksKimiModelId } from "./model-id.js";
+>>>>>>> upstream/main
 import { applyFireworksConfig, FIREWORKS_DEFAULT_MODEL_REF } from "./onboard.js";
 import {
   buildFireworksProvider,
@@ -17,6 +30,7 @@ import {
   FIREWORKS_DEFAULT_MAX_TOKENS,
   FIREWORKS_DEFAULT_MODEL_ID,
 } from "./provider-catalog.js";
+<<<<<<< HEAD
 
 const PROVIDER_ID = "fireworks";
 const OPENAI_COMPATIBLE_REPLAY_HOOKS = buildProviderReplayFamilyHooks({
@@ -26,10 +40,32 @@ const OPENAI_COMPATIBLE_REPLAY_HOOKS = buildProviderReplayFamilyHooks({
 function resolveFireworksDynamicModel(
   ctx: ProviderResolveDynamicModelContext,
 ): ProviderRuntimeModel | undefined {
+=======
+import { wrapFireworksProviderStream } from "./stream.js";
+import { resolveFireworksThinkingProfile } from "./thinking-policy.js";
+
+const PROVIDER_ID = "fireworks";
+function isFireworksGlmModelId(modelId: string): boolean {
+  const normalized = modelId.trim().toLowerCase();
+  const lastSegment = normalized.split("/").pop() ?? normalized;
+  return /^glm[-_.]/.test(lastSegment);
+}
+
+function resolveFireworksDynamicInput(modelId: string): Array<"text" | "image"> {
+  return isFireworksGlmModelId(modelId) ? ["text"] : ["text", "image"];
+}
+
+function resolveFireworksDynamicModel(ctx: ProviderResolveDynamicModelContext) {
+>>>>>>> upstream/main
   const modelId = ctx.modelId.trim();
   if (!modelId) {
     return undefined;
   }
+<<<<<<< HEAD
+=======
+  const isKimiModel = isFireworksKimiModelId(modelId);
+  const input = resolveFireworksDynamicInput(modelId);
+>>>>>>> upstream/main
 
   return (
     cloneFirstTemplateModel({
@@ -39,6 +75,11 @@ function resolveFireworksDynamicModel(
       ctx,
       patch: {
         provider: PROVIDER_ID,
+<<<<<<< HEAD
+=======
+        reasoning: !isKimiModel,
+        input,
+>>>>>>> upstream/main
       },
     }) ??
     normalizeModelCompat({
@@ -47,12 +88,21 @@ function resolveFireworksDynamicModel(
       provider: PROVIDER_ID,
       api: "openai-completions",
       baseUrl: FIREWORKS_BASE_URL,
+<<<<<<< HEAD
       reasoning: true,
       input: ["text", "image"],
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       contextWindow: FIREWORKS_DEFAULT_CONTEXT_WINDOW,
       maxTokens: FIREWORKS_DEFAULT_MAX_TOKENS || DEFAULT_CONTEXT_TOKENS,
     } as ProviderRuntimeModel)
+=======
+      reasoning: !isKimiModel,
+      input,
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: FIREWORKS_DEFAULT_CONTEXT_WINDOW,
+      maxTokens: FIREWORKS_DEFAULT_MAX_TOKENS || DEFAULT_CONTEXT_TOKENS,
+    })
+>>>>>>> upstream/main
   );
 }
 
@@ -82,6 +132,11 @@ export default defineSingleProviderPluginEntry({
       allowExplicitBaseUrl: true,
     },
     ...OPENAI_COMPATIBLE_REPLAY_HOOKS,
+<<<<<<< HEAD
+=======
+    wrapStreamFn: wrapFireworksProviderStream,
+    resolveThinkingProfile: ({ modelId }) => resolveFireworksThinkingProfile(modelId),
+>>>>>>> upstream/main
     resolveDynamicModel: (ctx) => resolveFireworksDynamicModel(ctx),
     isModernModelRef: () => true,
   },

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Runtime seam contract tests cover allowed plugin runtime entrypoints and import boundaries.
+>>>>>>> upstream/main
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -8,6 +12,7 @@ import {
 } from "../../config/runtime-snapshot.js";
 import { fetchWithSsrFGuard } from "../../infra/net/fetch-guard.js";
 import { TEST_UNDICI_RUNTIME_DEPS_KEY } from "../../infra/net/undici-runtime.js";
+<<<<<<< HEAD
 import type { PluginManifestRecord } from "../manifest-registry.js";
 
 const loadPluginManifestRegistryMock = vi.fn();
@@ -20,12 +25,46 @@ function createRuntimePluginDir(pluginId: string, marker: string): string {
   const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), `openclaw-runtime-contract-${pluginId}-`));
   tempDirs.push(rootDir);
   const pluginRoot = path.join(rootDir, pluginId);
+=======
+import * as activationCheck from "../../plugin-sdk/facade-activation-check.runtime.js";
+import * as facadeRuntime from "../../plugin-sdk/facade-runtime.js";
+
+vi.mock("../../config/plugin-auto-enable.js", () => ({
+  applyPluginAutoEnable: ({ config }: { config?: unknown }) => ({
+    config: config ?? {},
+    autoEnabledReasons: {},
+  }),
+}));
+
+const originalBundledPluginsDir = process.env.OPENCLAW_BUNDLED_PLUGINS_DIR;
+const originalStateDir = process.env.OPENCLAW_STATE_DIR;
+const originalGlobalFetch = globalThis.fetch;
+const tempDirs: string[] = [];
+
+function createInstalledRuntimePluginDir(
+  pluginId: string,
+  marker: string,
+): {
+  bundledDir: string;
+  stateDir: string;
+  pluginRoot: string;
+} {
+  const bundledDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), `openclaw-runtime-contract-bundled-${pluginId}-`),
+  );
+  const stateDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), `openclaw-runtime-contract-state-${pluginId}-`),
+  );
+  tempDirs.push(bundledDir, stateDir);
+  const pluginRoot = path.join(stateDir, "extensions", pluginId);
+>>>>>>> upstream/main
   fs.mkdirSync(pluginRoot, { recursive: true });
   fs.writeFileSync(
     path.join(pluginRoot, "runtime-api.js"),
     `export const marker = ${JSON.stringify(marker)};\n`,
     "utf8",
   );
+<<<<<<< HEAD
   return pluginRoot;
 }
 
@@ -44,44 +83,104 @@ function buildPluginManifestRecord(params: {
     providers: [],
     skills: [],
     hooks: [],
+=======
+  fs.writeFileSync(
+    path.join(pluginRoot, "package.json"),
+    JSON.stringify({
+      name: `@openclaw/${pluginId}`,
+      version: "0.0.0",
+      openclaw: {
+        extensions: ["./runtime-api.js"],
+        channel: { id: pluginId },
+      },
+    }),
+    "utf8",
+  );
+  fs.writeFileSync(
+    path.join(pluginRoot, "openclaw.plugin.json"),
+    JSON.stringify({
+      id: pluginId,
+      channels: [pluginId],
+      configSchema: { type: "object", additionalProperties: false, properties: {} },
+    }),
+    "utf8",
+  );
+  return {
+    bundledDir,
+    stateDir,
+    pluginRoot,
+>>>>>>> upstream/main
   };
 }
 
 afterEach(() => {
+<<<<<<< HEAD
   loadPluginManifestRegistryMock.mockReset();
   clearRuntimeConfigSnapshot();
   vi.restoreAllMocks();
   vi.resetModules();
   vi.doUnmock("../manifest-registry.js");
+=======
+  clearRuntimeConfigSnapshot();
+  facadeRuntime.resetFacadeRuntimeStateForTest();
+  vi.restoreAllMocks();
+>>>>>>> upstream/main
   Reflect.deleteProperty(globalThis as object, TEST_UNDICI_RUNTIME_DEPS_KEY);
   if (originalBundledPluginsDir === undefined) {
     delete process.env.OPENCLAW_BUNDLED_PLUGINS_DIR;
   } else {
     process.env.OPENCLAW_BUNDLED_PLUGINS_DIR = originalBundledPluginsDir;
   }
+<<<<<<< HEAD
+=======
+  if (originalStateDir === undefined) {
+    delete process.env.OPENCLAW_STATE_DIR;
+  } else {
+    process.env.OPENCLAW_STATE_DIR = originalStateDir;
+  }
+>>>>>>> upstream/main
   if (originalGlobalFetch) {
     (globalThis as Record<string, unknown>).fetch = originalGlobalFetch;
   } else {
     Reflect.deleteProperty(globalThis as object, "fetch");
   }
+<<<<<<< HEAD
   for (const dir of tempDirs.splice(0, tempDirs.length)) {
+=======
+  for (const dir of tempDirs.splice(0)) {
+>>>>>>> upstream/main
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
 
 describe("shared runtime seam contracts", () => {
   it("allows activated runtime facades when the resolved plugin root matches an installed-style manifest record", async () => {
+<<<<<<< HEAD
     const pluginRoot = createRuntimePluginDir("line", "line-ok");
     process.env.OPENCLAW_BUNDLED_PLUGINS_DIR = path.dirname(pluginRoot);
     setRuntimeConfigSnapshot({
       plugins: {
         entries: {
           line: {
+=======
+    const pluginId = "line-contract-fixture";
+    const { bundledDir, stateDir, pluginRoot } = createInstalledRuntimePluginDir(
+      pluginId,
+      "line-ok",
+    );
+    process.env.OPENCLAW_BUNDLED_PLUGINS_DIR = bundledDir;
+    process.env.OPENCLAW_STATE_DIR = stateDir;
+    setRuntimeConfigSnapshot({
+      plugins: {
+        entries: {
+          [pluginId]: {
+>>>>>>> upstream/main
             enabled: true,
           },
         },
       },
     });
+<<<<<<< HEAD
     loadPluginManifestRegistryMock.mockReturnValue({
       plugins: [buildPluginManifestRecord({ id: "line", origin: "global", rootDir: pluginRoot })],
       diagnostics: [],
@@ -113,6 +212,30 @@ describe("shared runtime seam contracts", () => {
       }).marker,
     ).toBe("line-ok");
     expect(facadeRuntime.listImportedBundledPluginFacadeIds()).toEqual(["line"]);
+=======
+    facadeRuntime.resetFacadeRuntimeStateForTest();
+
+    const location = {
+      modulePath: path.join(pluginRoot, "runtime-api.js"),
+      boundaryRoot: pluginRoot,
+    };
+    expect(
+      activationCheck.resolveBundledPluginPublicSurfaceAccess({
+        dirName: pluginId,
+        artifactBasename: "runtime-api.js",
+        location,
+        sourceExtensionsRoot: bundledDir,
+        resolutionKey: `test:${pluginId}`,
+      }).allowed,
+    ).toBe(true);
+    expect(
+      facadeRuntime.testing.loadFacadeModuleAtLocationSync<{ marker: string }>({
+        location,
+        trackedPluginId: pluginId,
+      }).marker,
+    ).toBe("line-ok");
+    expect(facadeRuntime.listImportedBundledPluginFacadeIds()).toEqual([pluginId]);
+>>>>>>> upstream/main
   });
 
   it("keeps guarded fetch on mocked global fetches even when a dispatcher is attached", async () => {
@@ -129,7 +252,11 @@ describe("shared runtime seam contracts", () => {
     const runtimeFetch = vi.fn(async () => new Response("runtime", { status: 200 }));
     const globalFetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const requestInit = init as RequestInit & { dispatcher?: unknown };
+<<<<<<< HEAD
       expect(requestInit.dispatcher).toBeDefined();
+=======
+      expect(requestInit.dispatcher).toBeInstanceOf(MockAgent);
+>>>>>>> upstream/main
       return new Response("mock", { status: 200 });
     });
 

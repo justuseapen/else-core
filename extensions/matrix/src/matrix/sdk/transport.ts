@@ -1,3 +1,7 @@
+// Matrix plugin module implements transport behavior.
+import { parseMediaContentLength } from "openclaw/plugin-sdk/media-runtime";
+import { MatrixMediaSizeLimitError } from "../media-errors.js";
+import { readResponseWithLimit } from "./read-response-with-limit.js";
 import {
   fetchWithRuntimeDispatcher,
   type PinnedDispatcherPolicy,
@@ -6,11 +10,17 @@ import {
   buildTimeoutAbortSignal,
   closeDispatcher,
   createPinnedDispatcher,
+  fetchWithRuntimeDispatcherOrMockedGlobal,
   resolvePinnedHostnameWithPolicy,
   type SsrFPolicy,
+<<<<<<< HEAD
 } from "../../runtime-api.js";
 import { MatrixMediaSizeLimitError } from "../media-errors.js";
 import { readResponseWithLimit } from "./read-response-with-limit.js";
+=======
+  type PinnedDispatcherPolicy,
+} from "./transport-runtime-api.js";
+>>>>>>> upstream/main
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
@@ -70,6 +80,24 @@ function toFetchUrl(resource: RequestInfo | URL): string {
   return resource.url;
 }
 
+const MATRIX_STATE_AFTER_SYNC_PARAM = "org.matrix.msc4222.use_state_after";
+
+function withoutMatrixStateAfterSyncParam(rawUrl: string): string {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return rawUrl;
+  }
+
+  if (!url.pathname.endsWith("/sync") || !url.searchParams.has(MATRIX_STATE_AFTER_SYNC_PARAM)) {
+    return rawUrl;
+  }
+
+  url.searchParams.delete(MATRIX_STATE_AFTER_SYNC_PARAM);
+  return url.toString();
+}
+
 function buildBufferedResponse(params: {
   source: Response;
   body: ArrayBuffer;
@@ -91,6 +119,7 @@ function buildBufferedResponse(params: {
   return response;
 }
 
+<<<<<<< HEAD
 function isMockedFetch(fetchImpl: typeof fetch | undefined): boolean {
   if (typeof fetchImpl !== "function") {
     return false;
@@ -98,6 +127,8 @@ function isMockedFetch(fetchImpl: typeof fetch | undefined): boolean {
   return typeof (fetchImpl as typeof fetch & { mock?: unknown }).mock === "object";
 }
 
+=======
+>>>>>>> upstream/main
 async function fetchWithMatrixDispatcher(params: {
   url: string;
   init: MatrixDispatcherRequestInit;
@@ -106,10 +137,14 @@ async function fetchWithMatrixDispatcher(params: {
   // fetches must stay fail-closed unless a retry path can preserve the
   // validated pinned-address binding. Route dispatcher-attached requests
   // through undici runtime fetch so the pinned dispatcher is preserved.
+<<<<<<< HEAD
   if (params.init.dispatcher && !isMockedFetch(globalThis.fetch)) {
     return await fetchWithRuntimeDispatcher(params.url, params.init);
   }
   return await fetch(params.url, params.init);
+=======
+  return await fetchWithRuntimeDispatcherOrMockedGlobal(params.url, params.init);
+>>>>>>> upstream/main
 }
 
 async function fetchWithMatrixGuardedRedirects(params: {
@@ -129,6 +164,8 @@ async function fetchWithMatrixGuardedRedirects(params: {
   const { signal, cleanup } = buildTimeoutAbortSignal({
     timeoutMs: params.timeoutMs,
     signal: params.signal,
+    operation: "matrix.guarded-redirect-fetch",
+    url: params.url,
   });
 
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
@@ -223,7 +260,7 @@ export function createMatrixGuardedFetch(params: {
   dispatcherPolicy?: PinnedDispatcherPolicy;
 }): typeof fetch {
   return (async (resource: RequestInfo | URL, init?: RequestInit) => {
-    const url = toFetchUrl(resource);
+    const url = withoutMatrixStateAfterSyncParam(toFetchUrl(resource));
     const { signal, ...requestInit } = init ?? {};
     const { response, release } = await fetchWithMatrixGuardedRedirects({
       url,
@@ -310,8 +347,13 @@ export async function performMatrixRequest(params: {
     if (params.raw) {
       const contentLength = response.headers.get("content-length");
       if (params.maxBytes && contentLength) {
+<<<<<<< HEAD
         const length = Number(contentLength);
         if (Number.isFinite(length) && length > params.maxBytes) {
+=======
+        const length = parseMediaContentLength(contentLength);
+        if (length !== null && length > params.maxBytes) {
+>>>>>>> upstream/main
           throw new MatrixMediaSizeLimitError(
             `Matrix media exceeds configured size limit (${length} bytes > ${params.maxBytes} bytes)`,
           );

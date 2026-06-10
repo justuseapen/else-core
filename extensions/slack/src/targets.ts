@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Slack plugin module implements targets behavior.
+>>>>>>> upstream/main
 export {
   looksLikeSlackTargetId,
   normalizeSlackMessagingTarget,

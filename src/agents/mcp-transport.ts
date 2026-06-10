@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -6,20 +7,60 @@ import { logDebug } from "../logger.js";
 import { resolveMcpTransportConfig } from "./mcp-transport-config.js";
 
 export type ResolvedMcpTransport = {
+=======
+/**
+ * MCP client transport factory.
+ *
+ * This module turns normalized MCP server config into stdio, SSE, or
+ * streamable-HTTP SDK transports with OpenClaw auth, redirect, and logging rules.
+ */
+import {
+  SSEClientTransport,
+  type SSEClientTransportOptions,
+} from "@modelcontextprotocol/sdk/client/sse.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import type { FetchLike, Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { logDebug } from "../logger.js";
+import {
+  buildMcpHttpFetch,
+  withoutMcpAuthorizationHeader,
+  withSameOriginMcpHttpHeaders,
+} from "./mcp-http-fetch.js";
+import { createMcpOAuthClientProvider } from "./mcp-oauth.js";
+import { OpenClawStdioClientTransport } from "./mcp-stdio-transport.js";
+import { resolveMcpTransportConfig } from "./mcp-transport-config.js";
+
+type ResolvedMcpTransport = {
+>>>>>>> upstream/main
   transport: Transport;
   description: string;
   transportType: "stdio" | "sse" | "streamable-http";
   connectionTimeoutMs: number;
+<<<<<<< HEAD
   detachStderr?: () => void;
 };
 
 function attachStderrLogging(serverName: string, transport: StdioClientTransport) {
+=======
+  requestTimeoutMs: number;
+  supportsParallelToolCalls: boolean;
+  detachStderr?: () => void;
+};
+
+function attachStderrLogging(serverName: string, transport: OpenClawStdioClientTransport) {
+>>>>>>> upstream/main
   const stderr = transport.stderr;
   if (!stderr || typeof stderr.on !== "function") {
     return undefined;
   }
   const onData = (chunk: Buffer | string) => {
+<<<<<<< HEAD
     const message = String(chunk).trim();
+=======
+    const message =
+      normalizeOptionalString(typeof chunk === "string" ? chunk : String(chunk)) ?? "";
+>>>>>>> upstream/main
     if (!message) {
       return;
     }
@@ -40,6 +81,7 @@ function attachStderrLogging(serverName: string, transport: StdioClientTransport
   };
 }
 
+<<<<<<< HEAD
 function buildSseEventSourceFetch(headers: Record<string, string>) {
   return (url: string | URL, init?: RequestInit) => {
     const sdkHeaders: Record<string, string> = {};
@@ -59,6 +101,35 @@ function buildSseEventSourceFetch(headers: Record<string, string>) {
   };
 }
 
+=======
+type SseEventSourceFetch = NonNullable<
+  NonNullable<SSEClientTransportOptions["eventSourceInit"]>["fetch"]
+>;
+
+function buildSseEventSourceFetch(
+  headers: Record<string, string>,
+  baseFetch: FetchLike,
+): SseEventSourceFetch {
+  return (url: string | URL, init?: RequestInit) => {
+    // Header names are case-insensitive, but object spreads preserve case
+    // variants and can duplicate Authorization on the wire. Normalize before
+    // merging so operator headers override SDK headers as a single entry.
+    const mergedHeaders: Record<string, string> = {};
+    for (const [key, value] of new Headers(init?.headers)) {
+      mergedHeaders[key.toLowerCase()] = value;
+    }
+    for (const [key, value] of Object.entries(headers)) {
+      mergedHeaders[key.toLowerCase()] = value;
+    }
+    return baseFetch(url, {
+      ...(init as RequestInit),
+      headers: mergedHeaders,
+    }) as ReturnType<SseEventSourceFetch>;
+  };
+}
+
+/** Resolves a configured MCP server into a live SDK transport instance. */
+>>>>>>> upstream/main
 export function resolveMcpTransport(
   serverName: string,
   rawServer: unknown,
@@ -68,7 +139,11 @@ export function resolveMcpTransport(
     return null;
   }
   if (resolved.kind === "stdio") {
+<<<<<<< HEAD
     const transport = new StdioClientTransport({
+=======
+    const transport = new OpenClawStdioClientTransport({
+>>>>>>> upstream/main
       command: resolved.command,
       args: resolved.args,
       env: resolved.env,
@@ -80,6 +155,7 @@ export function resolveMcpTransport(
       description: resolved.description,
       transportType: "stdio",
       connectionTimeoutMs: resolved.connectionTimeoutMs,
+<<<<<<< HEAD
       detachStderr: attachStderrLogging(serverName, transport),
     };
   }
@@ -87,10 +163,48 @@ export function resolveMcpTransport(
     return {
       transport: new StreamableHTTPClientTransport(new URL(resolved.url), {
         requestInit: resolved.headers ? { headers: resolved.headers } : undefined,
+=======
+      requestTimeoutMs: resolved.requestTimeoutMs,
+      supportsParallelToolCalls: resolved.supportsParallelToolCalls,
+      detachStderr: attachStderrLogging(serverName, transport),
+    };
+  }
+  const authProvider =
+    resolved.auth === "oauth"
+      ? createMcpOAuthClientProvider({
+          serverName,
+          serverUrl: resolved.url,
+          config: resolved.oauth,
+        })
+      : undefined;
+  const baseFetch = buildMcpHttpFetch({
+    sslVerify: resolved.sslVerify,
+    clientCert: resolved.clientCert,
+    clientKey: resolved.clientKey,
+    resourceUrl: resolved.url,
+  });
+  const headers =
+    resolved.auth === "oauth" ? withoutMcpAuthorizationHeader(resolved.headers) : resolved.headers;
+  const httpFetch =
+    resolved.auth === "oauth"
+      ? withSameOriginMcpHttpHeaders({
+          fetchFn: baseFetch,
+          headers,
+          resourceUrl: resolved.url,
+        })
+      : baseFetch;
+  if (resolved.transportType === "streamable-http") {
+    return {
+      transport: new StreamableHTTPClientTransport(new URL(resolved.url), {
+        requestInit: resolved.auth === "oauth" || !headers ? undefined : { headers },
+        fetch: httpFetch,
+        authProvider,
+>>>>>>> upstream/main
       }),
       description: resolved.description,
       transportType: "streamable-http",
       connectionTimeoutMs: resolved.connectionTimeoutMs,
+<<<<<<< HEAD
     };
   }
   const headers: Record<string, string> = {
@@ -101,9 +215,30 @@ export function resolveMcpTransport(
     transport: new SSEClientTransport(new URL(resolved.url), {
       requestInit: hasHeaders ? { headers } : undefined,
       eventSourceInit: hasHeaders ? { fetch: buildSseEventSourceFetch(headers) } : undefined,
+=======
+      requestTimeoutMs: resolved.requestTimeoutMs,
+      supportsParallelToolCalls: resolved.supportsParallelToolCalls,
+    };
+  }
+  const sseHeaders: Record<string, string> = { ...headers };
+  const hasHeaders = Object.keys(sseHeaders).length > 0;
+  return {
+    transport: new SSEClientTransport(new URL(resolved.url), {
+      requestInit: resolved.auth === "oauth" || !hasHeaders ? undefined : { headers: sseHeaders },
+      fetch: httpFetch,
+      eventSourceInit: {
+        fetch: buildSseEventSourceFetch(resolved.auth === "oauth" ? {} : sseHeaders, httpFetch),
+      },
+      authProvider,
+>>>>>>> upstream/main
     }),
     description: resolved.description,
     transportType: "sse",
     connectionTimeoutMs: resolved.connectionTimeoutMs,
+<<<<<<< HEAD
+=======
+    requestTimeoutMs: resolved.requestTimeoutMs,
+    supportsParallelToolCalls: resolved.supportsParallelToolCalls,
+>>>>>>> upstream/main
   };
 }

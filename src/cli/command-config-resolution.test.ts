@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Command config resolution tests cover config lookup before command execution.
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -20,7 +24,11 @@ describe("resolveCommandConfigWithSecrets", () => {
     vi.clearAllMocks();
   });
 
+<<<<<<< HEAD
   it("logs diagnostics and preserves resolved config when auto-enable is off", async () => {
+=======
+  it("emits diagnostics to stderr and preserves resolved config when auto-enable is off", async () => {
+>>>>>>> upstream/main
     const runtime = { log: vi.fn(), error: vi.fn(), exit: vi.fn() } as const;
     const config = { channels: {} };
     const resolvedConfig = { channels: { telegram: {} } };
@@ -44,7 +52,12 @@ describe("resolveCommandConfigWithSecrets", () => {
       targetIds,
       mode: "read_only_status",
     });
+<<<<<<< HEAD
     expect(runtime.log).toHaveBeenCalledWith("[secrets] resolved channels.telegram.token");
+=======
+    expect(runtime.error).toHaveBeenCalledWith("[secrets] resolved channels.telegram.token");
+    expect(runtime.log).not.toHaveBeenCalled();
+>>>>>>> upstream/main
     expect(mocks.applyPluginAutoEnable).not.toHaveBeenCalled();
     expect(result).toEqual({
       resolvedConfig,
@@ -79,4 +92,32 @@ describe("resolveCommandConfigWithSecrets", () => {
     });
     expect(result.effectiveConfig).toBe(effectiveConfig);
   });
+<<<<<<< HEAD
+=======
+
+  it("passes scoped target paths to command secret resolution", async () => {
+    const config = { tools: { web: { search: { provider: "tavily" } } } };
+    const allowedPaths = new Set(["plugins.entries.tavily.config.webSearch.apiKey"]);
+    const forcedActivePaths = new Set(["plugins.entries.tavily.config.webSearch.apiKey"]);
+    mocks.resolveCommandSecretRefsViaGateway.mockResolvedValue({
+      resolvedConfig: config,
+      diagnostics: [],
+    });
+
+    await resolveCommandConfigWithSecrets({
+      config,
+      commandName: "infer web search",
+      targetIds: new Set(["plugins.entries.*.config.webSearch.apiKey"]),
+      allowedPaths,
+      forcedActivePaths,
+    });
+
+    expect(mocks.resolveCommandSecretRefsViaGateway).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowedPaths,
+        forcedActivePaths,
+      }),
+    );
+  });
+>>>>>>> upstream/main
 });

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Telegram plugin module implements exec approvals behavior.
+>>>>>>> upstream/main
 import { resolveApprovalApprovers } from "openclaw/plugin-sdk/approval-auth-runtime";
 import {
   createChannelExecApprovalProfile,
@@ -6,17 +10,46 @@ import {
   matchesApprovalRequestFilters,
 } from "openclaw/plugin-sdk/approval-client-runtime";
 import { resolveApprovalRequestChannelAccountId } from "openclaw/plugin-sdk/approval-native-runtime";
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import type { TelegramExecApprovalConfig } from "openclaw/plugin-sdk/config-runtime";
 import type { ExecApprovalRequest, PluginApprovalRequest } from "openclaw/plugin-sdk/infra-runtime";
 import type { ReplyPayload } from "openclaw/plugin-sdk/reply-runtime";
 import { normalizeAccountId } from "openclaw/plugin-sdk/routing";
+=======
+import type {
+  ExecApprovalRequest,
+  PluginApprovalRequest,
+} from "openclaw/plugin-sdk/approval-runtime";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import type { TelegramExecApprovalConfig } from "openclaw/plugin-sdk/config-contracts";
+import type { ReplyPayload } from "openclaw/plugin-sdk/reply-runtime";
+import { normalizeAccountId } from "openclaw/plugin-sdk/routing";
+import {
+  normalizeLowercaseStringOrEmpty,
+  normalizeOptionalString,
+} from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import { listTelegramAccountIds, resolveTelegramAccount } from "./accounts.js";
 import { resolveTelegramInlineButtonsConfigScope } from "./inline-buttons.js";
 import { normalizeTelegramChatId, resolveTelegramTargetChatType } from "./targets.js";
 
 function normalizeApproverId(value: string | number): string {
-  return String(value).trim();
+  return normalizeOptionalString(String(value)) ?? "";
+}
+
+function normalizeTelegramDirectApproverId(value: string | number): string | undefined {
+  const normalized = normalizeApproverId(value);
+  const chatId = normalizeTelegramChatId(normalized);
+  if (!chatId || chatId.startsWith("-")) {
+    return undefined;
+  }
+  return chatId;
+}
+
+function resolveTelegramOwnerApprovers(cfg: OpenClawConfig): Array<string | number> {
+  const ownerAllowFrom = cfg.commands?.ownerAllowFrom;
+  return Array.isArray(ownerAllowFrom) ? ownerAllowFrom : [];
 }
 
 function normalizeTelegramDirectApproverId(value: string | number): string | undefined {
@@ -34,12 +67,20 @@ export function resolveTelegramExecApprovalConfig(params: {
 }): TelegramExecApprovalConfig | undefined {
   const account = resolveTelegramAccount(params);
   const config = account.config.execApprovals;
+<<<<<<< HEAD
   if (!config) {
     return undefined;
   }
   return {
     ...config,
     enabled: account.enabled && account.tokenSource !== "none" ? config.enabled : false,
+=======
+  const enabled =
+    account.enabled && account.tokenSource !== "none" ? (config?.enabled ?? "auto") : false;
+  return {
+    ...config,
+    enabled,
+>>>>>>> upstream/main
   };
 }
 
@@ -47,11 +88,17 @@ export function getTelegramExecApprovalApprovers(params: {
   cfg: OpenClawConfig;
   accountId?: string | null;
 }): string[] {
+<<<<<<< HEAD
   const account = resolveTelegramAccount(params).config;
   return resolveApprovalApprovers({
     explicit: resolveTelegramExecApprovalConfig(params)?.approvers,
     allowFrom: account.allowFrom,
     defaultTo: account.defaultTo ? String(account.defaultTo) : null,
+=======
+  return resolveApprovalApprovers({
+    explicit: resolveTelegramExecApprovalConfig(params)?.approvers,
+    allowFrom: resolveTelegramOwnerApprovers(params.cfg),
+>>>>>>> upstream/main
     normalizeApprover: normalizeTelegramDirectApproverId,
   });
 }
@@ -102,6 +149,7 @@ function countTelegramExecApprovalEligibleAccounts(params: {
   }).length;
 }
 
+<<<<<<< HEAD
 function matchesTelegramRequestAccount(params: {
   cfg: OpenClawConfig;
   accountId?: string | null;
@@ -128,6 +176,82 @@ function matchesTelegramRequestAccount(params: {
   );
 }
 
+=======
+function isExecApprovalRequest(
+  request: ExecApprovalRequest | PluginApprovalRequest,
+): request is ExecApprovalRequest {
+  return "command" in request.request;
+}
+
+function isTargetForwardingMode(mode?: string): boolean {
+  return mode === "targets" || mode === "both";
+}
+
+function matchesExplicitTelegramForwardTargetAccount(params: {
+  cfg: OpenClawConfig;
+  accountId?: string | null;
+  request: ExecApprovalRequest | PluginApprovalRequest;
+}): boolean | undefined {
+  const forwardingConfig = isExecApprovalRequest(params.request)
+    ? params.cfg.approvals?.exec
+    : params.cfg.approvals?.plugin;
+  if (!forwardingConfig?.enabled || !isTargetForwardingMode(forwardingConfig.mode)) {
+    return undefined;
+  }
+  const telegramTargets = (forwardingConfig.targets ?? []).filter(
+    (target) => normalizeLowercaseStringOrEmpty(target.channel) === "telegram",
+  );
+  if (telegramTargets.some((target) => !normalizeOptionalString(target.accountId))) {
+    return undefined;
+  }
+  const scopedTelegramAccountIds = telegramTargets
+    .map((target) => normalizeOptionalString(target.accountId))
+    .filter((accountId): accountId is string => Boolean(accountId));
+  if (scopedTelegramAccountIds.length === 0) {
+    return undefined;
+  }
+  const normalizedAccountId = params.accountId ? normalizeAccountId(params.accountId) : "";
+  return (
+    Boolean(normalizedAccountId) &&
+    scopedTelegramAccountIds.some(
+      (accountId) => normalizeAccountId(accountId) === normalizedAccountId,
+    )
+  );
+}
+
+function matchesTelegramRequestAccount(params: {
+  cfg: OpenClawConfig;
+  accountId?: string | null;
+  request: ExecApprovalRequest | PluginApprovalRequest;
+}): boolean {
+  const explicitTargetMatch = matchesExplicitTelegramForwardTargetAccount(params);
+  if (explicitTargetMatch !== undefined) {
+    return explicitTargetMatch;
+  }
+  const turnSourceChannel = normalizeLowercaseStringOrEmpty(
+    params.request.request.turnSourceChannel,
+  );
+  const boundAccountId = resolveApprovalRequestChannelAccountId({
+    cfg: params.cfg,
+    request: params.request,
+    channel: "telegram",
+  });
+  if (turnSourceChannel && turnSourceChannel !== "telegram" && !boundAccountId) {
+    return (
+      countTelegramExecApprovalEligibleAccounts({
+        cfg: params.cfg,
+        request: params.request,
+      }) <= 1
+    );
+  }
+  return (
+    !boundAccountId ||
+    !params.accountId ||
+    normalizeAccountId(boundAccountId) === normalizeAccountId(params.accountId)
+  );
+}
+
+>>>>>>> upstream/main
 const telegramExecApprovalProfile = createChannelExecApprovalProfile({
   resolveConfig: resolveTelegramExecApprovalConfig,
   resolveApprovers: getTelegramExecApprovalApprovers,

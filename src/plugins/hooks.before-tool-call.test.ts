@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+/** Tests before-tool-call hook ordering, mutation, and cancellation behavior. */
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it } from "vitest";
 import { createHookRunner } from "./hooks.js";
 import { addStaticTestHooks } from "./hooks.test-helpers.js";
@@ -33,15 +37,23 @@ function expectRequireApprovalResult(
     block?: boolean;
     blockReason?: string;
     params?: Record<string, unknown>;
+<<<<<<< HEAD
     requireApproval?: Record<string, unknown>;
+=======
+    requireApproval?: PluginHookBeforeToolCallResult["requireApproval"];
+>>>>>>> upstream/main
   },
 ) {
   expect(result?.block).toBe(expected.block);
   expect(result?.blockReason).toBe(expected.blockReason);
   expect(result?.params).toEqual(expected.params);
+<<<<<<< HEAD
   expect(result?.requireApproval).toEqual(
     expected.requireApproval ? expect.objectContaining(expected.requireApproval) : undefined,
   );
+=======
+  expect(result?.requireApproval).toEqual(expected.requireApproval);
+>>>>>>> upstream/main
 }
 
 describe("before_tool_call hook merger — requireApproval", () => {
@@ -90,6 +102,12 @@ describe("before_tool_call hook merger — requireApproval", () => {
         },
       ],
       expectedApproval: {
+<<<<<<< HEAD
+=======
+        id: "a1",
+        title: "T",
+        description: "D",
+>>>>>>> upstream/main
         pluginId: "my-plugin",
       },
     },
@@ -119,6 +137,10 @@ describe("before_tool_call hook merger — requireApproval", () => {
       ],
       expectedApproval: {
         title: "First",
+<<<<<<< HEAD
+=======
+        description: "First plugin",
+>>>>>>> upstream/main
         pluginId: "plugin-a",
       },
     },
@@ -137,6 +159,11 @@ describe("before_tool_call hook merger — requireApproval", () => {
         },
       ],
       expectedApproval: {
+<<<<<<< HEAD
+=======
+        title: "T",
+        description: "D",
+>>>>>>> upstream/main
         pluginId: "actual-plugin",
       },
     },
@@ -201,7 +228,15 @@ describe("before_tool_call hook merger — requireApproval", () => {
         },
       ],
       expected: {
+<<<<<<< HEAD
         requireApproval: { pluginId: "approver" },
+=======
+        requireApproval: {
+          title: "Needs approval",
+          description: "Approval needed",
+          pluginId: "approver",
+        },
+>>>>>>> upstream/main
         params: { source: "approver", safe: true },
       },
     },
@@ -232,7 +267,15 @@ describe("before_tool_call hook merger — requireApproval", () => {
       expected: {
         block: true,
         blockReason: "blocked",
+<<<<<<< HEAD
         requireApproval: { pluginId: "approver" },
+=======
+        requireApproval: {
+          title: "Needs approval",
+          description: "Approval needed",
+          pluginId: "approver",
+        },
+>>>>>>> upstream/main
         params: { source: "approver", safe: true },
       },
     },

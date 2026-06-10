@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Vllm API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   VLLM_DEFAULT_API_KEY_ENV_VAR,
   VLLM_DEFAULT_BASE_URL,
@@ -5,3 +9,7 @@ export {
   VLLM_PROVIDER_LABEL,
 } from "./defaults.js";
 export { buildVllmProvider } from "./models.js";
+<<<<<<< HEAD
+=======
+export { createVllmQwenThinkingWrapper, wrapVllmProviderStream } from "./stream.js";
+>>>>>>> upstream/main

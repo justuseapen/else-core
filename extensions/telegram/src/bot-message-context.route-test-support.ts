@@ -1,12 +1,30 @@
+<<<<<<< HEAD
 import { vi, type Mock } from "vitest";
 
 type AsyncUnknownMock = Mock<(...args: unknown[]) => Promise<unknown>>;
+=======
+// Telegram plugin module implements bot message context.route test support behavior.
+import { buildChannelInboundEventContext } from "openclaw/plugin-sdk/channel-inbound";
+import {
+  clearRuntimeConfigSnapshot,
+  setRuntimeConfigSnapshot,
+} from "openclaw/plugin-sdk/runtime-config-snapshot";
+import { vi, type Mock } from "vitest";
+
+type AsyncUnknownMock = Mock<(...args: unknown[]) => Promise<unknown>>;
+type BuildTelegramMessageContextForTest =
+  typeof import("./bot-message-context.test-harness.js").buildTelegramMessageContextForTest;
+type BuildTelegramMessageContextForTestParams = Parameters<BuildTelegramMessageContextForTest>[0];
+type BuildTelegramMessageContextParams =
+  import("./bot-message-context.types.js").BuildTelegramMessageContextParams;
+>>>>>>> upstream/main
 
 const hoisted = vi.hoisted((): { recordInboundSessionMock: AsyncUnknownMock } => ({
   recordInboundSessionMock: vi.fn().mockResolvedValue(undefined),
 }));
 
 export const recordInboundSessionMock: AsyncUnknownMock = hoisted.recordInboundSessionMock;
+<<<<<<< HEAD
 
 vi.mock("./bot-message-context.session.runtime.js", async () => {
   const actual = await vi.importActual<typeof import("./bot-message-context.session.runtime.js")>(
@@ -17,20 +35,50 @@ vi.mock("./bot-message-context.session.runtime.js", async () => {
     recordInboundSession: (...args: unknown[]) => recordInboundSessionMock(...args),
   };
 });
+=======
+const recordInboundSessionForTest: NonNullable<
+  NonNullable<BuildTelegramMessageContextParams["sessionRuntime"]>["recordInboundSession"]
+> = async (params) => {
+  await recordInboundSessionMock(params);
+};
+
+export const telegramRouteTestSessionRuntime: NonNullable<
+  BuildTelegramMessageContextParams["sessionRuntime"]
+> = {
+  buildChannelInboundEventContext,
+  readSessionUpdatedAt: () => undefined,
+  recordInboundSession: recordInboundSessionForTest,
+  resolveInboundLastRouteSessionKey: ({ route, sessionKey }) =>
+    route.lastRoutePolicy === "main" ? route.mainSessionKey : sessionKey,
+  resolvePinnedMainDmOwnerFromAllowlist: () => null,
+  resolveStorePath: () => "/tmp/openclaw/session-store.json",
+};
+>>>>>>> upstream/main
 
 export async function loadTelegramMessageContextRouteHarness() {
-  vi.resetModules();
-  const [
-    { clearRuntimeConfigSnapshot, setRuntimeConfigSnapshot },
-    { buildTelegramMessageContextForTest },
-  ] = await Promise.all([
-    import("../../../src/config/config.js"),
-    import("./bot-message-context.test-harness.js"),
-  ]);
+  const { buildTelegramMessageContextForTest } =
+    await import("./bot-message-context.test-harness.js");
+  const buildTelegramMessageContextForRouteTest = async (
+    params: BuildTelegramMessageContextForTestParams,
+  ) => {
+    const ctx = await buildTelegramMessageContextForTest({
+      ...params,
+      sessionRuntime: {
+        ...telegramRouteTestSessionRuntime,
+        ...params.sessionRuntime,
+      },
+    });
+    if (ctx) {
+      await recordInboundSessionMock({
+        updateLastRoute: ctx.turn.record.updateLastRoute,
+      });
+    }
+    return ctx;
+  };
   return {
     clearRuntimeConfigSnapshot,
     setRuntimeConfigSnapshot,
-    buildTelegramMessageContextForTest,
+    buildTelegramMessageContextForTest: buildTelegramMessageContextForRouteTest,
   };
 }
 

@@ -1,7 +1,15 @@
+<<<<<<< HEAD
+=======
+// Msteams plugin module implements approval auth behavior.
+>>>>>>> upstream/main
 import {
   createResolvedApproverActionAuthAdapter,
   resolveApprovalApprovers,
 } from "openclaw/plugin-sdk/approval-auth-runtime";
+<<<<<<< HEAD
+=======
+import { normalizeOptionalLowercaseString } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import type { OpenClawConfig } from "../runtime-api.js";
 import { normalizeMSTeamsMessagingTarget } from "./resolve-allowlist.js";
 
@@ -12,7 +20,14 @@ function normalizeMSTeamsApproverId(value: string | number): string | undefined 
   if (!normalized?.startsWith("user:")) {
     return undefined;
   }
+<<<<<<< HEAD
   const id = normalized.slice("user:".length).trim().toLowerCase();
+=======
+  const id = normalizeOptionalLowercaseString(normalized.slice("user:".length));
+  if (!id) {
+    return undefined;
+  }
+>>>>>>> upstream/main
   return MSTEAMS_ID_RE.test(id) ? id : undefined;
 }
 
@@ -31,7 +46,14 @@ export const msTeamsApprovalAuth = createResolvedApproverActionAuthAdapter({
     });
   },
   normalizeSenderId: (value) => {
+<<<<<<< HEAD
     const trimmed = value.trim().toLowerCase();
+=======
+    const trimmed = normalizeOptionalLowercaseString(value);
+    if (!trimmed) {
+      return undefined;
+    }
+>>>>>>> upstream/main
     return MSTEAMS_ID_RE.test(trimmed) ? trimmed : undefined;
   },
 });

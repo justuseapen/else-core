@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import type { BedrockClient } from "@aws-sdk/client-bedrock";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+=======
+// Amazon Bedrock tests cover discovery plugin behavior.
+import type { BedrockClient } from "@aws-sdk/client-bedrock";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import {
   discoverBedrockModels,
   mergeImplicitBedrockProvider,
@@ -30,12 +36,32 @@ function mockSingleActiveSummary(overrides: Partial<typeof baseActiveAnthropicSu
     .mockResolvedValueOnce({ inferenceProfileSummaries: [] });
 }
 
+<<<<<<< HEAD
+=======
+function expectModelFields(model: unknown, expected: Record<string, unknown>): void {
+  if (!model || typeof model !== "object") {
+    throw new Error("Expected model record");
+  }
+  const actual = model as Record<string, unknown>;
+  for (const [key, value] of Object.entries(expected)) {
+    expect(actual[key]).toEqual(value);
+  }
+}
+
+>>>>>>> upstream/main
 describe("bedrock discovery", () => {
   beforeEach(() => {
     sendMock.mockClear();
     resetBedrockDiscoveryCacheForTest();
   });
 
+<<<<<<< HEAD
+=======
+  afterEach(() => {
+    resetBedrockDiscoveryCacheForTest();
+  });
+
+>>>>>>> upstream/main
   it("filters to active streaming text models and maps modalities", async () => {
     sendMock
       .mockResolvedValueOnce({
@@ -82,12 +108,20 @@ describe("bedrock discovery", () => {
 
     const models = await discoverBedrockModels({ region: "us-east-1", clientFactory });
     expect(models).toHaveLength(1);
+<<<<<<< HEAD
     expect(models[0]).toMatchObject({
+=======
+    expectModelFields(models[0], {
+>>>>>>> upstream/main
       id: "anthropic.claude-3-7-sonnet-20250219-v1:0",
       name: "Claude 3.7 Sonnet",
       reasoning: false,
       input: ["text", "image"],
+<<<<<<< HEAD
       contextWindow: 32000,
+=======
+      contextWindow: 200000,
+>>>>>>> upstream/main
       maxTokens: 4096,
     });
   });
@@ -104,14 +138,141 @@ describe("bedrock discovery", () => {
   });
 
   it("uses configured defaults for context and max tokens", async () => {
+<<<<<<< HEAD
     mockSingleActiveSummary();
+=======
+    mockSingleActiveSummary({
+      modelId: "example.unknown-text-v1:0",
+      modelName: "Example Unknown Text",
+      providerName: "example",
+    });
+>>>>>>> upstream/main
 
     const models = await discoverBedrockModels({
       region: "us-east-1",
       config: { defaultContextWindow: 64000, defaultMaxTokens: 8192 },
       clientFactory,
     });
+<<<<<<< HEAD
     expect(models[0]).toMatchObject({ contextWindow: 64000, maxTokens: 8192 });
+=======
+    expectModelFields(models[0], { contextWindow: 64000, maxTokens: 8192 });
+  });
+
+  it("keeps the conservative fallback for unknown inference profiles", async () => {
+    sendMock
+      .mockResolvedValueOnce({
+        modelSummaries: [],
+      })
+      .mockResolvedValueOnce({
+        inferenceProfileSummaries: [
+          {
+            inferenceProfileId: "jp.example.unknown-text-v1:0",
+            inferenceProfileName: "JP Example Unknown Text",
+            status: "ACTIVE",
+            type: "SYSTEM_DEFINED",
+            models: [
+              {
+                modelArn:
+                  "arn:aws:bedrock:ap-northeast-1::foundation-model/example.unknown-text-v1:0",
+              },
+            ],
+          },
+        ],
+      });
+
+    const models = await discoverBedrockModels({ region: "ap-northeast-1", clientFactory });
+
+    expect(models).toHaveLength(1);
+    expectModelFields(models[0], {
+      id: "jp.example.unknown-text-v1:0",
+      contextWindow: 32000,
+      maxTokens: 4096,
+      input: ["text"],
+    });
+  });
+
+  it("normalizes region-prefixed versioned model ids when resolving context windows", async () => {
+    sendMock
+      .mockResolvedValueOnce({
+        modelSummaries: [],
+      })
+      .mockResolvedValueOnce({
+        inferenceProfileSummaries: [
+          {
+            inferenceProfileId: "jp.anthropic.claude-sonnet-4-6-v1:0",
+            inferenceProfileName: "JP Claude Sonnet 4.6",
+            status: "ACTIVE",
+            type: "SYSTEM_DEFINED",
+            models: [
+              {
+                modelArn:
+                  "arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-sonnet-4-6-v1:0",
+              },
+            ],
+          },
+        ],
+      });
+
+    const models = await discoverBedrockModels({ region: "ap-northeast-1", clientFactory });
+
+    expectModelFields(models[0], {
+      id: "jp.anthropic.claude-sonnet-4-6-v1:0",
+      contextWindow: 1_000_000,
+    });
+  });
+
+  it("uses 1M context window for dotted Claude Opus 4.8 Bedrock refs", async () => {
+    sendMock
+      .mockResolvedValueOnce({
+        modelSummaries: [
+          {
+            modelId: "anthropic.claude-opus-4.8-v1:0",
+            modelName: "Claude Opus 4.8",
+            providerName: "anthropic",
+            inputModalities: ["TEXT"],
+            outputModalities: ["TEXT"],
+            responseStreamingSupported: true,
+            modelLifecycle: { status: "ACTIVE" },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        inferenceProfileSummaries: [
+          {
+            inferenceProfileId: "us.anthropic.claude-opus-4.8-v1:0",
+            inferenceProfileName: "US Claude Opus 4.8",
+            status: "ACTIVE",
+            type: "SYSTEM_DEFINED",
+            models: [
+              {
+                modelArn:
+                  "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-opus-4.8-v1:0",
+              },
+            ],
+          },
+        ],
+      });
+
+    const models = await discoverBedrockModels({ region: "us-east-1", clientFactory });
+
+    expectModelFields(
+      models.find((model) => model.id === "anthropic.claude-opus-4.8-v1:0"),
+      {
+        contextWindow: 1_000_000,
+        reasoning: true,
+        thinkingLevelMap: { xhigh: "xhigh", max: "max" },
+      },
+    );
+    expectModelFields(
+      models.find((model) => model.id === "us.anthropic.claude-opus-4.8-v1:0"),
+      {
+        contextWindow: 1_000_000,
+        reasoning: true,
+        thinkingLevelMap: { xhigh: "xhigh", max: "max" },
+      },
+    );
+>>>>>>> upstream/main
   });
 
   it("caches results when refreshInterval is enabled", async () => {
@@ -123,6 +284,31 @@ describe("bedrock discovery", () => {
     expect(sendMock).toHaveBeenCalledTimes(2);
   });
 
+<<<<<<< HEAD
+=======
+  it("skips cache when refreshInterval expiry overflows", async () => {
+    sendMock
+      .mockResolvedValueOnce({ modelSummaries: [baseActiveAnthropicSummary] })
+      .mockResolvedValueOnce({ inferenceProfileSummaries: [] })
+      .mockResolvedValueOnce({ modelSummaries: [baseActiveAnthropicSummary] })
+      .mockResolvedValueOnce({ inferenceProfileSummaries: [] });
+
+    await discoverBedrockModels({
+      region: "us-east-1",
+      config: { refreshInterval: 1 },
+      now: () => 8_640_000_000_000_000,
+      clientFactory,
+    });
+    await discoverBedrockModels({
+      region: "us-east-1",
+      config: { refreshInterval: 1 },
+      now: () => 8_640_000_000_000_000,
+      clientFactory,
+    });
+    expect(sendMock).toHaveBeenCalledTimes(4);
+  });
+
+>>>>>>> upstream/main
   it("skips cache when refreshInterval is 0", async () => {
     sendMock
       .mockResolvedValueOnce({ modelSummaries: [baseActiveAnthropicSummary] })
@@ -246,6 +432,7 @@ describe("bedrock discovery", () => {
     const globalProfile = models.find((m) => m.id === "global.anthropic.claude-sonnet-4-6");
 
     // Foundation model has image input.
+<<<<<<< HEAD
     expect(foundationModel).toMatchObject({ input: ["text", "image"] });
 
     // Inference profiles inherit image input from the foundation model.
@@ -257,6 +444,19 @@ describe("bedrock discovery", () => {
     });
     expect(euProfile).toMatchObject({ input: ["text", "image"] });
     expect(globalProfile).toMatchObject({ input: ["text", "image"] });
+=======
+    expectModelFields(foundationModel, { input: ["text", "image"] });
+
+    // Inference profiles inherit image input from the foundation model.
+    expectModelFields(usProfile, {
+      name: "US Anthropic Claude Sonnet 4.6",
+      input: ["text", "image"],
+      contextWindow: 1000000,
+      maxTokens: 4096,
+    });
+    expectModelFields(euProfile, { input: ["text", "image"] });
+    expectModelFields(globalProfile, { input: ["text", "image"] });
+>>>>>>> upstream/main
 
     // Inactive profile should not be present.
     expect(models.find((m) => m.id === "ap.anthropic.claude-sonnet-4-6")).toBeUndefined();
@@ -353,14 +553,56 @@ describe("bedrock discovery", () => {
     const models = await discoverBedrockModels({ region: "us-east-1", clientFactory });
     const profile = models.find((model) => model.id === "us.my-prod-profile");
 
+<<<<<<< HEAD
     expect(profile).toMatchObject({
       id: "us.my-prod-profile",
       input: ["text", "image"],
       contextWindow: 32000,
+=======
+    expectModelFields(profile, {
+      id: "us.my-prod-profile",
+      input: ["text", "image"],
+      contextWindow: 1000000,
+>>>>>>> upstream/main
       maxTokens: 4096,
     });
   });
 
+<<<<<<< HEAD
+=======
+  it("uses the resolved base model id for application-profile context fallback", async () => {
+    sendMock
+      .mockResolvedValueOnce({
+        modelSummaries: [],
+      })
+      .mockResolvedValueOnce({
+        inferenceProfileSummaries: [
+          {
+            inferenceProfileId: "us.my-prod-profile",
+            inferenceProfileName: "Prod Claude Profile",
+            status: "ACTIVE",
+            type: "APPLICATION",
+            models: [
+              {
+                modelArn:
+                  "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-opus-4-6-v1:0",
+              },
+            ],
+          },
+        ],
+      });
+
+    const models = await discoverBedrockModels({ region: "us-east-1", clientFactory });
+
+    expectModelFields(models[0], {
+      id: "us.my-prod-profile",
+      contextWindow: 1_000_000,
+      maxTokens: 4096,
+      input: ["text"],
+    });
+  });
+
+>>>>>>> upstream/main
   it("merges implicit Bedrock models into explicit provider overrides", () => {
     expect(
       mergeImplicitBedrockProvider({
@@ -389,6 +631,7 @@ describe("bedrock discovery", () => {
     ).toEqual(["amazon.nova-micro-v1:0"]);
   });
 
+<<<<<<< HEAD
   it("prefers plugin-owned discovery config and still honors legacy fallback", async () => {
     mockSingleActiveSummary();
 
@@ -401,6 +644,12 @@ describe("bedrock discovery", () => {
           },
         },
       },
+=======
+  it("uses plugin-owned discovery config without runtime legacy fallback", async () => {
+    mockSingleActiveSummary();
+
+    const pluginEnabled = await resolveImplicitBedrockProvider({
+>>>>>>> upstream/main
       pluginConfig: {
         discovery: {
           enabled: true,
@@ -414,6 +663,7 @@ describe("bedrock discovery", () => {
     expect(pluginEnabled?.baseUrl).toBe("https://bedrock-runtime.us-east-1.amazonaws.com");
     // 2 calls per discovery (ListFoundationModels + ListInferenceProfiles).
     expect(sendMock).toHaveBeenCalledTimes(2);
+<<<<<<< HEAD
 
     mockSingleActiveSummary();
 
@@ -432,5 +682,66 @@ describe("bedrock discovery", () => {
 
     expect(legacyEnabled?.baseUrl).toBe("https://bedrock-runtime.us-west-2.amazonaws.com");
     expect(sendMock).toHaveBeenCalledTimes(4);
+=======
+  });
+
+  // Ported from #65449 by @alickgithub2 — extended to also cover apac. prefix
+  it("resolves au. and apac. prefixes for regional inference profiles", async () => {
+    sendMock
+      .mockResolvedValueOnce({
+        modelSummaries: [
+          {
+            modelId: "anthropic.claude-sonnet-4-6",
+            modelName: "Claude Sonnet 4.6",
+            providerName: "anthropic",
+            inputModalities: ["TEXT", "IMAGE"],
+            outputModalities: ["TEXT"],
+            responseStreamingSupported: true,
+            modelLifecycle: { status: "ACTIVE" },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        inferenceProfileSummaries: [
+          {
+            inferenceProfileId: "au.anthropic.claude-sonnet-4-6",
+            inferenceProfileName: "AU Anthropic Claude Sonnet 4.6",
+            inferenceProfileArn:
+              "arn:aws:bedrock:ap-southeast-2::inference-profile/au.anthropic.claude-sonnet-4-6",
+            status: "ACTIVE",
+            type: "SYSTEM_DEFINED",
+            models: [], // no ARNs — forces the prefix-regex fallback
+          },
+          {
+            inferenceProfileId: "apac.anthropic.claude-sonnet-4-6",
+            inferenceProfileName: "APAC Anthropic Claude Sonnet 4.6",
+            inferenceProfileArn:
+              "arn:aws:bedrock:ap-northeast-1::inference-profile/apac.anthropic.claude-sonnet-4-6",
+            status: "ACTIVE",
+            type: "SYSTEM_DEFINED",
+            models: [],
+          },
+        ],
+      });
+
+    const models = await discoverBedrockModels({ region: "ap-southeast-2", clientFactory });
+
+    // Foundation model + 2 regional inference profiles
+    expect(models).toHaveLength(3);
+
+    const auProfile = models.find((m) => m.id === "au.anthropic.claude-sonnet-4-6");
+    expectModelFields(auProfile, {
+      id: "au.anthropic.claude-sonnet-4-6",
+      name: "AU Anthropic Claude Sonnet 4.6",
+      input: ["text", "image"],
+    });
+
+    const apacProfile = models.find((m) => m.id === "apac.anthropic.claude-sonnet-4-6");
+    expectModelFields(apacProfile, {
+      id: "apac.anthropic.claude-sonnet-4-6",
+      name: "APAC Anthropic Claude Sonnet 4.6",
+      input: ["text", "image"],
+    });
+>>>>>>> upstream/main
   });
 });

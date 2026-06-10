@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Covers native approval delivery planning.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import type { ChannelApprovalNativeAdapter } from "../channels/plugins/types.adapters.js";
 import { resolveChannelNativeApprovalDeliveryPlan } from "./approval-native-delivery.js";

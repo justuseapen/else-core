@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Minimax plugin module implements model definitions behavior.
+>>>>>>> upstream/main
 import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-shared";
 import { MINIMAX_DEFAULT_MODEL_ID, MINIMAX_TEXT_MODEL_CATALOG } from "./provider-models.js";
 
@@ -7,9 +11,16 @@ export const MINIMAX_CN_API_BASE_URL = "https://api.minimaxi.com/anthropic";
 export const MINIMAX_HOSTED_MODEL_ID = MINIMAX_DEFAULT_MODEL_ID;
 export const MINIMAX_HOSTED_MODEL_REF = `minimax/${MINIMAX_HOSTED_MODEL_ID}`;
 export const DEFAULT_MINIMAX_CONTEXT_WINDOW = 204800;
+export const MINIMAX_M3_CONTEXT_WINDOW = 1_000_000;
 export const DEFAULT_MINIMAX_MAX_TOKENS = 131072;
 
 export const MINIMAX_API_COST = {
+  input: 0.6,
+  output: 2.4,
+  cacheRead: 0.12,
+  cacheWrite: 0,
+};
+export const MINIMAX_M27_API_COST = {
   input: 0.3,
   output: 1.2,
   cacheRead: 0.06,
@@ -49,6 +60,12 @@ export const MINIMAX_LM_STUDIO_COST = {
 type MinimaxCatalogId = keyof typeof MINIMAX_TEXT_MODEL_CATALOG;
 
 export function resolveMinimaxApiCost(modelId: string): ModelDefinitionConfig["cost"] {
+<<<<<<< HEAD
+=======
+  if (modelId === "MiniMax-M2.7") {
+    return MINIMAX_M27_API_COST;
+  }
+>>>>>>> upstream/main
   if (modelId === "MiniMax-M2.5-highspeed") {
     return MINIMAX_M25_API_HIGHSPEED_COST;
   }
@@ -76,7 +93,11 @@ export function buildMinimaxModelDefinition(params: {
     id: params.id,
     name: params.name ?? catalog?.name ?? `MiniMax ${params.id}`,
     reasoning: params.reasoning ?? catalog?.reasoning ?? false,
+<<<<<<< HEAD
     input: isImageCapable ? ["text", "image"] : ["text"],
+=======
+    input: [...(catalog?.input ?? ["text"])],
+>>>>>>> upstream/main
     cost: params.cost,
     contextWindow: params.contextWindow,
     maxTokens: params.maxTokens,
@@ -87,7 +108,13 @@ export function buildMinimaxApiModelDefinition(modelId: string): ModelDefinition
   return buildMinimaxModelDefinition({
     id: modelId,
     cost: resolveMinimaxApiCost(modelId),
+<<<<<<< HEAD
     contextWindow: DEFAULT_MINIMAX_CONTEXT_WINDOW,
+=======
+    contextWindow:
+      MINIMAX_TEXT_MODEL_CATALOG[modelId as MinimaxCatalogId]?.contextWindow ??
+      DEFAULT_MINIMAX_CONTEXT_WINDOW,
+>>>>>>> upstream/main
     maxTokens: DEFAULT_MINIMAX_MAX_TOKENS,
   });
 }

@@ -1,14 +1,27 @@
+<<<<<<< HEAD
+=======
+// Line plugin module implements channel behavior.
+>>>>>>> upstream/main
 import { createChatChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { createPairingPrefixStripper } from "openclaw/plugin-sdk/channel-pairing";
 import { createRestrictSendersChannelSecurity } from "openclaw/plugin-sdk/channel-policy";
 import { createEmptyChannelDirectoryAdapter } from "openclaw/plugin-sdk/directory-runtime";
 import { createLazyRuntimeModule } from "openclaw/plugin-sdk/lazy-runtime";
 import { resolveLineAccount } from "./accounts.js";
+<<<<<<< HEAD
 import { type ChannelPlugin, type ResolvedLineAccount } from "./channel-api.js";
 import { lineChannelPluginCommon } from "./channel-shared.js";
 import { lineGatewayAdapter } from "./gateway.js";
 import { resolveLineGroupRequireMention } from "./group-policy.js";
 import { lineOutboundAdapter } from "./outbound.js";
+=======
+import { lineBindingsAdapter } from "./bindings.js";
+import type { ChannelPlugin, ResolvedLineAccount } from "./channel-api.js";
+import { lineChannelPluginCommon } from "./channel-shared.js";
+import { lineGatewayAdapter } from "./gateway.js";
+import { resolveLineGroupRequireMention } from "./group-policy.js";
+import { lineMessageAdapter, lineOutboundAdapter } from "./outbound.js";
+>>>>>>> upstream/main
 import { hasLineDirectives, parseLineDirectives } from "./reply-payload-transform.js";
 import { getLineRuntime } from "./runtime.js";
 import { lineSetupAdapter } from "./setup-core.js";
@@ -16,6 +29,7 @@ import { lineSetupWizard } from "./setup-surface.js";
 import { lineStatusAdapter } from "./status.js";
 
 const loadLineChannelRuntime = createLazyRuntimeModule(() => import("./channel.runtime.js"));
+<<<<<<< HEAD
 
 function normalizeLineConversationId(raw?: string | null): string | null {
   const trimmed = raw?.trim() ?? "";
@@ -43,6 +57,8 @@ function resolveLineInboundConversation(params: { to?: string; conversationId?: 
     normalizeLineConversationId(params.conversationId) ?? normalizeLineConversationId(params.to);
   return conversationId ? { conversationId } : null;
 }
+=======
+>>>>>>> upstream/main
 
 const lineSecurityAdapter = createRestrictSendersChannelSecurity<ResolvedLineAccount>({
   channelKey: "line",
@@ -68,6 +84,7 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = createChatChannelP
       resolveRequireMention: resolveLineGroupRequireMention,
     },
     messaging: {
+      targetPrefixes: ["line"],
       normalizeTarget: (target) => {
         const trimmed = target.trim();
         if (!trimmed) {
@@ -75,8 +92,12 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = createChatChannelP
         }
         return trimmed.replace(/^line:(group|room|user):/i, "").replace(/^line:/i, "");
       },
+<<<<<<< HEAD
       resolveInboundConversation: ({ to, conversationId }) =>
         resolveLineInboundConversation({ to, conversationId }),
+=======
+      resolveInboundConversation: lineBindingsAdapter.resolveInboundConversation,
+>>>>>>> upstream/main
       transformReplyPayload: ({ payload }) => {
         if (!payload.text || !hasLineDirectives(payload.text)) {
           return payload;
@@ -98,6 +119,7 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = createChatChannelP
     setup: lineSetupAdapter,
     status: lineStatusAdapter,
     gateway: lineGatewayAdapter,
+<<<<<<< HEAD
     bindings: {
       compileConfiguredBinding: ({ conversationId }) => {
         const normalized = normalizeLineConversationId(conversationId);
@@ -120,6 +142,10 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = createChatChannelP
           fallbackTo,
         }),
     },
+=======
+    message: lineMessageAdapter,
+    bindings: lineBindingsAdapter,
+>>>>>>> upstream/main
     conversationBindings: {
       defaultTopLevelPlacement: "current",
     },
@@ -189,6 +215,10 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = createChatChannelP
           getLineRuntime().channel.line?.pushMessageLine ??
           (await loadLineChannelRuntime()).pushMessageLine;
         await pushMessageLine(id, message, {
+<<<<<<< HEAD
+=======
+          cfg,
+>>>>>>> upstream/main
           accountId: account.accountId,
           channelAccessToken: account.channelAccessToken,
         });

@@ -1,24 +1,37 @@
+<<<<<<< HEAD
 import {
   type ChannelDoctorAdapter,
   type ChannelDoctorConfigMutation,
   type ChannelDoctorLegacyConfigRule,
 } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Matrix plugin module implements doctor behavior.
+import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import {
   detectPluginInstallPathIssue,
   formatPluginInstallPathIssue,
   removePluginFromConfig,
 } from "openclaw/plugin-sdk/runtime-doctor";
 import {
+<<<<<<< HEAD
   hasLegacyFlatAllowPrivateNetworkAlias,
   isPrivateNetworkOptInEnabled,
   migrateLegacyFlatAllowPrivateNetworkAlias,
 } from "openclaw/plugin-sdk/ssrf-runtime";
+=======
+  legacyConfigRules as MATRIX_LEGACY_CONFIG_RULES,
+  normalizeCompatibilityConfig as normalizeMatrixCompatibilityConfig,
+} from "./doctor-contract.js";
+>>>>>>> upstream/main
 import {
   autoMigrateLegacyMatrixState,
   autoPrepareLegacyMatrixCrypto,
   detectLegacyMatrixCrypto,
   detectLegacyMatrixState,
+<<<<<<< HEAD
   hasActionableMatrixMigration,
   hasPendingMatrixMigration,
   maybeCreateMatrixMigrationSnapshot,
@@ -223,6 +236,12 @@ const MATRIX_LEGACY_CONFIG_RULES: ChannelDoctorLegacyConfigRule[] = [
     match: hasLegacyMatrixAccountRoomAllowAliases,
   },
 ];
+=======
+  maybeCreateMatrixMigrationSnapshot,
+  resolveMatrixMigrationStatus,
+} from "./matrix-migration.runtime.js";
+import { isRecord } from "./record-shared.js";
+>>>>>>> upstream/main
 
 function hasConfiguredMatrixChannel(cfg: OpenClawConfig): boolean {
   const channels = cfg.channels as Record<string, unknown> | undefined;
@@ -276,8 +295,13 @@ export function formatMatrixLegacyCryptoPreview(
       [
         `- Matrix encrypted-state migration is pending for account "${plan.accountId}".`,
         `- Legacy crypto store: ${plan.legacyCryptoPath}`,
+<<<<<<< HEAD
         `- New recovery key file: ${plan.recoveryKeyPath}`,
         `- Migration state file: ${plan.statePath}`,
+=======
+        `- Recovery key state: Matrix SQLite state (imports ${plan.recoveryKeyPath} if present)`,
+        `- Migration state: Matrix SQLite state (imports ${plan.statePath} if present)`,
+>>>>>>> upstream/main
         '- Run "openclaw doctor --fix" to extract any saved backup key now. Backed-up room keys will restore automatically on next gateway start.',
       ].join("\n"),
     );
@@ -339,17 +363,25 @@ export async function applyMatrixDoctorRepair(params: {
 }): Promise<{ changes: string[]; warnings: string[] }> {
   const changes: string[] = [];
   const warnings: string[] = [];
+<<<<<<< HEAD
   const pendingMatrixMigration = hasPendingMatrixMigration({
     cfg: params.cfg,
     env: params.env,
   });
   const actionableMatrixMigration = hasActionableMatrixMigration({
+=======
+  const migrationStatus = resolveMatrixMigrationStatus({
+>>>>>>> upstream/main
     cfg: params.cfg,
     env: params.env,
   });
 
   let matrixSnapshotReady = true;
+<<<<<<< HEAD
   if (actionableMatrixMigration) {
+=======
+  if (migrationStatus.actionable) {
+>>>>>>> upstream/main
     try {
       const snapshot = await maybeCreateMatrixMigrationSnapshot({
         trigger: "doctor-fix",
@@ -367,7 +399,11 @@ export async function applyMatrixDoctorRepair(params: {
         '- Skipping Matrix migration changes for now. Resolve the snapshot failure, then rerun "openclaw doctor --fix".',
       );
     }
+<<<<<<< HEAD
   } else if (pendingMatrixMigration) {
+=======
+  } else if (migrationStatus.pending) {
+>>>>>>> upstream/main
     warnings.push(
       "- Matrix migration warnings are present, but no on-disk Matrix mutation is actionable yet. No pre-migration snapshot was needed.",
     );
@@ -428,6 +464,7 @@ export async function runMatrixDoctorSequence(params: {
     return { changeNotes, warningNotes };
   }
 
+<<<<<<< HEAD
   const legacyState = detectLegacyMatrixState({
     cfg: params.cfg,
     env: params.env,
@@ -437,6 +474,8 @@ export async function runMatrixDoctorSequence(params: {
     env: params.env,
   });
 
+=======
+>>>>>>> upstream/main
   if (params.shouldRepair) {
     const repair = await applyMatrixDoctorRepair({
       cfg: params.cfg,
@@ -444,6 +483,7 @@ export async function runMatrixDoctorSequence(params: {
     });
     changeNotes.push(...repair.changes);
     warningNotes.push(...repair.warnings);
+<<<<<<< HEAD
   } else if (legacyState) {
     if ("warning" in legacyState) {
       warningNotes.push(`- ${legacyState.warning}`);
@@ -454,6 +494,26 @@ export async function runMatrixDoctorSequence(params: {
 
   if (!params.shouldRepair && (legacyCrypto.warnings.length > 0 || legacyCrypto.plans.length > 0)) {
     warningNotes.push(...formatMatrixLegacyCryptoPreview(legacyCrypto));
+=======
+  } else {
+    const migrationStatus = resolveMatrixMigrationStatus({
+      cfg: params.cfg,
+      env: params.env,
+    });
+    if (migrationStatus.legacyState) {
+      if ("warning" in migrationStatus.legacyState) {
+        warningNotes.push(`- ${migrationStatus.legacyState.warning}`);
+      } else {
+        warningNotes.push(formatMatrixLegacyStatePreview(migrationStatus.legacyState));
+      }
+    }
+    if (
+      migrationStatus.legacyCrypto.warnings.length > 0 ||
+      migrationStatus.legacyCrypto.plans.length > 0
+    ) {
+      warningNotes.push(...formatMatrixLegacyCryptoPreview(migrationStatus.legacyCrypto));
+    }
+>>>>>>> upstream/main
   }
 
   return { changeNotes, warningNotes };
@@ -465,7 +525,11 @@ export const matrixDoctor: ChannelDoctorAdapter = {
   groupAllowFromFallbackToAllowFrom: false,
   warnOnEmptyGroupSenderAllowlist: true,
   legacyConfigRules: MATRIX_LEGACY_CONFIG_RULES,
+<<<<<<< HEAD
   normalizeCompatibilityConfig: ({ cfg }) => normalizeMatrixCompatibilityConfig(cfg),
+=======
+  normalizeCompatibilityConfig: normalizeMatrixCompatibilityConfig,
+>>>>>>> upstream/main
   runConfigSequence: async ({ cfg, env, shouldRepair }) =>
     await runMatrixDoctorSequence({ cfg, env, shouldRepair }),
   cleanStaleConfig: async ({ cfg }) => await cleanStaleMatrixPluginConfig(cfg),

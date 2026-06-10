@@ -1,19 +1,29 @@
+// Kimi Coding plugin entrypoint registers its OpenClaw integration.
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { createProviderApiKeyAuthMethod } from "openclaw/plugin-sdk/provider-auth-api-key";
 import { normalizeProviderId } from "openclaw/plugin-sdk/provider-model-shared";
 import type { SecretInput } from "openclaw/plugin-sdk/secret-input";
+<<<<<<< HEAD
 import { applyKimiCodeConfig, KIMI_CODING_MODEL_REF } from "./onboard.js";
 import { buildKimiCodingProvider } from "./provider-catalog.js";
+=======
+import { isRecord, normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { applyKimiCodeConfig, KIMI_CODING_MODEL_REF } from "./onboard.js";
+import { buildKimiCodingProvider, normalizeKimiCodingModelId } from "./provider-catalog.js";
+>>>>>>> upstream/main
 import { KIMI_REPLAY_POLICY } from "./replay-policy.js";
 import { wrapKimiProviderStream } from "./stream.js";
 
 const PLUGIN_ID = "kimi";
 const PROVIDER_ID = "kimi";
 
+<<<<<<< HEAD
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+=======
+>>>>>>> upstream/main
 function findExplicitProviderConfig(
   providers: Record<string, unknown> | undefined,
   providerId: string,
@@ -27,12 +37,15 @@ function findExplicitProviderConfig(
   );
   return isRecord(match?.[1]) ? match[1] : undefined;
 }
+<<<<<<< HEAD
 
 function buildKimiReplayPolicy() {
   return {
     preserveSignatures: false,
   };
 }
+=======
+>>>>>>> upstream/main
 export default definePluginEntry({
   id: PLUGIN_ID,
   name: "Kimi Provider",
@@ -49,7 +62,7 @@ export default definePluginEntry({
           providerId: PROVIDER_ID,
           methodId: "api-key",
           label: "Kimi Code API key (subscription)",
-          hint: "Kimi K2.5 + Kimi",
+          hint: "Kimi K2.6 + Kimi",
           optionKey: "kimiCodeApiKey",
           flagName: "--kimi-code-api-key",
           envVar: "KIMI_API_KEY",
@@ -66,8 +79,8 @@ export default definePluginEntry({
             choiceId: "kimi-code-api-key",
             choiceLabel: "Kimi Code API key (subscription)",
             groupId: "moonshot",
-            groupLabel: "Moonshot AI (Kimi K2.5)",
-            groupHint: "Kimi K2.5",
+            groupLabel: "Moonshot AI (Kimi K2.6)",
+            groupHint: "Kimi K2.6",
           },
         }),
       ],
@@ -83,8 +96,7 @@ export default definePluginEntry({
             PROVIDER_ID,
           );
           const builtInProvider = buildKimiCodingProvider();
-          const explicitBaseUrl =
-            typeof explicitProvider?.baseUrl === "string" ? explicitProvider.baseUrl.trim() : "";
+          const explicitBaseUrl = normalizeOptionalString(explicitProvider?.baseUrl) ?? "";
           const explicitHeaders = isRecord(explicitProvider?.headers)
             ? (explicitProvider.headers as Record<string, SecretInput>)
             : undefined;
@@ -106,6 +118,20 @@ export default definePluginEntry({
         },
       },
       buildReplayPolicy: () => KIMI_REPLAY_POLICY,
+<<<<<<< HEAD
+=======
+      normalizeResolvedModel: ({ model }) => {
+        const normalizedId = normalizeKimiCodingModelId(model.id);
+        return normalizedId === model.id ? undefined : { ...model, id: normalizedId };
+      },
+      resolveThinkingProfile: () => ({
+        levels: [
+          { id: "off", label: "off" },
+          { id: "low", label: "on" },
+        ],
+        defaultLevel: "off",
+      }),
+>>>>>>> upstream/main
       wrapStreamFn: wrapKimiProviderStream,
     });
   },

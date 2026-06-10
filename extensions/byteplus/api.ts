@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+/**
+ * Public BytePlus provider plugin API exports.
+ */
+>>>>>>> upstream/main
 export { buildBytePlusCodingProvider, buildBytePlusProvider } from "./provider-catalog.js";
 export {
   buildBytePlusModelDefinition,

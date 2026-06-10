@@ -1,12 +1,22 @@
+/**
+ * Runtime SDK subpath for channel setup wizards, prompts, and allowlist helpers.
+ */
 export type { OpenClawConfig } from "../config/config.js";
 export type { WizardPrompter } from "../wizard/prompts.js";
+export { createClackPrompter } from "../wizard/clack-prompter.js";
+export { createSetupTranslator } from "../wizard/i18n/index.js";
+export type { SetupTranslator, WizardI18nParams } from "../wizard/i18n/index.js";
 export type { ChannelSetupAdapter } from "../channels/plugins/types.adapters.js";
-export type { ChannelSetupDmPolicy } from "../channels/plugins/setup-wizard-types.js";
 export type {
+  ChannelSetupDmPolicy,
   ChannelSetupWizard,
   ChannelSetupWizardAllowFromEntry,
   ChannelSetupWizardTextInput,
+<<<<<<< HEAD
 } from "../channels/plugins/setup-wizard.js";
+=======
+} from "../channels/plugins/setup-wizard-types.js";
+>>>>>>> upstream/main
 
 export { DEFAULT_ACCOUNT_ID } from "../routing/session-key.js";
 

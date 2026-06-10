@@ -2,6 +2,12 @@
 
 export type {
   GeneratedMusicAsset,
+<<<<<<< HEAD
+=======
+  MusicGenerationEditCapabilities,
+  MusicGenerationMode,
+  MusicGenerationModeCapabilities,
+>>>>>>> upstream/main
   MusicGenerationProvider,
   MusicGenerationProviderCapabilities,
   MusicGenerationRequest,
@@ -9,3 +15,12 @@ export type {
   MusicGenerationSourceImage,
   MusicGenerationOutputFormat,
 } from "../music-generation/types.js";
+<<<<<<< HEAD
+=======
+export {
+  downloadGeneratedMusicAsset,
+  extractGeneratedMusicFileCandidates,
+  generatedMusicAssetFromBase64,
+  type GeneratedMusicFileCandidate,
+} from "../music-generation/provider-assets.js";
+>>>>>>> upstream/main

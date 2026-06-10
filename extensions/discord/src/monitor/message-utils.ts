@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { ChannelType, Client, Message } from "@buape/carbon";
 import { StickerFormatType, type APIAttachment, type APIStickerItem } from "discord-api-types/v10";
 import { fetchRemoteMedia, type FetchLike } from "openclaw/plugin-sdk/media-runtime";
@@ -726,3 +727,40 @@ export function buildDiscordMediaPayload(
 } {
   return buildMediaPayload(mediaList);
 }
+=======
+// Discord helper module supports message utils behavior.
+export {
+  resetDiscordChannelInfoCacheForTest,
+  resolveDiscordChannelInfo,
+  resolveDiscordMessageChannelId,
+  type DiscordChannelInfo,
+  type DiscordChannelInfoClient,
+} from "./message-channel-info.js";
+export {
+  hasDiscordMessageStickers,
+  normalizeDiscordMessageSnapshots,
+  normalizeDiscordStickerItems,
+  resolveDiscordMessageSnapshots,
+  resolveDiscordMessageStickers,
+  resolveDiscordReferencedForwardMessage,
+  resolveDiscordReferencedReplyMessage,
+  resolveDiscordSnapshotStickers,
+  type DiscordMessageSnapshot,
+  type DiscordSnapshotAuthor,
+  type DiscordSnapshotMessage,
+} from "./message-forwarded.js";
+export {
+  buildDiscordMediaPayload,
+  buildDiscordMediaPlaceholder,
+  resolveForwardedMediaList,
+  resolveMediaList,
+  resolveReferencedReplyMediaList,
+  type DiscordMediaInfo,
+  type DiscordMediaResolveOptions,
+} from "./message-media.js";
+export {
+  resolveDiscordEmbedText,
+  resolveDiscordForwardedMessagesTextFromSnapshots,
+  resolveDiscordMessageText,
+} from "./message-text.js";
+>>>>>>> upstream/main

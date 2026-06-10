@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -7,9 +8,16 @@ import type { OpenClawConfig } from "../config/config.js";
 import { createEmptyPluginRegistry } from "../plugins/registry.js";
 import { setActivePluginRegistry } from "../plugins/runtime.js";
 import type { PluginWebSearchProviderEntry } from "../plugins/types.js";
+=======
+/** Tests runtime SecretRef resolution across core config and auth-profile surfaces. */
+import { describe, expect, it } from "vitest";
+import { asConfig, setupSecretsRuntimeSnapshotTestHooks } from "./runtime.test-support.ts";
+>>>>>>> upstream/main
 
-type WebProviderUnderTest = "brave" | "gemini" | "grok" | "kimi" | "perplexity" | "firecrawl";
+const EMPTY_LOADABLE_PLUGIN_ORIGINS = new Map();
+const { prepareSecretsRuntimeSnapshot } = setupSecretsRuntimeSnapshotTestHooks();
 
+<<<<<<< HEAD
 const { resolvePluginWebSearchProvidersMock } = vi.hoisted(() => ({
   resolvePluginWebSearchProvidersMock: vi.fn(() => buildTestWebSearchProviders()),
 }));
@@ -530,6 +538,21 @@ describe("secrets runtime snapshot", () => {
     );
   });
 
+=======
+function expectWarning(
+  snapshot: Awaited<ReturnType<typeof prepareSecretsRuntimeSnapshot>>,
+  expected: { code: string; path: string },
+): void {
+  const warning = snapshot.warnings.find(
+    (entry) => entry.code === expected.code && entry.path === expected.path,
+  );
+  if (!warning) {
+    throw new Error(`Expected warning ${expected.code} ${expected.path}`);
+  }
+}
+
+describe("secrets runtime snapshot", () => {
+>>>>>>> upstream/main
   it("resolves sandbox ssh secret refs for active ssh backends", async () => {
     const snapshot = await prepareSecretsRuntimeSnapshot({
       config: asConfig({
@@ -561,13 +584,14 @@ describe("secrets runtime snapshot", () => {
         SSH_CERTIFICATE_DATA: "SSH CERT",
         SSH_KNOWN_HOSTS_DATA: "example.com ssh-ed25519 AAAATEST",
       },
+      includeAuthStoreRefs: false,
+      loadablePluginOrigins: EMPTY_LOADABLE_PLUGIN_ORIGINS,
     });
 
-    expect(snapshot.config.agents?.defaults?.sandbox?.ssh).toMatchObject({
-      identityData: "PRIVATE KEY",
-      certificateData: "SSH CERT",
-      knownHostsData: "example.com ssh-ed25519 AAAATEST",
-    });
+    const ssh = snapshot.config.agents?.defaults?.sandbox?.ssh;
+    expect(ssh?.identityData).toBe("PRIVATE KEY");
+    expect(ssh?.certificateData).toBe("SSH CERT");
+    expect(ssh?.knownHostsData).toBe("example.com ssh-ed25519 AAAATEST");
   });
 
   it("treats sandbox ssh secret refs as inactive when ssh backend is not selected", async () => {
@@ -586,6 +610,8 @@ describe("secrets runtime snapshot", () => {
         },
       }),
       env: {},
+      includeAuthStoreRefs: false,
+      loadablePluginOrigins: EMPTY_LOADABLE_PLUGIN_ORIGINS,
     });
 
     expect(snapshot.config.agents?.defaults?.sandbox?.ssh?.identityData).toEqual({
@@ -593,31 +619,11 @@ describe("secrets runtime snapshot", () => {
       provider: "default",
       id: "SSH_IDENTITY_DATA",
     });
-    expect(snapshot.warnings).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: "SECRETS_REF_IGNORED_INACTIVE_SURFACE",
-          path: "agents.defaults.sandbox.ssh.identityData",
-        }),
-      ]),
-    );
-  });
-
-  it("normalizes inline SecretRef object on token to tokenRef", async () => {
-    const config: OpenClawConfig = { models: {}, secrets: {} };
-    const snapshot = await prepareSecretsRuntimeSnapshot({
-      config,
-      env: { MY_TOKEN: "resolved-token-value" },
-      agentDirs: ["/tmp/openclaw-agent-main"],
-      loadAuthStore: () =>
-        loadAuthStoreWithProfiles({
-          "custom:inline-token": {
-            type: "token",
-            provider: "custom",
-            token: { source: "env", provider: "default", id: "MY_TOKEN" } as unknown as string,
-          },
-        }),
+    expectWarning(snapshot, {
+      code: "SECRETS_REF_IGNORED_INACTIVE_SURFACE",
+      path: "agents.defaults.sandbox.ssh.identityData",
     });
+<<<<<<< HEAD
 
     const profile = snapshot.authStores[0]?.store.profiles["custom:inline-token"] as Record<
       string,
@@ -1054,6 +1060,8 @@ describe("secrets runtime snapshot", () => {
         loadAuthStore: () => ({ version: 1, profiles: {} }),
       }),
     ).rejects.toThrow(/MISSING_GATEWAY_TOKEN_REF/i);
+=======
+>>>>>>> upstream/main
   });
 
   it("resolves media request secret refs for provider headers, auth, and tls material", async () => {
@@ -1417,11 +1425,14 @@ describe("secrets runtime snapshot", () => {
           },
         }),
         env: {},
+        includeAuthStoreRefs: false,
         agentDirs: ["/tmp/openclaw-agent-main"],
         loadAuthStore: () => ({ version: 1, profiles: {} }),
+        loadablePluginOrigins: EMPTY_LOADABLE_PLUGIN_ORIGINS,
       }),
     ).rejects.toThrow(/must not include "\." or "\.\." path segments/i);
   });
+<<<<<<< HEAD
 
   it("treats gateway.auth.password ref as inactive when auth mode is trusted-proxy", async () => {
     const snapshot = await prepareSecretsRuntimeSnapshot({
@@ -2914,4 +2925,6 @@ describe("secrets runtime snapshot", () => {
     });
     expect(snapshot.config.plugins?.entries?.xai).toBeUndefined();
   });
+=======
+>>>>>>> upstream/main
 });

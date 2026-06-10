@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+/**
+ * Public Chutes provider plugin API exports.
+ */
+>>>>>>> upstream/main
 export {
   buildChutesModelDefinition,
   CHUTES_BASE_URL,

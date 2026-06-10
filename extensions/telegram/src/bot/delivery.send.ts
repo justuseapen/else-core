@@ -1,40 +1,46 @@
+// Telegram plugin module implements delivery.send behavior.
 import { type Bot, GrammyError } from "grammy";
+<<<<<<< HEAD
+=======
+import { createTelegramRetryRunner } from "openclaw/plugin-sdk/retry-runtime";
+>>>>>>> upstream/main
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { formatErrorMessage } from "openclaw/plugin-sdk/ssrf-runtime";
 import { withTelegramApiErrorLogging } from "../api-logging.js";
 import { markdownToTelegramHtml } from "../format.js";
+<<<<<<< HEAD
 import { normalizeTelegramReplyToMessageId } from "../outbound-params.js";
+=======
+import { isSafeToRetrySendError, isTelegramRateLimitError } from "../network-errors.js";
+import {
+  buildTelegramSendParams,
+  getTelegramNativeQuoteReplyMessageId,
+  removeTelegramNativeQuoteParam,
+} from "../reply-parameters.js";
+>>>>>>> upstream/main
 import { buildInlineKeyboard } from "../send.js";
-import { buildTelegramThreadParams, type TelegramThreadSpec } from "./helpers.js";
+import type { TelegramThreadSpec } from "./helpers.js";
+
+export { buildTelegramSendParams } from "../reply-parameters.js";
 
 const PARSE_ERR_RE = /can't parse entities|parse entities|find end of the entity/i;
 const EMPTY_TEXT_ERR_RE = /message text is empty/i;
-const THREAD_NOT_FOUND_RE = /message thread not found/i;
+const QUOTE_PARAM_RE = /\bquote not found\b|\bQUOTE_TEXT_INVALID\b|\bquote text invalid\b/i;
 const GrammyErrorCtor: typeof GrammyError | undefined =
   typeof GrammyError === "function" ? GrammyError : undefined;
 
-function isTelegramThreadNotFoundError(err: unknown): boolean {
+function isTelegramQuoteParamError(err: unknown): boolean {
   if (GrammyErrorCtor && err instanceof GrammyErrorCtor) {
-    return THREAD_NOT_FOUND_RE.test(err.description);
+    return QUOTE_PARAM_RE.test(err.description);
   }
-  return THREAD_NOT_FOUND_RE.test(formatErrorMessage(err));
+  return QUOTE_PARAM_RE.test(formatErrorMessage(err));
 }
 
-function hasMessageThreadIdParam(params: Record<string, unknown> | undefined): boolean {
-  if (!params) {
-    return false;
-  }
-  return typeof params.message_thread_id === "number";
-}
-
-function removeMessageThreadIdParam(
-  params: Record<string, unknown> | undefined,
-): Record<string, unknown> {
-  if (!params) {
-    return {};
-  }
-  const { message_thread_id: _ignored, ...rest } = params;
-  return rest;
+function createTelegramDeliverySendRetry() {
+  return createTelegramRetryRunner({
+    shouldRetry: (err) => isSafeToRetrySendError(err) || isTelegramRateLimitError(err),
+    strictShouldRetry: true,
+  });
 }
 
 export async function sendTelegramWithThreadFallback<T>(params: {
@@ -45,37 +51,43 @@ export async function sendTelegramWithThreadFallback<T>(params: {
   send: (effectiveParams: Record<string, unknown>) => Promise<T>;
   shouldLog?: (err: unknown) => boolean;
 }): Promise<T> {
-  const allowThreadlessRetry = params.thread?.scope === "dm";
-  const hasThreadId = hasMessageThreadIdParam(params.requestParams);
+  const hasNativeQuote = getTelegramNativeQuoteReplyMessageId(params.requestParams) != null;
   const shouldSuppressFirstErrorLog = (err: unknown) =>
-    allowThreadlessRetry && hasThreadId && isTelegramThreadNotFoundError(err);
+    hasNativeQuote && isTelegramQuoteParamError(err);
   const mergedShouldLog = params.shouldLog
     ? (err: unknown) => params.shouldLog!(err) && !shouldSuppressFirstErrorLog(err)
     : (err: unknown) => !shouldSuppressFirstErrorLog(err);
+  const requestWithRetry = createTelegramDeliverySendRetry();
+  const runLoggedSend = (
+    operation: string,
+    requestParams: Record<string, unknown>,
+    shouldLog?: (err: unknown) => boolean,
+  ) =>
+    withTelegramApiErrorLogging({
+      operation,
+      runtime: params.runtime,
+      ...(shouldLog ? { shouldLog } : {}),
+      fn: () => requestWithRetry(() => params.send(requestParams), operation),
+    });
 
   try {
-    return await withTelegramApiErrorLogging({
-      operation: params.operation,
-      runtime: params.runtime,
-      shouldLog: mergedShouldLog,
-      fn: () => params.send(params.requestParams),
-    });
+    return await runLoggedSend(params.operation, params.requestParams, mergedShouldLog);
   } catch (err) {
-    if (!allowThreadlessRetry || !hasThreadId || !isTelegramThreadNotFoundError(err)) {
-      throw err;
+    if (hasNativeQuote && isTelegramQuoteParamError(err)) {
+      params.runtime.log?.(
+        `telegram ${params.operation}: native quote rejected; retrying with legacy reply_to_message_id`,
+      );
+      return await sendTelegramWithThreadFallback({
+        ...params,
+        operation: `${params.operation} (legacy reply retry)`,
+        requestParams: removeTelegramNativeQuoteParam(params.requestParams),
+      });
     }
-    const retryParams = removeMessageThreadIdParam(params.requestParams);
-    params.runtime.log?.(
-      `telegram ${params.operation}: message thread not found; retrying without message_thread_id`,
-    );
-    return await withTelegramApiErrorLogging({
-      operation: `${params.operation} (threadless retry)`,
-      runtime: params.runtime,
-      fn: () => params.send(retryParams),
-    });
+    throw err;
   }
 }
 
+<<<<<<< HEAD
 export function buildTelegramSendParams(opts?: {
   replyToMessageId?: number;
   thread?: TelegramThreadSpec | null;
@@ -97,6 +109,8 @@ export function buildTelegramSendParams(opts?: {
   return params;
 }
 
+=======
+>>>>>>> upstream/main
 export async function sendTelegramText(
   bot: Bot,
   chatId: string,
@@ -104,7 +118,10 @@ export async function sendTelegramText(
   runtime: RuntimeEnv,
   opts?: {
     replyToMessageId?: number;
+    replyQuoteMessageId?: number;
     replyQuoteText?: string;
+    replyQuotePosition?: number;
+    replyQuoteEntities?: unknown[];
     thread?: TelegramThreadSpec | null;
     textMode?: "markdown" | "html";
     plainText?: string;
@@ -115,6 +132,10 @@ export async function sendTelegramText(
 ): Promise<number> {
   const baseParams = buildTelegramSendParams({
     replyToMessageId: opts?.replyToMessageId,
+    replyQuoteMessageId: opts?.replyQuoteMessageId,
+    replyQuoteText: opts?.replyQuoteText,
+    replyQuotePosition: opts?.replyQuotePosition,
+    replyQuoteEntities: opts?.replyQuoteEntities,
     thread: opts?.thread,
     silent: opts?.silent,
   });

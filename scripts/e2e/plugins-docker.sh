@@ -2,10 +2,39 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-IMAGE_NAME="openclaw-plugins-e2e"
+source "$ROOT_DIR/scripts/lib/docker-e2e-image.sh"
+IMAGE_NAME="$(docker_e2e_resolve_image "openclaw-plugins-e2e" OPENCLAW_PLUGINS_E2E_IMAGE)"
 
-echo "Building Docker image..."
-docker build -t "$IMAGE_NAME" -f "$ROOT_DIR/scripts/e2e/Dockerfile" "$ROOT_DIR"
+docker_e2e_build_or_reuse "$IMAGE_NAME" plugins
+
+OPENCLAW_TEST_STATE_SCRIPT_B64="$(docker_e2e_test_state_shell_b64 plugins empty)"
+DOCKER_ENV_ARGS=(
+  -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+  -e "OPENCLAW_TEST_STATE_SCRIPT_B64=$OPENCLAW_TEST_STATE_SCRIPT_B64"
+)
+for env_name in \
+  OPENCLAW_PLUGINS_E2E_CLAWHUB \
+  OPENCLAW_PLUGINS_E2E_LIVE_CLAWHUB \
+  OPENCLAW_PLUGINS_E2E_CLAWHUB_SPEC \
+  OPENCLAW_PLUGINS_E2E_CLAWHUB_ID; do
+  env_value="${!env_name:-}"
+  if [[ -n "$env_value" && "$env_value" != "undefined" && "$env_value" != "null" ]]; then
+    DOCKER_ENV_ARGS+=(-e "$env_name")
+  fi
+done
+if [[ "${OPENCLAW_PLUGINS_E2E_LIVE_CLAWHUB:-0}" = "1" ]]; then
+  for env_name in \
+    OPENCLAW_CLAWHUB_URL \
+    CLAWHUB_URL \
+    OPENCLAW_CLAWHUB_TOKEN \
+    CLAWHUB_TOKEN \
+    CLAWHUB_AUTH_TOKEN; do
+    env_value="${!env_name:-}"
+    if [[ -n "$env_value" && "$env_value" != "undefined" && "$env_value" != "null" ]]; then
+      DOCKER_ENV_ARGS+=(-e "$env_name")
+    fi
+  done
+fi
 
 DOCKER_ENV_ARGS=(-e COREPACK_ENABLE_DOWNLOAD_PROMPT=0)
 if [[ -n "${OPENAI_API_KEY:-}" && "${OPENAI_API_KEY:-}" != "undefined" && "${OPENAI_API_KEY:-}" != "null" ]]; then
@@ -16,6 +45,7 @@ if [[ -n "${OPENAI_BASE_URL:-}" && "${OPENAI_BASE_URL:-}" != "undefined" && "${O
 fi
 
 echo "Running plugins Docker E2E..."
+<<<<<<< HEAD
 docker run --rm "${DOCKER_ENV_ARGS[@]}" -i "$IMAGE_NAME" bash -s <<'EOF'
 set -euo pipefail
 
@@ -909,5 +939,12 @@ console.log("ok");
 NODE
 
 EOF
+=======
+docker_e2e_run_logged_print_with_harness \
+  plugins-run \
+  "${DOCKER_ENV_ARGS[@]}" \
+  "$IMAGE_NAME" \
+  bash scripts/e2e/lib/plugins/sweep.sh
+>>>>>>> upstream/main
 
 echo "OK"

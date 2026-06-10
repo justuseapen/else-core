@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Kilocode setup module handles plugin onboarding behavior.
+>>>>>>> upstream/main
 import {
   createModelCatalogPresetAppliers,
   type OpenClawConfig,

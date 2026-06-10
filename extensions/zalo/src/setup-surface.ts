@@ -1,20 +1,26 @@
+// Zalo plugin module implements setup surface behavior.
 import {
   buildSingleChannelSecretPromptState,
   createStandardChannelSetupStatus,
   DEFAULT_ACCOUNT_ID,
-  formatDocsLink,
   hasConfiguredSecretInput,
-  mergeAllowFromEntries,
-  normalizeAccountId,
   promptSingleChannelSecretInput,
   runSingleChannelSecretStep,
-  type ChannelSetupDmPolicy,
   type ChannelSetupWizard,
   type OpenClawConfig,
   type SecretInput,
+  createSetupTranslator,
 } from "openclaw/plugin-sdk/setup";
+<<<<<<< HEAD
 import { listZaloAccountIds, resolveDefaultZaloAccountId, resolveZaloAccount } from "./accounts.js";
 import { zaloDmPolicy, zaloSetupAdapter } from "./setup-core.js";
+=======
+import { resolveZaloAccount } from "./accounts.js";
+import { noteZaloTokenHelp, promptZaloAllowFrom } from "./setup-allow-from.js";
+import { zaloDmPolicy } from "./setup-core.js";
+
+const t = createSetupTranslator();
+>>>>>>> upstream/main
 
 const channel = "zalo" as const;
 
@@ -95,6 +101,7 @@ function setZaloUpdateMode(
   } as OpenClawConfig;
 }
 
+<<<<<<< HEAD
 async function noteZaloTokenHelp(
   prompter: Parameters<NonNullable<ChannelSetupWizard["finalize"]>>[0]["prompter"],
 ): Promise<void> {
@@ -172,16 +179,18 @@ async function promptZaloAllowFrom(params: {
   } as OpenClawConfig;
 }
 
+=======
+>>>>>>> upstream/main
 export { zaloSetupAdapter } from "./setup-core.js";
 
 export const zaloSetupWizard: ChannelSetupWizard = {
   channel,
   status: createStandardChannelSetupStatus({
     channelLabel: "Zalo",
-    configuredLabel: "configured",
-    unconfiguredLabel: "needs token",
-    configuredHint: "recommended · configured",
-    unconfiguredHint: "recommended · newcomer-friendly",
+    configuredLabel: t("wizard.channels.statusConfigured"),
+    unconfiguredLabel: t("wizard.channels.statusNeedsToken"),
+    configuredHint: t("wizard.channels.statusRecommendedConfigured"),
+    unconfiguredHint: t("wizard.channels.statusRecommendedNewcomerFriendly"),
     configuredScore: 1,
     unconfiguredScore: 10,
     includeStatusLine: true,
@@ -215,15 +224,15 @@ export const zaloSetupWizard: ChannelSetupWizard = {
       cfg: next,
       prompter,
       providerHint: "zalo",
-      credentialLabel: "bot token",
+      credentialLabel: t("wizard.zalo.botToken"),
       secretInputMode: options?.secretInputMode,
       accountConfigured,
       hasConfigToken,
       allowEnv,
       envValue: process.env.ZALO_BOT_TOKEN,
-      envPrompt: "ZALO_BOT_TOKEN detected. Use env var?",
-      keepPrompt: "Zalo token already configured. Keep it?",
-      inputPrompt: "Enter Zalo bot token",
+      envPrompt: t("wizard.zalo.tokenEnvPrompt"),
+      keepPrompt: t("wizard.zalo.tokenKeep"),
+      inputPrompt: t("wizard.zalo.tokenInput"),
       preferredEnvVar: "ZALO_BOT_TOKEN",
       onMissingConfigured: async () => await noteZaloTokenHelp(prompter),
       applyUseEnv: async (currentCfg) =>
@@ -262,7 +271,9 @@ export const zaloSetupWizard: ChannelSetupWizard = {
                   accounts: {
                     ...currentCfg.channels?.zalo?.accounts,
                     [accountId]: {
-                      ...currentCfg.channels?.zalo?.accounts?.[accountId],
+                      ...(currentCfg.channels?.zalo?.accounts?.[accountId] as
+                        | Record<string, unknown>
+                        | undefined),
                       enabled: true,
                       botToken: value,
                     },
@@ -274,17 +285,17 @@ export const zaloSetupWizard: ChannelSetupWizard = {
     next = tokenStep.cfg;
 
     const wantsWebhook = await prompter.confirm({
-      message: "Use webhook mode for Zalo?",
+      message: t("wizard.zalo.webhookModePrompt"),
       initialValue: Boolean(resolvedAccount.config.webhookUrl),
     });
     if (wantsWebhook) {
-      const webhookUrl = String(
+      const webhookUrl = (
         await prompter.text({
-          message: "Webhook URL (https://...) ",
+          message: t("wizard.zalo.webhookUrlPrompt"),
           initialValue: resolvedAccount.config.webhookUrl,
           validate: (value) =>
             value?.trim()?.startsWith("https://") ? undefined : "HTTPS URL required",
-        }),
+        })
       ).trim();
       const defaultPath = (() => {
         try {
@@ -298,7 +309,7 @@ export const zaloSetupWizard: ChannelSetupWizard = {
         cfg: next,
         prompter,
         providerHint: "zalo-webhook",
-        credentialLabel: "webhook secret",
+        credentialLabel: t("wizard.zalo.webhookSecret"),
         secretInputMode: options?.secretInputMode,
         ...buildSingleChannelSecretPromptState({
           accountConfigured: hasConfiguredSecretInput(resolvedAccount.config.webhookSecret),
@@ -306,8 +317,8 @@ export const zaloSetupWizard: ChannelSetupWizard = {
           allowEnv: false,
         }),
         envPrompt: "",
-        keepPrompt: "Zalo webhook secret already configured. Keep it?",
-        inputPrompt: "Webhook secret (8-256 chars)",
+        keepPrompt: t("wizard.zalo.webhookSecretKeep"),
+        inputPrompt: t("wizard.zalo.webhookSecretInput"),
         preferredEnvVar: "ZALO_WEBHOOK_SECRET",
       });
       while (
@@ -315,12 +326,12 @@ export const zaloSetupWizard: ChannelSetupWizard = {
         typeof webhookSecretResult.value === "string" &&
         (webhookSecretResult.value.length < 8 || webhookSecretResult.value.length > 256)
       ) {
-        await prompter.note("Webhook secret must be between 8 and 256 characters.", "Zalo webhook");
+        await prompter.note(t("wizard.zalo.webhookSecretLength"), t("wizard.zalo.webhookTitle"));
         webhookSecretResult = await promptSingleChannelSecretInput({
           cfg: next,
           prompter,
           providerHint: "zalo-webhook",
-          credentialLabel: "webhook secret",
+          credentialLabel: t("wizard.zalo.webhookSecret"),
           secretInputMode: options?.secretInputMode,
           ...buildSingleChannelSecretPromptState({
             accountConfigured: false,
@@ -328,8 +339,8 @@ export const zaloSetupWizard: ChannelSetupWizard = {
             allowEnv: false,
           }),
           envPrompt: "",
-          keepPrompt: "Zalo webhook secret already configured. Keep it?",
-          inputPrompt: "Webhook secret (8-256 chars)",
+          keepPrompt: t("wizard.zalo.webhookSecretKeep"),
+          inputPrompt: t("wizard.zalo.webhookSecretInput"),
           preferredEnvVar: "ZALO_WEBHOOK_SECRET",
         });
       }
@@ -337,11 +348,11 @@ export const zaloSetupWizard: ChannelSetupWizard = {
         webhookSecretResult.action === "set"
           ? webhookSecretResult.value
           : resolvedAccount.config.webhookSecret;
-      const webhookPath = String(
+      const webhookPath = (
         await prompter.text({
-          message: "Webhook path (optional)",
+          message: t("wizard.zalo.webhookPathPrompt"),
           initialValue: resolvedAccount.config.webhookPath ?? defaultPath,
-        }),
+        })
       ).trim();
       next = setZaloUpdateMode(
         next,

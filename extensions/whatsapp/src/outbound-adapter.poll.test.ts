@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Whatsapp tests cover outbound adapter.poll plugin behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const hoisted = vi.hoisted(() => ({
@@ -6,9 +11,15 @@ const hoisted = vi.hoisted(() => ({
   sendReactionWhatsApp: vi.fn(async () => undefined),
 }));
 
-vi.mock("../../../src/globals.js", () => ({
-  shouldLogVerbose: () => false,
-}));
+vi.mock("openclaw/plugin-sdk/runtime-env", async () => {
+  const actual = await vi.importActual<typeof import("openclaw/plugin-sdk/runtime-env")>(
+    "openclaw/plugin-sdk/runtime-env",
+  );
+  return {
+    ...actual,
+    shouldLogVerbose: () => false,
+  };
+});
 
 vi.mock("./send.js", () => ({
   sendPollWhatsApp: hoisted.sendPollWhatsApp,

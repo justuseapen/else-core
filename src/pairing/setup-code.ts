@@ -1,10 +1,26 @@
+// Generates setup codes used to pair external channels with OpenClaw.
 import os from "node:os";
+import {
+  isCarrierGradeNatIpv4Address,
+  isIpv4Address,
+  isIpv6Address,
+  isLoopbackIpAddress,
+  isRfc1918Ipv4Address,
+  parseCanonicalIpAddress,
+} from "@openclaw/net-policy/ip";
+import {
+  normalizeLowercaseStringOrEmpty,
+  normalizeOptionalString,
+} from "@openclaw/normalization-core/string-coerce";
 import { resolveGatewayPort } from "../config/paths.js";
 import type { OpenClawConfig } from "../config/types.js";
 import { normalizeSecretInputString, resolveSecretInputRef } from "../config/types.secrets.js";
 import { materializeGatewayAuthSecretRefs } from "../gateway/auth-config-utils.js";
 import { assertExplicitGatewayAuthModeWhenBothConfigured } from "../gateway/auth-mode-policy.js";
+<<<<<<< HEAD
 import { isLoopbackHost, isSecureWebSocketUrl } from "../gateway/net.js";
+=======
+>>>>>>> upstream/main
 import { issueDeviceBootstrapToken } from "../infra/device-bootstrap.js";
 import {
   pickMatchingExternalInterfaceAddress,
@@ -13,6 +29,7 @@ import {
 import { PAIRING_SETUP_BOOTSTRAP_PROFILE } from "../shared/device-bootstrap-profile.js";
 import { resolveGatewayBindUrl } from "../shared/gateway-bind-url.js";
 import {
+<<<<<<< HEAD
   isCarrierGradeNatIpv4Address,
   isIpv4Address,
   isIpv6Address,
@@ -20,6 +37,11 @@ import {
   parseCanonicalIpAddress,
 } from "../shared/net/ip.js";
 import { resolveTailnetHostWithRunner } from "../shared/tailscale-status.js";
+=======
+  resolveTailnetHostWithRunner,
+  resolveTailscalePublishedHost,
+} from "../shared/tailscale-status.js";
+>>>>>>> upstream/main
 
 export type PairingSetupPayload = {
   url: string;
@@ -70,6 +92,7 @@ function describeSecureMobilePairingFix(source?: string): string {
   return (
     "Tailscale and public mobile pairing require a secure gateway URL (wss://) or Tailscale Serve/Funnel." +
     sourceNote +
+<<<<<<< HEAD
     " Fix: use a private LAN host/address, prefer gateway.tailscale.mode=serve, or set " +
     "gateway.remote.url / plugins.entries.device-pair.config.publicUrl to a wss:// URL. " +
     "ws:// is only valid for localhost, private LAN, or the Android emulator."
@@ -89,35 +112,92 @@ function isPrivateLanIpHost(host: string): boolean {
     return true;
   }
   const parsed = parseCanonicalIpAddress(host);
+=======
+    " Fix: use a private LAN address, prefer gateway.tailscale.mode=serve, or set " +
+    "gateway.remote.url / plugins.entries.device-pair.config.publicUrl to a wss:// URL. " +
+    "ws:// is only valid for localhost, private LAN addresses, .local hosts, or the Android emulator."
+  );
+}
+
+function normalizeMobilePairingHost(host: string): string {
+  let normalized = normalizeLowercaseStringOrEmpty(host);
+  if (normalized.startsWith("[") && normalized.endsWith("]")) {
+    normalized = normalized.slice(1, -1);
+  }
+  if (normalized.endsWith(".")) {
+    normalized = normalized.slice(0, -1);
+  }
+  const zoneIndex = normalized.indexOf("%");
+  if (zoneIndex >= 0) {
+    normalized = normalized.slice(0, zoneIndex);
+  }
+  return normalized;
+}
+
+function isPrivateLanHost(host: string): boolean {
+  const normalized = normalizeMobilePairingHost(host);
+  if (normalized.endsWith(".local")) {
+    return true;
+  }
+  if (isRfc1918Ipv4Address(normalized)) {
+    return true;
+  }
+  const parsed = parseCanonicalIpAddress(normalized);
+>>>>>>> upstream/main
   if (!parsed) {
     return false;
   }
   if (isIpv4Address(parsed)) {
+<<<<<<< HEAD
     const normalized = parsed.toString();
     return normalized.startsWith("169.254.") && !isCarrierGradeNatIpv4Address(normalized);
+=======
+    const normalizedIp = parsed.toString();
+    return normalizedIp.startsWith("169.254.") && !isCarrierGradeNatIpv4Address(normalizedIp);
+>>>>>>> upstream/main
   }
   if (!isIpv6Address(parsed)) {
     return false;
   }
+<<<<<<< HEAD
   const normalized = parsed.toString().toLowerCase();
   return (
     normalized.startsWith("fe80:") || normalized.startsWith("fc") || normalized.startsWith("fd")
+=======
+  const normalizedIp = normalizeLowercaseStringOrEmpty(parsed.toString());
+  return (
+    normalizedIp.startsWith("fe80:") ||
+    normalizedIp.startsWith("fc") ||
+    normalizedIp.startsWith("fd")
+>>>>>>> upstream/main
   );
 }
 
 function isMobilePairingCleartextAllowedHost(host: string): boolean {
+<<<<<<< HEAD
   return (
     isLoopbackHost(host) ||
     host === "10.0.2.2" ||
     isPrivateLanIpHost(host) ||
     isPrivateLanHostname(host)
+=======
+  const normalized = normalizeMobilePairingHost(host);
+  return (
+    normalized === "localhost" ||
+    isLoopbackIpAddress(normalized) ||
+    normalized === "10.0.2.2" ||
+    isPrivateLanHost(normalized)
+>>>>>>> upstream/main
   );
 }
 
 function validateMobilePairingUrl(url: string, source?: string): string | null {
+<<<<<<< HEAD
   if (isSecureWebSocketUrl(url)) {
     return null;
   }
+=======
+>>>>>>> upstream/main
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -126,6 +206,12 @@ function validateMobilePairingUrl(url: string, source?: string): string | null {
   }
   const protocol =
     parsed.protocol === "https:" ? "wss:" : parsed.protocol === "http:" ? "ws:" : parsed.protocol;
+<<<<<<< HEAD
+=======
+  if (protocol === "wss:") {
+    return null;
+  }
+>>>>>>> upstream/main
   if (protocol !== "ws:" || isMobilePairingCleartextAllowedHost(parsed.hostname)) {
     return null;
   }
@@ -137,13 +223,34 @@ type ResolveAuthLabelResult = {
   error?: string;
 };
 
+const GATEWAY_SCHEME_WITHOUT_AUTHORITY_RE = /^(?:https?|wss?):(?!\/\/)/i;
+const SCHEME_LIKE_PATH_RE = /^[A-Za-z][A-Za-z0-9+.-]*:\//;
+
 function normalizeUrl(raw: string, schemeFallback: "ws" | "wss"): string | null {
   const trimmed = raw.trim();
   if (!trimmed) {
     return null;
   }
+  if (GATEWAY_SCHEME_WITHOUT_AUTHORITY_RE.test(trimmed)) {
+    return null;
+  }
+  const parsedUrl = parseNormalizedGatewayUrl(trimmed);
+  if (parsedUrl) {
+    return parsedUrl;
+  }
+  if (trimmed.includes("://") || SCHEME_LIKE_PATH_RE.test(trimmed)) {
+    return null;
+  }
+  const withoutPath = normalizeOptionalString(trimmed.split("/", 1)[0]) ?? "";
+  return withoutPath ? parseNormalizedGatewayUrl(`${schemeFallback}://${withoutPath}`) : null;
+}
+
+function parseNormalizedGatewayUrl(raw: string): string | null {
   try {
-    const parsed = new URL(trimmed);
+    const parsed = new URL(raw);
+    if (parsed.username || parsed.password) {
+      return null;
+    }
     const scheme = parsed.protocol.replace(":", "");
     if (!scheme) {
       return null;
@@ -159,14 +266,8 @@ function normalizeUrl(raw: string, schemeFallback: "ws" | "wss"): string | null 
     const port = parsed.port ? `:${parsed.port}` : "";
     return `${resolvedScheme}://${host}${port}`;
   } catch {
-    // Fall through to host:port parsing.
-  }
-
-  const withoutPath = trimmed.split("/")[0] ?? "";
-  if (!withoutPath) {
     return null;
   }
-  return `${schemeFallback}://${withoutPath}`;
 }
 
 function resolveScheme(
@@ -213,14 +314,6 @@ function pickTailnetIPv4(
   return pickIPv4Matching(networkInterfaces, isTailnetIPv4);
 }
 
-function resolveGatewayTokenFromEnv(env: NodeJS.ProcessEnv): string | undefined {
-  return env.OPENCLAW_GATEWAY_TOKEN?.trim() || undefined;
-}
-
-function resolveGatewayPasswordFromEnv(env: NodeJS.ProcessEnv): string | undefined {
-  return env.OPENCLAW_GATEWAY_PASSWORD?.trim() || undefined;
-}
-
 function resolvePairingSetupAuthLabel(
   cfg: OpenClawConfig,
   env: NodeJS.ProcessEnv,
@@ -235,8 +328,8 @@ function resolvePairingSetupAuthLabel(
     value: cfg.gateway?.auth?.password,
     defaults,
   }).ref;
-  const envToken = resolveGatewayTokenFromEnv(env);
-  const envPassword = resolveGatewayPasswordFromEnv(env);
+  const envToken = normalizeOptionalString(env.OPENCLAW_GATEWAY_TOKEN);
+  const envPassword = normalizeOptionalString(env.OPENCLAW_GATEWAY_PASSWORD);
   const token =
     envToken || (tokenRef ? undefined : normalizeSecretInputString(cfg.gateway?.auth?.token));
   const password =
@@ -287,10 +380,11 @@ async function resolveGatewayUrl(
   }
 
   const remoteUrlRaw = cfg.gateway?.remote?.url;
-  const remoteUrl =
-    typeof remoteUrlRaw === "string" && remoteUrlRaw.trim()
-      ? normalizeUrl(remoteUrlRaw, scheme)
-      : null;
+  const hasRemoteUrl = typeof remoteUrlRaw === "string" && remoteUrlRaw.trim();
+  const remoteUrl = hasRemoteUrl ? normalizeUrl(remoteUrlRaw, scheme) : null;
+  if (hasRemoteUrl && !remoteUrl) {
+    return { error: "Configured gateway.remote.url is invalid." };
+  }
   if (opts.preferRemoteUrl && remoteUrl) {
     return { url: remoteUrl, source: "gateway.remote.url" };
   }
@@ -301,7 +395,18 @@ async function resolveGatewayUrl(
     if (!host) {
       return { error: "Tailscale Serve is enabled, but MagicDNS could not be resolved." };
     }
-    return { url: `wss://${host}`, source: `gateway.tailscale.mode=${tailscaleMode}` };
+    const publishedHost = resolveTailscalePublishedHost({
+      tailscaleMode,
+      tailnetHost: host,
+      serviceName: cfg.gateway?.tailscale?.serviceName,
+    });
+    if (!publishedHost) {
+      return {
+        error:
+          "Tailscale Serve serviceName is configured, but Service MagicDNS could not be derived.",
+      };
+    }
+    return { url: `wss://${publishedHost}`, source: `gateway.tailscale.mode=${tailscaleMode}` };
   }
 
   if (remoteUrl) {
@@ -342,8 +447,13 @@ export async function resolvePairingSetupFromConfig(
     cfg,
     env,
     mode: cfg.gateway?.auth?.mode,
+<<<<<<< HEAD
     hasTokenCandidate: Boolean(resolveGatewayTokenFromEnv(env)),
     hasPasswordCandidate: Boolean(resolveGatewayPasswordFromEnv(env)),
+=======
+    hasTokenCandidate: Boolean(normalizeOptionalString(env.OPENCLAW_GATEWAY_TOKEN)),
+    hasPasswordCandidate: Boolean(normalizeOptionalString(env.OPENCLAW_GATEWAY_PASSWORD)),
+>>>>>>> upstream/main
   });
   const authLabel = resolvePairingSetupAuthLabel(cfgForAuth, env);
   if (authLabel.error) {

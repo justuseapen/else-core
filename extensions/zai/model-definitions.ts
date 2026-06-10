@@ -1,21 +1,29 @@
+<<<<<<< HEAD
 import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-shared";
+=======
+// Zai plugin module implements model definitions behavior.
+import { buildManifestModelProviderConfig } from "openclaw/plugin-sdk/provider-catalog-shared";
+import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-shared";
+import manifest from "./openclaw.plugin.json" with { type: "json" };
+>>>>>>> upstream/main
 
 export const ZAI_CODING_GLOBAL_BASE_URL = "https://api.z.ai/api/coding/paas/v4";
 export const ZAI_CODING_CN_BASE_URL = "https://open.bigmodel.cn/api/coding/paas/v4";
 export const ZAI_GLOBAL_BASE_URL = "https://api.z.ai/api/paas/v4";
 export const ZAI_CN_BASE_URL = "https://open.bigmodel.cn/api/paas/v4";
-export const ZAI_DEFAULT_MODEL_ID = "glm-5";
+export const ZAI_DEFAULT_MODEL_ID = "glm-5.1";
 export const ZAI_DEFAULT_MODEL_REF = `zai/${ZAI_DEFAULT_MODEL_ID}`;
 
-type ZaiCatalogEntry = {
-  name: string;
-  reasoning: boolean;
-  input: ModelDefinitionConfig["input"];
-  contextWindow: number;
-  maxTokens: number;
-  cost: ModelDefinitionConfig["cost"];
-};
+const ZAI_MANIFEST_CATALOG = manifest.modelCatalog.providers.zai;
+const ZAI_MANIFEST_PROVIDER = buildManifestModelProviderConfig({
+  providerId: "zai",
+  catalog: ZAI_MANIFEST_CATALOG,
+});
+const ZAI_MODEL_CATALOG = new Map(
+  ZAI_MANIFEST_PROVIDER.models.map((model) => [model.id, model] as const),
+);
 
+<<<<<<< HEAD
 export const ZAI_DEFAULT_COST = {
   input: 1,
   output: 3.2,
@@ -131,6 +139,16 @@ const ZAI_MODEL_CATALOG = {
 } as const satisfies Record<string, ZaiCatalogEntry>;
 
 type ZaiCatalogId = keyof typeof ZAI_MODEL_CATALOG;
+=======
+export const ZAI_DEFAULT_COST =
+  ZAI_MODEL_CATALOG.get("glm-5")?.cost ??
+  ({
+    input: 1,
+    output: 3.2,
+    cacheRead: 0.2,
+    cacheWrite: 0,
+  } satisfies ModelDefinitionConfig["cost"]);
+>>>>>>> upstream/main
 
 export function resolveZaiBaseUrl(endpoint?: string): string {
   switch (endpoint) {
@@ -147,6 +165,12 @@ export function resolveZaiBaseUrl(endpoint?: string): string {
   }
 }
 
+export function buildZaiCatalogModels(): ModelDefinitionConfig[] {
+  return ZAI_MANIFEST_PROVIDER.models.map((model) =>
+    Object.assign({}, model, { input: [...model.input] }),
+  );
+}
+
 export function buildZaiModelDefinition(params: {
   id: string;
   name?: string;
@@ -156,7 +180,7 @@ export function buildZaiModelDefinition(params: {
   contextWindow?: number;
   maxTokens?: number;
 }): ModelDefinitionConfig {
-  const catalog = ZAI_MODEL_CATALOG[params.id as ZaiCatalogId];
+  const catalog = ZAI_MODEL_CATALOG.get(params.id);
   return {
     id: params.id,
     name: params.name ?? catalog?.name ?? `GLM ${params.id}`,

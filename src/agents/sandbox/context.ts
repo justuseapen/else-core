@@ -1,27 +1,87 @@
+/**
+ * Sandbox context resolver.
+ *
+ * Prepares workspace layout, backend handle, filesystem bridge, browser bridge, and registry state for one run.
+ */
 import fs from "node:fs/promises";
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../../config/config.js";
 import { loadConfig } from "../../config/config.js";
 import { getRemoteSkillEligibility } from "../../infra/skills-remote.js";
+=======
+import path from "node:path";
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
+>>>>>>> upstream/main
 import {
   ensureBrowserControlAuth,
   resolveBrowserControlAuth,
 } from "../../plugin-sdk/browser-control-auth.js";
+<<<<<<< HEAD
 import { DEFAULT_BROWSER_EVALUATE_ENABLED } from "../../plugin-sdk/browser-profiles.js";
+=======
+import {
+  DEFAULT_BROWSER_EVALUATE_ENABLED,
+  resolveBrowserConfig,
+} from "../../plugin-sdk/browser-profiles.js";
+>>>>>>> upstream/main
 import { defaultRuntime } from "../../runtime.js";
+import type { SkillEligibilityContext } from "../../skills/types.js";
 import { resolveUserPath } from "../../utils.js";
+<<<<<<< HEAD
 import { canExecRequestNode } from "../exec-defaults.js";
 import { syncSkillsToWorkspace } from "../skills.js";
+=======
+>>>>>>> upstream/main
 import { DEFAULT_AGENT_WORKSPACE_DIR } from "../workspace.js";
 import { requireSandboxBackendFactory } from "./backend.js";
 import { ensureSandboxBrowser } from "./browser.js";
 import { resolveSandboxConfigForAgent } from "./config.js";
+import { SANDBOX_STATE_DIR } from "./constants.js";
 import { createSandboxFsBridge } from "./fs-bridge.js";
-import { maybePruneSandboxes } from "./prune.js";
 import { updateRegistry } from "./registry.js";
 import { resolveSandboxRuntimeStatus } from "./runtime-status.js";
 import { resolveSandboxScopeKey, resolveSandboxWorkspaceDir } from "./shared.js";
 import type { SandboxContext, SandboxDockerConfig, SandboxWorkspaceInfo } from "./types.js";
+import { resolveMaterializedSandboxSkillsWorkspaceDir } from "./workspace-mounts.js";
 import { ensureSandboxWorkspace } from "./workspace.js";
+
+async function syncSandboxSkillsToWorkspace(params: {
+  sourceWorkspaceDir: string;
+  targetWorkspaceDir: string;
+  config?: OpenClawConfig;
+  agentId: string;
+  rawSessionKey: string;
+}): Promise<SkillEligibilityContext | undefined> {
+  try {
+    const [{ syncSkillsToWorkspace }, { getRemoteSkillEligibility }, { canExecRequestNode }] =
+      await Promise.all([
+        import("../../skills/loading/workspace.js"),
+        import("../../skills/runtime/remote.js"),
+        import("../exec-defaults.js"),
+      ]);
+    const eligibility: SkillEligibilityContext = {
+      remote: getRemoteSkillEligibility({
+        advertiseExecNode: canExecRequestNode({
+          cfg: params.config,
+          sessionKey: params.rawSessionKey,
+          agentId: params.agentId,
+        }),
+      }),
+    };
+    await syncSkillsToWorkspace({
+      sourceWorkspaceDir: params.sourceWorkspaceDir,
+      targetWorkspaceDir: params.targetWorkspaceDir,
+      config: params.config,
+      agentId: params.agentId,
+      eligibility,
+    });
+    return eligibility;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : JSON.stringify(error);
+    defaultRuntime.error?.(`Sandbox skill sync failed: ${message}`);
+    return undefined;
+  }
+}
 
 async function ensureSandboxWorkspaceLayout(params: {
   cfg: ReturnType<typeof resolveSandboxConfigForAgent>;
@@ -33,6 +93,8 @@ async function ensureSandboxWorkspaceLayout(params: {
   agentWorkspaceDir: string;
   scopeKey: string;
   sandboxWorkspaceDir: string;
+  skillsWorkspaceDir: string;
+  skillsEligibility?: SkillEligibilityContext;
   workspaceDir: string;
 }> {
   const { cfg, rawSessionKey } = params;
@@ -45,13 +107,24 @@ async function ensureSandboxWorkspaceLayout(params: {
   const sandboxWorkspaceDir =
     cfg.scope === "shared" ? workspaceRoot : resolveSandboxWorkspaceDir(workspaceRoot, scopeKey);
   const workspaceDir = cfg.workspaceAccess === "rw" ? agentWorkspaceDir : sandboxWorkspaceDir;
+  const materializedSkillsRoot = resolveSandboxWorkspaceDir(
+    path.join(SANDBOX_STATE_DIR, "skills-workspaces"),
+    scopeKey,
+  );
+  const skillsWorkspaceDir =
+    cfg.workspaceAccess === "rw"
+      ? resolveMaterializedSandboxSkillsWorkspaceDir(materializedSkillsRoot)
+      : sandboxWorkspaceDir;
 
-  if (workspaceDir === sandboxWorkspaceDir) {
+  let skillsEligibility: SkillEligibilityContext | undefined;
+  if (cfg.workspaceAccess !== "rw") {
     await ensureSandboxWorkspace(
       sandboxWorkspaceDir,
       agentWorkspaceDir,
       params.config?.agents?.defaults?.skipBootstrap,
+      params.config?.agents?.defaults?.skipOptionalBootstrapFiles,
     );
+<<<<<<< HEAD
     if (cfg.workspaceAccess !== "rw") {
       try {
         await syncSkillsToWorkspace({
@@ -74,11 +147,34 @@ async function ensureSandboxWorkspaceLayout(params: {
         defaultRuntime.error?.(`Sandbox skill sync failed: ${message}`);
       }
     }
+=======
+    skillsEligibility = await syncSandboxSkillsToWorkspace({
+      sourceWorkspaceDir: agentWorkspaceDir,
+      targetWorkspaceDir: sandboxWorkspaceDir,
+      config: params.config,
+      agentId: params.agentId,
+      rawSessionKey,
+    });
+>>>>>>> upstream/main
   } else {
     await fs.mkdir(workspaceDir, { recursive: true });
+    skillsEligibility = await syncSandboxSkillsToWorkspace({
+      sourceWorkspaceDir: agentWorkspaceDir,
+      targetWorkspaceDir: skillsWorkspaceDir,
+      config: params.config,
+      agentId: params.agentId,
+      rawSessionKey,
+    });
   }
 
-  return { agentWorkspaceDir, scopeKey, sandboxWorkspaceDir, workspaceDir };
+  return {
+    agentWorkspaceDir,
+    scopeKey,
+    sandboxWorkspaceDir,
+    skillsWorkspaceDir,
+    ...(skillsEligibility ? { skillsEligibility } : {}),
+    workspaceDir,
+  };
 }
 
 export async function resolveSandboxDockerUser(params: {
@@ -133,8 +229,11 @@ export async function resolveSandboxContext(params: {
   }
   const { rawSessionKey, cfg, runtime } = resolved;
 
-  await maybePruneSandboxes(cfg);
+  if (cfg.prune.idleHours !== 0 || cfg.prune.maxAgeDays !== 0) {
+    await (await import("./prune.js")).maybePruneSandboxes(cfg);
+  }
 
+<<<<<<< HEAD
   const { agentWorkspaceDir, scopeKey, workspaceDir } = await ensureSandboxWorkspaceLayout({
     cfg,
     agentId: runtime.agentId,
@@ -142,6 +241,16 @@ export async function resolveSandboxContext(params: {
     config: params.config,
     workspaceDir: params.workspaceDir,
   });
+=======
+  const { agentWorkspaceDir, scopeKey, skillsEligibility, skillsWorkspaceDir, workspaceDir } =
+    await ensureSandboxWorkspaceLayout({
+      cfg,
+      agentId: runtime.agentId,
+      rawSessionKey,
+      config: params.config,
+      workspaceDir: params.workspaceDir,
+    });
+>>>>>>> upstream/main
 
   const docker = await resolveSandboxDockerUser({
     docker: cfg.docker,
@@ -155,6 +264,7 @@ export async function resolveSandboxContext(params: {
     scopeKey,
     workspaceDir,
     agentWorkspaceDir,
+    skillsWorkspaceDir,
     cfg: resolvedCfg,
   });
   await updateRegistry({
@@ -168,14 +278,18 @@ export async function resolveSandboxContext(params: {
     configLabelKind: backend.configLabelKind ?? "Image",
   });
 
+  const resolvedBrowserConfig = resolvedCfg.browser.enabled
+    ? resolveBrowserConfig(params.config?.browser, params.config)
+    : undefined;
   const evaluateEnabled =
-    params.config?.browser?.evaluateEnabled ?? DEFAULT_BROWSER_EVALUATE_ENABLED;
+    resolvedBrowserConfig?.evaluateEnabled ?? DEFAULT_BROWSER_EVALUATE_ENABLED;
 
   const bridgeAuth = cfg.browser.enabled
     ? await (async () => {
         // Sandbox browser bridge server runs on a loopback TCP port; always wire up
         // the same auth that loopback browser clients will send (token/password).
-        const cfgForAuth = params.config ?? loadConfig();
+        const cfgForAuth =
+          params.config ?? (await import("../../config/config.js")).getRuntimeConfig();
         let browserAuth = resolveBrowserControlAuth(cfgForAuth);
         try {
           const ensured = await ensureBrowserControlAuth({ cfg: cfgForAuth });
@@ -198,9 +312,11 @@ export async function resolveSandboxContext(params: {
           scopeKey,
           workspaceDir,
           agentWorkspaceDir,
+          skillsWorkspaceDir,
           cfg: resolvedCfg,
           evaluateEnabled,
           bridgeAuth,
+          ssrfPolicy: resolvedBrowserConfig?.ssrfPolicy,
         })
       : null;
 
@@ -210,6 +326,8 @@ export async function resolveSandboxContext(params: {
     sessionKey: rawSessionKey,
     workspaceDir,
     agentWorkspaceDir,
+    skillsWorkspaceDir,
+    ...(skillsEligibility ? { skillsEligibility } : {}),
     workspaceAccess: resolvedCfg.workspaceAccess,
     runtimeId: backend.runtimeId,
     runtimeLabel: backend.runtimeLabel,

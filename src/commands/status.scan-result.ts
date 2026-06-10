@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../config/config.js";
+=======
+// Normalized full status scan result shape.
+// Builders flatten the gateway snapshot so downstream text/JSON code reads one stable object.
+
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+>>>>>>> upstream/main
 import type { collectChannelStatusIssues as collectChannelStatusIssuesFn } from "../infra/channels-status-issues.js";
 import { resolveOsSummary } from "../infra/os-summary.js";
 import type { UpdateCheckResult } from "../infra/update-check.js";
@@ -42,6 +49,10 @@ export type StatusScanResult = {
   pluginCompatibility: PluginCompatibilityNotice[];
 };
 
+<<<<<<< HEAD
+=======
+/** Flattens overview, gateway, channel, summary, memory, and compatibility inputs into a scan result. */
+>>>>>>> upstream/main
 export function buildStatusScanResult(params: {
   cfg: OpenClawConfig;
   sourceConfig: OpenClawConfig;

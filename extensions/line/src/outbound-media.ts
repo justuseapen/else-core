@@ -1,4 +1,12 @@
+<<<<<<< HEAD
 export type LineOutboundMediaKind = "image" | "video" | "audio";
+=======
+// Line plugin module implements outbound media behavior.
+import { resolvePinnedHostnameWithPolicy, type SsrFPolicy } from "openclaw/plugin-sdk/ssrf-runtime";
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+
+type LineOutboundMediaKind = "image" | "video" | "audio";
+>>>>>>> upstream/main
 
 export type LineOutboundMediaResolved = {
   mediaUrl: string;
@@ -15,7 +23,15 @@ type ResolveLineOutboundMediaOpts = {
   trackingId?: string;
 };
 
+<<<<<<< HEAD
 export function validateLineMediaUrl(url: string): void {
+=======
+const LINE_OUTBOUND_MEDIA_SSRF_POLICY: SsrFPolicy = {
+  allowPrivateNetwork: false,
+};
+
+export async function validateLineMediaUrl(url: string): Promise<void> {
+>>>>>>> upstream/main
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -28,10 +44,20 @@ export function validateLineMediaUrl(url: string): void {
   if (url.length > 2000) {
     throw new Error(`LINE outbound media URL must be 2000 chars or less (got ${url.length})`);
   }
+<<<<<<< HEAD
 }
 
 export function detectLineMediaKind(mimeType: string): LineOutboundMediaKind {
   const normalized = mimeType.toLowerCase();
+=======
+  await resolvePinnedHostnameWithPolicy(parsed.hostname, {
+    policy: LINE_OUTBOUND_MEDIA_SSRF_POLICY,
+  });
+}
+
+export function detectLineMediaKind(mimeType: string): LineOutboundMediaKind {
+  const normalized = normalizeLowercaseStringOrEmpty(mimeType);
+>>>>>>> upstream/main
   if (normalized.startsWith("image/")) {
     return "image";
   }
@@ -54,7 +80,11 @@ function isHttpsUrl(url: string): boolean {
 
 function detectLineMediaKindFromUrl(url: string): LineOutboundMediaKind | undefined {
   try {
+<<<<<<< HEAD
     const pathname = new URL(url).pathname.toLowerCase();
+=======
+    const pathname = normalizeLowercaseStringOrEmpty(new URL(url).pathname);
+>>>>>>> upstream/main
     if (/\.(png|jpe?g|gif|webp|bmp|heic|heif|avif)$/i.test(pathname)) {
       return "image";
     }
@@ -76,10 +106,17 @@ export async function resolveLineOutboundMedia(
 ): Promise<LineOutboundMediaResolved> {
   const trimmedUrl = mediaUrl.trim();
   if (isHttpsUrl(trimmedUrl)) {
+<<<<<<< HEAD
     validateLineMediaUrl(trimmedUrl);
     const previewImageUrl = opts.previewImageUrl?.trim();
     if (previewImageUrl) {
       validateLineMediaUrl(previewImageUrl);
+=======
+    await validateLineMediaUrl(trimmedUrl);
+    const previewImageUrl = opts.previewImageUrl?.trim();
+    if (previewImageUrl) {
+      await validateLineMediaUrl(previewImageUrl);
+>>>>>>> upstream/main
     }
     const mediaKind =
       opts.mediaKind ??

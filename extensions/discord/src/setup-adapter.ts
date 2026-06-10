@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 import { createEnvPatchedAccountSetupAdapter } from "openclaw/plugin-sdk/setup-adapter-runtime";
 import type { ChannelSetupAdapter } from "openclaw/plugin-sdk/setup-runtime";
+=======
+// Discord plugin module implements setup adapter behavior.
+import {
+  createEnvPatchedAccountSetupAdapter,
+  type ChannelSetupAdapter,
+} from "openclaw/plugin-sdk/setup-runtime";
+>>>>>>> upstream/main
 
 const channel = "discord" as const;
 

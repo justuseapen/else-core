@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../config/config.js";
 import type { PluginManifestRecord } from "./manifest-registry.js";
 import { resolvePluginWebSearchProviders } from "./web-search-providers.runtime.js";
+=======
+// Checks web-search credential presence from config and plugin metadata.
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { loadManifestMetadataSnapshot } from "./manifest-contract-eligibility.js";
+import type { PluginManifestRecord } from "./manifest-registry.js";
+>>>>>>> upstream/main
 
 function hasConfiguredCredentialValue(value: unknown): boolean {
   if (typeof value === "string") {
@@ -9,16 +16,74 @@ function hasConfiguredCredentialValue(value: unknown): boolean {
   return value !== undefined && value !== null;
 }
 
+<<<<<<< HEAD
+=======
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function hasConfiguredSearchCredentialCandidate(searchConfig: unknown): boolean {
+  if (!isRecord(searchConfig)) {
+    return false;
+  }
+  return Object.entries(searchConfig).some(
+    ([key, value]) => key !== "enabled" && hasConfiguredCredentialValue(value),
+  );
+}
+
+function hasConfiguredPluginWebSearchCandidate(config: OpenClawConfig): boolean {
+  const entries = isRecord(config.plugins?.entries) ? config.plugins.entries : undefined;
+  if (!entries) {
+    return false;
+  }
+  return Object.values(entries).some((entry) => {
+    const pluginConfig = isRecord(entry) ? entry.config : undefined;
+    return isRecord(pluginConfig) && hasConfiguredSearchCredentialCandidate(pluginConfig.webSearch);
+  });
+}
+
+function hasManifestWebSearchEnvCredentialCandidate(params: {
+  config: OpenClawConfig;
+  env?: NodeJS.ProcessEnv;
+  origin?: PluginManifestRecord["origin"];
+}): boolean {
+  const env = params.env;
+  if (!env) {
+    return false;
+  }
+  return loadManifestMetadataSnapshot({
+    config: params.config,
+    env,
+  }).plugins.some((plugin) => {
+    if (params.origin && plugin.origin !== params.origin) {
+      return false;
+    }
+    if ((plugin.contracts?.webSearchProviders?.length ?? 0) === 0) {
+      return false;
+    }
+    const envVars = [
+      ...(plugin.setup?.providers ?? []).flatMap((provider) => provider.envVars ?? []),
+      ...Object.values(plugin.providerAuthEnvVars ?? {}).flat(),
+    ];
+    return envVars.some((envVar) => hasConfiguredCredentialValue(env[envVar]));
+  });
+}
+
+>>>>>>> upstream/main
 export function hasConfiguredWebSearchCredential(params: {
   config: OpenClawConfig;
   env?: NodeJS.ProcessEnv;
   searchConfig?: Record<string, unknown>;
   origin?: PluginManifestRecord["origin"];
+<<<<<<< HEAD
   bundledAllowlistCompat?: boolean;
+=======
+>>>>>>> upstream/main
 }): boolean {
   const searchConfig =
     params.searchConfig ??
     (params.config.tools?.web?.search as Record<string, unknown> | undefined);
+<<<<<<< HEAD
   return resolvePluginWebSearchProviders({
     config: params.config,
     env: params.env,
@@ -33,4 +98,15 @@ export function hasConfiguredWebSearchCredential(params: {
     }
     return provider.envVars.some((envVar) => hasConfiguredCredentialValue(params.env?.[envVar]));
   });
+=======
+  return (
+    hasConfiguredSearchCredentialCandidate(searchConfig) ||
+    hasConfiguredPluginWebSearchCandidate(params.config) ||
+    hasManifestWebSearchEnvCredentialCandidate({
+      config: params.config,
+      env: params.env,
+      origin: params.origin,
+    })
+  );
+>>>>>>> upstream/main
 }

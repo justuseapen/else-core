@@ -1,8 +1,17 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import path from "node:path";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { describe, expect, it } from "vitest";
 import { withTempHome } from "../../../test/helpers/temp-home.js";
+=======
+// Matrix tests cover legacy state plugin behavior.
+import fs from "node:fs";
+import path from "node:path";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { withTempHome } from "openclaw/plugin-sdk/test-env";
+import { describe, expect, it } from "vitest";
+>>>>>>> upstream/main
 import { autoMigrateLegacyMatrixState, detectLegacyMatrixState } from "./legacy-state.js";
 
 function writeFile(filePath: string, value: string) {
@@ -35,7 +44,11 @@ describe("matrix legacy state migration", () => {
 
       const result = await autoMigrateLegacyMatrixState({ cfg, env: process.env });
       expect(result.migrated).toBe(true);
+<<<<<<< HEAD
       expect(result.warnings).toEqual([]);
+=======
+      expect(result.warnings).toStrictEqual([]);
+>>>>>>> upstream/main
       expect(fs.existsSync(path.join(stateDir, "matrix", "bot-storage.json"))).toBe(false);
       expect(fs.existsSync(path.join(stateDir, "matrix", "crypto"))).toBe(false);
       expect(fs.existsSync(detection.targetStoragePath)).toBe(true);

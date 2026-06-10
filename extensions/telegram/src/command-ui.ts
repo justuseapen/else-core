@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Telegram plugin module implements command ui behavior.
+>>>>>>> upstream/main
 import type { ReplyPayload } from "openclaw/plugin-sdk/reply-runtime";
 import {
   buildBrowseProvidersButton,
@@ -5,6 +9,10 @@ import {
   buildProviderKeyboard,
   type ProviderInfo,
 } from "./model-buttons.js";
+<<<<<<< HEAD
+=======
+import { buildTelegramNativeCommandCallbackData } from "./native-command-callback-data.js";
+>>>>>>> upstream/main
 
 export function buildCommandsPaginationKeyboard(
   currentPage: number,
@@ -36,6 +44,26 @@ export function buildCommandsPaginationKeyboard(
   return [buttons];
 }
 
+<<<<<<< HEAD
+=======
+export function buildTelegramModelsMenuButtons(params: { providers: ProviderInfo[] }) {
+  return buildProviderKeyboard(params.providers);
+}
+
+export function buildTelegramModelsMenuChannelData(params: {
+  providers: ProviderInfo[];
+}): ReplyPayload["channelData"] | null {
+  if (params.providers.length === 0) {
+    return null;
+  }
+  return {
+    telegram: {
+      buttons: buildTelegramModelsMenuButtons(params),
+    },
+  };
+}
+
+>>>>>>> upstream/main
 export function buildTelegramCommandsListChannelData(params: {
   currentPage: number;
   totalPages: number;
@@ -68,6 +96,28 @@ export function buildTelegramModelsProviderChannelData(params: {
   };
 }
 
+<<<<<<< HEAD
+=======
+export function buildTelegramModelsAddProviderChannelData(params: {
+  providers: Array<{ id: string }>;
+}): ReplyPayload["channelData"] | null {
+  if (params.providers.length === 0) {
+    return null;
+  }
+  const buttons = params.providers.map((provider) => [
+    {
+      text: provider.id,
+      callback_data: buildTelegramNativeCommandCallbackData(`/models add ${provider.id}`),
+    },
+  ]);
+  return {
+    telegram: {
+      buttons,
+    },
+  };
+}
+
+>>>>>>> upstream/main
 export function buildTelegramModelsListChannelData(params: {
   provider: string;
   models: readonly string[];

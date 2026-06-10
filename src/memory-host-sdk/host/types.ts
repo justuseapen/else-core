@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export type MemorySource = "memory" | "sessions";
 
 export type MemorySearchResult = {
@@ -79,3 +80,10 @@ export interface MemorySearchManager {
   probeVectorAvailability(): Promise<boolean>;
   close?(): Promise<void>;
 }
+=======
+/**
+ * Public memory host type barrel. Re-export through core so plugins and runtime
+ * code share the same contract without depending on package internals.
+ */
+export * from "../../../packages/memory-host-sdk/src/host/types.js";
+>>>>>>> upstream/main

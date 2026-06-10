@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Discord plugin module implements runtime behavior.
+>>>>>>> upstream/main
 import type { PluginRuntime } from "openclaw/plugin-sdk/channel-core";
 import { createPluginRuntimeStore } from "openclaw/plugin-sdk/runtime-store";
 
@@ -16,5 +20,12 @@ const {
   setRuntime: setDiscordRuntime,
   tryGetRuntime: getOptionalDiscordRuntime,
   getRuntime: getDiscordRuntime,
+<<<<<<< HEAD
 } = createPluginRuntimeStore<DiscordRuntime>("Discord runtime not initialized");
+=======
+} = createPluginRuntimeStore<DiscordRuntime>({
+  pluginId: "discord",
+  errorMessage: "Discord runtime not initialized",
+});
+>>>>>>> upstream/main
 export { getDiscordRuntime, getOptionalDiscordRuntime, setDiscordRuntime };

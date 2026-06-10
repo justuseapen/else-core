@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { coerceSecretRef } from "openclaw/plugin-sdk/provider-auth";
+=======
+// Googlechat plugin module implements secret contract behavior.
+>>>>>>> upstream/main
 import {
   getChannelSurface,
   hasOwnProperty,
@@ -8,8 +12,13 @@ import {
   resolveChannelAccountSurface,
   type ResolverContext,
   type SecretDefaults,
+<<<<<<< HEAD
   type SecretTargetRegistryEntry,
 } from "openclaw/plugin-sdk/security-runtime";
+=======
+} from "openclaw/plugin-sdk/channel-secret-basic-runtime";
+import { coerceSecretRef } from "openclaw/plugin-sdk/secret-ref-runtime";
+>>>>>>> upstream/main
 
 type GoogleChatAccountLike = {
   serviceAccount?: unknown;
@@ -17,6 +26,7 @@ type GoogleChatAccountLike = {
   accounts?: Record<string, unknown>;
 };
 
+<<<<<<< HEAD
 export const secretTargetRegistryEntries = [
   {
     id: "channels.googlechat.accounts.*.serviceAccount",
@@ -45,6 +55,37 @@ export const secretTargetRegistryEntries = [
     includeInAudit: true,
   },
 ] satisfies SecretTargetRegistryEntry[];
+=======
+export const secretTargetRegistryEntries: import("openclaw/plugin-sdk/channel-secret-basic-runtime").SecretTargetRegistryEntry[] =
+  [
+    {
+      id: "channels.googlechat.accounts.*.serviceAccount",
+      targetType: "channels.googlechat.serviceAccount",
+      targetTypeAliases: ["channels.googlechat.accounts.*.serviceAccount"],
+      configFile: "openclaw.json",
+      pathPattern: "channels.googlechat.accounts.*.serviceAccount",
+      refPathPattern: "channels.googlechat.accounts.*.serviceAccountRef",
+      secretShape: "sibling_ref",
+      expectedResolvedValue: "string-or-object",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+      accountIdPathSegmentIndex: 3,
+    },
+    {
+      id: "channels.googlechat.serviceAccount",
+      targetType: "channels.googlechat.serviceAccount",
+      configFile: "openclaw.json",
+      pathPattern: "channels.googlechat.serviceAccount",
+      refPathPattern: "channels.googlechat.serviceAccountRef",
+      secretShape: "sibling_ref",
+      expectedResolvedValue: "string-or-object",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+  ];
+>>>>>>> upstream/main
 
 function resolveSecretInputRef(params: {
   value: unknown;
@@ -63,7 +104,11 @@ function resolveSecretInputRef(params: {
 function collectGoogleChatAccountAssignment(params: {
   target: GoogleChatAccountLike;
   path: string;
+<<<<<<< HEAD
   defaults: SecretDefaults | undefined;
+=======
+  defaults?: SecretDefaults;
+>>>>>>> upstream/main
   context: ResolverContext;
   active?: boolean;
   inactiveReason?: string;
@@ -107,7 +152,11 @@ function collectGoogleChatAccountAssignment(params: {
 
 export function collectRuntimeConfigAssignments(params: {
   config: { channels?: Record<string, unknown> };
+<<<<<<< HEAD
   defaults: SecretDefaults | undefined;
+=======
+  defaults?: SecretDefaults;
+>>>>>>> upstream/main
   context: ResolverContext;
 }): void {
   const resolved = getChannelSurface(params.config, "googlechat");
@@ -154,3 +203,11 @@ export function collectRuntimeConfigAssignments(params: {
     });
   }
 }
+<<<<<<< HEAD
+=======
+
+export const channelSecrets = {
+  secretTargetRegistryEntries,
+  collectRuntimeConfigAssignments,
+};
+>>>>>>> upstream/main

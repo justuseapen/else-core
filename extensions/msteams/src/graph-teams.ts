@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Msteams plugin module implements graph teams behavior.
+>>>>>>> upstream/main
 import type { OpenClawConfig } from "../runtime-api.js";
 import { type GraphResponse, fetchGraphJson, resolveGraphToken } from "./graph.js";
 
@@ -5,7 +9,11 @@ import { type GraphResponse, fetchGraphJson, resolveGraphToken } from "./graph.j
 // Types
 // ---------------------------------------------------------------------------
 
+<<<<<<< HEAD
 export type GraphTeamsChannel = {
+=======
+type GraphTeamsChannel = {
+>>>>>>> upstream/main
   id?: string;
   displayName?: string;
   description?: string;
@@ -14,12 +22,20 @@ export type GraphTeamsChannel = {
   createdDateTime?: string;
 };
 
+<<<<<<< HEAD
 export type ListChannelsMSTeamsParams = {
+=======
+type ListChannelsMSTeamsParams = {
+>>>>>>> upstream/main
   cfg: OpenClawConfig;
   teamId: string;
 };
 
+<<<<<<< HEAD
 export type ListChannelsMSTeamsResult = {
+=======
+type ListChannelsMSTeamsResult = {
+>>>>>>> upstream/main
   channels: Array<{
     id: string | undefined;
     displayName: string | undefined;
@@ -29,13 +45,21 @@ export type ListChannelsMSTeamsResult = {
   truncated?: boolean;
 };
 
+<<<<<<< HEAD
 export type GetChannelInfoMSTeamsParams = {
+=======
+type GetChannelInfoMSTeamsParams = {
+>>>>>>> upstream/main
   cfg: OpenClawConfig;
   teamId: string;
   channelId: string;
 };
 
+<<<<<<< HEAD
 export type GetChannelInfoMSTeamsResult = {
+=======
+type GetChannelInfoMSTeamsResult = {
+>>>>>>> upstream/main
   channel: {
     id: string | undefined;
     displayName: string | undefined;
@@ -84,7 +108,11 @@ export async function listChannelsMSTeams(
     description: ch.description,
     membershipType: ch.membershipType,
   }));
+<<<<<<< HEAD
   return { channels, truncated: !!nextPath };
+=======
+  return { channels, truncated: Boolean(nextPath) };
+>>>>>>> upstream/main
 }
 
 // ---------------------------------------------------------------------------

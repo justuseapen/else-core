@@ -1,10 +1,24 @@
 #!/usr/bin/env node
 
+/**
+ * Stdio MCP proxy used by ACPX wrappers. It injects OpenClaw-provided MCP
+ * servers into session creation/load/fork requests before forwarding to target.
+ */
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
 import { splitCommandLine } from "./mcp-command-line.mjs";
+<<<<<<< HEAD
+=======
+
+function formatErrorMessage(error) {
+  if (error instanceof Error) {
+    return error.message || error.name || "Error";
+  }
+  return String(error);
+}
+>>>>>>> upstream/main
 
 function decodePayload(argv) {
   const payloadIndex = argv.indexOf("--payload");
@@ -63,6 +77,7 @@ function rewriteLine(line, mcpServers) {
   }
 }
 
+<<<<<<< HEAD
 function isMainModule() {
   const mainPath = process.argv[1];
   if (!mainPath) {
@@ -82,6 +97,36 @@ function main() {
   if (!child.stdin || !child.stdout) {
     throw new Error("Failed to create MCP proxy stdio pipes");
   }
+=======
+/** Build spawn options for the proxied MCP target process. */
+export function createTargetSpawnOptions(platform = process.platform) {
+  const options = {
+    stdio: ["pipe", "pipe", "inherit"],
+    env: process.env,
+  };
+  if (platform === "win32") {
+    options.windowsHide = true;
+  }
+  return options;
+}
+
+function isMainModule() {
+  const mainPath = process.argv[1];
+  if (!mainPath) {
+    return false;
+  }
+  return import.meta.url === pathToFileURL(path.resolve(mainPath)).href;
+}
+
+function main() {
+  const { targetCommand, mcpServers } = decodePayload(process.argv.slice(2));
+  const target = splitCommandLine(targetCommand);
+  const child = spawn(target.command, target.args, createTargetSpawnOptions());
+
+  if (!child.stdin || !child.stdout) {
+    throw new Error("Failed to create MCP proxy stdio pipes");
+  }
+>>>>>>> upstream/main
 
   const input = createInterface({ input: process.stdin });
   input.on("line", (line) => {
@@ -94,7 +139,11 @@ function main() {
   child.stdout.pipe(process.stdout);
 
   child.on("error", (error) => {
+<<<<<<< HEAD
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+=======
+    process.stderr.write(`${formatErrorMessage(error)}\n`);
+>>>>>>> upstream/main
     process.exit(1);
   });
 

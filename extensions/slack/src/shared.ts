@@ -1,27 +1,44 @@
+// Slack plugin module implements shared behavior.
 import { describeAccountSnapshot } from "openclaw/plugin-sdk/account-helpers";
 import { formatAllowFromLowercase } from "openclaw/plugin-sdk/allow-from";
 import {
   adaptScopedAccountAccessor,
   createScopedChannelConfigAdapter,
 } from "openclaw/plugin-sdk/channel-config-helpers";
+<<<<<<< HEAD
 import { hasConfiguredSecretInput } from "openclaw/plugin-sdk/secret-input";
 import { patchChannelConfigForAccount } from "openclaw/plugin-sdk/setup-runtime";
 import { formatDocsLink } from "openclaw/plugin-sdk/setup-tools";
+=======
+import { isSlackPluginAccountConfigured } from "./account-configured.js";
+>>>>>>> upstream/main
 import { inspectSlackAccount } from "./account-inspect.js";
 import {
   listSlackAccountIds,
+  resolveSlackConfigAccessorAccount,
   resolveDefaultSlackAccountId,
   resolveSlackAccount,
+  type SlackConfigAccessorAccount,
   type ResolvedSlackAccount,
 } from "./accounts.js";
+<<<<<<< HEAD
 import { getChatChannelMeta, type ChannelPlugin, type OpenClawConfig } from "./channel-api.js";
+=======
+import { getChatChannelMeta, type ChannelPlugin } from "./channel-api.js";
+>>>>>>> upstream/main
 import { SlackChannelConfigSchema } from "./config-schema.js";
 import { slackDoctor } from "./doctor.js";
 import { isSlackInteractiveRepliesEnabled } from "./interactive-replies.js";
 import { collectRuntimeConfigAssignments, secretTargetRegistryEntries } from "./secret-contract.js";
+<<<<<<< HEAD
+=======
+import { slackSecurityAdapter } from "./security.js";
+import { SLACK_CHANNEL } from "./setup-shared.js";
+>>>>>>> upstream/main
 
-export const SLACK_CHANNEL = "slack" as const;
+export { setSlackChannelAllowlist, SLACK_CHANNEL } from "./setup-shared.js";
 
+<<<<<<< HEAD
 function buildSlackManifest(botName: string) {
   const safeName = botName.trim() || "OpenClaw";
   const manifest = {
@@ -147,15 +164,24 @@ export function isSlackSetupAccountConfigured(account: ResolvedSlackAccount): bo
 }
 
 export const slackConfigAdapter = createScopedChannelConfigAdapter<ResolvedSlackAccount>({
+=======
+export { isSlackPluginAccountConfigured };
+
+export const slackConfigAdapter = createScopedChannelConfigAdapter<
+  ResolvedSlackAccount,
+  SlackConfigAccessorAccount
+>({
+>>>>>>> upstream/main
   sectionKey: SLACK_CHANNEL,
   listAccountIds: listSlackAccountIds,
   resolveAccount: adaptScopedAccountAccessor(resolveSlackAccount),
+  resolveAccessorAccount: resolveSlackConfigAccessorAccount,
   inspectAccount: adaptScopedAccountAccessor(inspectSlackAccount),
   defaultAccountId: resolveDefaultSlackAccountId,
   clearBaseFields: ["botToken", "appToken", "name"],
-  resolveAllowFrom: (account: ResolvedSlackAccount) => account.dm?.allowFrom,
+  resolveAllowFrom: (account) => account.allowFrom,
   formatAllowFrom: (allowFrom) => formatAllowFromLowercase({ allowFrom }),
-  resolveDefaultTo: (account: ResolvedSlackAccount) => account.config.defaultTo,
+  resolveDefaultTo: (account) => account.defaultTo,
 });
 
 export function createSlackPluginBase(params: {
@@ -175,6 +201,10 @@ export function createSlackPluginBase(params: {
   | "configSchema"
   | "config"
   | "setup"
+<<<<<<< HEAD
+=======
+  | "security"
+>>>>>>> upstream/main
   | "secrets"
 > {
   return {
@@ -210,7 +240,7 @@ export function createSlackPluginBase(params: {
         ],
       }),
       messageToolHints: ({ cfg, accountId }) =>
-        isSlackInteractiveRepliesEnabled({ cfg, accountId })
+        (isSlackInteractiveRepliesEnabled({ cfg, accountId })
           ? [
               "- Prefer Slack buttons/selects for 2-5 discrete choices or parameter picks instead of asking the user to type one.",
               "- Slack interactive replies: use `[[slack_buttons: Label:value, Other:other]]` to add action buttons that route clicks back as Slack interaction system events.",
@@ -218,12 +248,18 @@ export function createSlackPluginBase(params: {
             ]
           : [
               "- Slack interactive replies are disabled. If needed, ask to set `channels.slack.capabilities.interactiveReplies=true` (or the same under `channels.slack.accounts.<account>.capabilities`).",
-            ],
+            ]
+        ).concat([
+          "- Slack plain text sends: write standard Markdown; OpenClaw converts it to Slack mrkdwn, including `**bold**`, headings, lists, and `[label](url)` links.",
+          "- When mentioning Slack users, use the stable `<@USER_ID>` token from Slack context instead of plain `@name` text so Slack notifies and links the user.",
+          "- Slack Block Kit or presentation text fields are sent as Slack mrkdwn directly; use `*bold*`, `_italic_`, `~strike~`, `<url|label>` links, and avoid Markdown headings or pipe tables there.",
+        ]),
     },
     streaming: {
       blockStreamingCoalesceDefaults: { minChars: 1500, idleMs: 1000 },
     },
     reload: { configPrefixes: ["channels.slack"] },
+    security: slackSecurityAdapter,
     configSchema: SlackChannelConfigSchema,
     config: {
       ...slackConfigAdapter,
@@ -261,6 +297,10 @@ export function createSlackPluginBase(params: {
     | "configSchema"
     | "config"
     | "setup"
+<<<<<<< HEAD
+=======
+    | "security"
+>>>>>>> upstream/main
     | "secrets"
   >;
 }

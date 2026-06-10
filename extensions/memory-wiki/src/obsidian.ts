@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Memory Wiki plugin module implements obsidian behavior.
+>>>>>>> upstream/main
 import { execFile } from "node:child_process";
 import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
@@ -7,12 +11,20 @@ import type { ResolvedMemoryWikiConfig } from "./config.js";
 
 const execFileAsync = promisify(execFile);
 
+<<<<<<< HEAD
 export type ObsidianCliProbe = {
+=======
+type ObsidianCliProbe = {
+>>>>>>> upstream/main
   available: boolean;
   command: string | null;
 };
 
+<<<<<<< HEAD
 export type ObsidianCliResult = {
+=======
+type ObsidianCliResult = {
+>>>>>>> upstream/main
   command: string;
   argv: string[];
   stdout: string;
@@ -33,7 +45,11 @@ async function isExecutableFile(inputPath: string): Promise<boolean> {
   }
 }
 
+<<<<<<< HEAD
 export async function resolveCommandOnPath(command: string): Promise<string | null> {
+=======
+async function resolveCommandOnPath(command: string): Promise<string | null> {
+>>>>>>> upstream/main
   const pathValue = process.env.PATH ?? "";
   const pathEntries = pathValue.split(path.delimiter).filter(Boolean);
   const windowsExts =
@@ -72,7 +88,11 @@ export async function probeObsidianCli(
   };
 }
 
+<<<<<<< HEAD
 export async function runObsidianCli(params: {
+=======
+async function runObsidianCli(params: {
+>>>>>>> upstream/main
   config: ResolvedMemoryWikiConfig;
   subcommand: string;
   args?: string[];

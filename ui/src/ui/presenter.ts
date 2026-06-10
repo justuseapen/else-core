@@ -1,5 +1,18 @@
+<<<<<<< HEAD
 import { t } from "../i18n/index.ts";
 import { formatRelativeTimestamp, formatDurationHuman, formatMs } from "./format.ts";
+=======
+// Control UI module implements presenter behavior.
+import { t } from "../i18n/index.ts";
+import { resolveCronJobLastRunStatus } from "./cron-status.ts";
+import {
+  formatDateMs,
+  formatRelativeTimestamp,
+  formatDurationHuman,
+  formatMs,
+  formatUnknownText,
+} from "./format.ts";
+>>>>>>> upstream/main
 import type { CronJob, GatewaySessionRow, PresenceEntry } from "./types.ts";
 
 export function formatPresenceSummary(entry: PresenceEntry): string {
@@ -18,8 +31,14 @@ export function formatPresenceAge(entry: PresenceEntry): string {
 export function formatNextRun(ms?: number | null) {
   if (!ms) {
     return t("common.na");
+<<<<<<< HEAD
+=======
   }
-  const weekday = new Date(ms).toLocaleDateString(undefined, { weekday: "short" });
+  const weekday = formatDateMs(ms, { weekday: "short" });
+  if (weekday === t("common.na")) {
+    return weekday;
+>>>>>>> upstream/main
+  }
   return `${weekday}, ${formatMs(ms)} (${formatRelativeTimestamp(ms)})`;
 }
 
@@ -39,8 +58,7 @@ export function formatEventPayload(payload: unknown): string {
   try {
     return JSON.stringify(payload, null, 2);
   } catch {
-    // oxlint-disable typescript/no-base-to-string
-    return String(payload);
+    return formatUnknownText(payload);
   }
 }
 
@@ -48,7 +66,11 @@ export function formatCronState(job: CronJob) {
   const state = job.state ?? {};
   const next = state.nextRunAtMs ? formatMs(state.nextRunAtMs) : t("common.na");
   const last = state.lastRunAtMs ? formatMs(state.lastRunAtMs) : t("common.na");
+<<<<<<< HEAD
   const status = state.lastStatus ?? t("common.na");
+=======
+  const status = resolveCronJobLastRunStatus(job);
+>>>>>>> upstream/main
   return `${status} · next ${next} · last ${last}`;
 }
 
@@ -68,6 +90,9 @@ export function formatCronPayload(job: CronJob) {
   const p = job.payload;
   if (p.kind === "systemEvent") {
     return `System: ${p.text}`;
+  }
+  if (p.kind === "command") {
+    return `Command: ${p.argv.join(" ")}`;
   }
   const base = `Agent: ${p.message}`;
   const delivery = job.delivery;

@@ -1,15 +1,22 @@
+// Device bootstrap profile helpers build profile claims for device onboarding.
 import { normalizeDeviceAuthRole, normalizeDeviceAuthScopes } from "./device-auth.js";
 
+/** Normalized roles/scopes carried by a bootstrap token during device handoff. */
 export type DeviceBootstrapProfile = {
   roles: string[];
   scopes: string[];
 };
 
+/** Caller-provided bootstrap profile before role/scope normalization and bounding. */
 export type DeviceBootstrapProfileInput = {
   roles?: readonly string[];
   scopes?: readonly string[];
 };
 
+<<<<<<< HEAD
+=======
+/** Operator scopes allowed to cross the short-lived bootstrap handoff boundary. */
+>>>>>>> upstream/main
 export const BOOTSTRAP_HANDOFF_OPERATOR_SCOPES = [
   "operator.approvals",
   "operator.read",
@@ -19,11 +26,40 @@ export const BOOTSTRAP_HANDOFF_OPERATOR_SCOPES = [
 
 const BOOTSTRAP_HANDOFF_OPERATOR_SCOPE_SET = new Set<string>(BOOTSTRAP_HANDOFF_OPERATOR_SCOPES);
 
+<<<<<<< HEAD
 export const PAIRING_SETUP_BOOTSTRAP_PROFILE: DeviceBootstrapProfile = {
+=======
+/** Default setup-code/QR bootstrap profile for native onboarding handoff. */
+export const PAIRING_SETUP_BOOTSTRAP_PROFILE: DeviceBootstrapProfile = {
+  // QR/setup-code bootstrap must hand off both tokens for native onboarding:
+  // iOS/Android suppress the operator loop while bootstrap auth is active and
+  // only start it after persisting this bounded operator token.
+>>>>>>> upstream/main
   roles: ["node", "operator"],
   scopes: [...BOOTSTRAP_HANDOFF_OPERATOR_SCOPES],
 };
 
+<<<<<<< HEAD
+=======
+/** Return whether an input exactly matches the current setup-code bootstrap profile. */
+export function isPairingSetupBootstrapProfile(
+  input: DeviceBootstrapProfileInput | undefined,
+): boolean {
+  const profile = normalizeDeviceBootstrapProfile(input);
+  if (profile.roles.length !== PAIRING_SETUP_BOOTSTRAP_PROFILE.roles.length) {
+    return false;
+  }
+  if (profile.scopes.length !== PAIRING_SETUP_BOOTSTRAP_PROFILE.scopes.length) {
+    return false;
+  }
+  return (
+    profile.roles.every((role, index) => role === PAIRING_SETUP_BOOTSTRAP_PROFILE.roles[index]) &&
+    profile.scopes.every((scope, index) => scope === PAIRING_SETUP_BOOTSTRAP_PROFILE.scopes[index])
+  );
+}
+
+/** Resolve the subset of requested scopes a bootstrap profile may carry for one role. */
+>>>>>>> upstream/main
 export function resolveBootstrapProfileScopesForRole(
   role: string,
   scopes: readonly string[],
@@ -36,6 +72,31 @@ export function resolveBootstrapProfileScopesForRole(
   return [];
 }
 
+<<<<<<< HEAD
+=======
+/** Resolve bounded bootstrap handoff scopes across a role set. */
+export function resolveBootstrapProfileScopesForRoles(
+  roles: readonly string[],
+  scopes: readonly string[],
+): string[] {
+  return normalizeDeviceAuthScopes(
+    roles.flatMap((role) => resolveBootstrapProfileScopesForRole(role, scopes)),
+  );
+}
+
+/** Normalize a requested bootstrap profile and strip scopes outside the handoff allowlist. */
+export function normalizeDeviceBootstrapHandoffProfile(
+  input: DeviceBootstrapProfileInput | undefined,
+): DeviceBootstrapProfile {
+  const profile = normalizeDeviceBootstrapProfile(input);
+  // Bootstrap handoff profiles can only carry the documented handoff allowlist.
+  return {
+    roles: profile.roles,
+    scopes: resolveBootstrapProfileScopesForRoles(profile.roles, profile.scopes),
+  };
+}
+
+>>>>>>> upstream/main
 function normalizeBootstrapRoles(roles: readonly string[] | undefined): string[] {
   if (!Array.isArray(roles)) {
     return [];
@@ -50,6 +111,7 @@ function normalizeBootstrapRoles(roles: readonly string[] | undefined): string[]
   return [...out].toSorted();
 }
 
+/** Normalize caller-provided bootstrap roles/scopes without applying handoff bounds. */
 export function normalizeDeviceBootstrapProfile(
   input: DeviceBootstrapProfileInput | undefined,
 ): DeviceBootstrapProfile {

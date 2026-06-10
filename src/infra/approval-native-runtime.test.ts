@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 import { describe, expect, it, vi } from "vitest";
 import type { ChannelApprovalNativeAdapter } from "../channels/plugins/types.adapters.js";
+=======
+// Covers native approval runtime delivery and resolution.
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ChannelApprovalNativeAdapter } from "../channels/plugins/types.adapters.js";
+import { clearApprovalNativeRouteStateForTest } from "./approval-native-route-coordinator.js";
+>>>>>>> upstream/main
 import {
   createChannelNativeApprovalRuntime,
   deliverApprovalRequestViaChannelNativePlan,
@@ -14,8 +21,30 @@ const execRequest = {
   expiresAtMs: 120_000,
 };
 
+<<<<<<< HEAD
 describe("deliverApprovalRequestViaChannelNativePlan", () => {
   it("sends an origin notice and dedupes converged prepared targets", async () => {
+=======
+afterEach(() => {
+  clearApprovalNativeRouteStateForTest();
+  vi.useRealTimers();
+});
+
+function requireRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Expected a non-array record");
+  }
+  return value as Record<string, unknown>;
+}
+
+function mockCallArg(mock: ReturnType<typeof vi.fn>, index = 0): Record<string, unknown> {
+  const arg = mock.mock.calls[index]?.[0];
+  return requireRecord(arg);
+}
+
+describe("deliverApprovalRequestViaChannelNativePlan", () => {
+  it("dedupes converged prepared targets", async () => {
+>>>>>>> upstream/main
     const adapter: ChannelApprovalNativeAdapter = {
       describeDeliveryCapabilities: () => ({
         enabled: true,
@@ -27,7 +56,10 @@ describe("deliverApprovalRequestViaChannelNativePlan", () => {
       resolveOriginTarget: async () => ({ to: "origin-room" }),
       resolveApproverDmTargets: async () => [{ to: "approver-1" }, { to: "approver-2" }],
     };
+<<<<<<< HEAD
     const sendOriginNotice = vi.fn().mockResolvedValue(undefined);
+=======
+>>>>>>> upstream/main
     const prepareTarget = vi
       .fn()
       .mockImplementation(
@@ -51,24 +83,39 @@ describe("deliverApprovalRequestViaChannelNativePlan", () => {
       );
     const onDuplicateSkipped = vi.fn();
 
+<<<<<<< HEAD
     const entries = await deliverApprovalRequestViaChannelNativePlan({
+=======
+    const result = await deliverApprovalRequestViaChannelNativePlan({
+>>>>>>> upstream/main
       cfg: {} as never,
       approvalKind: "exec",
       request: execRequest,
       adapter,
+<<<<<<< HEAD
       sendOriginNotice: async ({ originTarget }) => {
         await sendOriginNotice(originTarget);
       },
+=======
+>>>>>>> upstream/main
       prepareTarget,
       deliverTarget,
       onDuplicateSkipped,
     });
 
+<<<<<<< HEAD
     expect(sendOriginNotice).toHaveBeenCalledWith({ to: "origin-room" });
     expect(prepareTarget).toHaveBeenCalledTimes(2);
     expect(deliverTarget).toHaveBeenCalledTimes(1);
     expect(onDuplicateSkipped).toHaveBeenCalledTimes(1);
     expect(entries).toEqual([{ channelId: "shared-dm" }]);
+=======
+    expect(prepareTarget).toHaveBeenCalledTimes(2);
+    expect(deliverTarget).toHaveBeenCalledTimes(1);
+    expect(onDuplicateSkipped).toHaveBeenCalledTimes(1);
+    expect(result.entries).toEqual([{ channelId: "shared-dm" }]);
+    expect(result.deliveryPlan.notifyOriginWhenDmOnly).toBe(true);
+>>>>>>> upstream/main
   });
 
   it("continues after per-target delivery failures", async () => {
@@ -83,7 +130,11 @@ describe("deliverApprovalRequestViaChannelNativePlan", () => {
     };
     const onDeliveryError = vi.fn();
 
+<<<<<<< HEAD
     const entries = await deliverApprovalRequestViaChannelNativePlan({
+=======
+    const result = await deliverApprovalRequestViaChannelNativePlan({
+>>>>>>> upstream/main
       cfg: {} as never,
       approvalKind: "exec",
       request: execRequest,
@@ -102,7 +153,11 @@ describe("deliverApprovalRequestViaChannelNativePlan", () => {
     });
 
     expect(onDeliveryError).toHaveBeenCalledTimes(1);
+<<<<<<< HEAD
     expect(entries).toEqual([{ channelId: "approver-2" }]);
+=======
+    expect(result.entries).toEqual([{ channelId: "approver-2" }]);
+>>>>>>> upstream/main
   });
 });
 
@@ -131,6 +186,11 @@ describe("createChannelNativeApprovalRuntime", () => {
     const runtime = createChannelNativeApprovalRuntime({
       label: "test/native-runtime",
       clientDisplayName: "Test",
+<<<<<<< HEAD
+=======
+      channel: "telegram",
+      channelLabel: "Telegram",
+>>>>>>> upstream/main
       cfg: {} as never,
       accountId: "secondary",
       eventKinds: ["exec", "plugin"] as const,
@@ -161,6 +221,7 @@ describe("createChannelNativeApprovalRuntime", () => {
       ts: 1,
     });
 
+<<<<<<< HEAD
     expect(buildPendingContent).toHaveBeenCalledWith({
       request: expect.objectContaining({ id: "plugin:req-1" }),
       approvalKind: "plugin",
@@ -204,6 +265,54 @@ describe("createChannelNativeApprovalRuntime", () => {
       resolved: expect.objectContaining({ id: "plugin:req-1", decision: "allow-once" }),
       entries: [{ chatId: "plugin:secondary", messageId: "m1" }],
     });
+=======
+    const pendingCall = mockCallArg(buildPendingContent);
+    expect(requireRecord(pendingCall.request).id).toBe("plugin:req-1");
+    expect(pendingCall.approvalKind).toBe("plugin");
+    expect(typeof pendingCall.nowMs).toBe("number");
+
+    const prepareCall = mockCallArg(prepareTarget);
+    expect(prepareCall.plannedTarget).toEqual({
+      surface: "approver-dm",
+      target: { to: "plugin:secondary" },
+      reason: "preferred",
+    });
+    expect(requireRecord(prepareCall.request).id).toBe("plugin:req-1");
+    expect(prepareCall.approvalKind).toBe("plugin");
+    expect(prepareCall.pendingContent).toBe("pending plugin");
+
+    const deliverCall = mockCallArg(deliverTarget);
+    expect(deliverCall.plannedTarget).toEqual({
+      surface: "approver-dm",
+      target: { to: "plugin:secondary" },
+      reason: "preferred",
+    });
+    expect(deliverCall.preparedTarget).toEqual({ chatId: "plugin:secondary" });
+    expect(requireRecord(deliverCall.request).id).toBe("plugin:req-1");
+    expect(deliverCall.approvalKind).toBe("plugin");
+    expect(deliverCall.pendingContent).toBe("pending plugin");
+
+    const capabilitiesCall = mockCallArg(describeDeliveryCapabilities);
+    expect(capabilitiesCall.cfg).toEqual({});
+    expect(capabilitiesCall.accountId).toBe("secondary");
+    expect(capabilitiesCall.approvalKind).toBe("plugin");
+    expect(requireRecord(capabilitiesCall.request).id).toBe("plugin:req-1");
+
+    const dmTargetsCall = mockCallArg(resolveApproverDmTargets);
+    expect(dmTargetsCall.cfg).toEqual({});
+    expect(dmTargetsCall.accountId).toBe("secondary");
+    expect(dmTargetsCall.approvalKind).toBe("plugin");
+    expect(requireRecord(dmTargetsCall.request).id).toBe("plugin:req-1");
+
+    const resolvedCall = mockCallArg(finalizeResolved);
+    expect(requireRecord(resolvedCall.request).id).toBe("plugin:req-1");
+    expect(requireRecord(resolvedCall.resolved)).toEqual({
+      id: "plugin:req-1",
+      decision: "allow-once",
+      ts: 1,
+    });
+    expect(resolvedCall.entries).toEqual([{ chatId: "plugin:secondary", messageId: "m1" }]);
+>>>>>>> upstream/main
   });
 
   it("runs expiration through the shared runtime factory", async () => {
@@ -212,6 +321,11 @@ describe("createChannelNativeApprovalRuntime", () => {
     const runtime = createChannelNativeApprovalRuntime({
       label: "test/native-runtime-expiry",
       clientDisplayName: "Test",
+<<<<<<< HEAD
+=======
+      channel: "telegram",
+      channelLabel: "Telegram",
+>>>>>>> upstream/main
       cfg: {} as never,
       nowMs: Date.now,
       nativeAdapter: {
@@ -246,10 +360,16 @@ describe("createChannelNativeApprovalRuntime", () => {
 
     await vi.advanceTimersByTimeAsync(60_000);
 
+<<<<<<< HEAD
     expect(finalizeExpired).toHaveBeenCalledWith({
       request: expect.objectContaining({ id: "req-1" }),
       entries: [{ chatId: "owner", messageId: "m1" }],
     });
+=======
+    const expiredCall = mockCallArg(finalizeExpired);
+    expect(requireRecord(expiredCall.request).id).toBe("req-1");
+    expect(expiredCall.entries).toEqual([{ chatId: "owner", messageId: "m1" }]);
+>>>>>>> upstream/main
     vi.useRealTimers();
   });
 });

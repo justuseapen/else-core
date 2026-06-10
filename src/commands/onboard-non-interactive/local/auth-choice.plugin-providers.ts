@@ -1,3 +1,9 @@
+/**
+ * Applies non-interactive setup for provider plugins.
+ *
+ * This path resolves trusted plugin providers, delegates setup to their
+ * non-interactive method, and installs runtime plugins required by the model.
+ */
 import {
   resolveAgentDir,
   resolveDefaultAgentId,
@@ -5,9 +11,11 @@ import {
 } from "../../../agents/agent-scope.js";
 import type { ApiKeyCredential } from "../../../agents/auth-profiles/types.js";
 import { resolveDefaultAgentWorkspaceDir } from "../../../agents/workspace.js";
-import type { OpenClawConfig } from "../../../config/config.js";
+import { resolveAgentModelPrimaryValue } from "../../../config/model-input.js";
+import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import { enablePluginInConfig } from "../../../plugins/enable.js";
 import { resolvePreferredProviderForAuthChoice } from "../../../plugins/provider-auth-choice-preference.js";
+import { resolveManifestProviderAuthChoice } from "../../../plugins/provider-auth-choices.js";
 import type {
   ProviderAuthOptionBag,
   ProviderNonInteractiveApiKeyCredentialParams,
@@ -15,6 +23,12 @@ import type {
 } from "../../../plugins/types.js";
 import type { RuntimeEnv } from "../../../runtime.js";
 import { createLazyRuntimeSurface } from "../../../shared/lazy-runtime.js";
+import {
+  CODEX_RUNTIME_PLUGIN_ID,
+  ensureCodexRuntimePluginForModelSelection,
+} from "../../codex-runtime-plugin-install.js";
+import { ensureCopilotRuntimePluginForModelSelection } from "../../copilot-runtime-plugin-install.js";
+import { createNonInteractiveLoggingPrompter } from "../../non-interactive-prompter.js";
 import type { OnboardOptions } from "../../onboard-types.js";
 
 const PROVIDER_PLUGIN_CHOICE_PREFIX = "provider-plugin:";
@@ -28,6 +42,7 @@ const loadAuthChoicePluginProvidersRuntime = createLazyRuntimeSurface(
   ({ authChoicePluginProvidersRuntime }) => authChoicePluginProvidersRuntime,
 );
 
+<<<<<<< HEAD
 function buildIsolatedProviderResolutionConfig(
   cfg: OpenClawConfig,
   ids: Iterable<string | undefined>,
@@ -62,6 +77,9 @@ function buildIsolatedProviderResolutionConfig(
   };
 }
 
+=======
+/** Applies a plugin-defined auth choice, or returns undefined when it is not plugin-backed. */
+>>>>>>> upstream/main
 export async function applyNonInteractivePluginProviderChoice(params: {
   nextConfig: OpenClawConfig;
   authChoice: string;
@@ -92,10 +110,20 @@ export async function applyNonInteractivePluginProviderChoice(params: {
       workspaceDir,
       includeUntrustedWorkspacePlugins: false,
     }));
+<<<<<<< HEAD
   const { resolveOwningPluginIdsForProvider, resolveProviderPluginChoice, resolvePluginProviders } =
     await loadAuthChoicePluginProvidersRuntime();
+=======
+  // Provider discovery is lazy so non-plugin auth choices do not pull plugin
+  // runtime code into the basic non-interactive setup path.
+  const {
+    resolveOwningPluginIdsForProviderRef,
+    resolveProviderPluginChoice,
+    resolvePluginProviders,
+  } = await loadAuthChoicePluginProvidersRuntime();
+>>>>>>> upstream/main
   const owningPluginIds = preferredProviderId
-    ? resolveOwningPluginIdsForProvider({
+    ? resolveOwningPluginIdsForProviderRef({
         provider: preferredProviderId,
         config: params.nextConfig,
         workspaceDir,
@@ -107,14 +135,55 @@ export async function applyNonInteractivePluginProviderChoice(params: {
   ]);
   const providerChoice = resolveProviderPluginChoice({
     providers: resolvePluginProviders({
-      config: resolutionConfig,
+      config: params.nextConfig,
       workspaceDir,
       onlyPluginIds: owningPluginIds,
       mode: "setup",
+<<<<<<< HEAD
+=======
+      includeUntrustedWorkspacePlugins: false,
+>>>>>>> upstream/main
     }),
     choice: params.authChoice,
   });
   if (!providerChoice) {
+    if (prefixedProviderId) {
+      // Explicit provider-plugin choices are user intent; fail closed if the
+      // target provider is unavailable rather than falling back to core auth.
+      params.runtime.error(
+        [
+          `Auth choice "${params.authChoice}" was not matched to a trusted provider plugin.`,
+          "If this provider comes from a workspace plugin, trust/allow it first and retry.",
+        ].join("\n"),
+      );
+      params.runtime.exit(1);
+      return null;
+    }
+    // Keep mismatch diagnostics metadata-only so untrusted workspace plugins are not loaded.
+    const trustedManifestMatch = resolveManifestProviderAuthChoice(params.authChoice, {
+      config: params.nextConfig,
+      workspaceDir,
+      includeUntrustedWorkspacePlugins: false,
+    });
+    const untrustedOnlyManifestMatch =
+      !trustedManifestMatch &&
+      resolveManifestProviderAuthChoice(params.authChoice, {
+        config: params.nextConfig,
+        workspaceDir,
+        includeUntrustedWorkspacePlugins: true,
+      });
+    if (untrustedOnlyManifestMatch) {
+      // Manifest metadata can identify untrusted matches without loading the
+      // plugin implementation, preserving workspace trust boundaries.
+      params.runtime.error(
+        [
+          `Auth choice "${params.authChoice}" matched a provider plugin that is not trusted or enabled for setup.`,
+          "If this provider comes from a workspace plugin, trust/allow it first and retry.",
+        ].join("\n"),
+      );
+      params.runtime.exit(1);
+      return null;
+    }
     return undefined;
   }
 
@@ -132,6 +201,8 @@ export async function applyNonInteractivePluginProviderChoice(params: {
 
   const method = providerChoice.method;
   if (!method.runNonInteractive) {
+    // Interactive-only plugin setup methods may prompt, so non-interactive
+    // setup must reject them before entering plugin code.
     params.runtime.error(
       [
         `Auth choice "${params.authChoice}" requires interactive mode.`,
@@ -142,7 +213,7 @@ export async function applyNonInteractivePluginProviderChoice(params: {
     return null;
   }
 
-  return method.runNonInteractive({
+  const result = await method.runNonInteractive({
     authChoice: params.authChoice,
     config: enableResult.config,
     baseConfig: params.baseConfig,
@@ -153,4 +224,46 @@ export async function applyNonInteractivePluginProviderChoice(params: {
     resolveApiKey: params.resolveApiKey,
     toApiKeyCredential: params.toApiKeyCredential,
   });
+  if (!result) {
+    return result;
+  }
+  const selectedModel = resolveAgentModelPrimaryValue(result.agents?.defaults?.model);
+  if (!selectedModel) {
+    return result;
+  }
+  // Model selection can imply a runtime plugin even when auth setup belonged to
+  // a provider plugin; install those runtimes before persisting the config.
+  const nonInteractivePrompter = createNonInteractiveLoggingPrompter(
+    params.runtime,
+    (message) => `Non-interactive setup cannot prompt for plugin install: ${message}`,
+  );
+  const codexInstall = await ensureCodexRuntimePluginForModelSelection({
+    cfg: result,
+    model: selectedModel,
+    prompter: nonInteractivePrompter,
+    runtime: params.runtime,
+    workspaceDir,
+  });
+  if (codexInstall.installed) {
+    // Non-interactive onboarding never auto-applies migration; emit a hint so
+    // the operator knows Codex CLI state is available to import deliberately.
+    // Gated on installed (not freshlyInstalled) so repair runs against an
+    // already-present harness still surface the hint.
+    const { offerPostInstallMigrations } =
+      await import("../../../wizard/setup.post-install-migration.js");
+    await offerPostInstallMigrations({
+      config: codexInstall.cfg,
+      runtime: params.runtime,
+      installedPluginIds: [CODEX_RUNTIME_PLUGIN_ID],
+      nonInteractive: true,
+    });
+  }
+  const copilotInstall = await ensureCopilotRuntimePluginForModelSelection({
+    cfg: codexInstall.cfg,
+    model: selectedModel,
+    prompter: nonInteractivePrompter,
+    runtime: params.runtime,
+    workspaceDir,
+  });
+  return copilotInstall.cfg;
 }

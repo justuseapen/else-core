@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,14 +11,62 @@ import {
   resolveEnvApiKeyVarName,
   resolveMissingProviderApiKey,
 } from "./models-config.providers.secrets.js";
+=======
+// Verifies implicit provider secret wiring for NVIDIA, MiniMax portal, and vLLM.
+import { describe, expect, it, vi } from "vitest";
+import type { ModelDefinitionConfig, ModelProviderConfig } from "../config/types.models.js";
+import { resolveEnvApiKey } from "./model-auth-env.js";
+import {
+  resolveEnvApiKeyVarName,
+  resolveMissingProviderApiKey,
+} from "./models-config.providers.secret-helpers.js";
+
+vi.mock("../plugins/setup-registry.js", () => ({
+  resolvePluginSetupProvider: () => undefined,
+}));
+
+vi.mock("../infra/shell-env.js", () => ({
+  getShellEnvAppliedKeys: () => [],
+}));
+
+vi.mock("./provider-auth-aliases.js", () => ({
+  resolveProviderAuthAliasMap: () => ({}),
+  resolveProviderIdForAuth: (provider: string) => provider.trim().toLowerCase(),
+}));
+
+vi.mock("./model-auth-env-vars.js", () => {
+  // Fixed candidate map keeps provider-secret resolution deterministic.
+  const candidates = {
+    minimax: ["MINIMAX_API_KEY"],
+    "minimax-portal": ["MINIMAX_OAUTH_TOKEN"],
+    nvidia: ["NVIDIA_API_KEY"],
+    vllm: ["VLLM_API_KEY"],
+  } as const;
+  return {
+    listKnownProviderEnvApiKeyNames: () => [...new Set(Object.values(candidates).flat())],
+    resolveProviderEnvApiKeyCandidates: () => candidates,
+    resolveProviderEnvAuthEvidence: () => ({}),
+    resolveProviderEnvAuthLookupMaps: () => ({
+      aliasMap: {},
+      envCandidateMap: candidates,
+      authEvidenceMap: {},
+    }),
+  };
+});
+>>>>>>> upstream/main
 
 const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
 const MINIMAX_BASE_URL = "https://api.minimax.io/anthropic";
 const VLLM_DEFAULT_BASE_URL = "http://127.0.0.1:8000/v1";
 
+<<<<<<< HEAD
 installModelsConfigTestHooks();
 
 function createTestModel(id: string): ModelDefinitionConfig {
+=======
+function createTestModel(id: string): ModelDefinitionConfig {
+  // Minimal catalog row; these tests care about auth wiring, not model metadata.
+>>>>>>> upstream/main
   return {
     id,
     name: id,
@@ -30,6 +79,10 @@ function createTestModel(id: string): ModelDefinitionConfig {
 }
 
 function resolveMinimaxCatalogBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
+<<<<<<< HEAD
+=======
+  // MiniMax custom hosts still speak the Anthropic-compatible path.
+>>>>>>> upstream/main
   const rawHost = env.MINIMAX_API_HOST?.trim();
   if (!rawHost) {
     return MINIMAX_BASE_URL;
@@ -54,6 +107,10 @@ function buildMinimaxPortalCatalog(params: {
   explicitBaseUrl?: string;
   hasProfiles?: boolean;
 }): ModelProviderConfig | null {
+<<<<<<< HEAD
+=======
+  // Portal catalog is only available when OAuth/env/profile auth exists.
+>>>>>>> upstream/main
   const apiKey =
     params.envApiKey ??
     params.explicitApiKey ??
@@ -83,20 +140,21 @@ describe("NVIDIA provider", () => {
       profileApiKey: undefined,
     });
     expect(provider.apiKey).toBe("NVIDIA_API_KEY");
+<<<<<<< HEAD
     expect(provider.models?.length).toBeGreaterThan(0);
+=======
+    expect(provider.models).toStrictEqual([createTestModel("nvidia/test-model")]);
+>>>>>>> upstream/main
   });
 
-  it("resolves the nvidia api key value from env", async () => {
-    const agentDir = mkdtempSync(join(tmpdir(), "openclaw-test-"));
-    await withEnvAsync({ NVIDIA_API_KEY: "nvidia-test-api-key" }, async () => {
-      const auth = await resolveApiKeyForProvider({
-        provider: "nvidia",
-        agentDir,
-      });
+  it("resolves the nvidia api key value from env", () => {
+    const auth = resolveEnvApiKey("nvidia", {
+      NVIDIA_API_KEY: "nvidia-test-api-key",
+    } as NodeJS.ProcessEnv);
 
-      expect(auth.apiKey).toBe("nvidia-test-api-key");
-      expect(auth.mode).toBe("api-key");
-      expect(auth.source).toContain("NVIDIA_API_KEY");
+    expect(auth).toEqual({
+      apiKey: "nvidia-test-api-key",
+      source: "env: NVIDIA_API_KEY",
     });
   });
 });

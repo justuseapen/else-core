@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { describe, expect, it } from "vitest";
 import { listChannelCatalogEntries } from "../plugins/channel-catalog-registry.js";
+=======
+// Channel id tests cover identifier normalization and validation helpers.
+import { describe, expect, it } from "vitest";
+import { listBundledChannelCatalogEntries } from "./bundled-channel-catalog-read.js";
+>>>>>>> upstream/main
 import {
   CHAT_CHANNEL_ALIASES,
   CHAT_CHANNEL_ORDER,
@@ -7,20 +13,32 @@ import {
   type ChatChannelId,
 } from "./ids.js";
 
+<<<<<<< HEAD
 function collectBundledChatChannelAliases(): Record<string, ChatChannelId> {
   const aliases = new Map<string, ChatChannelId>();
 
   for (const entry of listChannelCatalogEntries({ origin: "bundled" })) {
     const channel = entry.channel;
     const rawId = channel?.id?.trim();
+=======
+function collectChatChannelAliases(): Record<string, ChatChannelId> {
+  const aliases = new Map<string, ChatChannelId>();
+
+  for (const entry of listBundledChannelCatalogEntries()) {
+    const rawId = entry.id.trim();
+>>>>>>> upstream/main
     if (!rawId || !CHAT_CHANNEL_ORDER.includes(rawId)) {
       continue;
     }
     const channelId = rawId;
+<<<<<<< HEAD
     if (!channel) {
       continue;
     }
     for (const alias of channel.aliases ?? []) {
+=======
+    for (const alias of entry.aliases ?? []) {
+>>>>>>> upstream/main
       const normalizedAlias = alias.trim().toLowerCase();
       if (!normalizedAlias) {
         continue;
@@ -45,7 +63,12 @@ describe("channel ids", () => {
     expect(normalizeChatChannelId("nope")).toBeNull();
   });
 
+<<<<<<< HEAD
   it("matches bundled built-in channel alias metadata", () => {
     expect(CHAT_CHANNEL_ALIASES).toEqual(collectBundledChatChannelAliases());
+=======
+  it("matches channel catalog alias metadata", () => {
+    expect(CHAT_CHANNEL_ALIASES).toEqual(collectChatChannelAliases());
+>>>>>>> upstream/main
   });
 });

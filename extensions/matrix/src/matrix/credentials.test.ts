@@ -1,3 +1,4 @@
+// Matrix tests cover credentials plugin behavior.
 import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import os from "node:os";
@@ -13,6 +14,27 @@ import {
   saveMatrixCredentials,
   touchMatrixCredentials,
 } from "./credentials.js";
+
+const DEFAULT_LEGACY_CREDENTIALS = {
+  homeserver: "https://matrix.example.org",
+  userId: "@bot:example.org",
+  accessToken: "legacy-token",
+  createdAt: "2026-03-01T10:00:00.000Z",
+};
+
+const EXPECTS_POSIX_PRIVATE_FILE_MODE = process.platform !== "win32";
+
+type MatrixCredentials = NonNullable<ReturnType<typeof loadMatrixCredentials>>;
+
+function expectMatrixCredentials(
+  credentials: ReturnType<typeof loadMatrixCredentials>,
+): MatrixCredentials {
+  if (credentials === null) {
+    throw new Error("Expected Matrix credentials");
+  }
+  expect(typeof credentials.createdAt).toBe("string");
+  return credentials;
+}
 
 describe("matrix credentials storage", () => {
   const tempDirs: string[] = [];
@@ -37,6 +59,19 @@ describe("matrix credentials storage", () => {
     return dir;
   }
 
+  function setupLegacyCredentialsFile(params: {
+    cfg: Record<string, unknown>;
+    accountId: string;
+    credentials?: Record<string, unknown>;
+  }) {
+    const stateDir = setupStateDir(params.cfg);
+    const legacyPath = path.join(stateDir, "credentials", "matrix", "credentials.json");
+    const currentPath = resolveMatrixCredentialsPath({}, params.accountId);
+    fs.mkdirSync(path.dirname(legacyPath), { recursive: true });
+    fs.writeFileSync(legacyPath, JSON.stringify(params.credentials ?? DEFAULT_LEGACY_CREDENTIALS));
+    return { stateDir, legacyPath, currentPath };
+  }
+
   it("writes credentials atomically with secure file permissions", async () => {
     const stateDir = setupStateDir();
     await saveMatrixCredentials(
@@ -54,7 +89,9 @@ describe("matrix credentials storage", () => {
     expect(fs.existsSync(credPath)).toBe(true);
     expect(credPath).toBe(path.join(stateDir, "credentials", "matrix", "credentials-ops.json"));
     const mode = fs.statSync(credPath).mode & 0o777;
-    expect(mode).toBe(0o600);
+    if (EXPECTS_POSIX_PRIVATE_FILE_MODE) {
+      expect(mode).toBe(0o600);
+    }
   });
 
   it("touch updates lastUsedAt while preserving createdAt", async () => {
@@ -72,15 +109,15 @@ describe("matrix credentials storage", () => {
         "default",
       );
       const initial = loadMatrixCredentials({}, "default");
-      expect(initial).not.toBeNull();
+      const initialCredentials = expectMatrixCredentials(initial);
 
       vi.setSystemTime(new Date("2026-03-01T10:05:00.000Z"));
       await touchMatrixCredentials({}, "default");
       const touched = loadMatrixCredentials({}, "default");
-      expect(touched).not.toBeNull();
+      const touchedCredentials = expectMatrixCredentials(touched);
 
-      expect(touched?.createdAt).toBe(initial?.createdAt);
-      expect(touched?.lastUsedAt).toBe("2026-03-01T10:05:00.000Z");
+      expect(touchedCredentials.createdAt).toBe(initialCredentials.createdAt);
+      expect(touchedCredentials.lastUsedAt).toBe("2026-03-01T10:05:00.000Z");
     } finally {
       vi.useRealTimers();
     }
@@ -111,10 +148,16 @@ describe("matrix credentials storage", () => {
       ),
     ).resolves.toBe("saved");
 
+<<<<<<< HEAD
     expect(loadMatrixCredentials({}, "default")).toMatchObject({
       accessToken: "tok-123",
       deviceId: "DEVICE123",
     });
+=======
+    const credentials = expectMatrixCredentials(loadMatrixCredentials({}, "default"));
+    expect(credentials.accessToken).toBe("tok-123");
+    expect(credentials.deviceId).toBe("DEVICE123");
+>>>>>>> upstream/main
   });
 
   it("backfill skips when newer credentials already changed the token", async () => {
@@ -143,10 +186,16 @@ describe("matrix credentials storage", () => {
       ),
     ).resolves.toBe("skipped");
 
+<<<<<<< HEAD
     expect(loadMatrixCredentials({}, "default")).toMatchObject({
       accessToken: "tok-new",
       deviceId: "DEVICE999",
     });
+=======
+    const credentials = expectMatrixCredentials(loadMatrixCredentials({}, "default"));
+    expect(credentials.accessToken).toBe("tok-new");
+    expect(credentials.deviceId).toBe("DEVICE999");
+>>>>>>> upstream/main
   });
 
   it("serializes stale backfill writes behind newer credential saves", async () => {
@@ -162,13 +211,26 @@ describe("matrix credentials storage", () => {
     );
 
     let releaseFirstWrite: (() => void) | undefined;
+<<<<<<< HEAD
     let firstWriteStarted = false;
+=======
+    let resolveFirstWriteStarted: (() => void) | undefined;
+    const firstWriteStarted = new Promise<void>((resolve) => {
+      resolveFirstWriteStarted = resolve;
+    });
+>>>>>>> upstream/main
     const originalRename = fsPromises.rename.bind(fsPromises);
     const renameSpy = vi
       .spyOn(fsPromises, "rename")
       .mockImplementation(async (...args: Parameters<typeof fsPromises.rename>) => {
+<<<<<<< HEAD
         if (!firstWriteStarted) {
           firstWriteStarted = true;
+=======
+        if (resolveFirstWriteStarted) {
+          resolveFirstWriteStarted();
+          resolveFirstWriteStarted = undefined;
+>>>>>>> upstream/main
           await new Promise<void>((resolve) => {
             releaseFirstWrite = resolve;
           });
@@ -188,9 +250,13 @@ describe("matrix credentials storage", () => {
         "default",
       );
 
+<<<<<<< HEAD
       await vi.waitFor(() => {
         expect(firstWriteStarted).toBe(true);
       });
+=======
+      await firstWriteStarted;
+>>>>>>> upstream/main
 
       const newerSavePromise = saveMatrixCredentials(
         {
@@ -206,37 +272,43 @@ describe("matrix credentials storage", () => {
       releaseFirstWrite?.();
       await Promise.all([staleBackfillPromise, newerSavePromise]);
 
+<<<<<<< HEAD
       expect(loadMatrixCredentials({}, "default")).toMatchObject({
         accessToken: "tok-new",
         deviceId: "DEVICE999",
       });
+=======
+      const credentials = expectMatrixCredentials(loadMatrixCredentials({}, "default"));
+      expect(credentials.accessToken).toBe("tok-new");
+      expect(credentials.deviceId).toBe("DEVICE999");
+>>>>>>> upstream/main
     } finally {
       renameSpy.mockRestore();
     }
   });
 
+<<<<<<< HEAD
   it("migrates legacy matrix credential files on read", async () => {
     const stateDir = setupStateDir({
       channels: {
         matrix: {
           accounts: {
             ops: {},
+=======
+  it("migrates legacy matrix credential files on read", () => {
+    const { legacyPath, currentPath } = setupLegacyCredentialsFile({
+      cfg: {
+        channels: {
+          matrix: {
+            accounts: {
+              ops: {},
+            },
+>>>>>>> upstream/main
           },
         },
       },
+      accountId: "ops",
     });
-    const legacyPath = path.join(stateDir, "credentials", "matrix", "credentials.json");
-    const currentPath = resolveMatrixCredentialsPath({}, "ops");
-    fs.mkdirSync(path.dirname(legacyPath), { recursive: true });
-    fs.writeFileSync(
-      legacyPath,
-      JSON.stringify({
-        homeserver: "https://matrix.example.org",
-        userId: "@bot:example.org",
-        accessToken: "legacy-token",
-        createdAt: "2026-03-01T10:00:00.000Z",
-      }),
-    );
 
     const loaded = loadMatrixCredentials({}, "ops");
 
@@ -246,6 +318,7 @@ describe("matrix credentials storage", () => {
   });
 
   it("returns migrated credentials when another process moves the legacy file mid-read", () => {
+<<<<<<< HEAD
     const stateDir = setupStateDir({
       channels: {
         matrix: {
@@ -382,24 +455,139 @@ describe("matrix credentials storage", () => {
             default: {
               homeserver: "https://matrix.default.example.org",
               accessToken: "default-token",
+=======
+    const { legacyPath, currentPath } = setupLegacyCredentialsFile({
+      cfg: {
+        channels: {
+          matrix: {
+            accounts: {
+              ops: {},
+>>>>>>> upstream/main
             },
-            ops: {},
           },
         },
       },
+      accountId: "ops",
     });
-    const legacyPath = path.join(stateDir, "credentials", "matrix", "credentials.json");
-    const currentPath = resolveMatrixCredentialsPath({}, "ops");
-    fs.mkdirSync(path.dirname(legacyPath), { recursive: true });
-    fs.writeFileSync(
-      legacyPath,
-      JSON.stringify({
+
+    const originalReadFileSync = fs.readFileSync.bind(fs);
+    let moved = false;
+    const readFileSpy = vi.spyOn(fs, "readFileSync").mockImplementation(((
+      filePath: fs.PathOrFileDescriptor,
+      options?: Parameters<typeof fs.readFileSync>[1],
+    ) => {
+      if (!moved && filePath === legacyPath) {
+        fs.renameSync(legacyPath, currentPath);
+        moved = true;
+      }
+      return originalReadFileSync(filePath, options as never);
+    }) as typeof fs.readFileSync);
+    try {
+      const loaded = loadMatrixCredentials({}, "ops");
+
+      expect(loaded?.accessToken).toBe("legacy-token");
+      expect(moved).toBe(true);
+      expect(fs.existsSync(legacyPath)).toBe(false);
+      expect(fs.existsSync(currentPath)).toBe(true);
+    } finally {
+      readFileSpy.mockRestore();
+    }
+  });
+
+  it("does not rename the legacy path after falling back to already-migrated current credentials", () => {
+    const { legacyPath, currentPath } = setupLegacyCredentialsFile({
+      cfg: {
+        channels: {
+          matrix: {
+            accounts: {
+              ops: {},
+            },
+          },
+        },
+      },
+      accountId: "ops",
+    });
+
+    const originalReadFileSync = fs.readFileSync.bind(fs);
+    const originalRenameSync = fs.renameSync.bind(fs);
+    const renameSpy = vi.spyOn(fs, "renameSync");
+    let migrated = false;
+    const readFileSpy = vi.spyOn(fs, "readFileSync").mockImplementation(((
+      filePath: fs.PathOrFileDescriptor,
+      options?: Parameters<typeof fs.readFileSync>[1],
+    ) => {
+      if (!migrated && filePath === legacyPath && fs.existsSync(legacyPath)) {
+        originalRenameSync(legacyPath, currentPath);
+        fs.writeFileSync(
+          currentPath,
+          JSON.stringify({
+            homeserver: "https://matrix.example.org",
+            userId: "@bot:example.org",
+            accessToken: "current-token",
+            createdAt: "2026-03-01T10:00:00.000Z",
+          }),
+        );
+        migrated = true;
+        try {
+          return originalReadFileSync(filePath, options as never);
+        } finally {
+          fs.writeFileSync(
+            legacyPath,
+            JSON.stringify({
+              homeserver: "https://matrix.example.org",
+              userId: "@bot:example.org",
+              accessToken: "recreated-stale-legacy-token",
+              createdAt: "2026-03-01T10:00:00.000Z",
+            }),
+          );
+        }
+      }
+      return originalReadFileSync(filePath, options as never);
+    }) as typeof fs.readFileSync);
+
+    try {
+      const loaded = loadMatrixCredentials({}, "ops");
+
+      expect(loaded?.accessToken).toBe("current-token");
+      expect(renameSpy).not.toHaveBeenCalled();
+      const currentFile = JSON.parse(fs.readFileSync(currentPath, "utf8")) as {
+        accessToken?: unknown;
+      };
+      const legacyFile = JSON.parse(fs.readFileSync(legacyPath, "utf8")) as {
+        accessToken?: unknown;
+      };
+      expect(currentFile.accessToken).toBe("current-token");
+      expect(legacyFile.accessToken).toBe("recreated-stale-legacy-token");
+    } finally {
+      readFileSpy.mockRestore();
+      renameSpy.mockRestore();
+    }
+  });
+
+  it("does not migrate legacy default credentials during a non-selected account read", () => {
+    const { legacyPath, currentPath } = setupLegacyCredentialsFile({
+      cfg: {
+        channels: {
+          matrix: {
+            defaultAccount: "default",
+            accounts: {
+              default: {
+                homeserver: "https://matrix.default.example.org",
+                accessToken: "default-token",
+              },
+              ops: {},
+            },
+          },
+        },
+      },
+      accountId: "ops",
+      credentials: {
         homeserver: "https://matrix.default.example.org",
         userId: "@default:example.org",
         accessToken: "default-token",
         createdAt: "2026-03-01T10:00:00.000Z",
-      }),
-    );
+      },
+    });
 
     const loaded = loadMatrixCredentials({}, "ops");
 
@@ -409,6 +597,7 @@ describe("matrix credentials storage", () => {
   });
 
   it("migrates legacy credentials to the named account when top-level auth is only a shared default", () => {
+<<<<<<< HEAD
     const stateDir = setupStateDir({
       channels: {
         matrix: {
@@ -417,10 +606,23 @@ describe("matrix credentials storage", () => {
             ops: {
               homeserver: "https://matrix.example.org",
               accessToken: "ops-token",
+=======
+    const { legacyPath, currentPath } = setupLegacyCredentialsFile({
+      cfg: {
+        channels: {
+          matrix: {
+            accessToken: "shared-token",
+            accounts: {
+              ops: {
+                homeserver: "https://matrix.example.org",
+                accessToken: "ops-token",
+              },
+>>>>>>> upstream/main
             },
           },
         },
       },
+<<<<<<< HEAD
     });
     const legacyPath = path.join(stateDir, "credentials", "matrix", "credentials.json");
     const currentPath = resolveMatrixCredentialsPath({}, "ops");
@@ -428,12 +630,21 @@ describe("matrix credentials storage", () => {
     fs.writeFileSync(
       legacyPath,
       JSON.stringify({
+=======
+      accountId: "ops",
+      credentials: {
+>>>>>>> upstream/main
         homeserver: "https://matrix.example.org",
         userId: "@ops:example.org",
         accessToken: "legacy-token",
         createdAt: "2026-03-01T10:00:00.000Z",
+<<<<<<< HEAD
       }),
     );
+=======
+      },
+    });
+>>>>>>> upstream/main
 
     const loaded = loadMatrixCredentials({}, "ops");
 

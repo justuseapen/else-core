@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tests command parser normalization, aliases, and argument extraction.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { parseConfigCommand } from "./config-commands.js";
 import { parseDebugCommand } from "./debug-commands.js";

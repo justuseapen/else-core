@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { canExecRequestNode } from "../agents/exec-defaults.js";
 import { buildWorkspaceSkillStatus } from "../agents/skills-status.js";
 import { formatCliCommand } from "../cli/command-format.js";
@@ -24,7 +25,20 @@ import {
 } from "./status-runtime-shared.ts";
 import { resolveNodeOnlyGatewayInfo } from "./status.node-mode.js";
 import { collectStatusScanOverview } from "./status.scan-overview.ts";
+=======
+// Entry point for `openclaw status --all`.
+// Orchestrates the scan, local service probes, and report rendering while report builders own formatting.
+>>>>>>> upstream/main
 
+import { withProgress } from "../cli/progress.js";
+import type { RuntimeEnv } from "../runtime.js";
+import { buildStatusAllReportData } from "./status-all/report-data.js";
+import { buildStatusAllReportLines } from "./status-all/report-lines.js";
+import { resolveStatusServiceSummaries } from "./status-runtime-shared.ts";
+import { resolveNodeOnlyGatewayInfo } from "./status.node-mode.js";
+import { collectStatusScanOverview } from "./status.scan-overview.ts";
+
+/** Runs the full read-only status report and writes it to the runtime logger. */
 export async function statusAllCommand(
   runtime: RuntimeEnv,
   opts?: { timeoutMs?: number },
@@ -37,6 +51,10 @@ export async function statusAllCommand(
       },
       showSecrets: false,
       runtime,
+<<<<<<< HEAD
+=======
+      // status --all can afford gateway overrides so channel summaries reflect live runtime state.
+>>>>>>> upstream/main
       useGatewayCallOverridesForChannelsStatus: true,
       progress,
       labels: {
@@ -49,6 +67,7 @@ export async function statusAllCommand(
         summarizingChannels: "Summarizing channels…",
       },
     });
+<<<<<<< HEAD
     const cfg = overview.cfg;
     const secretDiagnostics = overview.secretDiagnostics;
     const osSummary = overview.osSummary;
@@ -80,6 +99,8 @@ export async function statusAllCommand(
       gatewayCallOverrides,
     } = overview.gatewaySnapshot;
 
+=======
+>>>>>>> upstream/main
     progress.setLabel("Checking services…");
     const [daemon, nodeService] = await resolveStatusServiceSummaries();
     const nodeOnlyGateway = await resolveNodeOnlyGatewayInfo({
@@ -87,6 +108,7 @@ export async function statusAllCommand(
       node: nodeService,
     });
     progress.tick();
+<<<<<<< HEAD
     const agentStatus = overview.agentStatus;
     const channels = overview.channels;
 
@@ -219,14 +241,19 @@ export async function statusAllCommand(
       ],
     });
 
+=======
+>>>>>>> upstream/main
     const lines = await buildStatusAllReportLines({
       progress,
-      overviewRows,
-      channels,
-      channelIssues: channelIssues.map((issue) => ({
-        channel: issue.channel,
-        message: issue.message,
+      ...(await buildStatusAllReportData({
+        overview,
+        daemon,
+        nodeService,
+        nodeOnlyGateway,
+        progress,
+        timeoutMs: opts?.timeoutMs,
       })),
+<<<<<<< HEAD
       agentStatus,
       connectionDetailsForReport,
       diagnosis: {
@@ -248,6 +275,8 @@ export async function statusAllCommand(
         health,
         nodeOnlyGateway,
       },
+=======
+>>>>>>> upstream/main
     });
 
     progress.setLabel("Rendering…");

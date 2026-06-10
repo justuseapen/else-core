@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Line plugin module implements gateway behavior.
+>>>>>>> upstream/main
 import { createLazyRuntimeModule } from "openclaw/plugin-sdk/lazy-runtime";
 import { resolveLineAccount } from "./accounts.js";
 import {
@@ -112,7 +116,14 @@ export const lineGatewayAdapter: NonNullable<ChannelPlugin<ResolvedLineAccount>[
           delete nextCfg.channels;
         }
       }
+<<<<<<< HEAD
       await getLineRuntime().config.writeConfigFile(nextCfg);
+=======
+      await getLineRuntime().config.replaceConfigFile({
+        nextConfig: nextCfg,
+        afterWrite: { mode: "auto" },
+      });
+>>>>>>> upstream/main
     }
 
     const resolved = resolveLineAccount({

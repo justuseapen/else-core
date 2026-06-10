@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Channel MCP tools expose channel operations through an MCP server.
+>>>>>>> upstream/main
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { OpenClawChannelBridge } from "./channel-bridge.js";
@@ -5,9 +9,23 @@ import {
   extractAttachmentsFromMessage,
   resolveMessageId,
   summarizeResult,
+<<<<<<< HEAD
   toText,
 } from "./channel-shared.js";
 
+=======
+  summarizeStructuredResult,
+  toText,
+} from "./channel-shared.js";
+
+/**
+ * MCP tool registration for channel conversation access.
+ *
+ * Tool handlers stay thin: schemas validate public inputs and the bridge owns
+ * Gateway readiness, routing, event queueing, and approval resolution.
+ */
+/** Return protocol capabilities advertised when Claude channel mode is enabled. */
+>>>>>>> upstream/main
 export function getChannelMcpCapabilities(claudeChannelMode: "off" | "on" | "auto") {
   if (claudeChannelMode === "off") {
     return undefined;
@@ -20,6 +38,10 @@ export function getChannelMcpCapabilities(claudeChannelMode: "off" | "on" | "aut
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Register all channel MCP tools against a server instance. */
+>>>>>>> upstream/main
 export function registerChannelMcpTools(server: McpServer, bridge: OpenClawChannelBridge): void {
   server.tool(
     "conversations_list",
@@ -34,7 +56,11 @@ export function registerChannelMcpTools(server: McpServer, bridge: OpenClawChann
     async (args) => {
       const conversations = await bridge.listConversations(args);
       return {
+<<<<<<< HEAD
         ...summarizeResult("conversations", conversations.length),
+=======
+        ...summarizeStructuredResult("conversations", conversations.length, { conversations }),
+>>>>>>> upstream/main
         structuredContent: { conversations },
       };
     },
@@ -69,7 +95,11 @@ export function registerChannelMcpTools(server: McpServer, bridge: OpenClawChann
     async ({ session_key, limit }) => {
       const messages = await bridge.readMessages(session_key, limit ?? 20);
       return {
+<<<<<<< HEAD
         ...summarizeResult("messages", messages.length),
+=======
+        ...summarizeStructuredResult("messages", messages.length, { messages }),
+>>>>>>> upstream/main
         structuredContent: { messages },
       };
     },

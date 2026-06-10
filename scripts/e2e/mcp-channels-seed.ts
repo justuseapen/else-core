@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -23,6 +24,13 @@ const DOCKER_OPENAI_MODEL: ModelDefinitionConfig = {
   contextWindow: 1_050_000,
   maxTokens: 128_000,
 };
+=======
+// Mcp Channels Seed script supports OpenClaw repository automation.
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { applyDockerOpenAiProviderConfig, type OpenClawConfig } from "./docker-openai-seed.ts";
+>>>>>>> upstream/main
 
 async function main() {
   const stateDir = process.env.OPENCLAW_STATE_DIR?.trim() || path.join(os.homedir(), ".openclaw");
@@ -36,7 +44,11 @@ async function main() {
   await fs.mkdir(sessionsDir, { recursive: true });
   await fs.mkdir(path.dirname(configPath), { recursive: true });
 
+<<<<<<< HEAD
   const seededConfig = applyProviderConfigWithDefaultModelPreset(
+=======
+  const seededConfig = applyDockerOpenAiProviderConfig(
+>>>>>>> upstream/main
     {
       gateway: {
         controlUi: {
@@ -44,6 +56,7 @@ async function main() {
           enabled: false,
         },
       },
+<<<<<<< HEAD
     } satisfies OpenClawConfig,
     {
       providerId: "openai",
@@ -60,6 +73,21 @@ async function main() {
     throw new Error("failed to seed OpenAI provider config");
   }
   openAiProvider.apiKey = "sk-docker-smoke-test";
+=======
+      agents: {
+        defaults: {
+          heartbeat: {
+            every: "0m",
+          },
+        },
+      },
+      plugins: {
+        enabled: false,
+      },
+    } satisfies OpenClawConfig,
+    "sk-docker-smoke-test",
+  );
+>>>>>>> upstream/main
 
   await fs.writeFile(configPath, JSON.stringify(seededConfig, null, 2), "utf-8");
 
@@ -71,10 +99,19 @@ async function main() {
           sessionId: "sess-main",
           sessionFile,
           updatedAt: now,
+<<<<<<< HEAD
           lastChannel: "imessage",
           lastTo: "+15551234567",
           lastAccountId: "imessage-default",
           lastThreadId: "thread-42",
+=======
+          deliveryContext: {
+            channel: "imessage",
+            to: "+15551234567",
+            accountId: "imessage-default",
+            threadId: "thread-42",
+          },
+>>>>>>> upstream/main
           displayName: "Docker MCP Channel Smoke",
           derivedTitle: "Docker MCP Channel Smoke",
           lastMessagePreview: "seeded transcript",

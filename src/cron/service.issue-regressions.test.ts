@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -8,6 +9,16 @@ import {
   writeCronStoreSnapshot,
 } from "./service.issue-regressions.test-helpers.js";
 import { CronService } from "./service.js";
+=======
+// Cron service issue regression tests cover historical scheduler failures.
+import { describe, expect, it, vi } from "vitest";
+import {
+  setupCronIssueRegressionFixtures,
+  startCronForStore,
+  topOfHourOffsetMs,
+} from "./service.issue-regressions.test-helpers.js";
+import { loadCronStore, saveCronStore } from "./store.js";
+>>>>>>> upstream/main
 import type { CronJob, CronJobState } from "./types.js";
 
 describe("Cron issue regressions", () => {
@@ -59,6 +70,7 @@ describe("Cron issue regressions", () => {
     cron.stop();
   });
 
+<<<<<<< HEAD
   it("repairs isolated every jobs missing createdAtMs and sets nextWakeAtMs", async () => {
     const store = cronIssueRegressionFixtures.makeStorePath();
     await writeCronStoreSnapshot(store.storePath, [
@@ -102,32 +114,37 @@ describe("Cron issue regressions", () => {
     cron.stop();
   });
 
+=======
+>>>>>>> upstream/main
   it("does not rewrite unchanged stores during startup", async () => {
     const store = cronIssueRegressionFixtures.makeStorePath();
     const scheduledAt = Date.parse("2026-02-06T11:00:00.000Z");
-    await writeCronStoreSnapshot(store.storePath, [
-      {
-        id: "startup-stable",
-        name: "startup stable",
-        createdAtMs: scheduledAt - 60_000,
-        updatedAtMs: scheduledAt - 60_000,
-        enabled: true,
-        schedule: { kind: "at", at: new Date(scheduledAt).toISOString() },
-        sessionTarget: "main",
-        wakeMode: "next-heartbeat",
-        payload: { kind: "systemEvent", text: "stable" },
-        state: { nextRunAtMs: scheduledAt },
-      },
-    ]);
-    const before = await fs.readFile(store.storePath, "utf8");
+    await saveCronStore(store.storePath, {
+      version: 1,
+      jobs: [
+        {
+          id: "startup-stable",
+          name: "startup stable",
+          createdAtMs: scheduledAt - 60_000,
+          updatedAtMs: scheduledAt - 60_000,
+          enabled: true,
+          schedule: { kind: "at", at: new Date(scheduledAt).toISOString() },
+          sessionTarget: "main",
+          wakeMode: "next-heartbeat",
+          payload: { kind: "systemEvent", text: "stable" },
+          state: { nextRunAtMs: scheduledAt },
+        },
+      ],
+    });
+    const before = await loadCronStore(store.storePath);
 
     const cron = await startCronForStore({
       storePath: store.storePath,
       cronEnabled: true,
     });
-    const after = await fs.readFile(store.storePath, "utf8");
+    const after = await loadCronStore(store.storePath);
 
-    expect(after).toBe(before);
+    expect(after).toEqual(before);
     cron.stop();
   });
 
@@ -187,15 +204,14 @@ describe("Cron issue regressions", () => {
       payload: { kind: "systemEvent", text: "other-updated" },
     });
 
-    const storeData = JSON.parse(await fs.readFile(store.storePath, "utf8")) as {
-      jobs: Array<{ id: string; state?: { nextRunAtMs?: number } }>;
-    };
+    const storeData = await loadCronStore(store.storePath);
     const persistedDueJob = storeData.jobs.find((job) => job.id === dueJob.id);
     expect(persistedDueJob?.state?.nextRunAtMs).toBe(originalDueNextRunAtMs);
 
     cron.stop();
   });
 
+<<<<<<< HEAD
   it("treats persisted jobs with missing enabled as enabled during update()", async () => {
     const store = cronIssueRegressionFixtures.makeStorePath();
     const now = Date.parse("2026-02-06T10:05:00.000Z");
@@ -259,6 +275,36 @@ describe("Cron issue regressions", () => {
       "missing-enabled-due",
       expect.objectContaining({ agentId: undefined }),
     );
+=======
+  it("rejects invalid cron schedule updates without mutating disabled jobs", async () => {
+    const store = cronIssueRegressionFixtures.makeStorePath();
+    const cron = await startCronForStore({ storePath: store.storePath, cronEnabled: false });
+
+    const disabledJob = await cron.add({
+      name: "disabled-cron",
+      enabled: false,
+      schedule: { kind: "cron", expr: "0 * * * *", tz: "UTC" },
+      sessionTarget: "main",
+      wakeMode: "next-heartbeat",
+      payload: { kind: "systemEvent", text: "tick" },
+    });
+
+    await expect(
+      cron.update(disabledJob.id, {
+        schedule: { kind: "cron", expr: "* * * 13 *", tz: "UTC" },
+      }),
+    ).rejects.toThrow("CronPattern");
+
+    const persisted = await loadCronStore(store.storePath);
+    const storedJob = persisted.jobs.find((job) => job.id === disabledJob.id);
+    expect(storedJob?.enabled).toBe(false);
+    expect(storedJob?.schedule.kind).toBe("cron");
+    if (storedJob?.schedule.kind !== "cron") {
+      throw new Error("expected stored cron schedule");
+    }
+    expect(storedJob.schedule.expr).toBe("0 * * * *");
+    expect(storedJob.schedule.tz).toBe("UTC");
+>>>>>>> upstream/main
 
     cron.stop();
   });
@@ -268,13 +314,12 @@ describe("Cron issue regressions", () => {
     const originalTarget = "https://t.me/obviyus";
     const rewrittenTarget = "-10012345/6789";
     const runIsolatedAgentJob = vi.fn(async (params: { job: { id: string } }) => {
-      const raw = await fs.readFile(store.storePath, "utf-8");
-      const persisted = JSON.parse(raw) as { version: number; jobs: CronJob[] };
+      const persisted = await loadCronStore(store.storePath);
       const targetJob = persisted.jobs.find((job) => job.id === params.job.id);
       if (targetJob?.delivery?.channel === "telegram") {
         targetJob.delivery.to = rewrittenTarget;
       }
-      await fs.writeFile(store.storePath, JSON.stringify(persisted), "utf-8");
+      await saveCronStore(store.storePath, persisted);
       return { status: "ok" as const, summary: "done", delivered: true };
     });
 
@@ -300,9 +345,7 @@ describe("Cron issue regressions", () => {
     const result = await cron.run(job.id, "force");
     expect(result).toEqual({ ok: true, ran: true });
 
-    const persisted = JSON.parse(await fs.readFile(store.storePath, "utf8")) as {
-      jobs: CronJob[];
-    };
+    const persisted = await loadCronStore(store.storePath);
     const persistedJob = persisted.jobs.find((entry) => entry.id === job.id);
     expect(persistedJob?.delivery?.to).toBe(rewrittenTarget);
     expect(persistedJob?.state.lastStatus).toBe("ok");
@@ -346,7 +389,7 @@ describe("Cron issue regressions", () => {
     ];
     for (const { id, state } of terminalStates) {
       const job: CronJob = { id, ...baseJob, state };
-      await fs.writeFile(store.storePath, JSON.stringify({ version: 1, jobs: [job] }), "utf-8");
+      await saveCronStore(store.storePath, { version: 1, jobs: [job] });
       const enqueueSystemEvent = vi.fn();
       const cron = await startCronForStore({
         storePath: store.storePath,

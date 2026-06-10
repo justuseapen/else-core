@@ -1,9 +1,19 @@
 {
   "name": "@openclaw/fireworks-provider",
+<<<<<<< HEAD
   "version": "2026.4.5",
   "private": true,
   "description": "OpenClaw Fireworks provider plugin",
   "type": "module",
+=======
+  "version": "2026.6.2",
+  "private": true,
+  "description": "OpenClaw Fireworks provider plugin",
+  "type": "module",
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
+>>>>>>> upstream/main
   "openclaw": {
     "extensions": [
       "./index.ts"

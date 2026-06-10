@@ -1,6 +1,14 @@
+<<<<<<< HEAD
 import { createAccountListHelpers } from "openclaw/plugin-sdk/account-helpers";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import { resolveMergedAccountConfig } from "openclaw/plugin-sdk/account-resolution";
+=======
+// Qa Channel plugin module implements accounts behavior.
+import { createAccountListHelpers } from "openclaw/plugin-sdk/account-helpers";
+import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
+import { resolveMergedAccountConfig } from "openclaw/plugin-sdk/account-resolution-runtime";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import type { CoreConfig, QaChannelAccountConfig, ResolvedQaChannelAccount } from "./types.js";
 
 const DEFAULT_POLL_TIMEOUT_MS = 1_000;
@@ -8,16 +16,29 @@ const DEFAULT_POLL_TIMEOUT_MS = 1_000;
 const {
   listAccountIds: listQaChannelAccountIds,
   resolveDefaultAccountId: resolveDefaultQaChannelAccountId,
+<<<<<<< HEAD
 } = createAccountListHelpers("qa-channel", { normalizeAccountId });
+=======
+} = createAccountListHelpers("qa-channel", {
+  normalizeAccountId,
+  implicitDefaultAccount: {
+    channelKeys: ["baseUrl"],
+  },
+});
+>>>>>>> upstream/main
 
 export { listQaChannelAccountIds, resolveDefaultQaChannelAccountId };
 
 function resolveMergedQaAccountConfig(cfg: CoreConfig, accountId: string): QaChannelAccountConfig {
   return resolveMergedAccountConfig<QaChannelAccountConfig>({
     channelConfig: cfg.channels?.["qa-channel"] as QaChannelAccountConfig | undefined,
+<<<<<<< HEAD
     accounts: cfg.channels?.["qa-channel"]?.accounts as
       | Record<string, Partial<QaChannelAccountConfig>>
       | undefined,
+=======
+    accounts: cfg.channels?.["qa-channel"]?.accounts,
+>>>>>>> upstream/main
     accountId,
     omitKeys: ["defaultAccount"],
     normalizeAccountId,
@@ -39,7 +60,11 @@ export function resolveQaChannelAccount(params: {
     accountId,
     enabled,
     configured: Boolean(baseUrl),
+<<<<<<< HEAD
     name: merged.name?.trim() || undefined,
+=======
+    name: normalizeOptionalString(merged.name),
+>>>>>>> upstream/main
     baseUrl,
     botUserId,
     botDisplayName,

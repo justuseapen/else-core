@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Signal API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   removeReactionSignal,
   sendReactionSignal,

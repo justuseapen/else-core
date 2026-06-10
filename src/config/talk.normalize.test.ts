@@ -1,8 +1,7 @@
-import fs from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
+// Verifies talk-mode config normalization behavior.
 import { describe, expect, it } from "vitest";
 import { TALK_TEST_PROVIDER_ID } from "../test-utils/talk-test-provider.js";
+<<<<<<< HEAD
 import { createConfigIO } from "./io.js";
 import { buildTalkConfigResponse, normalizeTalkSection } from "./talk.js";
 
@@ -20,6 +19,10 @@ async function withTempConfig(
   }
 }
 
+=======
+import { buildTalkConfigResponse, normalizeTalkSection } from "./talk.js";
+
+>>>>>>> upstream/main
 describe("talk normalization", () => {
   it("keeps core Talk normalization generic and ignores legacy provider-flat fields", () => {
     const normalized = normalizeTalkSection({
@@ -28,11 +31,20 @@ describe("talk normalization", () => {
       modelId: "eleven_v3",
       outputFormat: "pcm_44100",
       apiKey: "secret-key", // pragma: allowlist secret
+      consultThinkingLevel: " low ",
+      consultFastMode: true,
+      speechLocale: " ru-RU ",
       interruptOnSpeech: false,
       silenceTimeoutMs: 1500,
     } as unknown as never);
 
     expect(normalized).toEqual({
+<<<<<<< HEAD
+=======
+      speechLocale: "ru-RU",
+      consultThinkingLevel: "low",
+      consultFastMode: true,
+>>>>>>> upstream/main
       interruptOnSpeech: false,
       silenceTimeoutMs: 1500,
     });
@@ -47,6 +59,24 @@ describe("talk normalization", () => {
           custom: true,
         },
       },
+<<<<<<< HEAD
+=======
+      realtime: {
+        provider: "openai",
+        providers: {
+          openai: {
+            model: "gpt-realtime",
+          },
+        },
+        model: "gpt-realtime",
+        speakerVoice: "alloy",
+        speakerVoiceId: "voice-123",
+        mode: "realtime",
+        transport: "webrtc",
+        brain: "agent-consult",
+        consultRouting: "force-agent-consult",
+      },
+>>>>>>> upstream/main
       interruptOnSpeech: true,
     });
 
@@ -58,7 +88,49 @@ describe("talk normalization", () => {
           custom: true,
         },
       },
+<<<<<<< HEAD
+=======
+      realtime: {
+        provider: "openai",
+        providers: {
+          openai: {
+            model: "gpt-realtime",
+          },
+        },
+        model: "gpt-realtime",
+        speakerVoice: "alloy",
+        speakerVoiceId: "voice-123",
+        mode: "realtime",
+        transport: "webrtc",
+        brain: "agent-consult",
+        consultRouting: "force-agent-consult",
+      },
+>>>>>>> upstream/main
       interruptOnSpeech: true,
+    });
+  });
+
+  it("merges duplicate provider ids after trimming", () => {
+    const normalized = normalizeTalkSection({
+      provider: " elevenlabs ",
+      providers: {
+        " elevenlabs ": {
+          voiceId: "voice-123",
+        },
+        elevenlabs: {
+          apiKey: "secret-key",
+        },
+      },
+    });
+
+    expect(normalized).toEqual({
+      provider: "elevenlabs",
+      providers: {
+        elevenlabs: {
+          voiceId: "voice-123",
+          apiKey: "secret-key",
+        },
+      },
     });
   });
 
@@ -71,6 +143,10 @@ describe("talk normalization", () => {
           modelId: "acme-model",
         },
       },
+<<<<<<< HEAD
+=======
+      speechLocale: "ru-RU",
+>>>>>>> upstream/main
       interruptOnSpeech: true,
     });
 
@@ -89,7 +165,81 @@ describe("talk normalization", () => {
           modelId: "acme-model",
         },
       },
+<<<<<<< HEAD
+=======
+      speechLocale: "ru-RU",
+>>>>>>> upstream/main
       interruptOnSpeech: true,
+    });
+  });
+
+  it("preserves normalized realtime instructions in talk.config payloads", () => {
+    const payload = buildTalkConfigResponse({
+      realtime: {
+        provider: "openai",
+        providers: {
+          openai: {
+            model: "gpt-realtime",
+            speakerVoice: "alloy",
+          },
+        },
+        instructions: " Speak with crisp diction. ",
+      },
+    });
+
+    expect(payload?.realtime?.provider).toBe("openai");
+    expect(payload?.realtime?.instructions).toBe("Speak with crisp diction.");
+  });
+
+  it("maps legacy realtime voice to speakerVoice while preserving legacy output", () => {
+    const normalized = normalizeTalkSection({
+      realtime: {
+        voice: " alloy ",
+      },
+    });
+
+    expect(normalized?.realtime).toEqual({
+      speakerVoice: "alloy",
+      voice: "alloy",
+    });
+  });
+
+  it("does not report an active provider when the configured speech provider cannot resolve", () => {
+    const mismatchPayload = buildTalkConfigResponse({
+      provider: "acme",
+      providers: {
+        elevenlabs: {
+          voiceId: "voice-123",
+        },
+      },
+    });
+    expect(mismatchPayload).toEqual({
+      providers: {
+        elevenlabs: {
+          voiceId: "voice-123",
+        },
+      },
+    });
+
+    const ambiguousPayload = buildTalkConfigResponse({
+      providers: {
+        acme: {
+          voiceId: "voice-acme",
+        },
+        elevenlabs: {
+          voiceId: "voice-123",
+        },
+      },
+    });
+    expect(ambiguousPayload).toEqual({
+      providers: {
+        acme: {
+          voiceId: "voice-acme",
+        },
+        elevenlabs: {
+          voiceId: "voice-123",
+        },
+      },
     });
   });
 
@@ -113,6 +263,7 @@ describe("talk normalization", () => {
     });
   });
 
+<<<<<<< HEAD
   it("does not inject provider apiKey defaults during snapshot materialization", async () => {
     await withTempConfig(
       {
@@ -128,5 +279,15 @@ describe("talk normalization", () => {
         expect(snapshot.config.talk?.providers?.elevenlabs?.apiKey).toBeUndefined();
       },
     );
+=======
+  it("does not inject provider apiKey defaults during snapshot materialization", () => {
+    const payload = buildTalkConfigResponse({
+      voiceId: "voice-123",
+    });
+
+    expect(payload?.provider).toBe("elevenlabs");
+    expect(payload?.resolved?.config.voiceId).toBe("voice-123");
+    expect(payload?.resolved?.config.apiKey).toBeUndefined();
+>>>>>>> upstream/main
   });
 });

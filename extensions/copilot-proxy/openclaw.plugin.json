@@ -1,5 +1,11 @@
 {
   "id": "copilot-proxy",
+<<<<<<< HEAD
+=======
+  "activation": {
+    "onStartup": false
+  },
+>>>>>>> upstream/main
   "enabledByDefault": true,
   "providers": ["copilot-proxy"],
   "autoEnableWhenConfiguredProviders": ["copilot-proxy"],

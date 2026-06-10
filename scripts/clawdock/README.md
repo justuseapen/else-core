@@ -141,6 +141,7 @@ The Docker setup uses three config files on the host. The container never stores
 
 ### Docker Files
 
+<<<<<<< HEAD
 | File                       | Purpose                                                                    |
 | -------------------------- | -------------------------------------------------------------------------- |
 | `Dockerfile`               | Builds the `openclaw:local` image (Node 22, pnpm, non-root `node` user)    |
@@ -156,11 +157,30 @@ The Docker setup uses three config files on the host. The container never stores
 | `<project>/.env`            | **Docker infra** — image, ports, gateway token   | `OPENCLAW_GATEWAY_TOKEN`, `OPENCLAW_IMAGE`, `OPENCLAW_GATEWAY_PORT` |
 | `~/.openclaw/.env`          | **Secrets** — API keys and bot tokens            | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`         |
 | `~/.openclaw/openclaw.json` | **Behavior config** — models, channels, policies | Model selection, WhatsApp allowlists, agent settings                |
+=======
+| File                          | Purpose                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| `Dockerfile`                  | Builds the `openclaw:local` image (Node 22, pnpm, non-root `node` user)        |
+| `docker-compose.yml`          | Defines `openclaw-gateway` and `openclaw-cli` services, bind-mounts, ports     |
+| `docker-compose.override.yml` | Standard Docker Compose overrides — auto-loaded by ClawDock helpers if present |
+| `docker-compose.extra.yml`    | Additional overrides — loaded after the standard override if present           |
+| `scripts/docker/setup.sh`     | First-time setup — builds image, creates `.env` from `.env.example`            |
+| `.env.example`                | Template for `<project>/.env` with all supported vars and docs                 |
+
+### Config Files
+
+| File                        | Purpose                                          | Examples                                                                                                |
+| --------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `<project>/.env`            | **Docker infra** — image, ports, gateway token   | `OPENCLAW_GATEWAY_TOKEN`, `OPENCLAW_IMAGE`, `OPENCLAW_GATEWAY_PORT`, `OPENCLAW_AUTH_PROFILE_SECRET_DIR` |
+| `~/.openclaw/.env`          | **Secrets** — API keys and bot tokens            | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`                                             |
+| `~/.openclaw/openclaw.json` | **Behavior config** — models, channels, policies | Model selection, WhatsApp allowlists, agent settings                                                    |
+>>>>>>> upstream/main
 
 **Do NOT** put API keys or bot tokens in `openclaw.json`. Use `~/.openclaw/.env` for all secrets.
 
 ### Initial Setup
 
+<<<<<<< HEAD
 `./docker-setup.sh` (in the project root) handles first-time Docker configuration:
 
 - Builds the `openclaw:local` image from `Dockerfile`
@@ -169,6 +189,17 @@ The Docker setup uses three config files on the host. The container never stores
 
 ```bash
 ./docker-setup.sh
+=======
+`./scripts/docker/setup.sh` handles first-time Docker configuration:
+
+- Builds the `openclaw:local` image from `Dockerfile`
+- Creates `<project>/.env` from `.env.example` with a generated gateway token
+- Creates the auth-profile secret key directory
+- Sets up `~/.openclaw` directories if they don't exist
+
+```bash
+./scripts/docker/setup.sh
+>>>>>>> upstream/main
 ```
 
 After setup, add your API keys:
@@ -179,9 +210,16 @@ vim ~/.openclaw/.env
 
 See `.env.example` for all supported keys.
 
+<<<<<<< HEAD
 The `Dockerfile` supports two optional build args:
 
 - `OPENCLAW_DOCKER_APT_PACKAGES` — extra apt packages to install (e.g. `ffmpeg`)
+=======
+The `Dockerfile` supports optional build args:
+
+- `OPENCLAW_IMAGE_APT_PACKAGES` — extra apt packages to install (e.g. `ffmpeg`); also accepts legacy `OPENCLAW_DOCKER_APT_PACKAGES`
+- `OPENCLAW_IMAGE_PIP_PACKAGES` — extra Python packages to install (e.g. `requests==2.32.5`); pin versions and use only package indexes you trust
+>>>>>>> upstream/main
 - `OPENCLAW_INSTALL_BROWSER=1` — pre-install Chromium for browser automation (adds ~300MB, but skips the 60-90s Playwright install on each container start)
 
 ### How It Works in Docker
@@ -192,12 +230,25 @@ The `Dockerfile` supports two optional build args:
 volumes:
   - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
   - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+<<<<<<< HEAD
+=======
+  - ${OPENCLAW_AUTH_PROFILE_SECRET_DIR}:/home/node/.config/openclaw
+>>>>>>> upstream/main
 ```
 
 This means:
 
 - `~/.openclaw/.env` is available inside the container at `/home/node/.openclaw/.env` — OpenClaw loads it automatically as the global env fallback
 - `~/.openclaw/openclaw.json` is available at `/home/node/.openclaw/openclaw.json` — the gateway watches it and hot-reloads most changes
+<<<<<<< HEAD
+=======
+- `~/.openclaw-auth-profile-secrets` is available at `/home/node/.config/openclaw` — OpenClaw stores the auth-profile encryption key there
+- Downloadable external plugin packages and install records live under the mounted OpenClaw home
+- Bundled OpenClaw channel plugins, such as Discord when present in the image,
+  should normally load from the image-matched bundled copy. Avoid installing
+  pinned `@openclaw/*` channel packages into the mounted home unless you
+  deliberately want an external npm override.
+>>>>>>> upstream/main
 - No need to add API keys to `docker-compose.yml` or configure anything inside the container
 - Keys survive `clawdock-update`, `clawdock-rebuild`, and `clawdock-clean` because they live on the host
 
@@ -220,6 +271,10 @@ OPENCLAW_GATEWAY_PORT=18789
 OPENCLAW_BRIDGE_PORT=18790
 OPENCLAW_GATEWAY_BIND=lan
 OPENCLAW_GATEWAY_TOKEN=<generated-by-docker-setup>
+<<<<<<< HEAD
+=======
+OPENCLAW_AUTH_PROFILE_SECRET_DIR=/Users/you/.openclaw-auth-profile-secrets
+>>>>>>> upstream/main
 OPENCLAW_IMAGE=openclaw:local
 ```
 

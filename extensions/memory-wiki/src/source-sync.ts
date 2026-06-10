@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Memory Wiki plugin module implements source sync behavior.
+>>>>>>> upstream/main
 import type { OpenClawConfig } from "../api.js";
 import { syncMemoryWikiBridgeSources, type BridgeMemoryWikiResult } from "./bridge.js";
 import {

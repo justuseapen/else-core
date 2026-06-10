@@ -1,7 +1,9 @@
+// Resolves command executables and wrapper policy paths for exec approvals.
 import fs from "node:fs";
 import path from "node:path";
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
 import { matchesExecAllowlistPattern } from "./exec-allowlist-pattern.js";
-import type { ExecAllowlistEntry } from "./exec-approvals.js";
+import type { ExecAllowlistEntry } from "./exec-approvals.types.js";
 import { resolveExecWrapperTrustPlan } from "./exec-wrapper-trust-plan.js";
 import {
   resolveExecutablePath as resolveExecutableCandidatePath,
@@ -144,8 +146,9 @@ export function resolveCommandResolutionFromArgv(
   argv: string[],
   cwd?: string,
   env?: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform = process.platform,
 ): CommandResolution | null {
-  const plan = resolveExecWrapperTrustPlan(argv);
+  const plan = resolveExecWrapperTrustPlan(argv, undefined, platform);
   const effectiveArgv = plan.argv;
   const rawExecutable = effectiveArgv[0]?.trim();
   if (!rawExecutable) {
@@ -181,6 +184,21 @@ function resolveExecutableCandidatePathFromResolution(
     cwd,
     requirePathSeparator: true,
   });
+<<<<<<< HEAD
+=======
+}
+
+export function resolveExecutableTrustPath(
+  resolution: ExecutableResolution | null | undefined,
+  cwd?: string,
+): string | undefined {
+  const realPath = resolution?.resolvedRealPath?.trim();
+  if (realPath) {
+    return realPath;
+  }
+  const candidatePath = resolveExecutableCandidatePathFromResolution(resolution, cwd);
+  return tryResolveRealpath(candidatePath) ?? candidatePath;
+>>>>>>> upstream/main
 }
 
 export function resolveExecutionTargetResolution(
@@ -211,11 +229,31 @@ export function resolveExecutionTargetCandidatePath(
   );
 }
 
+export function resolveExecutionTargetTrustPath(
+  resolution: CommandResolution | ExecutableResolution | null,
+  cwd?: string,
+): string | undefined {
+  return resolveExecutableTrustPath(
+    isCommandResolution(resolution) ? resolution.execution : resolution,
+    cwd,
+  );
+}
+
 export function resolvePolicyTargetCandidatePath(
   resolution: CommandResolution | ExecutableResolution | null,
   cwd?: string,
 ): string | undefined {
   return resolveExecutableCandidatePathFromResolution(
+    isCommandResolution(resolution) ? resolution.policy : resolution,
+    cwd,
+  );
+}
+
+export function resolvePolicyTargetTrustPath(
+  resolution: CommandResolution | ExecutableResolution | null,
+  cwd?: string,
+): string | undefined {
+  return resolveExecutableTrustPath(
     isCommandResolution(resolution) ? resolution.policy : resolution,
     cwd,
   );
@@ -228,7 +266,14 @@ export function resolveApprovalAuditCandidatePath(
   return resolvePolicyTargetCandidatePath(resolution, cwd);
 }
 
-// Legacy alias kept while callers migrate to explicit target naming.
+export function resolveApprovalAuditTrustPath(
+  resolution: CommandResolution | null,
+  cwd?: string,
+): string | undefined {
+  return resolvePolicyTargetTrustPath(resolution, cwd);
+}
+
+/** @deprecated Use resolveExecutionTargetCandidatePath. */
 export function resolveAllowlistCandidatePath(
   resolution: CommandResolution | ExecutableResolution | null,
   cwd?: string,
@@ -250,7 +295,10 @@ const TRAILING_SHELL_REDIRECTIONS_RE = /\s+(?:[12]>&[12]|[12]>\/dev\/null)\s*$/;
 
 function stripTrailingRedirections(value: string): string {
   let prev = value;
+<<<<<<< HEAD
   // eslint-disable-next-line no-constant-condition
+=======
+>>>>>>> upstream/main
   while (true) {
     const next = prev.replace(TRAILING_SHELL_REDIRECTIONS_RE, "");
     if (next === prev) {
@@ -290,9 +338,13 @@ function matchArgPattern(argPattern: string, argv: string[], platform?: string |
     // that an argPattern built from one style still matches the other.
     // Use the caller-supplied target platform so Linux gateways evaluating
     // Windows node commands also perform the normalization.
+<<<<<<< HEAD
     const effectivePlatform = String(platform ?? process.platform)
       .trim()
       .toLowerCase();
+=======
+    const effectivePlatform = normalizeLowercaseStringOrEmpty(platform ?? process.platform);
+>>>>>>> upstream/main
     if (effectivePlatform.startsWith("win")) {
       const normalized = argsString.replace(/\//g, "\\");
       if (normalized !== argsString && regex.test(normalized)) {
@@ -317,6 +369,33 @@ function matchArgPattern(argPattern: string, argv: string[], platform?: string |
   }
 }
 
+<<<<<<< HEAD
+=======
+function hasPathSelector(value: string): boolean {
+  return value.includes("/") || value.includes("\\") || value.includes("~");
+}
+
+function matchesExecutableBasenamePattern(
+  pattern: string,
+  resolution: ExecutableResolution,
+): boolean {
+  // Bare command-name allowlist entries are for PATH-resolved commands. A raw
+  // path such as ./rg or /tmp/rg must use a path allowlist entry so a workspace
+  // binary cannot inherit trust from a global command-name entry.
+  if (hasPathSelector(resolution.rawExecutable)) {
+    return false;
+  }
+  const candidates = new Set<string>();
+  if (resolution.executableName) {
+    candidates.add(resolution.executableName);
+  }
+  if (resolution.resolvedPath) {
+    candidates.add(path.basename(resolution.resolvedPath));
+  }
+  return [...candidates].some((candidate) => matchesExecAllowlistPattern(pattern, candidate));
+}
+
+>>>>>>> upstream/main
 export function matchAllowlist(
   entries: ExecAllowlistEntry[],
   resolution: ExecutableResolution | null,
@@ -336,6 +415,7 @@ export function matchAllowlist(
   if (!resolution?.resolvedPath) {
     return null;
   }
+<<<<<<< HEAD
   const resolvedPath = resolution.resolvedPath;
   // argPattern matching is currently Windows-only.  On other platforms every
   // path-matched entry is treated as a match regardless of argPattern, which
@@ -344,16 +424,25 @@ export function matchAllowlist(
   // a Linux gateway evaluating a Windows node command applies argPattern correctly.
   const effectivePlatform = platform ?? process.platform;
   const useArgPattern = String(effectivePlatform).trim().toLowerCase().startsWith("win");
+=======
+  const trustPath = resolution.resolvedRealPath?.trim() || resolution.resolvedPath;
+  if (!trustPath) {
+    return null;
+  }
+>>>>>>> upstream/main
   let pathOnlyMatch: ExecAllowlistEntry | null = null;
   for (const entry of entries) {
     const pattern = entry.pattern?.trim();
     if (!pattern) {
       continue;
     }
-    const hasPath = pattern.includes("/") || pattern.includes("\\") || pattern.includes("~");
-    if (!hasPath) {
+    const patternMatches = hasPathSelector(pattern)
+      ? matchesExecAllowlistPattern(pattern, trustPath)
+      : pattern !== "*" && matchesExecutableBasenamePattern(pattern, resolution);
+    if (!patternMatches) {
       continue;
     }
+<<<<<<< HEAD
     if (!matchesExecAllowlistPattern(pattern, resolvedPath)) {
       continue;
     }
@@ -361,6 +450,8 @@ export function matchAllowlist(
       // Non-Windows: first path match wins (legacy behaviour).
       return entry;
     }
+=======
+>>>>>>> upstream/main
     if (!entry.argPattern) {
       if (!pathOnlyMatch) {
         pathOnlyMatch = entry;

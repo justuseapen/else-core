@@ -1,15 +1,23 @@
 package ai.openclaw.app.ui
 
+<<<<<<< HEAD
 import ai.openclaw.app.gateway.isPrivateLanGatewayHost
 import java.util.Base64
 import java.util.Locale
 import java.net.URI
+=======
+import ai.openclaw.app.gateway.isLocalCleartextGatewayHost
+>>>>>>> upstream/main
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
+import java.net.URI
+import java.util.Base64
+import java.util.Locale
 
+/** Parsed endpoint fields after URL validation and cleartext-safety checks. */
 internal data class GatewayEndpointConfig(
   val host: String,
   val port: Int,
@@ -17,6 +25,7 @@ internal data class GatewayEndpointConfig(
   val displayUrl: String,
 )
 
+/** Decoded setup-code payload; only one credential family is expected to be populated. */
 internal data class GatewaySetupCode(
   val url: String,
   val bootstrapToken: String?,
@@ -24,6 +33,7 @@ internal data class GatewaySetupCode(
   val password: String?,
 )
 
+/** Final gateway connection fields selected from setup-code or manual UI input. */
 internal data class GatewayConnectConfig(
   val host: String,
   val port: Int,
@@ -33,10 +43,15 @@ internal data class GatewayConnectConfig(
   val password: String,
 )
 
+<<<<<<< HEAD
+=======
+/** Validation reason used by setup, QR, and manual endpoint copy. */
+>>>>>>> upstream/main
 internal enum class GatewayEndpointValidationError {
   INVALID_URL,
   INSECURE_REMOTE_URL,
 }
+<<<<<<< HEAD
 
 internal enum class GatewayEndpointInputSource {
   SETUP_CODE,
@@ -59,7 +74,35 @@ private const val remoteGatewaySecurityRule =
   "Tailscale and public mobile nodes require wss:// or Tailscale Serve. ws:// is allowed for private LAN, localhost, and the Android emulator."
 private const val remoteGatewaySecurityFix =
   "Use a private LAN host/address, or enable Tailscale Serve / expose a wss:// gateway URL."
+=======
+>>>>>>> upstream/main
 
+/** User input source used to choose endpoint-validation wording. */
+internal enum class GatewayEndpointInputSource {
+  SETUP_CODE,
+  MANUAL,
+  QR_SCAN,
+}
+
+/** Endpoint parse result that preserves the reason when no usable config exists. */
+internal data class GatewayEndpointParseResult(
+  val config: GatewayEndpointConfig? = null,
+  val error: GatewayEndpointValidationError? = null,
+)
+
+/** QR scan result that separates a usable setup code from validation copy. */
+internal data class GatewayScannedSetupCodeResult(
+  val setupCode: String? = null,
+  val error: GatewayEndpointValidationError? = null,
+)
+
+private val gatewaySetupJson = Json { ignoreUnknownKeys = true }
+private const val remoteGatewaySecurityRule =
+  "Public gateways require wss:// or Tailscale Serve. ws:// is allowed for localhost, the Android emulator, and private LAN IPs."
+private const val remoteGatewaySecurityFix =
+  "Use a private LAN IP for local setup, or enable Tailscale Serve / expose a wss:// gateway URL for remote access."
+
+/** Resolves setup-code or manual UI fields into a connection config. */
 internal fun resolveGatewayConnectConfig(
   useSetupCode: Boolean,
   setupCode: String,
@@ -77,6 +120,8 @@ internal fun resolveGatewayConnectConfig(
     val setup = decodeGatewaySetupCode(setupCode) ?: return null
     val parsed = parseGatewayEndpointResult(setup.url).config ?: return null
     val setupBootstrapToken = setup.bootstrapToken?.trim().orEmpty()
+    // Bootstrap setup codes intentionally suppress stale shared credentials;
+    // the bootstrap token owns the first authenticated pairing exchange.
     val sharedToken =
       when {
         !setup.token.isNullOrBlank() -> setup.token.trim()
@@ -121,11 +166,19 @@ internal fun resolveGatewayConnectConfig(
   )
 }
 
+<<<<<<< HEAD
 internal fun parseGatewayEndpoint(rawInput: String): GatewayEndpointConfig? {
   return parseGatewayEndpointResult(rawInput).config
 }
 
   internal fun parseGatewayEndpointResult(rawInput: String): GatewayEndpointParseResult {
+=======
+/** Parses an endpoint string and returns only the valid connection config. */
+internal fun parseGatewayEndpoint(rawInput: String): GatewayEndpointConfig? = parseGatewayEndpointResult(rawInput).config
+
+/** Parses and validates gateway endpoint input with user-facing error reasons. */
+internal fun parseGatewayEndpointResult(rawInput: String): GatewayEndpointParseResult {
+>>>>>>> upstream/main
   val raw = rawInput.trim()
   if (raw.isEmpty()) return GatewayEndpointParseResult(error = GatewayEndpointValidationError.INVALID_URL)
 
@@ -133,6 +186,7 @@ internal fun parseGatewayEndpoint(rawInput: String): GatewayEndpointConfig? {
   val uri =
     runCatching { URI(normalized) }.getOrNull()
       ?: return GatewayEndpointParseResult(error = GatewayEndpointValidationError.INVALID_URL)
+<<<<<<< HEAD
   val host = uri.host?.trim()?.trim('[', ']').orEmpty()
   if (host.isEmpty()) return GatewayEndpointParseResult(error = GatewayEndpointValidationError.INVALID_URL)
 
@@ -158,6 +212,29 @@ internal fun parseGatewayEndpoint(rawInput: String): GatewayEndpointConfig? {
       "ws", "http" -> 80
       else -> 443
     }
+=======
+  val host =
+    uri.host
+      ?.trim()
+      ?.trim('[', ']')
+      .orEmpty()
+  if (host.isEmpty()) return GatewayEndpointParseResult(error = GatewayEndpointValidationError.INVALID_URL)
+
+  val scheme =
+    uri.scheme
+      ?.trim()
+      ?.lowercase(Locale.US)
+      .orEmpty()
+  if (scheme !in setOf("ws", "wss", "http", "https")) {
+    return GatewayEndpointParseResult(error = GatewayEndpointValidationError.INVALID_URL)
+  }
+  val tls = scheme == "wss" || scheme == "https"
+  if (!tls && !isLocalCleartextGatewayHost(host)) {
+    return GatewayEndpointParseResult(error = GatewayEndpointValidationError.INSECURE_REMOTE_URL)
+  }
+  val defaultPort = if (tls) 443 else 18789
+  val displayPort = if (tls) 443 else 80
+>>>>>>> upstream/main
   val port = uri.port.takeIf { it in 1..65535 } ?: defaultPort
   val displayHost = if (host.contains(":")) "[$host]" else host
   val displayUrl =
@@ -172,6 +249,7 @@ internal fun parseGatewayEndpoint(rawInput: String): GatewayEndpointConfig? {
   )
 }
 
+/** Decodes base64url setup-code payloads produced by gateway onboarding. */
 internal fun decodeGatewaySetupCode(rawInput: String): GatewaySetupCode? {
   val trimmed = rawInput.trim()
   if (trimmed.isEmpty()) return null
@@ -199,10 +277,17 @@ internal fun decodeGatewaySetupCode(rawInput: String): GatewaySetupCode? {
   }
 }
 
+<<<<<<< HEAD
 internal fun resolveScannedSetupCode(rawInput: String): String? {
   return resolveScannedSetupCodeResult(rawInput).setupCode
 }
 
+=======
+/** Extracts a setup code from QR scanner text when the embedded endpoint is valid. */
+internal fun resolveScannedSetupCode(rawInput: String): String? = resolveScannedSetupCodeResult(rawInput).setupCode
+
+/** Resolves QR scanner text to setup-code or validation error for UI copy. */
+>>>>>>> upstream/main
 internal fun resolveScannedSetupCodeResult(rawInput: String): GatewayScannedSetupCodeResult {
   val setupCode =
     resolveSetupCodeCandidate(rawInput)
@@ -215,6 +300,7 @@ internal fun resolveScannedSetupCodeResult(rawInput: String): GatewayScannedSetu
     return GatewayScannedSetupCodeResult(error = parsed.error)
   }
   return GatewayScannedSetupCodeResult(setupCode = setupCode)
+<<<<<<< HEAD
 }
 
 internal fun gatewayEndpointValidationMessage(
@@ -238,19 +324,54 @@ internal fun gatewayEndpointValidationMessage(
         GatewayEndpointInputSource.MANUAL -> "Enter a valid manual host and port to connect."
       }
   }
+=======
+>>>>>>> upstream/main
 }
 
-internal fun composeGatewayManualUrl(hostInput: String, portInput: String, tls: Boolean): String? {
+/** Converts endpoint validation errors into setup-source-specific UI copy. */
+internal fun gatewayEndpointValidationMessage(
+  error: GatewayEndpointValidationError,
+  source: GatewayEndpointInputSource,
+): String =
+  when (error) {
+    GatewayEndpointValidationError.INSECURE_REMOTE_URL ->
+      when (source) {
+        GatewayEndpointInputSource.SETUP_CODE ->
+          "Setup code points to an insecure remote gateway. $remoteGatewaySecurityRule $remoteGatewaySecurityFix"
+        GatewayEndpointInputSource.QR_SCAN ->
+          "QR code points to an insecure remote gateway. $remoteGatewaySecurityRule $remoteGatewaySecurityFix"
+        GatewayEndpointInputSource.MANUAL ->
+          "$remoteGatewaySecurityRule $remoteGatewaySecurityFix"
+      }
+    GatewayEndpointValidationError.INVALID_URL ->
+      when (source) {
+        GatewayEndpointInputSource.SETUP_CODE -> "Setup code has invalid gateway URL."
+        GatewayEndpointInputSource.QR_SCAN -> "QR code did not contain a valid setup code."
+        GatewayEndpointInputSource.MANUAL -> "Enter a valid manual endpoint to connect."
+      }
+  }
+
+/** Builds a URL from manual host/port/tls fields for shared endpoint parsing. */
+internal fun composeGatewayManualUrl(
+  hostInput: String,
+  portInput: String,
+  tls: Boolean,
+): String? {
   val host = hostInput.trim()
-  val port = portInput.trim().toIntOrNull() ?: return null
-  if (host.isEmpty() || port !in 1..65535) return null
+  if (host.isEmpty()) return null
+  val portTrimmed = portInput.trim()
+  val port =
+    if (portTrimmed.isEmpty()) {
+      if (tls) 443 else return null
+    } else {
+      portTrimmed.toIntOrNull() ?: return null
+    }
+  if (port !in 1..65535) return null
   val scheme = if (tls) "https" else "http"
   return "$scheme://$host:$port"
 }
 
-private fun parseJsonObject(input: String): JsonObject? {
-  return runCatching { gatewaySetupJson.parseToJsonElement(input).jsonObject }.getOrNull()
-}
+private fun parseJsonObject(input: String): JsonObject? = runCatching { gatewaySetupJson.parseToJsonElement(input).jsonObject }.getOrNull()
 
 private fun resolveSetupCodeCandidate(rawInput: String): String? {
   val trimmed = rawInput.trim()
@@ -259,7 +380,10 @@ private fun resolveSetupCodeCandidate(rawInput: String): String? {
   return qrSetupCode ?: trimmed
 }
 
-private fun jsonField(obj: JsonObject, key: String): String? {
+private fun jsonField(
+  obj: JsonObject,
+  key: String,
+): String? {
   val value = (obj[key] as? JsonPrimitive)?.contentOrNull?.trim().orEmpty()
   return value.ifEmpty { null }
 }

@@ -1,4 +1,8 @@
 #!/usr/bin/env -S node --import tsx
+<<<<<<< HEAD
+=======
+// Plugin Clawhub Release Plan script supports OpenClaw repository automation.
+>>>>>>> upstream/main
 
 import { pathToFileURL } from "node:url";
 import {

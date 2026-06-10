@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { ModelCatalogEntry } from "../../agents/model-catalog.js";
 import type { createDefaultDeps } from "../../cli/deps.js";
 import type { HealthSummary } from "../../commands/health.js";
@@ -125,3 +126,9 @@ export type GatewayRequestHandlerOptions = {
 export type GatewayRequestHandler = (opts: GatewayRequestHandlerOptions) => Promise<void> | void;
 
 export type GatewayRequestHandlers = Record<string, GatewayRequestHandler>;
+=======
+/**
+ * Public barrel for server-method request and context types.
+ */
+export type * from "./shared-types.js";
+>>>>>>> upstream/main

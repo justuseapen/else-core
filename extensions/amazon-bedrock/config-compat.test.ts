@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Amazon Bedrock tests cover config compat plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { migrateAmazonBedrockLegacyConfig } from "./config-compat.js";
 

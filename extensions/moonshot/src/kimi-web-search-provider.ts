@@ -1,26 +1,14 @@
+<<<<<<< HEAD
 import { Type } from "@sinclair/typebox";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/provider-onboard";
+=======
+// Moonshot provider module implements model/runtime integration.
+>>>>>>> upstream/main
 import {
-  buildSearchCacheKey,
-  buildUnsupportedSearchFilterResponse,
-  DEFAULT_SEARCH_COUNT,
-  getScopedCredentialValue,
-  MAX_SEARCH_COUNT,
-  mergeScopedSearchConfig,
-  readCachedSearchPayload,
-  readConfiguredSecretString,
-  readNumberParam,
-  readProviderEnvValue,
-  readStringParam,
-  resolveProviderWebSearchPluginConfig,
-  resolveSearchCacheTtlMs,
-  resolveSearchCount,
-  resolveSearchTimeoutSeconds,
-  setScopedCredentialValue,
-  setProviderWebSearchPluginConfigValue,
-  type SearchConfigRecord,
+  createWebSearchProviderContractFields,
   type WebSearchProviderPlugin,
   type WebSearchProviderSetupContext,
+<<<<<<< HEAD
   type WebSearchProviderToolDefinition,
   withTrustedWebSearchEndpoint,
   wrapWebContent,
@@ -44,46 +32,21 @@ const KIMI_WEB_SEARCH_TOOL = {
   type: "builtin_function",
   function: { name: "$web_search" },
 } as const;
+=======
+} from "openclaw/plugin-sdk/provider-web-search-config-contract";
 
-type KimiConfig = {
-  apiKey?: string;
-  baseUrl?: string;
-  model?: string;
-};
+const KIMI_CREDENTIAL_PATH = "plugins.entries.moonshot.config.webSearch.apiKey";
+type KimiWebSearchProviderRuntime = typeof import("./kimi-web-search-provider.runtime.js");
+>>>>>>> upstream/main
 
-type KimiToolCall = {
-  id?: string;
-  type?: string;
-  function?: {
-    name?: string;
-    arguments?: string;
-  };
-};
+let kimiWebSearchProviderRuntimePromise: Promise<KimiWebSearchProviderRuntime> | undefined;
 
-type KimiMessage = {
-  role?: string;
-  content?: string;
-  reasoning_content?: string;
-  tool_calls?: KimiToolCall[];
-};
-
-type KimiSearchResponse = {
-  choices?: Array<{
-    finish_reason?: string;
-    message?: KimiMessage;
-  }>;
-  search_results?: Array<{
-    title?: string;
-    url?: string;
-    content?: string;
-  }>;
-};
-
-function resolveKimiConfig(searchConfig?: SearchConfigRecord): KimiConfig {
-  const kimi = searchConfig?.kimi;
-  return kimi && typeof kimi === "object" && !Array.isArray(kimi) ? (kimi as KimiConfig) : {};
+function loadKimiWebSearchProviderRuntime(): Promise<KimiWebSearchProviderRuntime> {
+  kimiWebSearchProviderRuntimePromise ??= import("./kimi-web-search-provider.runtime.js");
+  return kimiWebSearchProviderRuntimePromise;
 }
 
+<<<<<<< HEAD
 function resolveKimiApiKey(kimi?: KimiConfig): string | undefined {
   return (
     readConfiguredSecretString(kimi?.apiKey, "tools.web.search.kimi.apiKey") ??
@@ -344,8 +307,31 @@ function createKimiToolDefinition(
       };
       writeCachedSearchPayload(cacheKey, payload, resolveSearchCacheTtlMs(searchConfig));
       return payload;
+=======
+const KimiSearchSchema = {
+  type: "object",
+  properties: {
+    query: { type: "string", description: "Search query string." },
+    count: {
+      type: "integer",
+      description: "Number of results to return (1-10).",
+      minimum: 1,
+      maximum: 10,
+>>>>>>> upstream/main
     },
-  };
+    country: { type: "string", description: "Not supported by Kimi." },
+    language: { type: "string", description: "Not supported by Kimi." },
+    freshness: { type: "string", description: "Not supported by Kimi." },
+    date_after: { type: "string", description: "Not supported by Kimi." },
+    date_before: { type: "string", description: "Not supported by Kimi." },
+  },
+} satisfies Record<string, unknown>;
+
+async function runKimiSearchProviderSetup(
+  ctx: WebSearchProviderSetupContext,
+): Promise<WebSearchProviderSetupContext["config"]> {
+  const runtime = await loadKimiWebSearchProviderRuntime();
+  return await runtime.runKimiSearchProviderSetup(ctx);
 }
 
 async function runKimiSearchProviderSetup(
@@ -445,6 +431,7 @@ export function createKimiWebSearchProvider(): WebSearchProviderPlugin {
     signupUrl: "https://platform.moonshot.cn/",
     docsUrl: "https://docs.openclaw.ai/tools/web",
     autoDetectOrder: 40,
+<<<<<<< HEAD
     credentialPath: "plugins.entries.moonshot.config.webSearch.apiKey",
     inactiveSecretPaths: ["plugins.entries.moonshot.config.webSearch.apiKey"],
     getCredentialValue: (searchConfig) => getScopedCredentialValue(searchConfig, "kimi"),
@@ -475,3 +462,23 @@ export const __testing = {
   extractKimiCitations,
   extractKimiToolResultContent,
 } as const;
+=======
+    credentialPath: KIMI_CREDENTIAL_PATH,
+    ...createWebSearchProviderContractFields({
+      credentialPath: KIMI_CREDENTIAL_PATH,
+      searchCredential: { type: "scoped", scopeId: "kimi" },
+      configuredCredential: { pluginId: "moonshot" },
+    }),
+    runSetup: runKimiSearchProviderSetup,
+    createTool: (ctx) => ({
+      description:
+        "Search the web using Kimi by Moonshot. Returns AI-synthesized answers with citations from native $web_search.",
+      parameters: KimiSearchSchema,
+      execute: async (args) => {
+        const { executeKimiWebSearchProviderTool } = await loadKimiWebSearchProviderRuntime();
+        return await executeKimiWebSearchProviderTool(ctx, args);
+      },
+    }),
+  };
+}
+>>>>>>> upstream/main

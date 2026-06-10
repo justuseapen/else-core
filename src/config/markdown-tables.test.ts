@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Covers markdown table config normalization and channel overrides.
+>>>>>>> upstream/main
 import { describe, expect, it, vi } from "vitest";
 
 const listChannelPluginsMock = vi.hoisted(() =>

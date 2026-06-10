@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 import { describe, expect, it } from "vitest";
 import {
+=======
+// System prompt cache-boundary tests cover the internal marker that separates
+// stable prompt text from dynamic per-turn additions.
+import { describe, expect, it } from "vitest";
+import {
+  ensureSystemPromptCacheBoundary,
+>>>>>>> upstream/main
   prependSystemPromptAdditionAfterCacheBoundary,
   splitSystemPromptCacheBoundary,
   stripSystemPromptCacheBoundary,
@@ -42,3 +50,51 @@ describe("system prompt cache boundary helpers", () => {
     );
   });
 });
+<<<<<<< HEAD
+=======
+
+describe("ensureSystemPromptCacheBoundary", () => {
+  it("returns a marker-bearing prompt unchanged", () => {
+    const prompt = `Stable prefix${SYSTEM_PROMPT_CACHE_BOUNDARY}Dynamic suffix`;
+    expect(ensureSystemPromptCacheBoundary(prompt)).toBe(prompt);
+  });
+
+  it("appends the boundary to a marker-free prompt", () => {
+    expect(ensureSystemPromptCacheBoundary("Marker-free override")).toBe(
+      `Marker-free override${SYSTEM_PROMPT_CACHE_BOUNDARY}`,
+    );
+  });
+
+  it("does not add a boundary for an empty prompt", () => {
+    expect(ensureSystemPromptCacheBoundary("")).toBe("");
+    expect(ensureSystemPromptCacheBoundary(" \n\t ")).toBe(" \n\t ");
+  });
+
+  it("uses a per-turn addition directly when the base prompt is empty", () => {
+    expect(
+      prependSystemPromptAdditionAfterCacheBoundary({
+        systemPrompt: ensureSystemPromptCacheBoundary(""),
+        systemPromptAddition: "Per-turn media task hint",
+      }),
+    ).toBe("Per-turn media task hint");
+  });
+
+  it("is idempotent for a marker-free prompt", () => {
+    const once = ensureSystemPromptCacheBoundary("Marker-free override");
+    expect(ensureSystemPromptCacheBoundary(once)).toBe(once);
+  });
+
+  it("lets a per-turn addition split into the uncached suffix for a marker-free prompt", () => {
+    // Marker-free overrides become stable prefixes; additions stay in the
+    // dynamic suffix so prompt-cache bytes remain deterministic.
+    const result = prependSystemPromptAdditionAfterCacheBoundary({
+      systemPrompt: ensureSystemPromptCacheBoundary("Marker-free override"),
+      systemPromptAddition: "Per-turn media task hint",
+    });
+    expect(splitSystemPromptCacheBoundary(result)).toEqual({
+      stablePrefix: "Marker-free override",
+      dynamicSuffix: "Per-turn media task hint",
+    });
+  });
+});
+>>>>>>> upstream/main

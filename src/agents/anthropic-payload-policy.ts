@@ -1,11 +1,26 @@
+<<<<<<< HEAD
+=======
+/**
+ * Anthropic-family request payload policy helpers.
+ * Applies service-tier and cache-control markers only when provider endpoint
+ * capabilities allow them.
+ */
+>>>>>>> upstream/main
 import { resolveProviderRequestCapabilities } from "./provider-attribution.js";
 import {
   splitSystemPromptCacheBoundary,
   stripSystemPromptCacheBoundary,
 } from "./system-prompt-cache-boundary.js";
 
+<<<<<<< HEAD
 export type AnthropicServiceTier = "auto" | "standard_only";
 
+=======
+/** @deprecated Anthropic-family provider payload helper; do not use from third-party plugins. */
+export type AnthropicServiceTier = "auto" | "standard_only";
+
+/** @deprecated Anthropic-family provider payload helper; do not use from third-party plugins. */
+>>>>>>> upstream/main
 export type AnthropicEphemeralCacheControl = {
   type: "ephemeral";
   ttl?: "1h";
@@ -20,6 +35,12 @@ type AnthropicPayloadPolicyInput = {
   serviceTier?: AnthropicServiceTier;
 };
 
+<<<<<<< HEAD
+=======
+const ANTHROPIC_CACHE_CONTROL_LIMIT = 4;
+
+/** @deprecated Anthropic-family provider payload helper; do not use from third-party plugins. */
+>>>>>>> upstream/main
 export type AnthropicPayloadPolicy = {
   allowsServiceTier: boolean;
   cacheControl: AnthropicEphemeralCacheControl | undefined;
@@ -49,16 +70,34 @@ function isLongTtlEligibleEndpoint(baseUrl: string | undefined): boolean {
   );
 }
 
+<<<<<<< HEAD
 function resolveAnthropicEphemeralCacheControl(
+=======
+/** Resolve Anthropic cache-control marker retention for a request endpoint. */
+export function resolveAnthropicEphemeralCacheControl(
+>>>>>>> upstream/main
   baseUrl: string | undefined,
   cacheRetention: AnthropicPayloadPolicyInput["cacheRetention"],
 ): AnthropicEphemeralCacheControl | undefined {
   const retention =
+<<<<<<< HEAD
     cacheRetention ?? (process.env.PI_CACHE_RETENTION === "long" ? "long" : "short");
   if (retention === "none") {
     return undefined;
   }
   const ttl = retention === "long" && isLongTtlEligibleEndpoint(baseUrl) ? "1h" : undefined;
+=======
+    cacheRetention ?? (process.env.OPENCLAW_CACHE_RETENTION === "long" ? "long" : "short");
+  if (retention === "none") {
+    return undefined;
+  }
+  // Trust explicit long-retention opt-ins for Anthropic-compatible custom providers.
+  // Keep hostname gating for implicit/env-driven long retention so defaults stay conservative.
+  const ttl =
+    retention === "long" && (cacheRetention === "long" || isLongTtlEligibleEndpoint(baseUrl))
+      ? "1h"
+      : undefined;
+>>>>>>> upstream/main
   return { type: "ephemeral", ...(ttl ? { ttl } : {}) };
 }
 
@@ -128,6 +167,7 @@ function stripAnthropicSystemPromptBoundary(system: unknown): void {
 function applyAnthropicCacheControlToMessages(
   messages: unknown,
   cacheControl: AnthropicEphemeralCacheControl,
+<<<<<<< HEAD
 ): void {
   if (!Array.isArray(messages) || messages.length === 0) {
     return;
@@ -171,6 +211,94 @@ function applyAnthropicCacheControlToMessages(
   }
 }
 
+=======
+  markerLimit: number,
+): void {
+  if (!Array.isArray(messages) || messages.length === 0 || markerLimit <= 0) {
+    return;
+  }
+
+  let fallbackToolResult: Record<string, unknown> | undefined;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (!message || typeof message !== "object") {
+      continue;
+    }
+
+    const record = message as Record<string, unknown>;
+    if (record.role !== "user") {
+      continue;
+    }
+
+    const content = record.content;
+    if (typeof content === "string") {
+      if (fallbackToolResult && markerLimit === 1) {
+        fallbackToolResult.cache_control = cacheControl;
+        return;
+      }
+      record.content = [
+        {
+          type: "text",
+          text: content,
+          cache_control: cacheControl,
+        },
+      ];
+      if (fallbackToolResult && markerLimit > 1) {
+        fallbackToolResult.cache_control = cacheControl;
+      }
+      return;
+    }
+
+    if (!Array.isArray(content)) {
+      continue;
+    }
+
+    for (let j = content.length - 1; j >= 0; j--) {
+      const block = content[j];
+      if (!block || typeof block !== "object") {
+        continue;
+      }
+
+      const blockRecord = block as Record<string, unknown>;
+      if (blockRecord.type === "text" || blockRecord.type === "image") {
+        if (fallbackToolResult && markerLimit === 1) {
+          fallbackToolResult.cache_control = cacheControl;
+          return;
+        }
+        blockRecord.cache_control = cacheControl;
+        if (fallbackToolResult && markerLimit > 1) {
+          fallbackToolResult.cache_control = cacheControl;
+        }
+        return;
+      }
+      if (blockRecord.type === "tool_result" && fallbackToolResult === undefined) {
+        fallbackToolResult = blockRecord;
+      }
+    }
+  }
+
+  if (fallbackToolResult) {
+    fallbackToolResult.cache_control = cacheControl;
+  }
+}
+
+function countAnthropicCacheControlMarkers(blocks: unknown): number {
+  if (!Array.isArray(blocks)) {
+    return 0;
+  }
+
+  let count = 0;
+  for (const block of blocks) {
+    if (block && typeof block === "object" && "cache_control" in block) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+/** @deprecated Anthropic-family provider payload helper; do not use from third-party plugins. */
+>>>>>>> upstream/main
 export function resolveAnthropicPayloadPolicy(
   input: AnthropicPayloadPolicyInput,
 ): AnthropicPayloadPolicy {
@@ -192,6 +320,10 @@ export function resolveAnthropicPayloadPolicy(
   };
 }
 
+<<<<<<< HEAD
+=======
+/** @deprecated Anthropic-family provider payload helper; do not use from third-party plugins. */
+>>>>>>> upstream/main
 export function applyAnthropicPayloadPolicyToParams(
   payloadObj: Record<string, unknown>,
   policy: AnthropicPayloadPolicy,
@@ -214,12 +346,29 @@ export function applyAnthropicPayloadPolicyToParams(
     return;
   }
 
+<<<<<<< HEAD
   // Preserve Anthropic cache-write scope by only tagging the trailing user turn.
   applyAnthropicCacheControlToMessages(payloadObj.messages, policy.cacheControl);
 }
 
 export function applyAnthropicEphemeralCacheControlMarkers(
   payloadObj: Record<string, unknown>,
+=======
+  const usedMarkers =
+    countAnthropicCacheControlMarkers(payloadObj.system) +
+    countAnthropicCacheControlMarkers(payloadObj.tools);
+  applyAnthropicCacheControlToMessages(
+    payloadObj.messages,
+    policy.cacheControl,
+    ANTHROPIC_CACHE_CONTROL_LIMIT - usedMarkers,
+  );
+}
+
+/** @deprecated Anthropic-family provider payload helper; do not use from third-party plugins. */
+export function applyAnthropicEphemeralCacheControlMarkers(
+  payloadObj: Record<string, unknown>,
+  cacheControl: AnthropicEphemeralCacheControl | null = { type: "ephemeral" },
+>>>>>>> upstream/main
 ): void {
   const messages = payloadObj.messages;
   if (!Array.isArray(messages)) {
@@ -228,10 +377,18 @@ export function applyAnthropicEphemeralCacheControlMarkers(
 
   for (const message of messages as Array<{ role?: string; content?: unknown }>) {
     if (message.role === "system" || message.role === "developer") {
+<<<<<<< HEAD
       if (typeof message.content === "string") {
         message.content = [
           { type: "text", text: message.content, cache_control: { type: "ephemeral" } },
         ];
+=======
+      if (!cacheControl) {
+        continue;
+      }
+      if (typeof message.content === "string") {
+        message.content = [{ type: "text", text: message.content, cache_control: cacheControl }];
+>>>>>>> upstream/main
         continue;
       }
       if (Array.isArray(message.content) && message.content.length > 0) {
@@ -239,7 +396,11 @@ export function applyAnthropicEphemeralCacheControlMarkers(
         if (last && typeof last === "object") {
           const record = last as Record<string, unknown>;
           if (record.type !== "thinking" && record.type !== "redacted_thinking") {
+<<<<<<< HEAD
             record.cache_control = { type: "ephemeral" };
+=======
+            record.cache_control = cacheControl;
+>>>>>>> upstream/main
           }
         }
       }

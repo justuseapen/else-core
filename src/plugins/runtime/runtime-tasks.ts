@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../../config/config.js";
 import { cancelTaskById, listTasksForFlowId } from "../../tasks/runtime-internal.js";
+=======
+// Runtime task helpers expose task-flow operations to activated plugin runtimes.
+import { listTasksForFlowId } from "../../tasks/runtime-internal.js";
+>>>>>>> upstream/main
 import {
   mapTaskFlowDetail,
   mapTaskFlowView,
@@ -7,7 +12,11 @@ import {
   mapTaskRunDetail,
   mapTaskRunView,
 } from "../../tasks/task-domain-views.js";
+<<<<<<< HEAD
 import { getFlowTaskSummary } from "../../tasks/task-executor.js";
+=======
+import { cancelDetachedTaskRunById, getFlowTaskSummary } from "../../tasks/task-executor.js";
+>>>>>>> upstream/main
 import {
   getTaskFlowByIdForOwner,
   listTaskFlowsForOwner,
@@ -20,6 +29,7 @@ import {
   listTasksForRelatedSessionKeyForOwner,
   resolveTaskForLookupTokenForOwner,
 } from "../../tasks/task-owner-access.js";
+<<<<<<< HEAD
 import { normalizeDeliveryContext } from "../../utils/delivery-context.js";
 import type { OpenClawPluginToolContext } from "../types.js";
 import type { PluginRuntimeTaskFlow } from "./runtime-taskflow.js";
@@ -31,6 +41,26 @@ import type {
   TaskRunDetail,
   TaskRunView,
 } from "./task-domain-types.js";
+=======
+import { normalizeDeliveryContext } from "../../utils/delivery-context.shared.js";
+import type { PluginRuntimeTaskFlow } from "./runtime-taskflow.types.js";
+import type {
+  BoundTaskFlowsRuntime,
+  BoundTaskRunsRuntime,
+  PluginRuntimeTaskFlows,
+  PluginRuntimeTaskRuns,
+  PluginRuntimeTasks,
+  TaskFlowDetail,
+  TaskRunCancelResult,
+} from "./runtime-tasks.types.js";
+export type {
+  BoundTaskFlowsRuntime,
+  BoundTaskRunsRuntime,
+  PluginRuntimeTaskFlows,
+  PluginRuntimeTaskRuns,
+  PluginRuntimeTasks,
+} from "./runtime-tasks.types.js";
+>>>>>>> upstream/main
 
 function assertSessionKey(sessionKey: string | undefined, errorMessage: string): string {
   const normalized = sessionKey?.trim();
@@ -41,7 +71,11 @@ function assertSessionKey(sessionKey: string | undefined, errorMessage: string):
 }
 
 function mapCancelledTaskResult(
+<<<<<<< HEAD
   result: Awaited<ReturnType<typeof cancelTaskById>>,
+=======
+  result: Awaited<ReturnType<typeof cancelDetachedTaskRunById>>,
+>>>>>>> upstream/main
 ): TaskRunCancelResult {
   return {
     found: result.found,
@@ -51,6 +85,7 @@ function mapCancelledTaskResult(
   };
 }
 
+<<<<<<< HEAD
 export type BoundTaskRunsRuntime = {
   readonly sessionKey: string;
   readonly requesterOrigin?: ReturnType<typeof normalizeDeliveryContext>;
@@ -98,6 +133,8 @@ export type PluginRuntimeTasks = {
   flow: PluginRuntimeTaskFlow;
 };
 
+=======
+>>>>>>> upstream/main
 function createBoundTaskRunsRuntime(params: {
   sessionKey: string;
   requesterOrigin?: import("../../tasks/task-registry.types.js").TaskDeliveryState["requesterOrigin"];
@@ -148,7 +185,11 @@ function createBoundTaskRunsRuntime(params: {
         };
       }
       return mapCancelledTaskResult(
+<<<<<<< HEAD
         await cancelTaskById({
+=======
+        await cancelDetachedTaskRunById({
+>>>>>>> upstream/main
           cfg,
           taskId: task.taskId,
         }),
@@ -258,6 +299,10 @@ export function createRuntimeTasks(params: {
   return {
     runs: createRuntimeTaskRuns(),
     flows: createRuntimeTaskFlows(),
+<<<<<<< HEAD
+=======
+    managedFlows: params.legacyTaskFlow,
+>>>>>>> upstream/main
     flow: params.legacyTaskFlow,
   };
 }

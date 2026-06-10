@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Task domain types define plugin task-flow payloads shared by runtime adapters.
+>>>>>>> upstream/main
 import type { JsonValue } from "../../tasks/task-flow-registry.types.js";
 import type {
   TaskDeliveryStatus,
@@ -9,8 +13,14 @@ import type {
   TaskStatusCounts,
   TaskTerminalOutcome,
 } from "../../tasks/task-registry.types.js";
+<<<<<<< HEAD
 import type { DeliveryContext } from "../../utils/delivery-context.js";
 
+=======
+import type { DeliveryContext } from "../../utils/delivery-context.types.js";
+
+/** Aggregate task-run counts exposed to plugin task views. */
+>>>>>>> upstream/main
 export type TaskRunAggregateSummary = {
   total: number;
   active: number;
@@ -20,6 +30,10 @@ export type TaskRunAggregateSummary = {
   byRuntime: TaskRuntimeCounts;
 };
 
+<<<<<<< HEAD
+=======
+/** Public task run summary exposed through plugin runtime task APIs. */
+>>>>>>> upstream/main
 export type TaskRunView = {
   id: string;
   runtime: TaskRuntime;
@@ -48,8 +62,15 @@ export type TaskRunView = {
   terminalOutcome?: TaskTerminalOutcome;
 };
 
+<<<<<<< HEAD
 export type TaskRunDetail = TaskRunView;
 
+=======
+/** Detailed task run view; currently equal to the summary view. */
+export type TaskRunDetail = TaskRunView;
+
+/** Result returned when cancelling a task run. */
+>>>>>>> upstream/main
 export type TaskRunCancelResult = {
   found: boolean;
   cancelled: boolean;
@@ -57,6 +78,10 @@ export type TaskRunCancelResult = {
   task?: TaskRunDetail;
 };
 
+<<<<<<< HEAD
+=======
+/** Public task flow summary exposed through plugin runtime task APIs. */
+>>>>>>> upstream/main
 export type TaskFlowView = {
   id: string;
   ownerKey: string;
@@ -71,6 +96,10 @@ export type TaskFlowView = {
   endedAt?: number;
 };
 
+<<<<<<< HEAD
+=======
+/** Detailed task flow view with state, wait, blocked, and task summary data. */
+>>>>>>> upstream/main
 export type TaskFlowDetail = TaskFlowView & {
   state?: JsonValue;
   wait?: JsonValue;

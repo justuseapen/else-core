@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Mattermost tests cover approval auth plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { mattermostApprovalAuth } from "./approval-auth.js";
 

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Zalouser API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export { sendMessageZalouser } from "./src/send.js";
 export { parseZalouserOutboundTarget } from "./src/session-route.js";
 export {

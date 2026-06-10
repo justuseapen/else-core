@@ -1,11 +1,20 @@
+// Nextcloud Talk plugin module implements setup core behavior.
 import type { ChannelSetupAdapter, ChannelSetupInput } from "openclaw/plugin-sdk/channel-setup";
-import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/routing";
 import {
+<<<<<<< HEAD
+=======
+  applyAccountNameToChannelSection,
+  patchScopedAccountConfig,
+} from "openclaw/plugin-sdk/setup";
+import {
+>>>>>>> upstream/main
   createSetupInputPresenceValidator,
   mergeAllowFromEntries,
   promptParsedAllowFromForAccount,
   resolveSetupAccountId,
+<<<<<<< HEAD
   setSetupChannelEnabled,
   type ChannelSetupDmPolicy,
   type ChannelSetupWizard,
@@ -18,7 +27,18 @@ import {
   resolveDefaultNextcloudTalkAccountId,
   resolveNextcloudTalkAccount,
 } from "./accounts.js";
+=======
+  createSetupTranslator,
+  type ChannelSetupDmPolicy,
+  type WizardPrompter,
+} from "openclaw/plugin-sdk/setup-runtime";
+import { formatDocsLink } from "openclaw/plugin-sdk/setup-tools";
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { resolveDefaultNextcloudTalkAccountId, resolveNextcloudTalkAccount } from "./accounts.js";
+>>>>>>> upstream/main
 import type { CoreConfig } from "./types.js";
+
+const t = createSetupTranslator();
 
 const channel = "nextcloud-talk" as const;
 
@@ -78,7 +98,7 @@ export function clearNextcloudTalkAccountFields(
     return {
       ...cfg,
       channels: {
-        ...(cfg.channels ?? {}),
+        ...cfg.channels,
         "nextcloud-talk": nextSection as NextcloudTalkSection,
       },
     } as CoreConfig;
@@ -96,7 +116,7 @@ export function clearNextcloudTalkAccountFields(
   return {
     ...cfg,
     channels: {
-      ...(cfg.channels ?? {}),
+      ...cfg.channels,
       "nextcloud-talk": {
         ...section,
         accounts: {
@@ -118,26 +138,28 @@ async function promptNextcloudTalkAllowFrom(params: {
     accountId: params.accountId,
     defaultAccountId: params.accountId,
     prompter: params.prompter,
-    noteTitle: "Nextcloud Talk user id",
+    noteTitle: t("wizard.nextcloudTalk.userIdTitle"),
     noteLines: [
-      "1) Check the Nextcloud admin panel for user IDs",
-      "2) Or look at the webhook payload logs when someone messages",
-      "3) User IDs are typically lowercase usernames in Nextcloud",
-      `Docs: ${formatDocsLink("/channels/nextcloud-talk", "nextcloud-talk")}`,
+      t("wizard.nextcloudTalk.userIdHelpAdmin"),
+      t("wizard.nextcloudTalk.userIdHelpLogs"),
+      t("wizard.nextcloudTalk.userIdHelpLowercase"),
+      t("wizard.channels.docs", {
+        link: formatDocsLink("/channels/nextcloud-talk", "nextcloud-talk"),
+      }),
     ],
-    message: "Nextcloud Talk allowFrom (user id)",
+    message: t("wizard.nextcloudTalk.allowFromPrompt"),
     placeholder: "username",
     parseEntries: (raw) => ({
-      entries: String(raw)
+      entries: raw
         .split(/[\n,;]+/g)
-        .map((value) => value.trim().toLowerCase())
+        .map(normalizeLowercaseStringOrEmpty)
         .filter(Boolean),
     }),
     getExistingAllowFrom: ({ cfg, accountId }) =>
       resolveNextcloudTalkAccount({ cfg, accountId }).config.allowFrom ?? [],
     mergeEntries: ({ existing, parsed }) =>
       mergeAllowFromEntries(
-        existing.map((value) => String(value).trim().toLowerCase()),
+        existing.map((value) => normalizeLowercaseStringOrEmpty(String(value))),
         parsed,
       ),
     applyAllowFrom: ({ cfg, accountId, allowFrom }) =>
@@ -210,7 +232,7 @@ export const nextcloudTalkSetupAdapter: ChannelSetupAdapter = {
   validateInput: createSetupInputPresenceValidator({
     defaultAccountOnlyEnvError:
       "NEXTCLOUD_TALK_BOT_SECRET can only be used for the default account.",
-    validate: ({ accountId, input }) => {
+    validate: ({ input }) => {
       const setupInput = input as NextcloudSetupInput;
       if (!setupInput.useEnv && !setupInput.secret && !setupInput.secretFile) {
         return "Nextcloud Talk requires bot secret or --secret-file (or --use-env).";

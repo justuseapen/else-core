@@ -1,7 +1,19 @@
+<<<<<<< HEAD
 import {
   describeImageWithModel,
   describeImagesWithModel,
   type MediaUnderstandingProvider,
+=======
+// Qwen provider module implements model/runtime integration.
+import {
+  buildOpenAiCompatibleVideoRequestBody,
+  coerceOpenAiCompatibleVideoText,
+  describeImageWithModel,
+  describeImagesWithModel,
+  resolveMediaUnderstandingString,
+  type MediaUnderstandingProvider,
+  type OpenAiCompatibleVideoPayload,
+>>>>>>> upstream/main
   type VideoDescriptionRequest,
   type VideoDescriptionResult,
 } from "openclaw/plugin-sdk/media-understanding";
@@ -10,11 +22,16 @@ import {
   postJsonRequest,
   resolveProviderHttpRequestConfig,
 } from "openclaw/plugin-sdk/provider-http";
+<<<<<<< HEAD
 import { QWEN_STANDARD_CN_BASE_URL, QWEN_STANDARD_GLOBAL_BASE_URL } from "./models.js";
+=======
+import { QWEN_STANDARD_GLOBAL_BASE_URL } from "./models.js";
+>>>>>>> upstream/main
 
 const DEFAULT_QWEN_VIDEO_MODEL = "qwen-vl-max-latest";
 const DEFAULT_QWEN_VIDEO_PROMPT = "Describe the video in detail.";
 
+<<<<<<< HEAD
 type QwenVideoPayload = {
   choices?: Array<{
     message?: {
@@ -70,13 +87,21 @@ function coerceQwenText(payload: QwenVideoPayload): string | null {
   return null;
 }
 
+=======
+>>>>>>> upstream/main
 export async function describeQwenVideo(
   params: VideoDescriptionRequest,
 ): Promise<VideoDescriptionResult> {
   const fetchFn = params.fetchFn ?? fetch;
+<<<<<<< HEAD
   const model = params.model?.trim() || DEFAULT_QWEN_VIDEO_MODEL;
   const mime = params.mime?.trim() || "video/mp4";
   const prompt = params.prompt?.trim() || DEFAULT_QWEN_VIDEO_PROMPT;
+=======
+  const model = resolveMediaUnderstandingString(params.model, DEFAULT_QWEN_VIDEO_MODEL);
+  const mime = resolveMediaUnderstandingString(params.mime, "video/mp4");
+  const prompt = resolveMediaUnderstandingString(params.prompt, DEFAULT_QWEN_VIDEO_PROMPT);
+>>>>>>> upstream/main
   const { baseUrl, allowPrivateNetwork, headers, dispatcherPolicy } =
     resolveProviderHttpRequestConfig({
       baseUrl: params.baseUrl,
@@ -96,6 +121,7 @@ export async function describeQwenVideo(
   const { response: res, release } = await postJsonRequest({
     url: `${baseUrl}/chat/completions`,
     headers,
+<<<<<<< HEAD
     body: {
       model,
       messages: [
@@ -113,6 +139,14 @@ export async function describeQwenVideo(
         },
       ],
     },
+=======
+    body: buildOpenAiCompatibleVideoRequestBody({
+      model,
+      prompt,
+      mime,
+      buffer: params.buffer,
+    }),
+>>>>>>> upstream/main
     timeoutMs: params.timeoutMs,
     fetchFn,
     allowPrivateNetwork,
@@ -121,8 +155,13 @@ export async function describeQwenVideo(
 
   try {
     await assertOkOrThrowHttpError(res, "Qwen video description failed");
+<<<<<<< HEAD
     const payload = (await res.json()) as QwenVideoPayload;
     const text = coerceQwenText(payload);
+=======
+    const payload = (await res.json()) as OpenAiCompatibleVideoPayload;
+    const text = coerceOpenAiCompatibleVideoText(payload);
+>>>>>>> upstream/main
     if (!text) {
       throw new Error("Qwen video description response missing content");
     }
@@ -148,9 +187,12 @@ export function buildQwenMediaUnderstandingProvider(): MediaUnderstandingProvide
     describeVideo: describeQwenVideo,
   };
 }
+<<<<<<< HEAD
 
 export function resolveQwenMediaUnderstandingBaseUrl(
   cfg: { models?: { providers?: Record<string, { baseUrl?: string } | undefined> } } | undefined,
 ): string {
   return resolveQwenStandardBaseUrl(cfg, "qwen");
 }
+=======
+>>>>>>> upstream/main

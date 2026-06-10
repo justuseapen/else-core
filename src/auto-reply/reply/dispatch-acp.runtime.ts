@@ -1,7 +1,14 @@
+<<<<<<< HEAD
+=======
+// Lazily loads ACP dispatch runtime pieces outside the normal reply hot path.
+import { createLazyImportLoader } from "../../shared/lazy-promise.js";
+
+>>>>>>> upstream/main
 type ShouldBypassAcpDispatchForCommand =
   (typeof import("./dispatch-acp-command-bypass.js"))["shouldBypassAcpDispatchForCommand"];
 type TryDispatchAcpReply = (typeof import("./dispatch-acp.js"))["tryDispatchAcpReply"];
 
+<<<<<<< HEAD
 let dispatchAcpPromise: Promise<typeof import("./dispatch-acp.js")> | null = null;
 let dispatchAcpCommandBypassPromise: Promise<
   typeof import("./dispatch-acp-command-bypass.js")
@@ -15,6 +22,19 @@ function loadDispatchAcp() {
 function loadDispatchAcpCommandBypass() {
   dispatchAcpCommandBypassPromise ??= import("./dispatch-acp-command-bypass.js");
   return dispatchAcpCommandBypassPromise;
+=======
+const dispatchAcpLoader = createLazyImportLoader(() => import("./dispatch-acp.js"));
+const dispatchAcpCommandBypassLoader = createLazyImportLoader(
+  () => import("./dispatch-acp-command-bypass.js"),
+);
+
+function loadDispatchAcp() {
+  return dispatchAcpLoader.load();
+}
+
+function loadDispatchAcpCommandBypass() {
+  return dispatchAcpCommandBypassLoader.load();
+>>>>>>> upstream/main
 }
 
 export async function shouldBypassAcpDispatchForCommand(

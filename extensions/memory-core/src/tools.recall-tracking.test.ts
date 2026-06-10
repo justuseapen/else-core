@@ -1,11 +1,22 @@
+<<<<<<< HEAD
 import type { MemorySearchResult } from "openclaw/plugin-sdk/memory-core-host-runtime-files";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+=======
+// Memory Core tests cover tools.recall tracking plugin behavior.
+import type { MemorySearchResult } from "openclaw/plugin-sdk/memory-core-host-runtime-files";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { OpenClawConfig } from "../api.js";
+>>>>>>> upstream/main
 import {
   resetMemoryToolMockState,
   setMemoryBackend,
   setMemorySearchImpl,
+<<<<<<< HEAD
 } from "../../../test/helpers/memory-tool-manager-mock.js";
 import type { OpenClawConfig } from "../api.js";
+=======
+} from "./memory-tool-manager-mock.js";
+>>>>>>> upstream/main
 import { createMemorySearchTool } from "./tools.js";
 
 type RecordShortTermRecallsFn = (params: {
@@ -25,7 +36,11 @@ vi.mock("./short-term-promotion.js", () => ({
 }));
 
 function asOpenClawConfig(config: Partial<OpenClawConfig>): OpenClawConfig {
+<<<<<<< HEAD
   return config as OpenClawConfig;
+=======
+  return config;
+>>>>>>> upstream/main
 }
 
 function createSearchTool(config: OpenClawConfig) {
@@ -67,6 +82,20 @@ describe("memory_search recall tracking", () => {
     const tool = createSearchTool(
       asOpenClawConfig({
         agents: { list: [{ id: "main", default: true }] },
+<<<<<<< HEAD
+=======
+        plugins: {
+          entries: {
+            "memory-core": {
+              config: {
+                dreaming: {
+                  enabled: true,
+                },
+              },
+            },
+          },
+        },
+>>>>>>> upstream/main
         memory: {
           backend: "qmd",
           citations: "on",
@@ -82,7 +111,13 @@ describe("memory_search recall tracking", () => {
 
     expect(recallTrackingMock.recordShortTermRecalls).toHaveBeenCalledTimes(1);
     const [firstCall] = recallTrackingMock.recordShortTermRecalls.mock.calls;
+<<<<<<< HEAD
     expect(firstCall).toBeDefined();
+=======
+    if (!firstCall) {
+      throw new Error("expected short-term recall tracking call");
+    }
+>>>>>>> upstream/main
     const recallParams = firstCall[0];
     expect(recallParams.results).toHaveLength(1);
     expect(recallParams.results[0]?.path).toBe("memory/2026-04-03.md");
@@ -101,6 +136,20 @@ describe("memory_search recall tracking", () => {
     const tool = createSearchTool(
       asOpenClawConfig({
         agents: { list: [{ id: "main", default: true }] },
+<<<<<<< HEAD
+=======
+        plugins: {
+          entries: {
+            "memory-core": {
+              config: {
+                dreaming: {
+                  enabled: true,
+                },
+              },
+            },
+          },
+        },
+>>>>>>> upstream/main
       }),
     );
     setMemorySearchImpl(async () => [
@@ -116,14 +165,22 @@ describe("memory_search recall tracking", () => {
 
     let timeout: NodeJS.Timeout | undefined;
     try {
+<<<<<<< HEAD
       const result = (await Promise.race([
+=======
+      const result = await Promise.race([
+>>>>>>> upstream/main
         tool.execute("call_recall_non_blocking", { query: "glacier" }),
         new Promise<never>((_, reject) => {
           timeout = setTimeout(() => {
             reject(new Error("memory_search waited on recall persistence"));
           }, 200);
         }),
+<<<<<<< HEAD
       ])) as Awaited<ReturnType<typeof tool.execute>>;
+=======
+      ]);
+>>>>>>> upstream/main
 
       const details = result.details as { results: Array<{ path: string }> };
       expect(details.results).toHaveLength(1);
@@ -162,6 +219,10 @@ describe("memory_search recall tracking", () => {
             "memory-core": {
               config: {
                 dreaming: {
+<<<<<<< HEAD
+=======
+                  enabled: true,
+>>>>>>> upstream/main
                   timezone: "Europe/London",
                 },
               },
@@ -177,4 +238,43 @@ describe("memory_search recall tracking", () => {
     const [firstCall] = recallTrackingMock.recordShortTermRecalls.mock.calls;
     expect(firstCall?.[0]?.timezone).toBe("Europe/London");
   });
+<<<<<<< HEAD
+=======
+
+  it("skips recall tracking when dreaming is disabled", async () => {
+    setMemorySearchImpl(async () => [
+      {
+        path: "memory/2026-04-03.md",
+        startLine: 1,
+        endLine: 2,
+        score: 0.95,
+        snippet: "Move backups to S3 Glacier.",
+        source: "memory" as const,
+      },
+    ]);
+
+    const tool = createSearchTool(
+      asOpenClawConfig({
+        agents: { list: [{ id: "main", default: true }] },
+        plugins: {
+          entries: {
+            "memory-core": {
+              config: {
+                dreaming: {
+                  enabled: false,
+                },
+              },
+            },
+          },
+        },
+      }),
+    );
+
+    const result = await tool.execute("call_recall_disabled", { query: "glacier" });
+    const details = result.details as { results: Array<{ path: string }> };
+    expect(details.results).toHaveLength(1);
+    expect(details.results[0]?.path).toBe("memory/2026-04-03.md");
+    expect(recallTrackingMock.recordShortTermRecalls).not.toHaveBeenCalled();
+  });
+>>>>>>> upstream/main
 });

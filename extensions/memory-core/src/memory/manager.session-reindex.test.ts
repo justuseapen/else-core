@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -74,5 +75,49 @@ describe("memory manager session reindex gating", () => {
     expect(shouldSyncSessions({ reason: "watch" }, true)).toBe(true);
     expect(shouldSyncSessions({ reason: "session-start" }, false)).toBe(false);
     expect(shouldSyncSessions({ reason: "watch" }, false)).toBe(false);
+=======
+// Memory Core tests cover manager.session reindex plugin behavior.
+import { describe, expect, it } from "vitest";
+import { shouldSyncSessionsForReindex } from "./manager-session-reindex.js";
+
+describe("memory manager session reindex gating", () => {
+  it("keeps session syncing enabled for full reindexes triggered from session-start/watch", () => {
+    expect(
+      shouldSyncSessionsForReindex({
+        hasSessionSource: true,
+        sessionsDirty: false,
+        dirtySessionFileCount: 0,
+        sync: { reason: "session-start" },
+        needsFullReindex: true,
+      }),
+    ).toBe(true);
+    expect(
+      shouldSyncSessionsForReindex({
+        hasSessionSource: true,
+        sessionsDirty: false,
+        dirtySessionFileCount: 0,
+        sync: { reason: "watch" },
+        needsFullReindex: true,
+      }),
+    ).toBe(true);
+    expect(
+      shouldSyncSessionsForReindex({
+        hasSessionSource: true,
+        sessionsDirty: false,
+        dirtySessionFileCount: 0,
+        sync: { reason: "session-start" },
+        needsFullReindex: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldSyncSessionsForReindex({
+        hasSessionSource: true,
+        sessionsDirty: false,
+        dirtySessionFileCount: 0,
+        sync: { reason: "watch" },
+        needsFullReindex: false,
+      }),
+    ).toBe(false);
+>>>>>>> upstream/main
   });
 });

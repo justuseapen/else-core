@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/account-resolution";
+=======
+// Synology Chat plugin module implements approval auth behavior.
+>>>>>>> upstream/main
 import {
   createResolvedApproverActionAuthAdapter,
   resolveApprovalApprovers,
@@ -13,7 +17,11 @@ function normalizeSynologyChatApproverId(value: string | number): string | undef
 export const synologyChatApprovalAuth = createResolvedApproverActionAuthAdapter({
   channelLabel: "Synology Chat",
   resolveApprovers: ({ cfg, accountId }) => {
+<<<<<<< HEAD
     const account = resolveAccount((cfg ?? {}) as OpenClawConfig, accountId);
+=======
+    const account = resolveAccount(cfg ?? {}, accountId);
+>>>>>>> upstream/main
     return resolveApprovalApprovers({
       allowFrom: account.allowedUserIds,
       normalizeApprover: normalizeSynologyChatApproverId,

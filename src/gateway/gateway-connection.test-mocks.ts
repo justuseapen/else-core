@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// Gateway connection/startup module mocks.
+// Provides shared Vitest mocks for connection and startup helper tests.
+>>>>>>> upstream/main
 import { vi, type Mock } from "vitest";
 
 type TestMock<TArgs extends unknown[] = unknown[], TResult = unknown> = Mock<

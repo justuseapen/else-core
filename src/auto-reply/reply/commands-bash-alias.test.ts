@@ -1,12 +1,27 @@
+<<<<<<< HEAD
+=======
+/** Tests bash command aliases and chat shortcut handling. */
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
 import { handleBashCommand } from "./commands-bash.js";
 import type { HandleCommandsParams } from "./commands-types.js";
 
+<<<<<<< HEAD
+=======
+const resolveSessionAgentIdMock = vi.hoisted(() => vi.fn(() => "main"));
+>>>>>>> upstream/main
 const handleBashChatCommandMock = vi.hoisted(() =>
   vi.fn(async () => ({ text: "No active bash job" })),
 );
 
+<<<<<<< HEAD
+=======
+vi.mock("../../agents/agent-scope.js", () => ({
+  resolveSessionAgentId: resolveSessionAgentIdMock,
+}));
+
+>>>>>>> upstream/main
 vi.mock("./bash-command.js", () => ({
   handleBashChatCommand: handleBashChatCommandMock,
 }));
@@ -44,6 +59,10 @@ function buildBashParams(commandBodyNormalized: string): HandleCommandsParams {
 describe("handleBashCommand alias routing", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+<<<<<<< HEAD
+=======
+    resolveSessionAgentIdMock.mockReturnValue("target");
+>>>>>>> upstream/main
   });
 
   it("routes !poll and !stop through the bash chat handler", async () => {
@@ -54,4 +73,23 @@ describe("handleBashCommand alias routing", () => {
     }
     expect(handleBashChatCommandMock).toHaveBeenCalledTimes(2);
   });
+<<<<<<< HEAD
+=======
+
+  it("uses the canonical target session agent for /bash routing", async () => {
+    const params = buildBashParams("/bash pwd");
+    params.agentId = "main";
+    params.sessionKey = "agent:target:whatsapp:direct:test-user";
+
+    const result = await handleBashCommand(params, true);
+
+    expect(result?.shouldContinue).toBe(false);
+    expect(handleBashChatCommandMock).toHaveBeenCalledTimes(1);
+    const [[bashParams]] = handleBashChatCommandMock.mock.calls as unknown as Array<
+      [{ agentId?: string; sessionKey?: string }]
+    >;
+    expect(bashParams.agentId).toBe("target");
+    expect(bashParams.sessionKey).toBe("agent:target:whatsapp:direct:test-user");
+  });
+>>>>>>> upstream/main
 });

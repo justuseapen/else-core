@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Telegram tests cover action threading plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { resolveTelegramAutoThreadId } from "./action-threading.js";
 

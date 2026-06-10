@@ -1,9 +1,33 @@
+// Sub-CLI registration: core subcommands plus lazily imported command groups.
 import type { Command } from "commander";
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../../config/config.js";
 import { isTruthyEnvValue } from "../../infra/env.js";
 import { getPrimaryCommand, hasHelpOrVersion } from "../argv.js";
 import { removeCommandByName } from "./command-tree.js";
 import { registerLazyCommand as registerLazyCommandPlaceholder } from "./register-lazy-command.js";
+=======
+import { resolveCliArgvInvocation } from "../argv-invocation.js";
+import {
+  shouldEagerRegisterSubcommands,
+  shouldRegisterPrimarySubcommandOnly,
+} from "../command-registration-policy.js";
+import {
+  buildCommandGroupEntries,
+  defineImportedProgramCommandGroupSpecs,
+  type CommandGroupDescriptorSpec,
+} from "./command-group-descriptors.js";
+import {
+  registerCommandGroupByName,
+  registerCommandGroups,
+  type CommandGroupEntry,
+} from "./register-command-groups.js";
+import {
+  registerSubCliByName as registerSubCliByNameCore,
+  registerSubCliCommands as registerSubCliCommandsCore,
+  type SubCliRegistrationContext,
+} from "./register.subclis-core.js";
+>>>>>>> upstream/main
 import {
   getSubCliCommandsWithSubcommands,
   getSubCliEntries as getSubCliEntryDescriptors,
@@ -12,48 +36,20 @@ import {
 
 export { getSubCliCommandsWithSubcommands };
 
-type SubCliRegistrar = (program: Command) => Promise<void> | void;
+type SubCliRegistrar = (
+  program: Command,
+  argv: string[],
+  context: SubCliRegistrationContext,
+) => Promise<void> | void;
 
-type SubCliEntry = SubCliDescriptor & {
-  register: SubCliRegistrar;
-};
-
-const shouldRegisterPrimaryOnly = (argv: string[]) => {
-  if (isTruthyEnvValue(process.env.OPENCLAW_DISABLE_LAZY_SUBCOMMANDS)) {
-    return false;
-  }
-  if (hasHelpOrVersion(argv)) {
-    return false;
-  }
-  return true;
-};
-
-const shouldEagerRegisterSubcommands = (_argv: string[]) => {
-  return isTruthyEnvValue(process.env.OPENCLAW_DISABLE_LAZY_SUBCOMMANDS);
-};
-
-export const loadValidatedConfigForPluginRegistration =
-  async (): Promise<OpenClawConfig | null> => {
-    const mod = await import("../../config/config.js");
-    const snapshot = await mod.readConfigFileSnapshot();
-    if (!snapshot.valid) {
-      return null;
-    }
-    return mod.loadConfig();
-  };
-
-// Note for humans and agents:
-// If you update the list of commands, also check whether they have subcommands
-// and set the flag accordingly.
-const entries: SubCliEntry[] = [
-  {
-    name: "acp",
-    description: "Agent Control Protocol tools",
-    hasSubcommands: true,
-    register: async (program) => {
-      const mod = await import("../acp-cli.js");
-      mod.registerAcpCli(program);
+const entrySpecs: readonly CommandGroupDescriptorSpec<SubCliRegistrar>[] = [
+  ...defineImportedProgramCommandGroupSpecs([
+    {
+      commandNames: ["completion"],
+      loadModule: () => import("../completion-cli.js"),
+      exportName: "registerCompletionCli",
     },
+<<<<<<< HEAD
   },
   {
     name: "gateway",
@@ -320,22 +316,43 @@ const entries: SubCliEntry[] = [
       mod.registerCompletionCli(program);
     },
   },
+=======
+  ]),
+>>>>>>> upstream/main
 ];
 
+function resolveSubCliCommandGroups(
+  argv: string[],
+  context: SubCliRegistrationContext = {},
+): CommandGroupEntry[] {
+  return buildCommandGroupEntries(
+    getSubCliEntryDescriptors(),
+    entrySpecs,
+    (register) => async (program) => {
+      await register(program, argv, context);
+    },
+  );
+}
+
+/** Return visible sub-CLI descriptors after private QA filtering. */
 export function getSubCliEntries(): ReadonlyArray<SubCliDescriptor> {
   return getSubCliEntryDescriptors();
 }
 
-export async function registerSubCliByName(program: Command, name: string): Promise<boolean> {
-  const entry = entries.find((candidate) => candidate.name === name);
-  if (!entry) {
-    return false;
+/** Register one sub-CLI by name, including lazy command groups. */
+export async function registerSubCliByName(
+  program: Command,
+  name: string,
+  argv: string[] = process.argv,
+  context: SubCliRegistrationContext = {},
+): Promise<boolean> {
+  if (await registerSubCliByNameCore(program, name, argv, context)) {
+    return true;
   }
-  removeCommandByName(program, entry.name);
-  await entry.register(program);
-  return true;
+  return registerCommandGroupByName(program, resolveSubCliCommandGroups(argv, context), name);
 }
 
+<<<<<<< HEAD
 function registerLazyCommand(program: Command, entry: SubCliEntry) {
   registerLazyCommandPlaceholder({
     program,
@@ -344,25 +361,15 @@ function registerLazyCommand(program: Command, entry: SubCliEntry) {
     register: async () => {
       await entry.register(program);
     },
-  });
-}
-
+=======
+/** Register sub-CLI commands according to eager/lazy startup policy. */
 export function registerSubCliCommands(program: Command, argv: string[] = process.argv) {
-  if (shouldEagerRegisterSubcommands(argv)) {
-    for (const entry of entries) {
-      void entry.register(program);
-    }
-    return;
-  }
-  const primary = getPrimaryCommand(argv);
-  if (primary && shouldRegisterPrimaryOnly(argv)) {
-    const entry = entries.find((candidate) => candidate.name === primary);
-    if (entry) {
-      registerLazyCommand(program, entry);
-      return;
-    }
-  }
-  for (const candidate of entries) {
-    registerLazyCommand(program, candidate);
-  }
+  registerSubCliCommandsCore(program, argv);
+  const { primary } = resolveCliArgvInvocation(argv);
+  registerCommandGroups(program, resolveSubCliCommandGroups(argv), {
+    eager: shouldEagerRegisterSubcommands(),
+    primary,
+    registerPrimaryOnly: Boolean(primary && shouldRegisterPrimarySubcommandOnly(argv)),
+>>>>>>> upstream/main
+  });
 }

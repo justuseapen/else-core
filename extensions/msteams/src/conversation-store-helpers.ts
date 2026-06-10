@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// Msteams helper module supports conversation store helpers behavior.
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import type {
   MSTeamsConversationStoreEntry,
   StoredConversationReference,
@@ -33,9 +38,25 @@ export function mergeStoredConversationReference(
   nowIso: string,
 ): StoredConversationReference {
   return {
+<<<<<<< HEAD
     // Preserve fields from previous entry that may not be present on every activity
     // (e.g. timezone is only sent when clientInfo entity is available).
     ...(existing?.timezone && !incoming.timezone ? { timezone: existing.timezone } : {}),
+=======
+    // Preserve fields from the previous entry that may not be present on every
+    // inbound activity. Without this, sparse activities (e.g. conversationUpdate,
+    // reactions) would clear previously captured values. Some fields are only
+    // populated opportunistically, such as timezone from clientInfo entities and
+    // graphChatId from Graph lookups used for DM media downloads.
+    ...(existing?.timezone && !incoming.timezone ? { timezone: existing.timezone } : {}),
+    ...(existing?.graphChatId && !incoming.graphChatId
+      ? { graphChatId: existing.graphChatId }
+      : {}),
+    ...(existing?.tenantId && !incoming.tenantId ? { tenantId: existing.tenantId } : {}),
+    ...(existing?.aadObjectId && !incoming.aadObjectId
+      ? { aadObjectId: existing.aadObjectId }
+      : {}),
+>>>>>>> upstream/main
     ...incoming,
     lastSeenAt: nowIso,
   };
@@ -50,6 +71,7 @@ export function findPreferredDmConversationByUserId(
     return null;
   }
 
+<<<<<<< HEAD
   const matches: MSTeamsConversationStoreEntry[] = [];
   for (const entry of entries) {
     if (entry.reference.user?.aadObjectId === target || entry.reference.user?.id === target) {
@@ -76,4 +98,47 @@ export function findPreferredDmConversationByUserId(
   });
 
   return matches[0] ?? null;
+=======
+  // Partition user matches into DM-safe and non-DM buckets.
+  // Channel and group conversations also carry the sender's aadObjectId, but
+  // returning one of those when the caller asked for a user-targeted DM would
+  // leak the reply into a shared channel -- the root cause of #54520.
+  const personalMatches: MSTeamsConversationStoreEntry[] = [];
+  const unknownTypeMatches: MSTeamsConversationStoreEntry[] = [];
+  for (const entry of entries) {
+    if (entry.reference.user?.aadObjectId !== target && entry.reference.user?.id !== target) {
+      continue;
+    }
+    const convType = normalizeLowercaseStringOrEmpty(
+      entry.reference.conversation?.conversationType ?? "",
+    );
+    if (convType === "personal") {
+      personalMatches.push(entry);
+    } else if (convType === "channel" || convType === "groupchat") {
+      // Explicitly skip channel/group conversations -- these must never be
+      // returned for a user-targeted DM lookup.
+    } else {
+      // Legacy entries without conversationType are ambiguous. Include them
+      // as a fallback but rank below confirmed personal conversations.
+      unknownTypeMatches.push(entry);
+    }
+  }
+
+  // Prefer confirmed personal DMs, fall back to unknown-type entries.
+  const candidates = personalMatches.length > 0 ? personalMatches : unknownTypeMatches;
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  // When multiple candidates exist, prefer the most recently seen one.
+  if (candidates.length > 1) {
+    candidates.sort(
+      (a, b) =>
+        (parseStoredConversationTimestamp(b.reference.lastSeenAt) ?? 0) -
+        (parseStoredConversationTimestamp(a.reference.lastSeenAt) ?? 0),
+    );
+  }
+
+  return candidates[0] ?? null;
+>>>>>>> upstream/main
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   isDangerousNameMatchingEnabled,
   resolveNativeCommandsEnabled,
@@ -41,6 +42,20 @@ export function isDiscordMutableAllowEntry(raw: string): boolean {
 
   return true;
 }
+=======
+// Discord plugin module implements security audit behavior.
+import { coerceNativeSetting, normalizeAllowFromList } from "openclaw/plugin-sdk/channel-policy";
+import { readChannelAllowFromStore } from "openclaw/plugin-sdk/conversation-runtime";
+import { isDangerousNameMatchingEnabled } from "openclaw/plugin-sdk/dangerous-name-runtime";
+import {
+  resolveNativeCommandsEnabled,
+  resolveNativeSkillsEnabled,
+} from "openclaw/plugin-sdk/native-command-config-runtime";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+import type { ResolvedDiscordAccount } from "./accounts.js";
+import type { OpenClawConfig } from "./runtime-api.js";
+import { isDiscordMutableAllowEntry } from "./security-doctor.js";
+>>>>>>> upstream/main
 
 function addDiscordNameBasedEntries(params: {
   target: Set<string>;
@@ -54,7 +69,11 @@ function addDiscordNameBasedEntries(params: {
     if (!isDiscordMutableAllowEntry(String(value))) {
       continue;
     }
+<<<<<<< HEAD
     const text = String(value).trim();
+=======
+    const text = normalizeOptionalString(String(value)) ?? "";
+>>>>>>> upstream/main
     if (!text) {
       continue;
     }
@@ -77,7 +96,12 @@ export async function collectDiscordSecurityAuditFindings(params: {
     remediation?: string;
   }> = [];
   const discordCfg = params.account.config ?? {};
+<<<<<<< HEAD
   const accountId = params.accountId?.trim() || params.account.accountId || "default";
+=======
+  const accountId =
+    normalizeOptionalString(params.accountId) ?? params.account.accountId ?? "default";
+>>>>>>> upstream/main
   const dangerousNameMatchingEnabled = isDangerousNameMatchingEnabled(discordCfg);
   const storeAllowFrom = await readChannelAllowFromStore("discord", process.env, accountId).catch(
     () => [],

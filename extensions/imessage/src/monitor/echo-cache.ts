@@ -1,8 +1,12 @@
-export type SentMessageLookup = {
+// Imessage plugin module implements echo cache behavior.
+import { hasPersistedIMessageEcho } from "./persisted-echo-cache.js";
+
+type SentMessageLookup = {
   text?: string;
   messageId?: string;
 };
 
+<<<<<<< HEAD
 export type SentMessageCache = {
   remember: (scope: string, lookup: SentMessageLookup) => void;
   /**
@@ -17,17 +21,47 @@ export type SentMessageCache = {
   has: (scope: string, lookup: SentMessageLookup, skipIdShortCircuit?: boolean) => boolean;
 };
 
+=======
+type SentMessageLookupOptions = {
+  skipIdShortCircuit?: boolean;
+  includePendingText?: boolean;
+};
+
+export type SentMessageCache = {
+  remember: (scope: string, lookup: SentMessageLookup) => void;
+  /**
+   * Check whether an inbound message matches a recently-sent outbound message.
+   *
+   * @param skipIdShortCircuit - When true, skip the early return on message-ID
+   *   mismatch and fall through to text-based matching. Use this for self-chat
+   *   `is_from_me=true` messages where the inbound ID is a numeric SQLite row ID
+   *   that will never match the GUID outbound IDs, but text matching is still
+   *   the right way to identify agent reply echoes.
+   */
+  has: (
+    scope: string,
+    lookup: SentMessageLookup,
+    options?: boolean | SentMessageLookupOptions,
+  ) => boolean;
+};
+
+>>>>>>> upstream/main
 // Echo arrival observed at ~2.2s on M4 Mac Mini (SQLite poll interval is the bottleneck).
 // 4s provides ~80% margin. If echoes arrive after TTL expiry, the system degrades to
 // duplicate delivery (noisy but not lossy) — never message loss.
 const SENT_MESSAGE_TEXT_TTL_MS = 4_000;
 const SENT_MESSAGE_ID_TTL_MS = 60_000;
+const LEADING_ATTRIBUTED_BODY_CORRUPTION_MARKERS = /^[\uFEFF\uFFFD\uFFFE\uFFFF]+/u;
 
 function normalizeEchoTextKey(text: string | undefined): string | null {
   if (!text) {
     return null;
   }
-  const normalized = text.replace(/\r\n?/g, "\n").trim();
+  const normalized = text
+    .replace(/\r\n?/g, "\n")
+    .trim()
+    .replace(LEADING_ATTRIBUTED_BODY_CORRUPTION_MARKERS, "")
+    .trim();
   return normalized ? normalized : null;
 }
 
@@ -62,8 +96,28 @@ class DefaultSentMessageCache implements SentMessageCache {
     this.cleanup();
   }
 
+<<<<<<< HEAD
   has(scope: string, lookup: SentMessageLookup, skipIdShortCircuit = false): boolean {
     this.cleanup();
+=======
+  has(
+    scope: string,
+    lookup: SentMessageLookup,
+    options: boolean | SentMessageLookupOptions = false,
+  ): boolean {
+    this.cleanup();
+    const resolvedOptions =
+      typeof options === "boolean" ? { skipIdShortCircuit: options } : options;
+    if (
+      hasPersistedIMessageEcho({
+        scope,
+        ...lookup,
+        includePendingText: resolvedOptions.includePendingText,
+      })
+    ) {
+      return true;
+    }
+>>>>>>> upstream/main
     const textKey = normalizeEchoTextKey(lookup.text);
     const messageIdKey = normalizeEchoMessageIdKey(lookup.messageId);
     if (messageIdKey) {
@@ -78,7 +132,11 @@ class DefaultSentMessageCache implements SentMessageCache {
       const hasTextOnlyMatch =
         typeof textTimestamp === "number" &&
         (!textBackedByIdTimestamp || textTimestamp > textBackedByIdTimestamp);
+<<<<<<< HEAD
       if (!skipIdShortCircuit && !hasTextOnlyMatch) {
+=======
+      if (!resolvedOptions.skipIdShortCircuit && !hasTextOnlyMatch) {
+>>>>>>> upstream/main
         return false;
       }
     }

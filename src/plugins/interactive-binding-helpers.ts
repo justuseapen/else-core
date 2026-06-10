@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+/** Helpers for binding interactive plugin handlers to conversations and sessions. */
+>>>>>>> upstream/main
 import {
   detachPluginConversationBinding,
   getCurrentPluginConversationBinding,

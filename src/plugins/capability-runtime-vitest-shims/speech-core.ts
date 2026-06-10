@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 import { rmSync } from "node:fs";
 
 export type { SpeechProviderPlugin } from "../../plugins/types.js";
+=======
+// Speech-core Vitest shims expose speech capability types without loading full runtime code.
+>>>>>>> upstream/main
 export type {
   SpeechDirectiveTokenParseContext,
   SpeechDirectiveTokenParseResult,
@@ -8,6 +12,10 @@ export type {
   SpeechModelOverridePolicy,
   SpeechProviderConfig,
   SpeechProviderConfiguredContext,
+<<<<<<< HEAD
+=======
+  SpeechProviderPlugin,
+>>>>>>> upstream/main
   SpeechProviderResolveConfigContext,
   SpeechProviderResolveTalkConfigContext,
   SpeechProviderResolveTalkOverridesContext,
@@ -17,6 +25,7 @@ export type {
   SpeechVoiceOption,
   TtsDirectiveOverrides,
   TtsDirectiveParseResult,
+<<<<<<< HEAD
 } from "../../tts/provider-types.js";
 
 const TEMP_FILE_CLEANUP_DELAY_MS = 5 * 60 * 1000;
@@ -75,6 +84,25 @@ export function scheduleCleanup(
   }, delayMs);
   timer.unref();
 }
+=======
+} from "../../plugin-sdk/speech-core.js";
+
+export {
+  normalizeApplyTextNormalization,
+  normalizeLanguageCode,
+  normalizeSeed,
+  requireInRange,
+  scheduleCleanup,
+} from "../../plugin-sdk/speech-core.js";
+export {
+  asBoolean,
+  asFiniteNumber,
+  asObject,
+  readResponseTextLimited,
+  trimToUndefined,
+  truncateErrorDetail,
+} from "../../agents/provider-http-errors.js";
+>>>>>>> upstream/main
 
 export async function summarizeText(): Promise<never> {
   throw new Error("summarizeText is unavailable in the Vitest capability contract shim");

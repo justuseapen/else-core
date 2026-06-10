@@ -1,4 +1,14 @@
+<<<<<<< HEAD
 import type { Model } from "@mariozechner/pi-ai";
+=======
+/**
+ * OpenAI-completions compatibility defaults.
+ *
+ * Provider transports use these helpers to derive OpenAI-compatible request
+ * behavior from endpoint attribution without scattering provider-specific flags.
+ */
+import type { Model } from "../llm/types.js";
+>>>>>>> upstream/main
 import type { ProviderEndpointClass, ProviderRequestCapabilities } from "./provider-attribution.js";
 import { resolveProviderRequestCapabilities } from "./provider-attribution.js";
 
@@ -7,20 +17,39 @@ type OpenAICompletionsCompatDefaultsInput = {
   endpointClass: ProviderEndpointClass;
   knownProviderFamily: string;
   supportsNativeStreamingUsageCompat?: boolean;
+<<<<<<< HEAD
   usesExplicitProxyLikeEndpoint?: boolean;
 };
 
 export type OpenAICompletionsCompatDefaults = {
+=======
+  supportsOpenAICompletionsStreamingUsageCompat?: boolean;
+  usesExplicitProxyLikeEndpoint?: boolean;
+};
+
+type OpenAICompletionsCompatDefaults = {
+>>>>>>> upstream/main
   supportsStore: boolean;
   supportsDeveloperRole: boolean;
   supportsReasoningEffort: boolean;
   supportsUsageInStreaming: boolean;
   maxTokensField: "max_completion_tokens" | "max_tokens";
+<<<<<<< HEAD
   thinkingFormat: "openai" | "openrouter" | "zai";
   supportsStrictMode: boolean;
 };
 
 export type DetectedOpenAICompletionsCompat = {
+=======
+  thinkingFormat: "openai" | "openrouter" | "deepseek" | "together" | "zai";
+  visibleReasoningDetailTypes: string[];
+  supportsStrictMode: boolean;
+  requiresReasoningContentOnAssistantMessages: boolean;
+  requiresNonEmptyUserOrAssistantMessage: boolean;
+};
+
+type DetectedOpenAICompletionsCompat = {
+>>>>>>> upstream/main
   capabilities: ProviderRequestCapabilities;
   defaults: OpenAICompletionsCompatDefaults;
 };
@@ -29,13 +58,25 @@ function isDefaultRouteProvider(provider: string | undefined, ...ids: string[]) 
   return provider !== undefined && ids.includes(provider);
 }
 
+<<<<<<< HEAD
+=======
+/** Resolves default request flags for an OpenAI-compatible completions endpoint. */
+>>>>>>> upstream/main
 export function resolveOpenAICompletionsCompatDefaults(
   input: OpenAICompletionsCompatDefaultsInput,
 ): OpenAICompletionsCompatDefaults {
   const {
+<<<<<<< HEAD
     endpointClass,
     knownProviderFamily,
     supportsNativeStreamingUsageCompat = false,
+=======
+    provider,
+    endpointClass,
+    knownProviderFamily,
+    supportsNativeStreamingUsageCompat = false,
+    supportsOpenAICompletionsStreamingUsageCompat = false,
+>>>>>>> upstream/main
     usesExplicitProxyLikeEndpoint = false,
   } = input;
   const isDefaultRoute = endpointClass === "default";
@@ -46,9 +87,28 @@ export function resolveOpenAICompletionsCompatDefaults(
     knownProviderFamily === "modelstudio" ||
     endpointClass === "moonshot-native" ||
     endpointClass === "modelstudio-native";
+<<<<<<< HEAD
   const isZai =
     endpointClass === "zai-native" ||
     (isDefaultRoute && isDefaultRouteProvider(input.provider, "zai"));
+=======
+  const isModelStudioLike =
+    knownProviderFamily === "modelstudio" ||
+    endpointClass === "modelstudio-native" ||
+    (isDefaultRoute && isDefaultRouteProvider(provider, "dashscope", "modelstudio", "qwen"));
+  const isZai =
+    endpointClass === "zai-native" ||
+    (isDefaultRoute && isDefaultRouteProvider(input.provider, "zai"));
+  const isDeepSeek =
+    endpointClass === "deepseek-native" ||
+    (isDefaultRoute && isDefaultRouteProvider(input.provider, "deepseek"));
+  const isTogether =
+    knownProviderFamily === "together" ||
+    (isDefaultRoute && isDefaultRouteProvider(input.provider, "together"));
+  const isXiaomi =
+    endpointClass === "xiaomi-native" ||
+    (isDefaultRoute && isDefaultRouteProvider(input.provider, "xiaomi"));
+>>>>>>> upstream/main
   const isNonStandard =
     endpointClass === "cerebras-native" ||
     endpointClass === "chutes-native" ||
@@ -56,26 +116,44 @@ export function resolveOpenAICompletionsCompatDefaults(
     endpointClass === "mistral-public" ||
     endpointClass === "opencode-native" ||
     endpointClass === "xai-native" ||
+<<<<<<< HEAD
+=======
+    isXiaomi ||
+>>>>>>> upstream/main
     isZai ||
     (isDefaultRoute &&
       isDefaultRouteProvider(input.provider, "cerebras", "chutes", "deepseek", "opencode", "xai"));
   const isOpenRouterLike = input.provider === "openrouter" || endpointClass === "openrouter";
+<<<<<<< HEAD
+=======
+  const isLocalEndpoint = endpointClass === "local";
+>>>>>>> upstream/main
   const usesMaxTokens =
     endpointClass === "chutes-native" ||
     endpointClass === "mistral-public" ||
     knownProviderFamily === "mistral" ||
+<<<<<<< HEAD
     (isDefaultRoute && isDefaultRouteProvider(input.provider, "chutes"));
 
+=======
+    isTogether ||
+    (isDefaultRoute && isDefaultRouteProvider(provider, "chutes"));
+>>>>>>> upstream/main
   return {
     supportsStore:
       !isNonStandard && knownProviderFamily !== "mistral" && !usesExplicitProxyLikeEndpoint,
     supportsDeveloperRole: !isNonStandard && !isMoonshotLike && !usesConfiguredNonOpenAIEndpoint,
     supportsReasoningEffort:
       !isZai &&
+<<<<<<< HEAD
+=======
+      !isTogether &&
+>>>>>>> upstream/main
       knownProviderFamily !== "mistral" &&
       endpointClass !== "xai-native" &&
       !usesExplicitProxyLikeEndpoint,
     supportsUsageInStreaming:
+<<<<<<< HEAD
       !isNonStandard && (!usesConfiguredNonOpenAIEndpoint || supportsNativeStreamingUsageCompat),
     maxTokensField: usesMaxTokens ? "max_tokens" : "max_completion_tokens",
     thinkingFormat: isZai ? "zai" : isOpenRouterLike ? "openrouter" : "openai",
@@ -84,11 +162,41 @@ export function resolveOpenAICompletionsCompatDefaults(
 }
 
 export function resolveOpenAICompletionsCompatDefaultsFromCapabilities(
+=======
+      supportsOpenAICompletionsStreamingUsageCompat ||
+      (!isNonStandard &&
+        (isLocalEndpoint ||
+          !usesConfiguredNonOpenAIEndpoint ||
+          supportsNativeStreamingUsageCompat)),
+    maxTokensField: usesMaxTokens ? "max_tokens" : "max_completion_tokens",
+    thinkingFormat:
+      isDeepSeek || isXiaomi
+        ? "deepseek"
+        : isZai
+          ? "zai"
+          : isTogether
+            ? "together"
+            : isOpenRouterLike
+              ? "openrouter"
+              : "openai",
+    visibleReasoningDetailTypes: isOpenRouterLike ? ["response.output_text", "response.text"] : [],
+    supportsStrictMode: !isZai && !usesConfiguredNonOpenAIEndpoint,
+    requiresReasoningContentOnAssistantMessages: isDeepSeek || isXiaomi,
+    requiresNonEmptyUserOrAssistantMessage: isModelStudioLike,
+  };
+}
+
+function resolveOpenAICompletionsCompatDefaultsFromCapabilities(
+>>>>>>> upstream/main
   input: Pick<
     ProviderRequestCapabilities,
     | "endpointClass"
     | "knownProviderFamily"
     | "supportsNativeStreamingUsageCompat"
+<<<<<<< HEAD
+=======
+    | "supportsOpenAICompletionsStreamingUsageCompat"
+>>>>>>> upstream/main
     | "usesExplicitProxyLikeEndpoint"
   > & {
     provider?: string;
@@ -97,8 +205,16 @@ export function resolveOpenAICompletionsCompatDefaultsFromCapabilities(
   return resolveOpenAICompletionsCompatDefaults(input);
 }
 
+<<<<<<< HEAD
 export function detectOpenAICompletionsCompat(
   model: Pick<Model<"openai-completions">, "provider" | "baseUrl" | "id" | "compat">,
+=======
+/** Detects endpoint capabilities and defaults for an OpenAI-completions model. */
+export function detectOpenAICompletionsCompat(
+  model: Pick<Model<"openai-completions">, "provider" | "baseUrl" | "id"> & {
+    compat?: { supportsStore?: boolean } | null;
+  },
+>>>>>>> upstream/main
 ): DetectedOpenAICompletionsCompat {
   const capabilities = resolveProviderRequestCapabilities({
     provider: model.provider,

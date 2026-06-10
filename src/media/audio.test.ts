@@ -1,8 +1,9 @@
+// Audio media tests cover audio type normalization and extension mapping.
 import { describe, expect, it } from "vitest";
 import {
   isVoiceCompatibleAudio,
-  TELEGRAM_VOICE_AUDIO_EXTENSIONS,
-  TELEGRAM_VOICE_MIME_TYPES,
+  VOICE_MESSAGE_AUDIO_EXTENSIONS,
+  VOICE_MESSAGE_MIME_TYPES,
 } from "./audio.js";
 
 describe("isVoiceCompatibleAudio", () => {
@@ -28,7 +29,11 @@ describe("isVoiceCompatibleAudio", () => {
     {
       name: "returns true for supported MIME types",
       cases: [
+<<<<<<< HEAD
         ...Array.from(TELEGRAM_VOICE_MIME_TYPES, (contentType) => ({
+=======
+        ...Array.from(VOICE_MESSAGE_MIME_TYPES, (contentType) => ({
+>>>>>>> upstream/main
           opts: { contentType, fileName: null },
           expected: true,
         })),
@@ -38,7 +43,11 @@ describe("isVoiceCompatibleAudio", () => {
     },
     {
       name: "returns true for supported extensions",
+<<<<<<< HEAD
       cases: Array.from(TELEGRAM_VOICE_AUDIO_EXTENSIONS, (ext) => ({
+=======
+      cases: Array.from(VOICE_MESSAGE_AUDIO_EXTENSIONS, (ext) => ({
+>>>>>>> upstream/main
         opts: { fileName: `voice${ext}` },
         expected: true,
       })),

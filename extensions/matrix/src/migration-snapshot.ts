@@ -1,12 +1,19 @@
+<<<<<<< HEAD
+// Matrix plugin module implements migration snapshot backup behavior.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+<<<<<<<< HEAD:extensions/matrix/src/migration-snapshot.ts
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { writeJsonFileAtomically } from "openclaw/plugin-sdk/json-store";
 import { resolveRequiredHomeDir } from "openclaw/plugin-sdk/provider-auth";
 import { resolveStateDir } from "openclaw/plugin-sdk/state-paths";
 import { detectLegacyMatrixCrypto } from "./legacy-crypto.js";
 import { detectLegacyMatrixState } from "./legacy-state.js";
+========
+import { writeJsonFileAtomically } from "openclaw/plugin-sdk/json-store";
+import { resolveRequiredHomeDir, resolveStateDir } from "openclaw/plugin-sdk/state-paths";
+>>>>>>>> upstream/main:extensions/matrix/src/migration-snapshot-backup.ts
 
 const MATRIX_MIGRATION_SNAPSHOT_DIRNAME = "openclaw-migrations";
 
@@ -22,7 +29,7 @@ type MatrixMigrationSnapshotMarker = {
   includeWorkspace: boolean;
 };
 
-export type MatrixMigrationSnapshotResult = {
+type MatrixMigrationSnapshotResult = {
   created: boolean;
   archivePath: string;
   markerPath: string;
@@ -70,10 +77,49 @@ export function resolveMatrixMigrationSnapshotOutputDir(
   return path.join(homeDir, "Backups", MATRIX_MIGRATION_SNAPSHOT_DIRNAME);
 }
 
+<<<<<<<< HEAD:extensions/matrix/src/migration-snapshot.ts
+=======
+// Matrix plugin module implements migration snapshot behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { detectLegacyMatrixCrypto } from "./legacy-crypto.js";
+import { detectLegacyMatrixState } from "./legacy-state.js";
+import {
+  maybeCreateMatrixMigrationSnapshot,
+  resolveMatrixMigrationSnapshotMarkerPath,
+  resolveMatrixMigrationSnapshotOutputDir,
+} from "./migration-snapshot-backup.js";
+
+export type MatrixMigrationStatus = {
+  legacyState: ReturnType<typeof detectLegacyMatrixState>;
+  legacyCrypto: ReturnType<typeof detectLegacyMatrixCrypto>;
+  pending: boolean;
+  actionable: boolean;
+};
+
+export function resolveMatrixMigrationStatus(params: {
+  cfg: OpenClawConfig;
+  env?: NodeJS.ProcessEnv;
+}): MatrixMigrationStatus {
+  const env = params.env ?? process.env;
+  const legacyState = detectLegacyMatrixState({ cfg: params.cfg, env });
+  const legacyCrypto = detectLegacyMatrixCrypto({ cfg: params.cfg, env });
+  const actionableLegacyState = legacyState !== null && !("warning" in legacyState);
+  const actionableLegacyCrypto = legacyCrypto.plans.length > 0 && legacyCrypto.inspectorAvailable;
+  return {
+    legacyState,
+    legacyCrypto,
+    pending:
+      legacyState !== null || legacyCrypto.plans.length > 0 || legacyCrypto.warnings.length > 0,
+    actionable: actionableLegacyState || actionableLegacyCrypto,
+  };
+}
+
+>>>>>>> upstream/main
 export function hasPendingMatrixMigration(params: {
   cfg: OpenClawConfig;
   env?: NodeJS.ProcessEnv;
 }): boolean {
+<<<<<<< HEAD
   const env = params.env ?? process.env;
   const legacyState = detectLegacyMatrixState({ cfg: params.cfg, env });
   if (legacyState) {
@@ -81,12 +127,16 @@ export function hasPendingMatrixMigration(params: {
   }
   const legacyCrypto = detectLegacyMatrixCrypto({ cfg: params.cfg, env });
   return legacyCrypto.plans.length > 0 || legacyCrypto.warnings.length > 0;
+=======
+  return resolveMatrixMigrationStatus(params).pending;
+>>>>>>> upstream/main
 }
 
 export function hasActionableMatrixMigration(params: {
   cfg: OpenClawConfig;
   env?: NodeJS.ProcessEnv;
 }): boolean {
+<<<<<<< HEAD
   const env = params.env ?? process.env;
   const legacyState = detectLegacyMatrixState({ cfg: params.cfg, env });
   if (legacyState && !("warning" in legacyState)) {
@@ -96,6 +146,8 @@ export function hasActionableMatrixMigration(params: {
   return legacyCrypto.plans.length > 0 && isMatrixLegacyCryptoInspectorAvailable();
 }
 
+========
+>>>>>>>> upstream/main:extensions/matrix/src/migration-snapshot-backup.ts
 export async function maybeCreateMatrixMigrationSnapshot(params: {
   trigger: string;
   env?: NodeJS.ProcessEnv;
@@ -148,3 +200,13 @@ export async function maybeCreateMatrixMigrationSnapshot(params: {
     markerPath,
   };
 }
+=======
+  return resolveMatrixMigrationStatus(params).actionable;
+}
+
+export {
+  maybeCreateMatrixMigrationSnapshot,
+  resolveMatrixMigrationSnapshotMarkerPath,
+  resolveMatrixMigrationSnapshotOutputDir,
+};
+>>>>>>> upstream/main

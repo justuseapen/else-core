@@ -1,22 +1,15 @@
-import { inspect } from "node:util";
-import {
-  Client,
-  RateLimitError,
-  type BaseCommand,
-  type BaseMessageInteractiveComponent,
-  type Modal,
-} from "@buape/carbon";
-import { GatewayCloseCodes, type GatewayPlugin } from "@buape/carbon/gateway";
-import { Routes } from "discord-api-types/v10";
+// Discord provider module implements model/runtime integration.
+import type { ChannelRuntimeSurface } from "openclaw/plugin-sdk/channel-contract";
 import {
   listNativeCommandSpecsForConfig,
   listSkillCommandsForAgents,
-  type NativeCommandSpec,
-} from "openclaw/plugin-sdk/command-auth";
+} from "openclaw/plugin-sdk/command-auth-native";
+import type { OpenClawConfig, ReplyToMode } from "openclaw/plugin-sdk/config-contracts";
+import { createConnectedChannelStatusPatch } from "openclaw/plugin-sdk/gateway-runtime";
 import {
-  isNativeCommandsExplicitlyDisabled,
   resolveNativeCommandsEnabled,
   resolveNativeSkillsEnabled,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/config-runtime";
 import type { OpenClawConfig, ReplyToMode } from "openclaw/plugin-sdk/config-runtime";
 import { loadConfig } from "openclaw/plugin-sdk/config-runtime";
@@ -44,34 +37,54 @@ import { resolveDiscordAccount } from "../accounts.js";
 import { isDiscordExecApprovalClientEnabled } from "../exec-approvals.js";
 import { fetchDiscordApplicationId } from "../probe.js";
 import { resolveDiscordProxyFetchForAccount } from "../proxy-fetch.js";
-import { normalizeDiscordToken } from "../token.js";
-import { createDiscordVoiceCommand } from "../voice/command.js";
+=======
+} from "openclaw/plugin-sdk/native-command-config-runtime";
+import { resolveTextChunkLimit } from "openclaw/plugin-sdk/reply-chunking";
+import { getRuntimeConfig } from "openclaw/plugin-sdk/runtime-config-snapshot";
+import { isVerbose, logVerbose, shouldLogVerbose, warn } from "openclaw/plugin-sdk/runtime-env";
+import { createSubsystemLogger } from "openclaw/plugin-sdk/runtime-env";
+import { createNonExitingRuntime, type RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import {
-  createAgentComponentButton,
-  createAgentSelectMenu,
-  createDiscordComponentButton,
-  createDiscordComponentChannelSelect,
-  createDiscordComponentMentionableSelect,
-  createDiscordComponentModal,
-  createDiscordComponentRoleSelect,
-  createDiscordComponentStringSelect,
-  createDiscordComponentUserSelect,
-} from "./agent-components.js";
+  GROUP_POLICY_BLOCKED_LABEL,
+  resolveOpenProviderRuntimeGroupPolicy,
+  resolveDefaultGroupPolicy,
+  warnMissingProviderGroupPolicyFallbackOnce,
+} from "openclaw/plugin-sdk/runtime-group-policy";
+import { formatErrorMessage } from "openclaw/plugin-sdk/ssrf-runtime";
+import {
+  resolveDiscordAccount,
+  resolveDiscordAccountAllowFrom,
+  resolveDiscordAccountDmPolicy,
+} from "../accounts.js";
+import { Client } from "../internal/discord.js";
+import { GatewayCloseCodes } from "../internal/gateway.js";
+import { fetchDiscordApplicationId, parseApplicationIdFromToken } from "../probe.js";
+>>>>>>> upstream/main
+import { normalizeDiscordToken } from "../token.js";
+import { resolveDiscordVoiceEnabled } from "../voice/config.js";
 import { createDiscordAutoPresenceController } from "./auto-presence.js";
 import { resolveDiscordSlashCommandConfig } from "./commands.js";
-import { createExecApprovalButton, DiscordExecApprovalHandler } from "./exec-approvals.js";
 import type { MutableDiscordGateway } from "./gateway-handle.js";
 import { createDiscordGatewayPlugin } from "./gateway-plugin.js";
 import { createDiscordGatewaySupervisor } from "./gateway-supervisor.js";
 import { registerDiscordListener } from "./listeners.js";
-import {
-  createDiscordCommandArgFallbackButton,
-  createDiscordModelPickerFallbackButton,
-  createDiscordModelPickerFallbackSelect,
-  createDiscordNativeCommand,
-} from "./native-command.js";
+import { createDiscordNativeCommand } from "./native-command.js";
+import { probeDiscordAcpBindingHealth } from "./provider.acp.js";
 import { resolveDiscordAllowlistConfig } from "./provider.allowlist.js";
+import { cleanupDiscordProviderStartup } from "./provider.cleanup.js";
+import {
+  resolveDiscordProviderCommandSpecs,
+  type GetPluginCommandSpecs,
+} from "./provider.commands.js";
+import { logDiscordResolvedConfig } from "./provider.config-log.js";
+import {
+  formatDiscordDeployErrorDetails,
+  formatDiscordDeployErrorMessage,
+} from "./provider.deploy-errors.js";
+import { runDiscordCommandDeployInBackground } from "./provider.deploy.js";
+import { createDiscordProviderInteractionSurface } from "./provider.interactions.js";
 import { runDiscordGatewayLifecycle } from "./provider.lifecycle.js";
+import { logDiscordStartupPhase as logDiscordStartupPhaseBase } from "./provider.startup-log.js";
 import {
   createDiscordMonitorClient,
   fetchDiscordBotIdentity,
@@ -80,13 +93,13 @@ import {
 import { resolveDiscordRestFetch } from "./rest-fetch.js";
 import { formatDiscordStartupStatusMessage } from "./startup-status.js";
 import type { DiscordMonitorStatusSink } from "./status.js";
-import { formatThreadBindingDurationLabel } from "./thread-bindings.messages.js";
 
 export type MonitorDiscordOpts = {
   token?: string;
   accountId?: string;
   config?: OpenClawConfig;
   runtime?: RuntimeEnv;
+  channelRuntime?: ChannelRuntimeSurface;
   abortSignal?: AbortSignal;
   mediaMaxMb?: number;
   historyLimit?: number;
@@ -120,7 +133,7 @@ let createClientForTesting:
       plugins: ConstructorParameters<typeof Client>[2],
     ) => Client)
   | undefined;
-let getPluginCommandSpecsForTesting: typeof getPluginCommandSpecs | undefined;
+let getPluginCommandSpecsForTesting: GetPluginCommandSpecs | undefined;
 let resolveDiscordAccountForTesting: typeof resolveDiscordAccount | undefined;
 let resolveNativeCommandsEnabledForTesting: typeof resolveNativeCommandsEnabled | undefined;
 let resolveNativeSkillsEnabledForTesting: typeof resolveNativeSkillsEnabled | undefined;
@@ -129,20 +142,45 @@ let listSkillCommandsForAgentsForTesting: typeof listSkillCommandsForAgents | un
 let isVerboseForTesting: typeof isVerbose | undefined;
 let shouldLogVerboseForTesting: typeof shouldLogVerbose | undefined;
 
+function logDiscordStartupPhase(
+  params: Omit<Parameters<typeof logDiscordStartupPhaseBase>[0], "isVerbose">,
+) {
+  logDiscordStartupPhaseBase({
+    ...params,
+    isVerbose: isVerboseForTesting ?? isVerbose,
+  });
+}
+
 async function loadDiscordVoiceRuntime(): Promise<DiscordVoiceRuntimeModule> {
   if (loadDiscordVoiceRuntimeForTesting) {
     return await loadDiscordVoiceRuntimeForTesting();
   }
-  discordVoiceRuntimePromise ??= import("../voice/manager.runtime.js");
-  return await discordVoiceRuntimePromise;
+  const promise = discordVoiceRuntimePromise ?? import("../voice/manager.runtime.js");
+  discordVoiceRuntimePromise = promise;
+  try {
+    return await promise;
+  } catch (error) {
+    if (discordVoiceRuntimePromise === promise) {
+      discordVoiceRuntimePromise = undefined;
+    }
+    throw error;
+  }
 }
 
 async function loadDiscordProviderSessionRuntime(): Promise<DiscordProviderSessionRuntimeModule> {
   if (loadDiscordProviderSessionRuntimeForTesting) {
     return await loadDiscordProviderSessionRuntimeForTesting();
   }
-  discordProviderSessionRuntimePromise ??= import("./provider-session.runtime.js");
-  return await discordProviderSessionRuntimePromise;
+  const promise = discordProviderSessionRuntimePromise ?? import("./provider-session.runtime.js");
+  discordProviderSessionRuntimePromise = promise;
+  try {
+    return await promise;
+  } catch (error) {
+    if (discordProviderSessionRuntimePromise === promise) {
+      discordProviderSessionRuntimePromise = undefined;
+    }
+    throw error;
+  }
 }
 
 function normalizeBooleanForTesting(value: unknown): boolean | undefined {
@@ -163,6 +201,7 @@ function resolveThreadBindingsEnabledForTesting(params: {
   );
 }
 
+<<<<<<< HEAD
 function formatThreadBindingDurationForConfigLabel(durationMs: number): string {
   const label = formatThreadBindingDurationLabel(durationMs);
   return label === "disabled" ? "off" : label;
@@ -563,6 +602,8 @@ function formatDiscordDeployErrorDetails(err: unknown): string {
   return details.length > 0 ? ` (${details.join(", ")})` : "";
 }
 
+=======
+>>>>>>> upstream/main
 const DISCORD_DISALLOWED_INTENTS_CODE = GatewayCloseCodes.DisallowedIntents;
 
 function isDiscordDisallowedIntentsError(err: unknown): boolean {
@@ -575,7 +616,7 @@ function isDiscordDisallowedIntentsError(err: unknown): boolean {
 
 export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
   const startupStartedAt = Date.now();
-  const cfg = opts.config ?? loadConfig();
+  const cfg = opts.config ?? getRuntimeConfig();
   const account = (resolveDiscordAccountForTesting ?? resolveDiscordAccount)({
     cfg,
     accountId: opts.accountId,
@@ -597,6 +638,10 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
   const discordRestFetch = resolveDiscordRestFetch(rawDiscordCfg.proxy, runtime);
   const discordProxyFetch = resolveDiscordProxyFetchForAccount(account, cfg, runtime);
   const dmConfig = rawDiscordCfg.dm;
+  const configuredDmAllowFrom = resolveDiscordAccountAllowFrom({
+    cfg,
+    accountId: account.accountId,
+  });
   let guildEntries = rawDiscordCfg.guilds;
   const defaultGroupPolicy = resolveDefaultGroupPolicy(cfg);
   const providerConfigPresent = cfg.channels?.discord !== undefined;
@@ -614,7 +659,11 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
     blockedLabel: GROUP_POLICY_BLOCKED_LABEL.guild,
     log: (message) => runtime.log?.(warn(message)),
   });
+<<<<<<< HEAD
   let allowFrom = discordCfg.allowFrom ?? dmConfig?.allowFrom;
+=======
+  let allowFrom = configuredDmAllowFrom ?? [];
+>>>>>>> upstream/main
   const mediaMaxBytes =
     (opts.mediaMaxMb ?? discordCfg.mediaMaxMb ?? DEFAULT_DISCORD_MEDIA_MAX_MB) * 1024 * 1024;
   const textLimit = resolveTextChunkLimit(cfg, "discord", account.accountId, {
@@ -626,7 +675,11 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
   );
   const replyToMode = opts.replyToMode ?? discordCfg.replyToMode ?? "off";
   const dmEnabled = dmConfig?.enabled ?? true;
-  const dmPolicy = discordCfg.dmPolicy ?? dmConfig?.policy ?? "pairing";
+  const dmPolicy =
+    resolveDiscordAccountDmPolicy({
+      cfg,
+      accountId: account.accountId,
+    }) ?? "pairing";
   const discordProviderSessionRuntime = await loadDiscordProviderSessionRuntime();
   const threadBindingIdleTimeoutMs =
     discordProviderSessionRuntime.resolveThreadBindingIdleTimeoutMs({
@@ -655,45 +708,41 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
     providerSetting: discordCfg.commands?.nativeSkills,
     globalSetting: cfg.commands?.nativeSkills,
   });
-  const nativeDisabledExplicit = isNativeCommandsExplicitlyDisabled({
-    providerSetting: discordCfg.commands?.native,
-    globalSetting: cfg.commands?.native,
-  });
   const useAccessGroups = cfg.commands?.useAccessGroups !== false;
   const slashCommand = resolveDiscordSlashCommandConfig(discordCfg.slashCommand);
   const sessionPrefix = "discord:slash";
   const ephemeralDefault = slashCommand.ephemeral;
-  const voiceEnabled = discordCfg.voice?.enabled !== false;
+  const voiceEnabled = resolveDiscordVoiceEnabled(discordCfg.voice);
 
   const allowlistResolved = await resolveDiscordAllowlistConfig({
     token,
     guildEntries,
     allowFrom,
+    discordConfig: discordCfg,
     fetcher: discordRestFetch,
     runtime,
   });
   guildEntries = allowlistResolved.guildEntries;
-  allowFrom = allowlistResolved.allowFrom;
+  allowFrom = allowlistResolved.allowFrom ?? [];
 
   if ((shouldLogVerboseForTesting ?? shouldLogVerbose)()) {
-    const allowFromSummary = summarizeStringEntries({
-      entries: allowFrom ?? [],
-      limit: 4,
-      emptyText: "any",
+    logDiscordResolvedConfig({
+      dmEnabled,
+      dmPolicy,
+      allowFrom,
+      groupDmEnabled,
+      groupDmChannels,
+      groupPolicy,
+      guildEntries,
+      historyLimit,
+      mediaMaxBytes,
+      nativeEnabled,
+      nativeSkillsEnabled,
+      useAccessGroups,
+      threadBindingsEnabled,
+      threadBindingIdleTimeoutMs,
+      threadBindingMaxAgeMs,
     });
-    const groupDmChannelSummary = summarizeStringEntries({
-      entries: groupDmChannels ?? [],
-      limit: 4,
-      emptyText: "any",
-    });
-    const guildSummary = summarizeStringEntries({
-      entries: Object.keys(guildEntries ?? {}),
-      limit: 4,
-      emptyText: "any",
-    });
-    logVerbose(
-      `discord: config dm=${dmEnabled ? "on" : "off"} dmPolicy=${dmPolicy} allowFrom=${allowFromSummary} groupDm=${groupDmEnabled ? "on" : "off"} groupDmChannels=${groupDmChannelSummary} groupPolicy=${groupPolicy} guilds=${guildSummary} historyLimit=${historyLimit} mediaMaxMb=${Math.round(mediaMaxBytes / (1024 * 1024))} native=${nativeEnabled ? "on" : "off"} nativeSkills=${nativeSkillsEnabled ? "on" : "off"} accessGroups=${useAccessGroups ? "on" : "off"} threadBindings=${threadBindingsEnabled ? "on" : "off"} threadIdleTimeout=${formatThreadBindingDurationForConfigLabel(threadBindingIdleTimeoutMs)} threadMaxAge=${formatThreadBindingDurationForConfigLabel(threadBindingMaxAgeMs)}`,
-    );
   }
 
   logDiscordStartupPhase({
@@ -702,11 +751,18 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
     phase: "fetch-application-id:start",
     startAt: startupStartedAt,
   });
-  const applicationId = await (fetchDiscordApplicationIdForTesting ?? fetchDiscordApplicationId)(
-    token,
-    4000,
-    discordRestFetch,
-  );
+  const configuredApplicationId =
+    typeof discordCfg.applicationId === "string" && discordCfg.applicationId.trim()
+      ? discordCfg.applicationId.trim()
+      : undefined;
+  const parsedApplicationId = configuredApplicationId ?? parseApplicationIdFromToken(token);
+  const applicationId =
+    parsedApplicationId ??
+    (await (fetchDiscordApplicationIdForTesting ?? fetchDiscordApplicationId)(
+      token,
+      4000,
+      discordRestFetch,
+    ));
   if (!applicationId) {
     throw new Error("Failed to resolve Discord application id");
   }
@@ -718,41 +774,16 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
     details: `applicationId=${applicationId}`,
   });
 
-  const maxDiscordCommands = 100;
-  let skillCommands =
-    nativeEnabled && nativeSkillsEnabled
-      ? (listSkillCommandsForAgentsForTesting ?? listSkillCommandsForAgents)({ cfg })
-      : [];
-  let commandSpecs = nativeEnabled
-    ? (listNativeCommandSpecsForConfigForTesting ?? listNativeCommandSpecsForConfig)(cfg, {
-        skillCommands,
-        provider: "discord",
-      })
-    : [];
-  if (nativeEnabled) {
-    commandSpecs = appendPluginCommandSpecs({ commandSpecs, runtime });
-  }
-  const initialCommandCount = commandSpecs.length;
-  if (nativeEnabled && nativeSkillsEnabled && commandSpecs.length > maxDiscordCommands) {
-    skillCommands = [];
-    commandSpecs = (listNativeCommandSpecsForConfigForTesting ?? listNativeCommandSpecsForConfig)(
-      cfg,
-      { skillCommands: [], provider: "discord" },
-    );
-    commandSpecs = appendPluginCommandSpecs({ commandSpecs, runtime });
-    runtime.log?.(
-      warn(
-        `discord: ${initialCommandCount} commands exceeds limit; removing per-skill commands and keeping /skill.`,
-      ),
-    );
-  }
-  if (nativeEnabled && commandSpecs.length > maxDiscordCommands) {
-    runtime.log?.(
-      warn(
-        `discord: ${commandSpecs.length} commands exceeds limit; some commands may fail to deploy.`,
-      ),
-    );
-  }
+  const { commandSpecs } = await resolveDiscordProviderCommandSpecs({
+    cfg,
+    runtime,
+    nativeEnabled,
+    nativeSkillsEnabled,
+    listSkillCommandsForAgents: listSkillCommandsForAgentsForTesting ?? listSkillCommandsForAgents,
+    listNativeCommandSpecsForConfig:
+      listNativeCommandSpecsForConfigForTesting ?? listNativeCommandSpecsForConfig,
+    getPluginCommandSpecs: getPluginCommandSpecsForTesting,
+  });
   const voiceManagerRef: { current: DiscordVoiceManager | null } = { current: null };
   const threadBindings = threadBindingsEnabled
     ? discordProviderSessionRuntime.createThreadBindingManager({
@@ -775,6 +806,7 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
           sessionKey,
           storedState: session.acp?.state,
           lastActivityAt: session.acp?.lastActivityAt,
+          providerSessionRuntime: discordProviderSessionRuntime,
         });
         if (probe.status === "uncertain") {
           uncertainProbeKeys.add(`${sessionKey}${probe.reason ? ` (${probe.reason})` : ""}`);
@@ -796,13 +828,14 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
   let lifecycleStarted = false;
   let gatewaySupervisor: ReturnType<typeof createDiscordGatewaySupervisor> | undefined;
   let deactivateMessageHandler: (() => void) | undefined;
-  let autoPresenceController: ReturnType<
-    typeof createDiscordMonitorClient
+  let autoPresenceController: Awaited<
+    ReturnType<typeof createDiscordMonitorClient>
   >["autoPresenceController"] = null;
   let lifecycleGateway: MutableDiscordGateway | undefined;
   let earlyGatewayEmitter = gatewaySupervisor?.emitter;
   let onEarlyGatewayDebug: ((msg: unknown) => void) | undefined;
   try {
+<<<<<<< HEAD
     const commands: BaseCommand[] = commandSpecs.map((spec) =>
       (createDiscordNativeCommandForTesting ?? createDiscordNativeCommand)({
         command: spec,
@@ -897,18 +930,45 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
       components.push(createDiscordComponentChannelSelect(componentContext));
       modals.push(createDiscordComponentModal(componentContext));
     }
+=======
+    const { commands, components, modals } = createDiscordProviderInteractionSurface({
+      cfg,
+      discordConfig: discordCfg,
+      accountId: account.accountId,
+      token,
+      commandSpecs,
+      nativeEnabled,
+      voiceEnabled,
+      groupPolicy,
+      useAccessGroups,
+      sessionPrefix,
+      ephemeralDefault,
+      threadBindings,
+      voiceManagerRef,
+      guildEntries,
+      allowFrom,
+      dmPolicy,
+      runtime,
+      channelRuntime: opts.channelRuntime,
+      abortSignal: opts.abortSignal,
+      createNativeCommand: createDiscordNativeCommandForTesting ?? createDiscordNativeCommand,
+    });
+>>>>>>> upstream/main
 
     const {
       client,
       gateway,
       gatewaySupervisor: createdGatewaySupervisor,
       autoPresenceController: createdAutoPresenceController,
-      eventQueueOpts,
-    } = createDiscordMonitorClient({
+    } = await createDiscordMonitorClient({
       accountId: account.accountId,
       applicationId,
       token,
+<<<<<<< HEAD
       proxyFetch: discordProxyFetch,
+=======
+      restFetch: discordRestFetch,
+>>>>>>> upstream/main
       commands,
       components,
       modals,
@@ -940,24 +1000,19 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
     logDiscordStartupPhase({
       runtime,
       accountId: account.accountId,
-      phase: "deploy-commands:start",
+      phase: "deploy-commands:schedule",
       startAt: startupStartedAt,
       gateway: lifecycleGateway,
       details: `native=${nativeEnabled ? "on" : "off"} reconcile=on commandCount=${commands.length}`,
     });
-    await deployDiscordCommands({
+    runDiscordCommandDeployInBackground({
       client,
       runtime,
       enabled: nativeEnabled,
       accountId: account.accountId,
       startupStartedAt,
-    });
-    logDiscordStartupPhase({
-      runtime,
-      accountId: account.accountId,
-      phase: "deploy-commands:done",
-      startAt: startupStartedAt,
-      gateway: lifecycleGateway,
+      shouldLogVerbose: shouldLogVerboseForTesting ?? shouldLogVerbose,
+      isVerbose: isVerboseForTesting ?? isVerbose,
     });
 
     const logger = createSubsystemLogger("discord/monitor");
@@ -965,8 +1020,9 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
       string,
       import("openclaw/plugin-sdk/reply-history").HistoryEntry[]
     >();
-    let { botUserId, botUserName } = await fetchDiscordBotIdentity({
+    const { botUserId, botUserName } = await fetchDiscordBotIdentity({
       client,
+      token,
       runtime,
       logStartupPhase: (phase, details) =>
         logDiscordStartupPhase({
@@ -980,30 +1036,13 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
     });
     let voiceManager: DiscordVoiceManager | null = null;
 
-    if (nativeDisabledExplicit) {
-      logDiscordStartupPhase({
-        runtime,
-        accountId: account.accountId,
-        phase: "clear-native-commands:start",
-        startAt: startupStartedAt,
-        gateway: lifecycleGateway,
-      });
-      await clearDiscordNativeCommands({
-        client,
-        applicationId,
-        runtime,
-      });
-      logDiscordStartupPhase({
-        runtime,
-        accountId: account.accountId,
-        phase: "clear-native-commands:done",
-        startAt: startupStartedAt,
-        gateway: lifecycleGateway,
-      });
-    }
-
     if (voiceEnabled) {
-      const { DiscordVoiceManager, DiscordVoiceReadyListener } = await loadDiscordVoiceRuntime();
+      const {
+        DiscordVoiceManager,
+        DiscordVoiceReadyListener,
+        DiscordVoiceResumedListener,
+        DiscordVoiceStateUpdateListener,
+      } = await loadDiscordVoiceRuntime();
       voiceManager = new DiscordVoiceManager({
         client,
         cfg,
@@ -1012,8 +1051,15 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
         runtime,
         botUserId,
       });
+      const { setDiscordTranscriptsVoiceManager } = await import("../voice/transcripts-source.js");
+      setDiscordTranscriptsVoiceManager({
+        accountId: account.accountId,
+        manager: voiceManager,
+      });
       voiceManagerRef.current = voiceManager;
       registerDiscordListener(client.listeners, new DiscordVoiceReadyListener(voiceManager));
+      registerDiscordListener(client.listeners, new DiscordVoiceResumedListener(voiceManager));
+      registerDiscordListener(client.listeners, new DiscordVoiceStateUpdateListener(voiceManager));
     }
 
     const messageHandler = discordProviderSessionRuntime.createDiscordMessageHandler({
@@ -1024,7 +1070,6 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
       runtime,
       setStatus: opts.setStatus,
       abortSignal: opts.abortSignal,
-      workerRunTimeoutMs: discordCfg.inboundWorker?.runTimeoutMs,
       botUserId,
       guildHistories,
       historyLimit,
@@ -1032,6 +1077,7 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
       textLimit,
       replyToMode,
       dmEnabled,
+      dmPolicy,
       groupDmEnabled,
       groupDmChannels,
       allowFrom,
@@ -1043,6 +1089,7 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
     const trackInboundEvent = opts.setStatus
       ? () => {
           const at = Date.now();
+          // Gateway heartbeat ACKs are transport-level; Discord app events stay app-level only.
           opts.setStatus?.({ lastEventAt: at, lastInboundAt: at });
         }
       : undefined;
@@ -1063,7 +1110,14 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
       logger,
       messageHandler,
       trackInboundEvent,
-      eventQueueListenerTimeoutMs: eventQueueOpts.listenerTimeout,
+    });
+
+    logDiscordStartupPhase({
+      runtime,
+      accountId: account.accountId,
+      phase: "client-start",
+      startAt: startupStartedAt,
+      gateway: lifecycleGateway,
     });
 
     logDiscordStartupPhase({
@@ -1098,55 +1152,35 @@ export async function monitorDiscordProvider(opts: MonitorDiscordOpts = {}) {
       isDisallowedIntentsError: isDiscordDisallowedIntentsError,
       voiceManager,
       voiceManagerRef,
-      execApprovalsHandler,
       threadBindings,
       gatewaySupervisor,
+      gatewayReadyTimeoutMs: account.config.gatewayReadyTimeoutMs,
+      gatewayRuntimeReadyTimeoutMs: account.config.gatewayRuntimeReadyTimeoutMs,
     });
   } finally {
-    deactivateMessageHandler?.();
-    autoPresenceController?.stop();
-    opts.setStatus?.({ connected: false });
-    if (onEarlyGatewayDebug) {
-      earlyGatewayEmitter?.removeListener("debug", onEarlyGatewayDebug);
-    }
-    if (!lifecycleStarted) {
-      try {
-        lifecycleGateway?.disconnect();
-      } catch (err) {
-        runtime.error?.(
-          danger(`discord: failed to disconnect gateway during startup cleanup: ${String(err)}`),
-        );
-      }
-    }
-    gatewaySupervisor?.dispose();
-    if (!lifecycleStarted) {
-      threadBindings.stop();
-    }
-  }
-}
-
-async function clearDiscordNativeCommands(params: {
-  client: Client;
-  applicationId: string;
-  runtime: RuntimeEnv;
-}) {
-  try {
-    await params.client.rest.put(Routes.applicationCommands(params.applicationId), {
-      body: [],
+    cleanupDiscordProviderStartup({
+      deactivateMessageHandler,
+      autoPresenceController,
+      setStatus: opts.setStatus,
+      onEarlyGatewayDebug,
+      earlyGatewayEmitter,
+      lifecycleStarted,
+      lifecycleGateway,
+      gatewaySupervisor,
+      threadBindings,
+      runtime,
     });
-    logVerbose("discord: cleared native commands (commands.native=false)");
-  } catch (err) {
-    params.runtime.error?.(danger(`discord: failed to clear native commands: ${String(err)}`));
   }
 }
 
-export const __testing = {
+export const testing = {
   createDiscordGatewayPlugin,
   resolveDiscordRuntimeGroupPolicy: resolveOpenProviderRuntimeGroupPolicy,
   resolveDefaultGroupPolicy,
   resolveDiscordRestFetch,
   resolveThreadBindingsEnabled: resolveThreadBindingsEnabledForTesting,
   formatDiscordDeployErrorDetails,
+  formatDiscordDeployErrorMessage,
   setFetchDiscordApplicationId(mock?: typeof fetchDiscordApplicationId) {
     fetchDiscordApplicationIdForTesting = mock;
   },
@@ -1177,7 +1211,7 @@ export const __testing = {
   ) {
     createClientForTesting = mock;
   },
-  setGetPluginCommandSpecs(mock?: typeof getPluginCommandSpecs) {
+  setGetPluginCommandSpecs(mock?: GetPluginCommandSpecs) {
     getPluginCommandSpecsForTesting = mock;
   },
   setResolveDiscordAccount(mock?: typeof resolveDiscordAccount) {
@@ -1204,3 +1238,7 @@ export const __testing = {
 };
 
 export const resolveDiscordRuntimeGroupPolicy = resolveOpenProviderRuntimeGroupPolicy;
+<<<<<<< HEAD
+=======
+export { testing as __testing };
+>>>>>>> upstream/main

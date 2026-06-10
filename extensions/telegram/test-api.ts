@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export { buildTelegramMessageContextForTest } from "./src/bot-message-context.test-harness.js";
 export { handleTelegramAction } from "./src/action-runtime.js";
 export { telegramMessageActionRuntime } from "./src/channel-actions.js";
@@ -7,5 +8,8 @@ export { resolveTelegramFetch } from "./src/fetch.js";
 export { makeProxyFetch } from "./src/proxy.js";
 export { telegramOutbound } from "./src/outbound-adapter.js";
 export { setTelegramRuntime } from "./src/runtime.js";
+=======
+// Telegram API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export { sendMessageTelegram, sendPollTelegram, type TelegramApiOverride } from "./src/send.js";
 export { resetTelegramThreadBindingsForTests } from "./src/thread-bindings.js";

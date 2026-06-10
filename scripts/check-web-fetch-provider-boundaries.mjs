@@ -1,8 +1,15 @@
 #!/usr/bin/env node
 
+<<<<<<< HEAD
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+=======
+// Checks core web-fetch surfaces for provider-owned Firecrawl coupling.
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { collectSourceFileContents } from "./lib/source-file-scan-cache.mjs";
+>>>>>>> upstream/main
 import { runAsScript } from "./lib/ts-guard-utils.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -32,6 +39,7 @@ const suspiciousPatterns = [
   /id:\s*"firecrawl"/,
 ];
 
+<<<<<<< HEAD
 async function walkFiles(rootDir) {
   const out = [];
   let entries = [];
@@ -93,6 +101,66 @@ export async function collectWebFetchProviderBoundaryViolations() {
 
 export async function main(argv = process.argv.slice(2), io) {
   const json = argv.includes("--json");
+=======
+let webFetchProviderViolationsPromise;
+
+/**
+ * Collects web-fetch provider boundary violations in core source files.
+ */
+export async function collectWebFetchProviderBoundaryViolations() {
+  if (!webFetchProviderViolationsPromise) {
+    webFetchProviderViolationsPromise = (async () => {
+      const violations = [];
+      const files = await collectSourceFileContents({
+        repoRoot,
+        scanRoots: ["src"],
+        scanExtensions,
+        ignoredDirNames,
+      });
+      for (const { relativeFile, content } of files) {
+        if (
+          allowedFiles.has(relativeFile) ||
+          relativeFile.includes(".test.") ||
+          relativeFile.includes("test-support")
+        ) {
+          continue;
+        }
+        const lines = content.split(/\r?\n/);
+        for (const [index, line] of lines.entries()) {
+          if (!line.includes("firecrawl") && !line.includes("Firecrawl")) {
+            continue;
+          }
+          if (!suspiciousPatterns.some((pattern) => pattern.test(line))) {
+            continue;
+          }
+          violations.push({
+            file: relativeFile,
+            line: index + 1,
+            reason: "core web-fetch runtime/tooling contains Firecrawl-specific fetch logic",
+          });
+        }
+      }
+      return violations.toSorted(
+        (left, right) => left.file.localeCompare(right.file) || left.line - right.line,
+      );
+    })();
+    try {
+      return await webFetchProviderViolationsPromise;
+    } catch (error) {
+      webFetchProviderViolationsPromise = undefined;
+      throw error;
+    }
+  }
+  return await webFetchProviderViolationsPromise;
+}
+
+/**
+ * Runs the web-fetch provider boundary check.
+ */
+export async function main(argv, io) {
+  const args = argv ?? process.argv.slice(2);
+  const json = args.includes("--json");
+>>>>>>> upstream/main
   const violations = await collectWebFetchProviderBoundaryViolations();
   const writeStdout = (chunk) => {
     if (io?.stdout?.write) {

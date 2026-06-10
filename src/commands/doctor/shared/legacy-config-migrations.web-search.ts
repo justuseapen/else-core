@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Legacy web-search config migration from tools.web.search to plugin-owned config.
+>>>>>>> upstream/main
 import {
   defineLegacyConfigMigration,
   type LegacyConfigMigrationSpec,
@@ -28,6 +32,10 @@ function replaceRootRecord(
   Object.assign(target, replacement);
 }
 
+<<<<<<< HEAD
+=======
+/** Legacy config migration specs for web-search provider config. */
+>>>>>>> upstream/main
 export const LEGACY_CONFIG_MIGRATIONS_WEB_SEARCH: LegacyConfigMigrationSpec[] = [
   defineLegacyConfigMigration({
     id: "tools.web.search-provider-config->plugins.entries",

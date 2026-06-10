@@ -1,12 +1,23 @@
+<<<<<<< HEAD
 export type { OpenClawPluginApi, PluginRuntime } from "openclaw/plugin-sdk/core";
+=======
+// Telegram API module exposes the plugin public contract.
+export type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+>>>>>>> upstream/main
 export type { ChannelMessageActionAdapter } from "openclaw/plugin-sdk/channel-contract";
 export type { TelegramApiOverride } from "./src/send.js";
 export type {
   OpenClawPluginService,
   OpenClawPluginServiceContext,
   PluginLogger,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/core";
 import type { OpenClawConfig as RuntimeOpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+} from "openclaw/plugin-sdk/plugin-entry";
+import type { OpenClawConfig as RuntimeOpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+export type { PluginRuntime } from "openclaw/plugin-sdk/runtime-store";
+>>>>>>> upstream/main
 export type {
   AcpRuntime,
   AcpRuntimeCapabilities,
@@ -22,11 +33,19 @@ export type {
 export { AcpRuntimeError } from "openclaw/plugin-sdk/acp-runtime";
 
 export {
+<<<<<<< HEAD
   clearAccountEntryFields,
   emptyPluginConfigSchema,
   formatPairingApproveHint,
   getChatChannelMeta,
 } from "openclaw/plugin-sdk/core";
+=======
+  emptyPluginConfigSchema,
+  formatPairingApproveHint,
+  getChatChannelMeta,
+} from "openclaw/plugin-sdk/channel-plugin-common";
+export { clearAccountEntryFields } from "openclaw/plugin-sdk/channel-core";
+>>>>>>> upstream/main
 export { buildChannelConfigSchema, TelegramConfigSchema } from "./config-api.js";
 export { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 export {
@@ -84,8 +103,13 @@ export {
 } from "./src/thread-bindings.js";
 export { resolveTelegramToken } from "./src/token.js";
 export { setTelegramRuntime } from "./src/runtime.js";
+<<<<<<< HEAD
 export type { ChannelPlugin } from "openclaw/plugin-sdk/core";
 export type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+export type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
+export type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 export type TelegramAccountConfig = NonNullable<
   NonNullable<RuntimeOpenClawConfig["channels"]>["telegram"]
 >;

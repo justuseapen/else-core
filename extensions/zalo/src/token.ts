@@ -1,11 +1,15 @@
+// Zalo plugin module implements token behavior.
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
+<<<<<<< HEAD
+=======
+import type { BaseTokenResolution } from "openclaw/plugin-sdk/channel-contract";
+>>>>>>> upstream/main
 import { tryReadSecretFileSync } from "openclaw/plugin-sdk/core";
 import { resolveAccountEntry } from "openclaw/plugin-sdk/routing";
-import type { BaseTokenResolution } from "./runtime-api.js";
 import { normalizeResolvedSecretInputString, normalizeSecretInputString } from "./secret-input.js";
 import type { ZaloConfig } from "./types.js";
 
-export type ZaloTokenResolution = BaseTokenResolution & {
+type ZaloTokenResolution = BaseTokenResolution & {
   source: "env" | "config" | "configFile" | "none";
 };
 
@@ -25,9 +29,7 @@ export function resolveZaloToken(
     baseConfig?.accounts as Record<string, ZaloConfig> | undefined,
     normalizeAccountId(resolvedAccountId),
   );
-  const accountHasBotToken = Boolean(
-    accountConfig && Object.prototype.hasOwnProperty.call(accountConfig, "botToken"),
-  );
+  const accountHasBotToken = Boolean(accountConfig && Object.hasOwn(accountConfig, "botToken"));
 
   if (accountConfig && accountHasBotToken) {
     const token = options?.allowUnresolvedSecretRef

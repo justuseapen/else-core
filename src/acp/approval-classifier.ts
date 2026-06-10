@@ -1,8 +1,22 @@
+<<<<<<< HEAD
 import { homedir } from "node:os";
 import path from "node:path";
 import { isKnownCoreToolId } from "../agents/tool-catalog.js";
 import { isMutatingToolCall } from "../agents/tool-mutation.js";
 import { resolveOwnerOnlyToolApprovalClass } from "../agents/tool-policy.js";
+=======
+/** Classifies ACP tool permission requests into auto-approved and prompt-required risk buckets. */
+import { homedir } from "node:os";
+import path from "node:path";
+import { asRecord } from "@openclaw/acp-core/record-shared";
+import {
+  normalizeLowercaseStringOrEmpty,
+  normalizeOptionalString,
+} from "@openclaw/normalization-core/string-coerce";
+import { isKnownCoreToolId } from "../agents/tool-catalog.js";
+import { isMutatingToolCall } from "../agents/tool-mutation.js";
+import { isPathInside } from "../infra/path-guards.js";
+>>>>>>> upstream/main
 
 const SAFE_SEARCH_TOOL_IDS = new Set(["search", "web_search", "memory_search"]);
 const TRUSTED_SAFE_TOOL_ALIASES = new Set(["search"]);
@@ -13,8 +27,20 @@ const EXEC_CAPABLE_TOOL_IDS = new Set([
   "bash",
   "process",
   "code_execution",
+<<<<<<< HEAD
 ]);
 const CONTROL_PLANE_TOOL_IDS = new Set(["sessions_spawn", "sessions_send", "session_status"]);
+=======
+  "nodes",
+]);
+const CONTROL_PLANE_TOOL_IDS = new Set([
+  "cron",
+  "gateway",
+  "sessions_spawn",
+  "sessions_send",
+  "session_status",
+]);
+>>>>>>> upstream/main
 
 export type AcpApprovalClass =
   | "readonly_scoped"
@@ -26,18 +52,25 @@ export type AcpApprovalClass =
   | "other"
   | "unknown";
 
+<<<<<<< HEAD
 export type AcpApprovalClassification = {
+=======
+type AcpApprovalClassification = {
+>>>>>>> upstream/main
   toolName?: string;
   approvalClass: AcpApprovalClass;
   autoApprove: boolean;
 };
 
+<<<<<<< HEAD
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined;
 }
 
+=======
+>>>>>>> upstream/main
 function readFirstStringValue(
   source: Record<string, unknown> | undefined,
   keys: string[],
@@ -46,16 +79,26 @@ function readFirstStringValue(
     return undefined;
   }
   for (const key of keys) {
+<<<<<<< HEAD
     const value = source[key];
     if (typeof value === "string" && value.trim()) {
       return value.trim();
+=======
+    const value = normalizeOptionalString(source[key]);
+    if (value) {
+      return value;
+>>>>>>> upstream/main
     }
   }
   return undefined;
 }
 
 function normalizeToolName(value: string): string | undefined {
+<<<<<<< HEAD
   const normalized = value.trim().toLowerCase();
+=======
+  const normalized = normalizeLowercaseStringOrEmpty(value);
+>>>>>>> upstream/main
   if (!normalized || normalized.length > 128) {
     return undefined;
   }
@@ -66,11 +109,19 @@ function parseToolNameFromTitle(title: string | undefined | null): string | unde
   if (!title) {
     return undefined;
   }
+<<<<<<< HEAD
   const head = title.split(":", 1)[0]?.trim();
   return head ? normalizeToolName(head) : undefined;
 }
 
 export function resolveToolNameForPermission(params: {
+=======
+  const head = normalizeOptionalString(title.split(":", 1)[0]);
+  return head ? normalizeToolName(head) : undefined;
+}
+
+function resolveToolNameForPermission(params: {
+>>>>>>> upstream/main
   toolCall?: {
     title?: string | null;
     _meta?: unknown;
@@ -78,7 +129,11 @@ export function resolveToolNameForPermission(params: {
   };
 }): string | undefined {
   const toolCall = params.toolCall;
+<<<<<<< HEAD
   const toolMeta = asRecord(toolCall?._meta);
+=======
+  const toolMeta = asRecord(toolCall?.["_meta"]);
+>>>>>>> upstream/main
   const rawInput = asRecord(toolCall?.rawInput);
 
   const fromMeta = readFirstStringValue(toolMeta, ["toolName", "tool_name", "name"]);
@@ -176,11 +231,18 @@ function isReadToolCallScopedToCwd(
   if (!absolutePath) {
     return false;
   }
+<<<<<<< HEAD
   const root = path.resolve(cwd);
   const relative = path.relative(root, absolutePath);
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
+=======
+  return isPathInside(path.resolve(cwd), absolutePath);
+}
+
+/** Resolves the ACP approval class for one tool call, failing closed on spoofed tool identity. */
+>>>>>>> upstream/main
 export function classifyAcpToolApproval(params: {
   toolCall?: {
     title?: string | null;
@@ -211,10 +273,13 @@ export function classifyAcpToolApproval(params: {
   if (SAFE_SEARCH_TOOL_IDS.has(toolName) && isTrustedToolId) {
     return { toolName, approvalClass: "readonly_search", autoApprove: true };
   }
+<<<<<<< HEAD
   const ownerOnlyApprovalClass = resolveOwnerOnlyToolApprovalClass(toolName);
   if (ownerOnlyApprovalClass) {
     return { toolName, approvalClass: ownerOnlyApprovalClass, autoApprove: false };
   }
+=======
+>>>>>>> upstream/main
   if (EXEC_CAPABLE_TOOL_IDS.has(toolName)) {
     return { toolName, approvalClass: "exec_capable", autoApprove: false };
   }

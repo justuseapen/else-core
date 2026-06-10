@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Signal helper module supports config schema behavior.
+>>>>>>> upstream/main
 import { buildChannelConfigSchema, SignalConfigSchema } from "../config-api.js";
 import { signalChannelConfigUiHints } from "./config-ui-hints.js";
 

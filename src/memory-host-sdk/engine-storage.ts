@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Real workspace contract for memory engine storage/index helpers.
 
 export {
@@ -34,3 +35,13 @@ export { ensureMemoryIndexSchema } from "./host/memory-schema.js";
 export { loadSqliteVecExtension } from "./host/sqlite-vec.js";
 export { requireNodeSqlite } from "./host/sqlite.js";
 export { isFileMissingError, statRegularFile } from "./host/fs-utils.js";
+=======
+/**
+ * Core-facing facade for memory backend storage config resolution. Keep this
+ * path stable while the shared SDK package owns provider status semantics.
+ */
+export {
+  resolveMemoryBackendConfig,
+  type MemoryProviderStatus,
+} from "../../packages/memory-host-sdk/src/engine-storage.js";
+>>>>>>> upstream/main

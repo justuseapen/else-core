@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -9,6 +10,45 @@ const { createTempDir, createVault } = createMemoryWikiTestHarness();
 describe("syncMemoryWikiUnsafeLocalSources", () => {
   it("imports explicit private paths and preserves unsafe-local provenance", async () => {
     const privateDir = await createTempDir("memory-wiki-private-");
+=======
+// Memory Wiki tests cover unsafe local plugin behavior.
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createMemoryWikiTestHarness } from "./test-helpers.js";
+import { syncMemoryWikiUnsafeLocalSources } from "./unsafe-local.js";
+
+const { createVault } = createMemoryWikiTestHarness();
+
+describe("syncMemoryWikiUnsafeLocalSources", () => {
+  let fixtureRoot = "";
+  let caseId = 0;
+
+  beforeAll(async () => {
+    fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "memory-wiki-unsafe-suite-"));
+  });
+
+  afterAll(async () => {
+    if (!fixtureRoot) {
+      return;
+    }
+    await fs.rm(fixtureRoot, { recursive: true, force: true });
+  });
+
+  function nextCaseRoot(name: string): string {
+    return path.join(fixtureRoot, `case-${caseId++}-${name}`);
+  }
+
+  async function createPrivateDir(name: string): Promise<string> {
+    const privateDir = nextCaseRoot(name);
+    await fs.mkdir(privateDir, { recursive: true });
+    return privateDir;
+  }
+
+  it("imports explicit private paths and preserves unsafe-local provenance", async () => {
+    const privateDir = await createPrivateDir("private");
+>>>>>>> upstream/main
 
     await fs.mkdir(path.join(privateDir, "nested"), { recursive: true });
     await fs.writeFile(path.join(privateDir, "nested", "state.md"), "# internal state\n", "utf8");
@@ -18,7 +58,11 @@ describe("syncMemoryWikiUnsafeLocalSources", () => {
     await fs.writeFile(directPath, "private log\n", "utf8");
 
     const { rootDir: vaultDir, config } = await createVault({
+<<<<<<< HEAD
       prefix: "memory-wiki-unsafe-vault-",
+=======
+      rootDir: nextCaseRoot("vault"),
+>>>>>>> upstream/main
       config: {
         vaultMode: "unsafe-local",
         unsafeLocal: {
@@ -49,13 +93,21 @@ describe("syncMemoryWikiUnsafeLocalSources", () => {
   });
 
   it("prunes stale unsafe-local pages when configured files disappear", async () => {
+<<<<<<< HEAD
     const privateDir = await createTempDir("memory-wiki-private-prune-");
+=======
+    const privateDir = await createPrivateDir("private-prune");
+>>>>>>> upstream/main
 
     const secretPath = path.join(privateDir, "secret.md");
     await fs.writeFile(secretPath, "# private\n", "utf8");
 
     const { rootDir: vaultDir, config } = await createVault({
+<<<<<<< HEAD
       prefix: "memory-wiki-unsafe-prune-vault-",
+=======
+      rootDir: nextCaseRoot("prune-vault"),
+>>>>>>> upstream/main
       config: {
         vaultMode: "unsafe-local",
         unsafeLocal: {
@@ -67,15 +119,56 @@ describe("syncMemoryWikiUnsafeLocalSources", () => {
 
     const first = await syncMemoryWikiUnsafeLocalSources(config);
     const firstPagePath = first.pagePaths[0] ?? "";
+<<<<<<< HEAD
     await expect(fs.stat(path.join(vaultDir, firstPagePath))).resolves.toBeTruthy();
+=======
+    await expect(fs.readFile(path.join(vaultDir, firstPagePath), "utf8")).resolves.toContain(
+      "# private",
+    );
+>>>>>>> upstream/main
 
     await fs.rm(secretPath);
     const second = await syncMemoryWikiUnsafeLocalSources(config);
 
     expect(second.artifactCount).toBe(0);
     expect(second.removedCount).toBe(1);
+<<<<<<< HEAD
     await expect(fs.stat(path.join(vaultDir, firstPagePath))).rejects.toMatchObject({
       code: "ENOENT",
     });
+=======
+    await expect(fs.stat(path.join(vaultDir, firstPagePath))).rejects.toHaveProperty(
+      "code",
+      "ENOENT",
+    );
+  });
+
+  it("caps composed unsafe-local filenames to the filesystem component limit", async () => {
+    const privateDir = await createPrivateDir(`${"漢".repeat(50)}-private`);
+    const nestedDir = path.join(privateDir, `${"語".repeat(50)}-nested`);
+    const secretPath = path.join(nestedDir, `${"録".repeat(50)}.md`);
+    await fs.mkdir(nestedDir, { recursive: true });
+    await fs.writeFile(secretPath, "# very private\n", "utf8");
+
+    const { rootDir: vaultDir, config } = await createVault({
+      rootDir: nextCaseRoot("long-unsafe-vault"),
+      config: {
+        vaultMode: "unsafe-local",
+        unsafeLocal: {
+          allowPrivateMemoryCoreAccess: true,
+          paths: [privateDir],
+        },
+      },
+    });
+
+    const result = await syncMemoryWikiUnsafeLocalSources(config);
+    const pagePath = result.pagePaths[0] ?? "";
+
+    expect(result.importedCount).toBe(1);
+    expect(Buffer.byteLength(path.basename(pagePath))).toBeLessThanOrEqual(255);
+    await expect(fs.readFile(path.join(vaultDir, pagePath), "utf8")).resolves.toContain(
+      "# very private",
+    );
+>>>>>>> upstream/main
   });
 });

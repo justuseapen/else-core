@@ -1,14 +1,30 @@
+<<<<<<< HEAD
 import type { VoiceCallConfig } from "./config.js";
 import { VoiceCallConfigSchema } from "./config.js";
 
 export const VOICE_CALL_LEGACY_CONFIG_REMOVAL_VERSION = "2026.6.0";
 
 export type VoiceCallLegacyConfigIssue = {
+=======
+// Voice Call helper module supports config compat behavior.
+import { asOptionalRecord, readStringField } from "openclaw/plugin-sdk/string-coerce-runtime";
+import type { VoiceCallConfig } from "./config.js";
+import { VoiceCallConfigSchema } from "./config.js";
+
+// Legacy voice-call config warnings and doctor-fix migration helpers.
+
+/** Version where legacy voice-call config shape support is removed. */
+export const VOICE_CALL_LEGACY_CONFIG_REMOVAL_VERSION = "2026.6.0";
+
+/** One legacy config issue with the replacement path and message. */
+type VoiceCallLegacyConfigIssue = {
+>>>>>>> upstream/main
   path: string;
   replacement: string;
   message: string;
 };
 
+<<<<<<< HEAD
 function asObject(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -25,6 +41,18 @@ function getNumber(obj: Record<string, unknown> | undefined, key: string): numbe
   return typeof value === "number" ? value : undefined;
 }
 
+=======
+const asObject = asOptionalRecord;
+const getString = readStringField;
+
+/** Read finite numeric config values. */
+function getNumber(obj: Record<string, unknown> | undefined, key: string): number | undefined {
+  const value = obj?.[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+/** Merge legacy provider-specific values into the canonical providers map. */
+>>>>>>> upstream/main
 function mergeProviderConfig(
   providersValue: unknown,
   providerId: string,
@@ -45,8 +73,16 @@ function mergeProviderConfig(
   };
 }
 
+<<<<<<< HEAD
 export function collectVoiceCallLegacyConfigIssues(value: unknown): VoiceCallLegacyConfigIssue[] {
   const raw = asObject(value) ?? {};
+=======
+/** Collect legacy voice-call config keys that should be migrated. */
+export function collectVoiceCallLegacyConfigIssues(value: unknown): VoiceCallLegacyConfigIssue[] {
+  const raw = asObject(value) ?? {};
+  const realtime = asObject(raw.realtime);
+  const realtimeAgentContext = asObject(realtime?.agentContext);
+>>>>>>> upstream/main
   const twilio = asObject(raw.twilio);
   const streaming = asObject(raw.streaming);
 
@@ -100,10 +136,25 @@ export function collectVoiceCallLegacyConfigIssues(value: unknown): VoiceCallLeg
       message: "Move streaming.vadThreshold to streaming.providers.openai.vadThreshold.",
     });
   }
+<<<<<<< HEAD
+=======
+  if (realtimeAgentContext && Object.hasOwn(realtimeAgentContext, "includeSystemPrompt")) {
+    issues.push({
+      path: "realtime.agentContext.includeSystemPrompt",
+      replacement: "realtime.agentContext",
+      message:
+        "Remove realtime.agentContext.includeSystemPrompt; realtime context now uses the generated agent prompt.",
+    });
+  }
+>>>>>>> upstream/main
 
   return issues;
 }
 
+<<<<<<< HEAD
+=======
+/** Format runtime warnings for legacy voice-call config keys. */
+>>>>>>> upstream/main
 export function formatVoiceCallLegacyConfigWarnings(params: {
   value: unknown;
   configPathPrefix: string;
@@ -122,6 +173,10 @@ export function formatVoiceCallLegacyConfigWarnings(params: {
   ];
 }
 
+<<<<<<< HEAD
+=======
+/** Migrate legacy voice-call config input to the current canonical shape. */
+>>>>>>> upstream/main
 export function migrateVoiceCallLegacyConfigInput(params: {
   value: unknown;
   configPathPrefix?: string;
@@ -131,6 +186,11 @@ export function migrateVoiceCallLegacyConfigInput(params: {
   issues: VoiceCallLegacyConfigIssue[];
 } {
   const raw = asObject(params.value) ?? {};
+<<<<<<< HEAD
+=======
+  const realtime = asObject(raw.realtime);
+  const realtimeAgentContext = asObject(realtime?.agentContext);
+>>>>>>> upstream/main
   const twilio = asObject(raw.twilio);
   const streaming = asObject(raw.streaming);
   const configPathPrefix = params.configPathPrefix ?? "plugins.entries.voice-call.config";
@@ -181,12 +241,35 @@ export function migrateVoiceCallLegacyConfigInput(params: {
     delete normalizedTwilio.from;
   }
 
+<<<<<<< HEAD
+=======
+  const normalizedRealtimeAgentContext = realtimeAgentContext
+    ? {
+        ...realtimeAgentContext,
+      }
+    : undefined;
+  if (normalizedRealtimeAgentContext) {
+    delete normalizedRealtimeAgentContext.includeSystemPrompt;
+  }
+
+  const normalizedRealtime = realtime
+    ? {
+        ...realtime,
+        agentContext: normalizedRealtimeAgentContext ?? realtime.agentContext,
+      }
+    : undefined;
+
+>>>>>>> upstream/main
   const config = {
     ...raw,
     provider: raw.provider === "log" ? "mock" : raw.provider,
     fromNumber: raw.fromNumber ?? (typeof twilio?.from === "string" ? twilio.from : undefined),
     twilio: normalizedTwilio,
     streaming: normalizedStreaming,
+<<<<<<< HEAD
+=======
+    realtime: normalizedRealtime,
+>>>>>>> upstream/main
   };
 
   const changes: string[] = [];
@@ -211,6 +294,7 @@ export function migrateVoiceCallLegacyConfigInput(params: {
       `Moved ${configPathPrefix}.streaming.sttModel → ${configPathPrefix}.streaming.providers.openai.model.`,
     );
   }
+<<<<<<< HEAD
   if (typeof streaming?.silenceDurationMs === "number") {
     changes.push(
       `Moved ${configPathPrefix}.streaming.silenceDurationMs → ${configPathPrefix}.streaming.providers.openai.silenceDurationMs.`,
@@ -220,15 +304,41 @@ export function migrateVoiceCallLegacyConfigInput(params: {
     changes.push(
       `Moved ${configPathPrefix}.streaming.vadThreshold → ${configPathPrefix}.streaming.providers.openai.vadThreshold.`,
     );
+=======
+  if (getNumber(streaming, "silenceDurationMs") !== undefined) {
+    changes.push(
+      `Moved ${configPathPrefix}.streaming.silenceDurationMs → ${configPathPrefix}.streaming.providers.openai.silenceDurationMs.`,
+    );
+  } else if (typeof streaming?.silenceDurationMs === "number") {
+    changes.push(`Removed invalid ${configPathPrefix}.streaming.silenceDurationMs.`);
+  }
+  if (getNumber(streaming, "vadThreshold") !== undefined) {
+    changes.push(
+      `Moved ${configPathPrefix}.streaming.vadThreshold → ${configPathPrefix}.streaming.providers.openai.vadThreshold.`,
+    );
+  } else if (typeof streaming?.vadThreshold === "number") {
+    changes.push(`Removed invalid ${configPathPrefix}.streaming.vadThreshold.`);
+  }
+  if (realtimeAgentContext && Object.hasOwn(realtimeAgentContext, "includeSystemPrompt")) {
+    changes.push(`Removed ${configPathPrefix}.realtime.agentContext.includeSystemPrompt.`);
+>>>>>>> upstream/main
   }
 
   return { config, changes, issues };
 }
 
+<<<<<<< HEAD
+=======
+/** Normalize legacy voice-call config input without returning migration metadata. */
+>>>>>>> upstream/main
 export function normalizeVoiceCallLegacyConfigInput(value: unknown): Record<string, unknown> {
   return migrateVoiceCallLegacyConfigInput({ value }).config;
 }
 
+<<<<<<< HEAD
+=======
+/** Parse voice-call plugin config after applying legacy normalization. */
+>>>>>>> upstream/main
 export function parseVoiceCallPluginConfig(value: unknown): VoiceCallConfig {
   return VoiceCallConfigSchema.parse(normalizeVoiceCallLegacyConfigInput(value));
 }

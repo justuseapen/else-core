@@ -1,3 +1,4 @@
+// Setup group access configure tests cover channel setup writes for group access config.
 import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
 import { configureChannelAccessWithAllowlist } from "./setup-group-access-configure.js";
@@ -23,7 +24,6 @@ async function runConfigureChannelAccess<TResolved>(params: {
 }) {
   return await configureChannelAccessWithAllowlist({
     cfg: params.cfg,
-    // oxlint-disable-next-line typescript/no-explicit-any
     prompter: params.prompter as any,
     label: params.label ?? "Slack channels",
     currentPolicy: "allowlist",
@@ -106,7 +106,6 @@ describe("configureChannelAccessWithAllowlist", () => {
 
     const next = await configureChannelAccessWithAllowlist({
       cfg,
-      // oxlint-disable-next-line typescript/no-explicit-any
       prompter: prompter as any,
       label: "Twitch chat",
       currentPolicy: "disabled",

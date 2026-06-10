@@ -1,11 +1,28 @@
+<<<<<<< HEAD
+=======
+<<<<<<<< HEAD:extensions/mattermost/src/config-schema.ts
+import { z } from "openclaw/plugin-sdk/zod";
+========
+// Mattermost helper module supports config schema core behavior.
+>>>>>>>> upstream/main:extensions/mattermost/src/config-schema-core.ts
+>>>>>>> upstream/main
 import {
   BlockStreamingCoalesceSchema,
   DmPolicySchema,
   GroupPolicySchema,
   MarkdownConfigSchema,
   requireOpenAllowFrom,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/channel-config-primitives";
 import { z } from "openclaw/plugin-sdk/zod";
+=======
+<<<<<<<< HEAD:extensions/mattermost/src/config-schema.ts
+} from "./config-runtime.js";
+========
+} from "openclaw/plugin-sdk/channel-config-primitives";
+import { z } from "zod";
+>>>>>>>> upstream/main:extensions/mattermost/src/config-schema-core.ts
+>>>>>>> upstream/main
 import { buildSecretInputSchema } from "./secret-input.js";
 
 const MattermostGroupSchema = z
@@ -78,6 +95,47 @@ const MattermostNetworkSchema = z
   .strict()
   .optional();
 
+<<<<<<< HEAD
+=======
+<<<<<<<< HEAD:extensions/mattermost/src/config-schema.ts
+========
+const MattermostStreamingModeSchema = z.enum(["off", "partial", "block", "progress"]);
+const MattermostStreamingProgressSchema = z
+  .object({
+    label: z.union([z.string(), z.literal(false)]).optional(),
+    labels: z.array(z.string()).optional(),
+    maxLines: z.number().int().positive().optional(),
+    maxLineChars: z.number().int().positive().optional(),
+    toolProgress: z.boolean().optional(),
+  })
+  .strict();
+const MattermostStreamingPreviewSchema = z
+  .object({
+    toolProgress: z.boolean().optional(),
+  })
+  .strict();
+const MattermostStreamingBlockSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    coalesce: BlockStreamingCoalesceSchema.optional(),
+  })
+  .strict();
+const MattermostStreamingSchema = z.union([
+  MattermostStreamingModeSchema,
+  z.boolean(),
+  z
+    .object({
+      mode: MattermostStreamingModeSchema.optional(),
+      chunkMode: z.enum(["length", "newline"]).optional(),
+      preview: MattermostStreamingPreviewSchema.optional(),
+      progress: MattermostStreamingProgressSchema.optional(),
+      block: MattermostStreamingBlockSchema.optional(),
+    })
+    .strict(),
+]);
+
+>>>>>>>> upstream/main:extensions/mattermost/src/config-schema-core.ts
+>>>>>>> upstream/main
 const MattermostAccountSchemaBase = z
   .object({
     name: z.string().optional(),
@@ -97,6 +155,10 @@ const MattermostAccountSchemaBase = z
     groupPolicy: GroupPolicySchema.optional().default("allowlist"),
     textChunkLimit: z.number().int().positive().optional(),
     chunkMode: z.enum(["length", "newline"]).optional(),
+<<<<<<< HEAD
+=======
+    streaming: MattermostStreamingSchema.optional(),
+>>>>>>> upstream/main
     blockStreaming: z.boolean().optional(),
     blockStreamingCoalesce: BlockStreamingCoalesceSchema.optional(),
     replyToMode: z.enum(["off", "first", "all", "batched"]).optional(),

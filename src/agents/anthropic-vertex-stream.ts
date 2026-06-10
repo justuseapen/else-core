@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { AnthropicVertex } from "@anthropic-ai/vertex-sdk";
 import type { StreamFn } from "@mariozechner/pi-agent-core";
 import { streamAnthropic, type AnthropicOptions, type Model } from "@mariozechner/pi-ai";
@@ -65,22 +66,34 @@ function createAnthropicVertexOnPayload(params: {
   };
 }
 
+=======
+>>>>>>> upstream/main
 /**
- * Create a StreamFn that routes through pi-ai's `streamAnthropic` with an
- * injected `AnthropicVertex` client.  All streaming, message conversion, and
- * event handling is handled by pi-ai — we only supply the GCP-authenticated
- * client and map SimpleStreamOptions → AnthropicOptions.
+ * Anthropic Vertex stream facade.
+ * Keeps Vertex-specific provider implementation in the bundled provider plugin
+ * while core imports a small stable factory.
  */
-export function createAnthropicVertexStreamFn(
-  projectId: string | undefined,
-  region: string,
-  baseURL?: string,
-): StreamFn {
-  const client = new AnthropicVertex({
-    region,
-    ...(baseURL ? { baseURL } : {}),
-    ...(projectId ? { projectId } : {}),
+import { loadBundledPluginPublicSurfaceModuleSync } from "../plugin-sdk/facade-runtime.js";
+import type { StreamFn } from "./runtime/index.js";
+
+type AnthropicVertexStreamFacade = {
+  createAnthropicVertexStreamFn: (
+    projectId: string | undefined,
+    region: string,
+    baseURL?: string,
+  ) => StreamFn;
+  createAnthropicVertexStreamFnForModel: (
+    model: { baseUrl?: string },
+    env?: NodeJS.ProcessEnv,
+  ) => StreamFn;
+};
+
+function loadAnthropicVertexStreamFacade(): AnthropicVertexStreamFacade {
+  return loadBundledPluginPublicSurfaceModuleSync<AnthropicVertexStreamFacade>({
+    dirName: "anthropic-vertex",
+    artifactBasename: "api.js",
   });
+<<<<<<< HEAD
 
   return (model, context, options) => {
     const transportModel = model as Model<"anthropic-messages"> & {
@@ -163,18 +176,14 @@ function resolveAnthropicVertexSdkBaseUrl(baseUrl?: string): string | undefined 
   } catch {
     return trimmed;
   }
+=======
+>>>>>>> upstream/main
 }
 
+/** Creates an Anthropic Vertex stream function through the bundled provider facade. */
 export function createAnthropicVertexStreamFnForModel(
   model: { baseUrl?: string },
   env: NodeJS.ProcessEnv = process.env,
 ): StreamFn {
-  return createAnthropicVertexStreamFn(
-    resolveAnthropicVertexProjectId(env),
-    resolveAnthropicVertexClientRegion({
-      baseUrl: model.baseUrl,
-      env,
-    }),
-    resolveAnthropicVertexSdkBaseUrl(model.baseUrl),
-  );
+  return loadAnthropicVertexStreamFacade().createAnthropicVertexStreamFnForModel(model, env);
 }

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+/** Tests ACP tool approval classification and spoofing backstops. */
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { classifyAcpToolApproval } from "./approval-classifier.js";
 
@@ -83,6 +87,7 @@ describe("classifyAcpToolApproval", () => {
       expectedToolName: "nodes",
       expectedClass: "exec_capable",
     },
+<<<<<<< HEAD
     {
       title: "whatsapp_login: start",
       rawInput: { name: "whatsapp_login" },
@@ -91,6 +96,10 @@ describe("classifyAcpToolApproval", () => {
     },
   ] as const)(
     "classifies shared owner-only ACP backstops for $expectedToolName",
+=======
+  ] as const)(
+    "classifies shared ACP backstop tools for $expectedToolName",
+>>>>>>> upstream/main
     ({ title, rawInput, expectedToolName, expectedClass }) => {
       expect(
         classify({

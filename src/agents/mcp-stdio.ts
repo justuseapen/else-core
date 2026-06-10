@@ -1,6 +1,18 @@
+<<<<<<< HEAD
 import { isMcpConfigRecord, toMcpStringArray, toMcpStringRecord } from "./mcp-config-shared.js";
 
 type StdioMcpServerLaunchConfig = {
+=======
+/**
+ * Stdio MCP launch config normalization.
+ * Accepts OpenClaw and upstream MCP config field names, keeping only
+ * command/args/env/cwd needed to spawn a stdio server.
+ */
+import { isMcpConfigRecord, toMcpEnvRecord, toMcpStringArray } from "./mcp-config-shared.js";
+
+/** Normalized stdio MCP server launch config. */
+export type StdioMcpServerLaunchConfig = {
+>>>>>>> upstream/main
   command: string;
   args?: string[];
   env?: Record<string, string>;
@@ -11,7 +23,15 @@ type StdioMcpServerLaunchResult =
   | { ok: true; config: StdioMcpServerLaunchConfig }
   | { ok: false; reason: string };
 
+<<<<<<< HEAD
 export function resolveStdioMcpServerLaunchConfig(raw: unknown): StdioMcpServerLaunchResult {
+=======
+/** Resolve raw MCP server config into a stdio launch config. */
+export function resolveStdioMcpServerLaunchConfig(
+  raw: unknown,
+  options?: { onDroppedEnv?: (key: string, value: unknown) => void },
+): StdioMcpServerLaunchResult {
+>>>>>>> upstream/main
   if (!isMcpConfigRecord(raw)) {
     return { ok: false, reason: "server config must be an object" };
   }
@@ -35,17 +55,20 @@ export function resolveStdioMcpServerLaunchConfig(raw: unknown): StdioMcpServerL
     config: {
       command: raw.command,
       args: toMcpStringArray(raw.args),
+<<<<<<< HEAD
       env: toMcpStringRecord(raw.env),
+=======
+      env: toMcpEnvRecord(raw.env, { onDroppedEntry: options?.onDroppedEnv }),
+>>>>>>> upstream/main
       cwd,
     },
   };
 }
 
+/** Describe a stdio MCP launch config for diagnostics. */
 export function describeStdioMcpServerLaunchConfig(config: StdioMcpServerLaunchConfig): string {
   const args =
     Array.isArray(config.args) && config.args.length > 0 ? ` ${config.args.join(" ")}` : "";
   const cwd = config.cwd ? ` (cwd=${config.cwd})` : "";
   return `${config.command}${args}${cwd}`;
 }
-
-export type { StdioMcpServerLaunchConfig, StdioMcpServerLaunchResult };

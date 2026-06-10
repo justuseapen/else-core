@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Browser bridge tests cover browser control bridge requests and local server behavior.
+>>>>>>> upstream/main
 import type { Server } from "node:http";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

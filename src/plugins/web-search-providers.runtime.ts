@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../config/config.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { isRecord } from "../utils.js";
@@ -20,12 +21,28 @@ import {
   type PluginManifestRecord,
 } from "./manifest-registry.js";
 import { getActivePluginRegistryWorkspaceDir } from "./runtime.js";
+=======
+// Runtime bridge for web-search providers supplied by plugins.
+import { loadOpenClawPlugins } from "./loader.js";
+import type { PluginLoadOptions } from "./loader.js";
+import type { PluginManifestRecord } from "./manifest-registry.js";
+>>>>>>> upstream/main
 import type { PluginWebSearchProviderEntry } from "./types.js";
+import { resolveBundledWebSearchProvidersFromPublicArtifacts } from "./web-provider-public-artifacts.js";
+import {
+  mapRegistryProviders,
+  resolveManifestDeclaredWebProviderCandidatePluginIds,
+} from "./web-provider-resolution-shared.js";
+import {
+  resolvePluginWebProviders,
+  resolveRuntimeWebProviders,
+} from "./web-provider-runtime-shared.js";
 import {
   resolveBundledWebSearchResolutionConfig,
   sortWebSearchProviders,
 } from "./web-search-providers.shared.js";
 
+<<<<<<< HEAD
 const log = createSubsystemLogger("plugins");
 type WebSearchProviderSnapshotCacheEntry = {
   expiresAt: number;
@@ -80,6 +97,8 @@ function pluginManifestDeclaresWebSearch(record: PluginManifestRecord): boolean 
   return isRecord(properties) && "webSearch" in properties;
 }
 
+=======
+>>>>>>> upstream/main
 function resolveWebSearchCandidatePluginIds(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
@@ -87,6 +106,7 @@ function resolveWebSearchCandidatePluginIds(params: {
   onlyPluginIds?: readonly string[];
   origin?: PluginManifestRecord["origin"];
 }): string[] | undefined {
+<<<<<<< HEAD
   const contractIds = new Set(
     resolveManifestContractPluginIds({
       contract: "webSearchProviders",
@@ -113,6 +133,28 @@ function resolveWebSearchCandidatePluginIds(params: {
     .map((plugin) => plugin.id)
     .toSorted((left, right) => left.localeCompare(right));
   return ids.length > 0 ? ids : undefined;
+=======
+  return resolveManifestDeclaredWebProviderCandidatePluginIds({
+    contract: "webSearchProviders",
+    configKey: "webSearch",
+    config: params.config,
+    workspaceDir: params.workspaceDir,
+    env: params.env,
+    onlyPluginIds: params.onlyPluginIds,
+    origin: params.origin,
+  });
+}
+
+function mapRegistryWebSearchProviders(params: {
+  registry: ReturnType<typeof loadOpenClawPlugins>;
+  onlyPluginIds?: readonly string[];
+}): PluginWebSearchProviderEntry[] {
+  return mapRegistryProviders({
+    entries: params.registry.webSearchProviders,
+    onlyPluginIds: params.onlyPluginIds,
+    sortProviders: sortWebSearchProviders,
+  });
+>>>>>>> upstream/main
 }
 
 function resolveWebSearchLoadOptions(params: {
@@ -173,13 +215,13 @@ export function resolvePluginWebSearchProviders(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
   env?: PluginLoadOptions["env"];
-  bundledAllowlistCompat?: boolean;
   onlyPluginIds?: readonly string[];
   activate?: boolean;
   cache?: boolean;
   mode?: "runtime" | "setup";
   origin?: PluginManifestRecord["origin"];
 }): PluginWebSearchProviderEntry[] {
+<<<<<<< HEAD
   const env = params.env ?? process.env;
   const workspaceDir = params.workspaceDir ?? getActivePluginRegistryWorkspaceDir();
   if (params.mode === "setup") {
@@ -257,16 +299,24 @@ export function resolvePluginWebSearchProviders(params: {
     });
   }
   return resolved;
+=======
+  return resolvePluginWebProviders(params, {
+    resolveBundledResolutionConfig: resolveBundledWebSearchResolutionConfig,
+    resolveCandidatePluginIds: resolveWebSearchCandidatePluginIds,
+    mapRegistryProviders: mapRegistryWebSearchProviders,
+    resolveBundledPublicArtifactProviders: resolveBundledWebSearchProvidersFromPublicArtifacts,
+  });
+>>>>>>> upstream/main
 }
 
 export function resolveRuntimeWebSearchProviders(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
   env?: PluginLoadOptions["env"];
-  bundledAllowlistCompat?: boolean;
   onlyPluginIds?: readonly string[];
   origin?: PluginManifestRecord["origin"];
 }): PluginWebSearchProviderEntry[] {
+<<<<<<< HEAD
   const runtimeRegistry = resolveRuntimePluginRegistry(
     params.config === undefined
       ? undefined
@@ -282,4 +332,11 @@ export function resolveRuntimeWebSearchProviders(params: {
     });
   }
   return resolvePluginWebSearchProviders(params);
+=======
+  return resolveRuntimeWebProviders(params, {
+    resolveBundledResolutionConfig: resolveBundledWebSearchResolutionConfig,
+    resolveCandidatePluginIds: resolveWebSearchCandidatePluginIds,
+    mapRegistryProviders: mapRegistryWebSearchProviders,
+  });
+>>>>>>> upstream/main
 }

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Openai tests cover default models plugin behavior.
+>>>>>>> upstream/main
 import type { OpenClawConfig } from "openclaw/plugin-sdk/provider-onboard";
 import { describe, expect, it } from "vitest";
 import { applyOpenAIConfig, applyOpenAIProviderConfig, OPENAI_DEFAULT_MODEL } from "./api.js";
@@ -5,7 +9,12 @@ import { applyOpenAIConfig, applyOpenAIProviderConfig, OPENAI_DEFAULT_MODEL } fr
 describe("openai default models", () => {
   it("adds allowlist entry for the default model", () => {
     const next = applyOpenAIProviderConfig({});
+<<<<<<< HEAD
     expect(Object.keys(next.agents?.defaults?.models ?? {})).toContain(OPENAI_DEFAULT_MODEL);
+=======
+    expect(Object.keys(next.agents?.defaults?.models ?? {})).toEqual([OPENAI_DEFAULT_MODEL]);
+    expect(next.agents?.defaults?.models?.[OPENAI_DEFAULT_MODEL]).toEqual({ alias: "GPT" });
+>>>>>>> upstream/main
   });
 
   it("preserves existing alias for the default model", () => {

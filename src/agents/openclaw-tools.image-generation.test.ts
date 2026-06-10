@@ -1,8 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { OpenClawConfig } from "../config/config.js";
-import * as imageGenerationRuntime from "../image-generation/runtime.js";
-import { createOpenClawTools } from "./openclaw-tools.js";
+// Verifies image-generation tool registration through the shared generation harness.
+import { describeOpenClawGenerationToolRegistration } from "./openclaw-tools.generation.test-support.js";
 
+<<<<<<< HEAD
 vi.mock("../plugins/tools.js", () => ({
   resolvePluginTools: () => [],
   copyPluginToolMeta: () => undefined,
@@ -89,4 +88,10 @@ describe("openclaw tools image generation registration", () => {
 
     expect(tools.map((tool) => tool.name)).not.toContain("image_generate");
   });
+=======
+describeOpenClawGenerationToolRegistration({
+  suiteName: "openclaw tools image generation registration",
+  toolName: "image_generate",
+  toolLabel: "an image-generation tool",
+>>>>>>> upstream/main
 });

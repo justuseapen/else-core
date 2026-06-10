@@ -1,15 +1,33 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../../config/config.js";
+=======
+/**
+ * Auth profile policy validation.
+ * Rejects SecretRef-backed OAuth material because OAuth credentials are mutable
+ * runtime state and must stay directly persisted by refresh flows.
+ */
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
+>>>>>>> upstream/main
 import { coerceSecretRef, resolveSecretInputRef } from "../../config/types.secrets.js";
 import type { AuthProfileCredential, AuthProfileStore } from "./types.js";
 
 type SecretDefaults = NonNullable<OpenClawConfig["secrets"]>["defaults"];
 
+<<<<<<< HEAD
+=======
+/** Validation error for SecretRef usage in OAuth auth profiles. */
+>>>>>>> upstream/main
 type OAuthSecretRefPolicyViolation = {
   profileId: string;
   path: string;
   reason: string;
 };
 
+<<<<<<< HEAD
+=======
+// OAuth credentials are runtime-mutated during refresh. SecretRef-backed OAuth
+// fields would split mutable state across stores, so validation rejects them.
+>>>>>>> upstream/main
 function pushViolation(
   violations: OAuthSecretRefPolicyViolation[],
   profileId: string,
@@ -61,7 +79,11 @@ function collectOAuthModeSecretRefViolations(params: {
   profileId: string;
   credential: AuthProfileCredential;
   defaults: SecretDefaults | undefined;
+<<<<<<< HEAD
   configuredMode?: "api_key" | "oauth" | "token";
+=======
+  configuredMode?: "api_key" | "aws-sdk" | "oauth" | "token";
+>>>>>>> upstream/main
   violations: OAuthSecretRefPolicyViolation[];
 }): void {
   if (params.configuredMode !== "oauth") {
@@ -95,7 +117,11 @@ function collectOAuthModeSecretRefViolations(params: {
   }
 }
 
+<<<<<<< HEAD
 export function collectOAuthSecretRefPolicyViolations(params: {
+=======
+function collectOAuthSecretRefPolicyViolations(params: {
+>>>>>>> upstream/main
   store: AuthProfileStore;
   cfg?: OpenClawConfig;
   profileIds?: Iterable<string>;
@@ -124,6 +150,10 @@ export function collectOAuthSecretRefPolicyViolations(params: {
   return violations;
 }
 
+<<<<<<< HEAD
+=======
+/** Throws when OAuth profiles contain unsupported SecretRef fields. */
+>>>>>>> upstream/main
 export function assertNoOAuthSecretRefPolicyViolations(params: {
   store: AuthProfileStore;
   cfg?: OpenClawConfig;

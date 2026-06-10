@@ -1,9 +1,21 @@
+<<<<<<< HEAD
+=======
+// Gateway config runtime test mock.
+// Wraps config IO with mutable test runtime state for integration tests.
+>>>>>>> upstream/main
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { vi } from "vitest";
+<<<<<<< HEAD
 import type { ReadConfigFileSnapshotForWriteResult } from "../config/io.js";
+=======
+import type {
+  ReadConfigFileSnapshotForWriteResult,
+  ReadConfigFileSnapshotWithPluginMetadataResult,
+} from "../config/io.js";
+>>>>>>> upstream/main
 import { applyPluginAutoEnable } from "../config/plugin-auto-enable.js";
 import type { AgentBinding } from "../config/types.agents.js";
 import type { ConfigFileSnapshot, OpenClawConfig } from "../config/types.js";
@@ -12,6 +24,10 @@ import { testConfigRoot, testIsNixMode, testState } from "./test-helpers.runtime
 
 type GatewayConfigModule = typeof import("../config/config.js");
 
+<<<<<<< HEAD
+=======
+/** Wraps the real config module with gateway-test runtime overrides. */
+>>>>>>> upstream/main
 export function createGatewayConfigModuleMock(actual: GatewayConfigModule): GatewayConfigModule {
   const resolveConfigPath = () => path.join(testConfigRoot.value, "openclaw.json");
 
@@ -110,6 +126,7 @@ export function createGatewayConfigModuleMock(actual: GatewayConfigModule): Gate
     }
     const gateway = Object.keys(fileGateway).length > 0 ? fileGateway : undefined;
 
+<<<<<<< HEAD
     const fileCanvasHost =
       baseConfig.canvasHost &&
       typeof baseConfig.canvasHost === "object" &&
@@ -121,6 +138,8 @@ export function createGatewayConfigModuleMock(actual: GatewayConfigModule): Gate
     }
     const canvasHost = Object.keys(fileCanvasHost).length > 0 ? fileCanvasHost : undefined;
 
+=======
+>>>>>>> upstream/main
     const hooks = testState.hooksConfig ?? baseConfig.hooks;
 
     const fileCron =
@@ -142,7 +161,10 @@ export function createGatewayConfigModuleMock(actual: GatewayConfigModule): Gate
       channels,
       session,
       gateway,
+<<<<<<< HEAD
       canvasHost,
+=======
+>>>>>>> upstream/main
       hooks,
       cron,
     } as OpenClawConfig;
@@ -213,6 +235,13 @@ export function createGatewayConfigModuleMock(actual: GatewayConfigModule): Gate
     const raw = JSON.stringify(cfg, null, 2).trimEnd().concat("\n");
     await fs.writeFile(configPath, raw, "utf-8");
     actual.resetConfigRuntimeState();
+<<<<<<< HEAD
+=======
+    return {
+      persistedHash: "test-config-hash",
+      persistedConfig: composeTestConfig(cfg),
+    };
+>>>>>>> upstream/main
   });
 
   const readConfigFileSnapshotForWrite =
@@ -222,6 +251,25 @@ export function createGatewayConfigModuleMock(actual: GatewayConfigModule): Gate
         expectedConfigPath: resolveConfigPath(),
       },
     });
+<<<<<<< HEAD
+=======
+  const readConfigFileSnapshotWithPluginMetadata =
+    async (): Promise<ReadConfigFileSnapshotWithPluginMetadataResult> => {
+      const snapshot = await readConfigFileSnapshot();
+      const validation = actual.validateConfigObjectWithPlugins(snapshot.config, {
+        env: process.env,
+        pluginValidation: "skip",
+      });
+      return {
+        snapshot: {
+          ...snapshot,
+          valid: validation.ok,
+          issues: validation.ok ? [] : validation.issues,
+          warnings: validation.warnings,
+        },
+      };
+    };
+>>>>>>> upstream/main
 
   const loadTestConfig = () => {
     const configPath = resolveConfigPath();
@@ -263,7 +311,10 @@ export function createGatewayConfigModuleMock(actual: GatewayConfigModule): Gate
     },
     applyConfigOverrides: (cfg: OpenClawConfig) =>
       composeTestConfig(cfg as Record<string, unknown>),
+<<<<<<< HEAD
     loadConfig: loadRuntimeAwareTestConfig,
+=======
+>>>>>>> upstream/main
     getRuntimeConfig: loadRuntimeAwareTestConfig,
     parseConfigJson5: (raw: string) => {
       try {
@@ -278,6 +329,10 @@ export function createGatewayConfigModuleMock(actual: GatewayConfigModule): Gate
       issues: [],
     }),
     readConfigFileSnapshot,
+<<<<<<< HEAD
+=======
+    readConfigFileSnapshotWithPluginMetadata,
+>>>>>>> upstream/main
     readConfigFileSnapshotForWrite,
     writeConfigFile,
   };

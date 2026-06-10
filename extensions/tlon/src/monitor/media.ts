@@ -1,22 +1,34 @@
+// Tlon plugin module implements media behavior.
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import * as path from "node:path";
+<<<<<<< HEAD
 import {
   fetchRemoteMedia,
   MAX_IMAGE_BYTES,
   saveMediaBuffer,
 } from "openclaw/plugin-sdk/media-runtime";
+=======
+import { formatErrorMessage } from "openclaw/plugin-sdk/error-runtime";
+import { extensionForMime } from "openclaw/plugin-sdk/media-mime";
+import {
+  readRemoteMediaBuffer,
+  MAX_IMAGE_BYTES,
+  saveRemoteMedia,
+} from "openclaw/plugin-sdk/media-runtime";
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import { getDefaultSsrFPolicy } from "../urbit/context.js";
 
 const MAX_IMAGES_PER_MESSAGE = 8;
 const TLON_MEDIA_DOWNLOAD_IDLE_TIMEOUT_MS = 30_000;
 
-export interface ExtractedImage {
+interface ExtractedImage {
   url: string;
   alt?: string;
 }
 
-export interface DownloadedMedia {
+interface DownloadedMedia {
   localPath: string;
   contentType: string;
   originalUrl: string;
@@ -64,12 +76,17 @@ export async function downloadMedia(
       return null;
     }
 
+<<<<<<< HEAD
     const fetched = await fetchRemoteMedia({
+=======
+    const fetchOptions = {
+>>>>>>> upstream/main
       url,
       maxBytes: MAX_IMAGE_BYTES,
       readIdleTimeoutMs: TLON_MEDIA_DOWNLOAD_IDLE_TIMEOUT_MS,
       ssrfPolicy: getDefaultSsrFPolicy(),
       requestInit: { method: "GET" },
+<<<<<<< HEAD
     });
 
     if (!mediaDir) {
@@ -83,10 +100,23 @@ export async function downloadMedia(
       return {
         localPath: saved.path,
         contentType: saved.contentType ?? fetched.contentType ?? "application/octet-stream",
+=======
+    };
+
+    if (!mediaDir) {
+      const saved = await saveRemoteMedia(fetchOptions);
+      return {
+        localPath: saved.path,
+        contentType: saved.contentType ?? "application/octet-stream",
+>>>>>>> upstream/main
         originalUrl: url,
       };
     }
 
+<<<<<<< HEAD
+=======
+    const fetched = await readRemoteMediaBuffer(fetchOptions);
+>>>>>>> upstream/main
     await mkdir(mediaDir, { recursive: true });
     const ext =
       getExtensionFromFileName(fetched.fileName) ||
@@ -102,9 +132,13 @@ export async function downloadMedia(
       originalUrl: url,
     };
   } catch (error: unknown) {
+<<<<<<< HEAD
     console.error(
       `[tlon-media] Error downloading ${url}: ${error instanceof Error ? error.message : String(error)}`,
     );
+=======
+    console.error(`[tlon-media] Error downloading ${url}: ${formatErrorMessage(error)}`);
+>>>>>>> upstream/main
     return null;
   }
 }
@@ -118,26 +152,14 @@ function getExtensionFromFileName(fileName?: string): string | null {
 }
 
 function getExtensionFromContentType(contentType: string): string | null {
-  const map: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/jpg": "jpg",
-    "image/png": "png",
-    "image/gif": "gif",
-    "image/webp": "webp",
-    "image/svg+xml": "svg",
-    "video/mp4": "mp4",
-    "video/webm": "webm",
-    "audio/mpeg": "mp3",
-    "audio/ogg": "ogg",
-  };
-  return map[contentType.split(";")[0].trim()] ?? null;
+  return extensionForMime(contentType)?.replace(/^\./u, "") ?? null;
 }
 
 function getExtensionFromUrl(url: string): string | null {
   try {
     const pathname = new URL(url).pathname;
     const match = pathname.match(/\.([a-z0-9]+)$/i);
-    return match ? match[1].toLowerCase() : null;
+    return match ? normalizeLowercaseStringOrEmpty(match[1]) : null;
   } catch {
     return null;
   }

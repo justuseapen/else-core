@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Nextcloud Talk tests cover approval auth plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { nextcloudTalkApprovalAuth } from "./approval-auth.js";
 

@@ -1,13 +1,21 @@
+/**
+ * Shared approval helpers for gateway and node exec hosts.
+ * Owns pending-state construction, policy merging, unavailable-route handling,
+ * follow-up dispatch, and approval-pending tool result rendering.
+ */
 import crypto from "node:crypto";
-import type { AgentToolResult } from "@mariozechner/pi-agent-core";
-import { loadConfig } from "../config/config.js";
+import { resolveExpiresAtMsFromDurationMs } from "@openclaw/normalization-core/number-coercion";
+import { formatErrorMessage } from "../infra/errors.js";
 import { buildExecApprovalUnavailableReplyPayload } from "../infra/exec-approval-reply.js";
 import {
-  hasConfiguredExecApprovalDmRoute,
   type ExecApprovalInitiatingSurfaceState,
   resolveExecApprovalInitiatingSurfaceState,
 } from "../infra/exec-approval-surface.js";
 import {
+<<<<<<< HEAD
+=======
+  minSecurity,
+>>>>>>> upstream/main
   maxAsk,
   resolveExecApprovalAllowedDecisions,
   resolveExecApprovals,
@@ -16,6 +24,10 @@ import {
   type ExecSecurity,
 } from "../infra/exec-approvals.js";
 import { logWarn } from "../logger.js";
+<<<<<<< HEAD
+=======
+import { registerExecApprovalFollowupRuntimeHandoff } from "./bash-tools.exec-approval-followup-state.js";
+>>>>>>> upstream/main
 import { sendExecApprovalFollowup } from "./bash-tools.exec-approval-followup.js";
 import {
   type ExecApprovalRegistration,
@@ -23,9 +35,12 @@ import {
 } from "./bash-tools.exec-approval-request.js";
 import { buildApprovalPendingMessage } from "./bash-tools.exec-runtime.js";
 import { DEFAULT_APPROVAL_TIMEOUT_MS } from "./bash-tools.exec-runtime.js";
-import type { ExecToolDetails } from "./bash-tools.exec-types.js";
+import type { ExecElevatedDefaults, ExecToolDetails } from "./bash-tools.exec-types.js";
+import { isExecDeniedResultText } from "./exec-approval-result.js";
+import type { AgentToolResult } from "./runtime/index.js";
 
 type ResolvedExecApprovals = ReturnType<typeof resolveExecApprovals>;
+<<<<<<< HEAD
 export const MAX_EXEC_APPROVAL_FOLLOWUP_FAILURE_LOG_KEYS = 256;
 const loggedExecApprovalFollowupFailures = new Set<string>();
 
@@ -43,7 +58,28 @@ function rememberExecApprovalFollowupFailureKey(key: string): boolean {
   }
   return true;
 }
+=======
+/** Cap for deduplicating repeated follow-up dispatch failure log keys. */
+export const MAX_EXEC_APPROVAL_FOLLOWUP_FAILURE_LOG_KEYS = 256;
+const loggedExecApprovalFollowupFailures = new Set<string>();
+>>>>>>> upstream/main
 
+function rememberExecApprovalFollowupFailureKey(key: string): boolean {
+  if (loggedExecApprovalFollowupFailures.has(key)) {
+    return false;
+  }
+  loggedExecApprovalFollowupFailures.add(key);
+  // Bound memory growth for long-lived processes that see many unique approval failures.
+  if (loggedExecApprovalFollowupFailures.size > MAX_EXEC_APPROVAL_FOLLOWUP_FAILURE_LOG_KEYS) {
+    const oldestKey = loggedExecApprovalFollowupFailures.values().next().value;
+    if (typeof oldestKey === "string") {
+      loggedExecApprovalFollowupFailures.delete(oldestKey);
+    }
+  }
+  return true;
+}
+
+/** Effective approval policy after caller config and approvals file are merged. */
 export type ExecHostApprovalContext = {
   approvals: ResolvedExecApprovals;
   hostSecurity: ExecSecurity;
@@ -51,16 +87,21 @@ export type ExecHostApprovalContext = {
   askFallback: ResolvedExecApprovals["agent"]["askFallback"];
 };
 
+/** Pending approval state shared by gateway/node exec hosts. */
 export type ExecApprovalPendingState = {
   warningText: string;
   expiresAtMs: number;
   preResolvedDecision: string | null | undefined;
 };
 
+/** Pending approval state plus human-readable notice timing. */
 export type ExecApprovalRequestState = ExecApprovalPendingState & {
   noticeSeconds: number;
 };
 
+const EXPIRED_EXEC_APPROVAL_EXPIRES_AT_MS = 0;
+
+/** Why an approval request cannot be delivered interactively. */
 export type ExecApprovalUnavailableReason =
   | "no-approval-route"
   | "initiating-platform-disabled"
@@ -70,6 +111,10 @@ function isHeadlessExecTrigger(trigger?: string): boolean {
   return trigger === "cron";
 }
 
+<<<<<<< HEAD
+=======
+/** Context returned after a default approval request is registered. */
+>>>>>>> upstream/main
 export type RegisteredExecApprovalRequestContext = {
   approvalId: string;
   approvalSlug: string;
@@ -81,15 +126,31 @@ export type RegisteredExecApprovalRequestContext = {
   unavailableReason: ExecApprovalUnavailableReason | null;
 };
 
+/** Destination and context for async exec approval follow-up delivery. */
 export type ExecApprovalFollowupTarget = {
   approvalId: string;
   sessionKey?: string;
+  /** Session UUID active when the approval was requested. Lets the followup be
+   *  dropped if `/new` or `/reset` rebinds the session key to a new session. */
+  expectedSessionId?: string;
+  /** Session-store template, so the direct/denied path can resolve the key's
+   *  current sessionId and drop a rebound followup before sending. */
+  sessionStore?: string;
   turnSourceChannel?: string;
   turnSourceTo?: string;
   turnSourceAccountId?: string;
   turnSourceThreadId?: string | number;
+  direct?: boolean;
+  bashElevated?: ExecElevatedDefaults;
 };
 
+/** Test seam for follow-up delivery and warning logging. */
+export type ExecApprovalFollowupResultDeps = {
+  sendExecApprovalFollowup?: typeof sendExecApprovalFollowup;
+  logWarn?: typeof logWarn;
+};
+
+/** Common arguments used to build default approval request contexts. */
 export type DefaultExecApprovalRequestArgs = {
   warnings: string[];
   approvalRunningNoticeMs: number;
@@ -98,17 +159,21 @@ export type DefaultExecApprovalRequestArgs = {
   turnSourceAccountId?: string;
 };
 
+/** Builds pending approval state with warnings and a bounded expiry. */
 export function createExecApprovalPendingState(params: {
   warnings: string[];
   timeoutMs: number;
 }): ExecApprovalPendingState {
+  const expiresAtMs =
+    resolveExpiresAtMsFromDurationMs(params.timeoutMs) ?? EXPIRED_EXEC_APPROVAL_EXPIRES_AT_MS;
   return {
     warningText: params.warnings.length ? `${params.warnings.join("\n")}\n\n` : "",
-    expiresAtMs: Date.now() + params.timeoutMs,
+    expiresAtMs,
     preResolvedDecision: undefined,
   };
 }
 
+/** Builds pending approval state plus rounded notice duration. */
 export function createExecApprovalRequestState(params: {
   warnings: string[];
   timeoutMs: number;
@@ -124,6 +189,7 @@ export function createExecApprovalRequestState(params: {
   };
 }
 
+/** Creates a fresh approval id/slug/context key for a pending request. */
 export function createExecApprovalRequestContext(params: {
   warnings: string[];
   timeoutMs: number;
@@ -148,6 +214,7 @@ export function createExecApprovalRequestContext(params: {
   };
 }
 
+/** Creates a pending approval context using the default approval timeout. */
 export function createDefaultExecApprovalRequestContext(params: {
   warnings: string[];
   approvalRunningNoticeMs: number;
@@ -161,6 +228,7 @@ export function createDefaultExecApprovalRequestContext(params: {
   });
 }
 
+/** Converts a raw approval decision plus fallback policy into execution state. */
 export function resolveBaseExecApprovalDecision(params: {
   decision: string | null;
   askFallback: ResolvedExecApprovals["agent"]["askFallback"];
@@ -184,6 +252,7 @@ export function resolveBaseExecApprovalDecision(params: {
   return { approvedByAsk: false, deniedReason: null, timedOut: false };
 }
 
+/** Resolves effective exec policy for a gateway/node host. */
 export function resolveExecHostApprovalContext(params: {
   agentId?: string;
   security: ExecSecurity;
@@ -194,6 +263,7 @@ export function resolveExecHostApprovalContext(params: {
     security: params.security,
     ask: params.ask,
   });
+<<<<<<< HEAD
   // exec-approvals.json is the authoritative security policy and must be able to grant
   // a less-restrictive level (e.g. "full") even when tool/runtime defaults are stricter
   // (e.g. "allowlist"). This matches node-host behavior and mirrors the ask=off special
@@ -205,12 +275,20 @@ export function resolveExecHostApprovalContext(params: {
   // prompts even when tool/runtime defaults are stricter (for example on-miss).
   const hostAsk = approvals.agent.ask === "off" ? "off" : maxAsk(params.ask, approvals.agent.ask);
   const askFallback = approvals.agent.askFallback;
+=======
+  // Session/config tool policy is the caller's requested contract. The host file
+  // may tighten that contract, but it must not silently broaden it.
+  const hostSecurity = minSecurity(params.security, approvals.agent.security);
+  const hostAsk = maxAsk(params.ask, approvals.agent.ask);
+  const askFallback = minSecurity(hostSecurity, approvals.agent.askFallback);
+>>>>>>> upstream/main
   if (hostSecurity === "deny") {
     throw new Error(`exec denied: host=${params.host} security=deny`);
   }
   return { approvals, hostSecurity, hostAsk, askFallback };
 }
 
+/** Waits for approval while converting wait failures to an undefined sentinel. */
 export async function resolveApprovalDecisionOrUndefined(params: {
   approvalId: string;
   preResolvedDecision: string | null | undefined;
@@ -227,6 +305,7 @@ export async function resolveApprovalDecisionOrUndefined(params: {
   }
 }
 
+/** Resolves approval delivery availability for the initiating channel/account. */
 export function resolveExecApprovalUnavailableState(params: {
   turnSourceChannel?: string;
   turnSourceAccountId?: string;
@@ -240,9 +319,9 @@ export function resolveExecApprovalUnavailableState(params: {
     channel: params.turnSourceChannel,
     accountId: params.turnSourceAccountId,
   });
-  const sentApproverDms =
-    (initiatingSurface.kind === "disabled" || initiatingSurface.kind === "unsupported") &&
-    hasConfiguredExecApprovalDmRoute(loadConfig());
+  // Native approval runtimes emit routed-elsewhere notices after actual delivery.
+  // Avoid claiming approver DMs were sent from config-only guesses here.
+  const sentApproverDms = false;
   const unavailableReason =
     params.preResolvedDecision === null
       ? "no-approval-route"
@@ -258,6 +337,7 @@ export function resolveExecApprovalUnavailableState(params: {
   };
 }
 
+/** Creates, registers, and normalizes a default approval request context. */
 export async function createAndRegisterDefaultExecApprovalRequest(params: {
   warnings: string[];
   approvalRunningNoticeMs: number;
@@ -301,6 +381,7 @@ export async function createAndRegisterDefaultExecApprovalRequest(params: {
   };
 }
 
+/** Builds the shared argument shape passed into default approval registration. */
 export function buildDefaultExecApprovalRequestArgs(
   params: DefaultExecApprovalRequestArgs,
 ): DefaultExecApprovalRequestArgs {
@@ -313,19 +394,25 @@ export function buildDefaultExecApprovalRequestArgs(
   };
 }
 
+/** Builds the immutable follow-up target passed to async approval continuations. */
 export function buildExecApprovalFollowupTarget(
   params: ExecApprovalFollowupTarget,
 ): ExecApprovalFollowupTarget {
   return {
     approvalId: params.approvalId,
     sessionKey: params.sessionKey,
+    expectedSessionId: params.expectedSessionId,
+    sessionStore: params.sessionStore,
     turnSourceChannel: params.turnSourceChannel,
     turnSourceTo: params.turnSourceTo,
     turnSourceAccountId: params.turnSourceAccountId,
     turnSourceThreadId: params.turnSourceThreadId,
+    direct: params.direct,
+    bashElevated: params.bashElevated,
   };
 }
 
+/** Builds mutable approval decision state from a raw decision. */
 export function createExecApprovalDecisionState(params: {
   decision: string | null | undefined;
   askFallback: ResolvedExecApprovals["agent"]["askFallback"];
@@ -341,6 +428,37 @@ export function createExecApprovalDecisionState(params: {
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Prevents fallback approval from satisfying strict inline-eval/human-review paths. */
+export function enforceStrictInlineEvalApprovalBoundary(params: {
+  baseDecision: {
+    timedOut: boolean;
+  };
+  approvedByAsk: boolean;
+  deniedReason: string | null;
+  requiresInlineEvalApproval: boolean;
+  requiresAutoReviewHumanApproval?: boolean;
+}): {
+  approvedByAsk: boolean;
+  deniedReason: string | null;
+} {
+  const requiresRealApproval =
+    params.requiresInlineEvalApproval || params.requiresAutoReviewHumanApproval === true;
+  if (!params.baseDecision.timedOut || !requiresRealApproval || !params.approvedByAsk) {
+    return {
+      approvedByAsk: params.approvedByAsk,
+      deniedReason: params.deniedReason,
+    };
+  }
+  return {
+    approvedByAsk: false,
+    deniedReason: params.deniedReason ?? "approval-timeout",
+  };
+}
+
+/** Returns true when a headless run should resolve an unavailable approval inline. */
+>>>>>>> upstream/main
 export function shouldResolveExecApprovalUnavailableInline(params: {
   trigger?: string;
   unavailableReason: ExecApprovalUnavailableReason | null;
@@ -353,6 +471,10 @@ export function shouldResolveExecApprovalUnavailableInline(params: {
   );
 }
 
+<<<<<<< HEAD
+=======
+/** Builds the denial copy for headless runs that cannot wait for approval. */
+>>>>>>> upstream/main
 export function buildHeadlessExecApprovalDeniedMessage(params: {
   trigger?: string;
   host: "gateway" | "node";
@@ -373,28 +495,62 @@ export function buildHeadlessExecApprovalDeniedMessage(params: {
   ].join("\n");
 }
 
+<<<<<<< HEAD
+=======
+/** Sends async approval follow-up results with deduped warning logs on failure. */
+>>>>>>> upstream/main
 export async function sendExecApprovalFollowupResult(
   target: ExecApprovalFollowupTarget,
   resultText: string,
+  deps: ExecApprovalFollowupResultDeps = {},
 ): Promise<void> {
-  await sendExecApprovalFollowup({
+  const send = deps.sendExecApprovalFollowup ?? sendExecApprovalFollowup;
+  const warn = deps.logWarn ?? logWarn;
+  const runtimeHandoff =
+    target.direct === true || !target.sessionKey || isExecDeniedResultText(resultText)
+      ? undefined
+      : registerExecApprovalFollowupRuntimeHandoff({
+          approvalId: target.approvalId,
+          sessionKey: target.sessionKey,
+          bashElevated: target.bashElevated,
+        });
+  await send({
     approvalId: target.approvalId,
     sessionKey: target.sessionKey,
+    expectedSessionId: target.expectedSessionId,
+    sessionStore: target.sessionStore,
     turnSourceChannel: target.turnSourceChannel,
     turnSourceTo: target.turnSourceTo,
     turnSourceAccountId: target.turnSourceAccountId,
     turnSourceThreadId: target.turnSourceThreadId,
     resultText,
+<<<<<<< HEAD
   }).catch((error) => {
     const message = error instanceof Error ? error.message : String(error);
+=======
+    direct: target.direct,
+    ...(runtimeHandoff
+      ? {
+          internalRuntimeHandoffId: runtimeHandoff.handoffId,
+          idempotencyKey: runtimeHandoff.idempotencyKey,
+        }
+      : {}),
+  }).catch((error: unknown) => {
+    const message = formatErrorMessage(error);
+>>>>>>> upstream/main
     const key = `${target.approvalId}:${message}`;
     if (!rememberExecApprovalFollowupFailureKey(key)) {
       return;
     }
+<<<<<<< HEAD
     logWarn(`exec approval followup dispatch failed (id=${target.approvalId}): ${message}`);
+=======
+    warn(`exec approval followup dispatch failed (id=${target.approvalId}): ${message}`);
+>>>>>>> upstream/main
   });
 }
 
+/** Renders an approval-pending or approval-unavailable exec tool result. */
 export function buildExecApprovalPendingToolResult(params: {
   host: "gateway" | "node";
   command: string;

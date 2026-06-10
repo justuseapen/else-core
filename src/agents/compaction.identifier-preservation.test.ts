@@ -1,17 +1,24 @@
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
-import * as piCodingAgent from "@mariozechner/pi-coding-agent";
+// Covers identifier-preservation instructions through single and staged
+// compaction summarization paths.
+import type { AgentMessage } from "openclaw/plugin-sdk/agent-core";
+import type { ExtensionContext } from "openclaw/plugin-sdk/agent-sessions";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as agentSessions from "./sessions/index.js";
 
+<<<<<<< HEAD
 vi.mock("@mariozechner/pi-coding-agent", async () => {
   const actual = await vi.importActual<typeof piCodingAgent>("@mariozechner/pi-coding-agent");
+=======
+vi.mock("./sessions/index.js", async () => {
+  const actual = await vi.importActual<typeof agentSessions>("./sessions/index.js");
+>>>>>>> upstream/main
   return {
     ...actual,
     generateSummary: vi.fn(),
   };
 });
 
-const mockGenerateSummary = vi.mocked(piCodingAgent.generateSummary);
+const mockGenerateSummary = vi.mocked(agentSessions.generateSummary);
 type SummarizeInStagesInput = Parameters<typeof import("./compaction.js").summarizeInStages>[0];
 
 const { buildCompactionSummarizationInstructions, summarizeInStages } =
@@ -49,6 +56,8 @@ describe("compaction identifier-preservation instructions", () => {
     messageCount: number,
     overrides: Partial<Omit<SummarizeInStagesInput, "messages">> = {},
   ) {
+    // Each run gets a fresh AbortSignal because summarizeInStages treats the
+    // signal as a per-request lifecycle boundary.
     await summarizeInStages({
       ...summarizeBase,
       ...overrides,
@@ -57,20 +66,34 @@ describe("compaction identifier-preservation instructions", () => {
     });
   }
 
+  function summaryCall(index: number): unknown[] | undefined {
+    return mockGenerateSummary.mock.calls[index];
+  }
+
+  function latestSummaryCall(): unknown[] | undefined {
+    return mockGenerateSummary.mock.calls[mockGenerateSummary.mock.calls.length - 1];
+  }
+
   function firstSummaryInstructions() {
+<<<<<<< HEAD
     return extractSummaryInstructions(mockGenerateSummary.mock.calls[0]);
+=======
+    return extractSummaryInstructions(summaryCall(0));
+>>>>>>> upstream/main
   }
 
   it("injects identifier-preservation guidance even without custom instructions", async () => {
     await runSummary(2);
 
-    expect(mockGenerateSummary).toHaveBeenCalled();
+    expect(mockGenerateSummary).toHaveBeenCalledTimes(1);
     expect(firstSummaryInstructions()).toContain(
       "Preserve all opaque identifiers exactly as written",
     );
     expect(firstSummaryInstructions()).toContain("UUIDs");
     expect(firstSummaryInstructions()).toContain("IPs");
     expect(firstSummaryInstructions()).toContain("ports");
+    expect(firstSummaryInstructions()).not.toContain("tokens");
+    expect(firstSummaryInstructions()).not.toContain("API keys");
   });
 
   it("keeps identifier-preservation guidance when custom instructions are provided", async () => {
@@ -78,6 +101,7 @@ describe("compaction identifier-preservation instructions", () => {
       customInstructions: "Focus on release-impacting bugs.",
     });
 
+    expect(mockGenerateSummary).toHaveBeenCalledTimes(1);
     expect(firstSummaryInstructions()).toContain(
       "Preserve all opaque identifiers exactly as written",
     );
@@ -92,7 +116,7 @@ describe("compaction identifier-preservation instructions", () => {
       minMessagesForSplit: 4,
     });
 
-    expect(mockGenerateSummary.mock.calls.length).toBeGreaterThan(1);
+    expect(mockGenerateSummary).toHaveBeenCalledTimes(3);
     for (const call of mockGenerateSummary.mock.calls) {
       expect(extractSummaryInstructions(call)).toContain(
         "Preserve all opaque identifiers exactly as written",
@@ -108,7 +132,12 @@ describe("compaction identifier-preservation instructions", () => {
       customInstructions: "Prioritize customer-visible regressions.",
     });
 
+<<<<<<< HEAD
     const mergedCall = mockGenerateSummary.mock.calls.at(-1);
+=======
+    expect(mockGenerateSummary).toHaveBeenCalledTimes(3);
+    const mergedCall = latestSummaryCall();
+>>>>>>> upstream/main
     const instructions = extractSummaryInstructions(mergedCall);
     expect(instructions).toContain("Merge these partial summaries into a single cohesive summary.");
     expect(instructions).toContain("Prioritize customer-visible regressions.");
@@ -117,6 +146,11 @@ describe("compaction identifier-preservation instructions", () => {
 });
 
 function extractSummaryInstructions(call: unknown[] | undefined): string {
+<<<<<<< HEAD
+=======
+  // generateSummary has compatibility parameters; scan from the tail so the
+  // instruction argument is found across old and new call shapes.
+>>>>>>> upstream/main
   if (!call) {
     return "";
   }
@@ -139,9 +173,13 @@ describe("buildCompactionSummarizationInstructions", () => {
     const result = buildCompactionSummarizationInstructions();
     expect(result).toContain("Preserve all opaque identifiers exactly as written");
     expect(result).not.toContain("Additional focus:");
+    expect(result).not.toContain("tokens");
+    expect(result).not.toContain("API keys");
   });
 
   it("appends custom instructions in a stable format", () => {
+    // Stable formatting matters because staged merge prompts append this block
+    // again if duplicate headers are not guarded.
     const result = buildCompactionSummarizationInstructions("Keep deployment details.");
     expect(result).toContain("Preserve all opaque identifiers exactly as written");
     expect(result).toContain("Additional focus:");

@@ -1,9 +1,9 @@
+// Tlon plugin module implements channel behavior.
 import crypto from "node:crypto";
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
 import type { ChannelOutboundAdapter } from "openclaw/plugin-sdk/channel-send-result";
-import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
 import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
-import { createLoggerBackedRuntime } from "openclaw/plugin-sdk/runtime";
 import { monitorTlonProvider } from "./monitor/index.js";
 import { tlonSetupWizard } from "./setup-surface.js";
 import {
@@ -139,6 +139,15 @@ export const tlonRuntimeOutbound: ChannelOutboundAdapter = {
   deliveryMode: "direct",
   textChunkLimit: 10000,
   resolveTarget: ({ to }) => resolveTlonOutboundTarget(to),
+  deliveryCapabilities: {
+    durableFinal: {
+      text: true,
+      media: true,
+      replyTo: true,
+      thread: true,
+      messageSendingHooks: true,
+    },
+  },
   sendText: async ({ cfg, to, text, accountId, replyToId, threadId }) => {
     const { account, parsed } = resolveOutboundContext({ cfg, accountId, to });
     return withHttpPokeAccountApi(account, async (api) => {
@@ -183,6 +192,7 @@ export const tlonRuntimeOutbound: ChannelOutboundAdapter = {
           fromShip,
           toShip: parsed.ship,
           story,
+          kind: "media",
         });
       }
       return await sendGroupMessageWithStory({
@@ -192,6 +202,7 @@ export const tlonRuntimeOutbound: ChannelOutboundAdapter = {
         channelName: parsed.channelName,
         story,
         replyToId: resolveReplyId(replyToId, threadId),
+        kind: "media",
       });
     });
   },
@@ -228,7 +239,9 @@ export async function probeTlonAccount(account: ConfiguredTlonAccount) {
 }
 
 export async function startTlonGatewayAccount(
-  ctx: Parameters<NonNullable<NonNullable<ChannelPlugin["gateway"]>["startAccount"]>>[0],
+  ctx: Parameters<
+    NonNullable<NonNullable<ChannelPlugin<ResolvedTlonAccount>["gateway"]>["startAccount"]>
+  >[0],
 ) {
   const account = ctx.account;
   ctx.setStatus({

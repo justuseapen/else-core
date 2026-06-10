@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-on_error() {
-  echo "A2UI bundling failed. Re-run with: pnpm canvas:a2ui:bundle" >&2
-  echo "If this persists, verify pnpm deps and try again." >&2
-}
-trap on_error ERR
-
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+<<<<<<< HEAD
 HASH_FILE="$ROOT_DIR/src/canvas-host/a2ui/.bundle.hash"
 OUTPUT_FILE="$ROOT_DIR/src/canvas-host/a2ui/a2ui.bundle.js"
 A2UI_RENDERER_DIR="$ROOT_DIR/vendor/a2ui/renderers/lit"
@@ -102,3 +96,6 @@ else
 fi
 
 echo "$current_hash" > "$HASH_FILE"
+=======
+exec node "$ROOT_DIR/scripts/bundle-a2ui.mjs" "$@"
+>>>>>>> upstream/main

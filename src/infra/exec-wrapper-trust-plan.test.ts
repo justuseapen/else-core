@@ -1,3 +1,4 @@
+// Covers trust-plan unwrapping for exec command wrappers.
 import { describe, expect, test } from "vitest";
 import { resolveExecWrapperTrustPlan } from "./exec-wrapper-trust-plan.js";
 
@@ -6,10 +7,17 @@ describe("resolveExecWrapperTrustPlan", () => {
     {
       name: "unwraps transparent caffeinate wrappers before shell policy checks",
       enabled: process.platform !== "win32",
+<<<<<<< HEAD
       argv: ["/usr/bin/caffeinate", "-d", "-w", "42", "sh", "-lc", "echo hi"],
       expected: {
         argv: ["sh", "-lc", "echo hi"],
         policyArgv: ["sh", "-lc", "echo hi"],
+=======
+      argv: ["/usr/bin/caffeinate", "-d", "-w", "42", "sh", "-c", "echo hi"],
+      expected: {
+        argv: ["sh", "-c", "echo hi"],
+        policyArgv: ["sh", "-c", "echo hi"],
+>>>>>>> upstream/main
         wrapperChain: ["caffeinate"],
         policyBlocked: false,
         shellWrapperExecutable: true,
@@ -19,10 +27,17 @@ describe("resolveExecWrapperTrustPlan", () => {
     {
       name: "unwraps dispatch wrappers and shell multiplexers into one trust plan",
       enabled: process.platform !== "win32",
+<<<<<<< HEAD
       argv: ["/usr/bin/time", "-p", "busybox", "sh", "-lc", "echo hi"],
       expected: {
         argv: ["sh", "-lc", "echo hi"],
         policyArgv: ["busybox", "sh", "-lc", "echo hi"],
+=======
+      argv: ["/usr/bin/time", "-p", "busybox", "sh", "-c", "echo hi"],
+      expected: {
+        argv: ["sh", "-c", "echo hi"],
+        policyArgv: ["busybox", "sh", "-c", "echo hi"],
+>>>>>>> upstream/main
         wrapperChain: ["time", "busybox"],
         policyBlocked: false,
         shellWrapperExecutable: true,
@@ -30,6 +45,7 @@ describe("resolveExecWrapperTrustPlan", () => {
       },
     },
     {
+<<<<<<< HEAD
       name: "unwraps script wrappers before evaluating nested shell payloads",
       enabled: process.platform === "darwin" || process.platform === "freebsd",
       argv: ["/usr/bin/script", "-q", "/dev/null", "sh", "-lc", "echo hi"],
@@ -40,15 +56,35 @@ describe("resolveExecWrapperTrustPlan", () => {
         policyBlocked: false,
         shellWrapperExecutable: true,
         shellInlineCommand: "echo hi",
+=======
+      name: "blocks script wrappers before evaluating nested shell payloads",
+      enabled: process.platform === "darwin" || process.platform === "freebsd",
+      argv: ["/usr/bin/script", "-q", "/dev/null", "sh", "-c", "echo hi"],
+      expected: {
+        argv: ["/usr/bin/script", "-q", "/dev/null", "sh", "-c", "echo hi"],
+        policyArgv: ["/usr/bin/script", "-q", "/dev/null", "sh", "-c", "echo hi"],
+        wrapperChain: [],
+        policyBlocked: true,
+        blockedWrapper: "script",
+        shellWrapperExecutable: false,
+        shellInlineCommand: null,
+>>>>>>> upstream/main
       },
     },
     {
       name: "unwraps sandbox-exec wrappers before evaluating nested shell payloads",
       enabled: process.platform !== "win32",
+<<<<<<< HEAD
       argv: ["/usr/bin/sandbox-exec", "-p", "(allow default)", "sh", "-lc", "echo hi"],
       expected: {
         argv: ["sh", "-lc", "echo hi"],
         policyArgv: ["sh", "-lc", "echo hi"],
+=======
+      argv: ["/usr/bin/sandbox-exec", "-p", "(allow default)", "sh", "-c", "echo hi"],
+      expected: {
+        argv: ["sh", "-c", "echo hi"],
+        policyArgv: ["sh", "-c", "echo hi"],
+>>>>>>> upstream/main
         wrapperChain: ["sandbox-exec"],
         policyBlocked: false,
         shellWrapperExecutable: true,
@@ -56,6 +92,22 @@ describe("resolveExecWrapperTrustPlan", () => {
       },
     },
     {
+<<<<<<< HEAD
+=======
+      name: "omits startup shell inline payloads from trust plans",
+      enabled: process.platform !== "win32",
+      argv: ["bash", "--login", "-c", "echo hi"],
+      expected: {
+        argv: ["bash", "--login", "-c", "echo hi"],
+        policyArgv: ["bash", "--login", "-c", "echo hi"],
+        wrapperChain: [],
+        policyBlocked: false,
+        shellWrapperExecutable: true,
+        shellInlineCommand: null,
+      },
+    },
+    {
+>>>>>>> upstream/main
       name: "fails closed for unsupported shell multiplexer applets",
       enabled: true,
       argv: ["busybox", "sed", "-n", "1p"],

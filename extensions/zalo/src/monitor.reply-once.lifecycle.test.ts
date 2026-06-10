@@ -1,22 +1,38 @@
+<<<<<<< HEAD
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { withServer } from "../../../test/helpers/http-test-server.js";
+=======
+// Zalo tests cover monitor.reply once.lifecycle plugin behavior.
+import { withServer } from "openclaw/plugin-sdk/test-env";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import type { PluginRuntime } from "../runtime-api.js";
 import {
   createLifecycleMonitorSetup,
   createTextUpdate,
   postWebhookReplay,
   settleAsyncWork,
+<<<<<<< HEAD
 } from "../test-support/lifecycle-test-support.js";
+=======
+} from "./test-support/lifecycle-test-support.js";
+>>>>>>> upstream/main
 import {
   resetLifecycleTestState,
   sendMessageMock,
   setLifecycleRuntimeCore,
   startWebhookLifecycleMonitor,
+<<<<<<< HEAD
 } from "../test-support/monitor-mocks-test-support.js";
+=======
+} from "./test-support/monitor-mocks-test-support.js";
+>>>>>>> upstream/main
 
 describe("Zalo reply-once lifecycle", () => {
   const finalizeInboundContextMock = vi.fn((ctx: Record<string, unknown>) => ctx);
-  const recordInboundSessionMock = vi.fn(async () => undefined);
+  const recordInboundSessionMock = vi.fn(
+    async (_input: { sessionKey?: string; ctx?: Record<string, unknown> }) => undefined,
+  );
   const resolveAgentRouteMock = vi.fn(() => ({
     agentId: "main",
     channel: "zalo",
@@ -47,7 +63,11 @@ describe("Zalo reply-once lifecycle", () => {
     });
   });
 
+<<<<<<< HEAD
   afterEach(async () => {
+=======
+  afterAll(async () => {
+>>>>>>> upstream/main
     await resetLifecycleTestState();
   });
 
@@ -58,6 +78,15 @@ describe("Zalo reply-once lifecycle", () => {
     });
   }
 
+  function requireRecordInboundSessionArgs() {
+    const [call] = recordInboundSessionMock.mock.calls;
+    if (!call) {
+      throw new Error("expected inbound session record call");
+    }
+    const [recordArgs] = call;
+    return recordArgs;
+  }
+
   it("routes one accepted webhook event to one visible reply across duplicate replay", async () => {
     dispatchReplyWithBufferedBlockDispatcherMock.mockImplementation(
       async ({ dispatcherOptions }) => {
@@ -65,11 +94,24 @@ describe("Zalo reply-once lifecycle", () => {
       },
     );
 
+<<<<<<< HEAD
     const monitor = await startWebhookLifecycleMonitor(createReplyOnceMonitorSetup());
 
     try {
       await withServer(
         (req, res) => monitor.route.handler(req, res),
+=======
+    const monitor = await startWebhookLifecycleMonitor({
+      ...createReplyOnceMonitorSetup(),
+      cacheKey: "zalo-reply-once-lifecycle",
+    });
+
+    try {
+      await withServer(
+        (req, res) => {
+          void monitor.route.handler(req, res);
+        },
+>>>>>>> upstream/main
         async (baseUrl) => {
           const { first, replay } = await postWebhookReplay({
             baseUrl,
@@ -89,6 +131,7 @@ describe("Zalo reply-once lifecycle", () => {
         },
       );
 
+<<<<<<< HEAD
       expect(finalizeInboundContextMock).toHaveBeenCalledTimes(1);
       expect(finalizeInboundContextMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -114,6 +157,26 @@ describe("Zalo reply-once lifecycle", () => {
         }),
         undefined,
       );
+=======
+      expect(recordInboundSessionMock).toHaveBeenCalledTimes(1);
+      const recordArgs = requireRecordInboundSessionArgs();
+      expect(recordArgs?.sessionKey).toBe("agent:main:zalo:direct:dm-chat-1");
+      expect(recordArgs?.ctx?.AccountId).toBe("acct-zalo-lifecycle");
+      expect(recordArgs?.ctx?.SessionKey).toBe("agent:main:zalo:direct:dm-chat-1");
+      expect(recordArgs?.ctx?.From).toBe("zalo:user-1");
+      expect(recordArgs?.ctx?.To).toBe("zalo:dm-chat-1");
+      expect(recordArgs?.ctx?.MessageSid).toContain("zalo-replay-");
+      expect(sendMessageMock).toHaveBeenCalledTimes(1);
+      const [sendToken, sendPayload, sendOptions] = sendMessageMock.mock.calls[0] as [
+        string,
+        { chat_id?: string; text?: string },
+        unknown,
+      ];
+      expect(sendToken).toBe("zalo-token");
+      expect(sendPayload.chat_id).toBe("dm-chat-1");
+      expect(sendPayload.text).toBe("zalo reply once");
+      expect(sendOptions).toBeUndefined();
+>>>>>>> upstream/main
     } finally {
       await monitor.stop();
     }
@@ -131,11 +194,24 @@ describe("Zalo reply-once lifecycle", () => {
       },
     );
 
+<<<<<<< HEAD
     const monitor = await startWebhookLifecycleMonitor(createReplyOnceMonitorSetup());
 
     try {
       await withServer(
         (req, res) => monitor.route.handler(req, res),
+=======
+    const monitor = await startWebhookLifecycleMonitor({
+      ...createReplyOnceMonitorSetup(),
+      cacheKey: "zalo-reply-once-lifecycle",
+    });
+
+    try {
+      await withServer(
+        (req, res) => {
+          void monitor.route.handler(req, res);
+        },
+>>>>>>> upstream/main
         async (baseUrl) => {
           const { first, replay } = await postWebhookReplay({
             baseUrl,
@@ -159,7 +235,11 @@ describe("Zalo reply-once lifecycle", () => {
       expect(dispatchReplyWithBufferedBlockDispatcherMock).toHaveBeenCalledTimes(1);
       expect(sendMessageMock).toHaveBeenCalledTimes(1);
       expect(monitor.runtime.error).toHaveBeenCalledWith(
+<<<<<<< HEAD
         expect.stringContaining("Zalo webhook failed: Error: post-send failure"),
+=======
+        "[acct-zalo-lifecycle] Zalo webhook failed: Error: post-send failure",
+>>>>>>> upstream/main
       );
     } finally {
       await monitor.stop();

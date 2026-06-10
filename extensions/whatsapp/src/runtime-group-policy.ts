@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import { resolveOpenProviderRuntimeGroupPolicy } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Whatsapp plugin module implements runtime group policy behavior.
+import { resolveOpenProviderRuntimeGroupPolicy } from "openclaw/plugin-sdk/runtime-group-policy";
+>>>>>>> upstream/main
 
 export function resolveWhatsAppRuntimeGroupPolicy(params: {
   providerConfigPresent: boolean;

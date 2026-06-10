@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import path from "node:path";
 
@@ -21,6 +22,12 @@ function escapeForCmdExe(arg) {
 function buildCmdExeCommandLine(command, args) {
   return [escapeForCmdExe(command), ...args.map(escapeForCmdExe)].join(" ");
 }
+=======
+// Resolves npm commands from the active Node toolchain, especially on Windows.
+import fs from "node:fs";
+import path from "node:path";
+import { buildCmdExeCommandLine, resolvePathEnvKey } from "./windows-cmd-helpers.mjs";
+>>>>>>> upstream/main
 
 function resolveToolchainNpmRunner(params) {
   const npmCliCandidates = [
@@ -61,6 +68,12 @@ function resolveToolchainNpmRunner(params) {
   return null;
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Resolves a toolchain-local npm invocation for the current platform.
+ */
+>>>>>>> upstream/main
 export function resolveNpmRunner(params = {}) {
   const execPath = params.execPath ?? process.execPath;
   const npmArgs = params.npmArgs ?? [];

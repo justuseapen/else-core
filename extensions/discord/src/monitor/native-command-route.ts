@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Discord plugin module implements native command route behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import * as conversationRuntime from "openclaw/plugin-sdk/conversation-binding-runtime";
 import type { ResolvedAgentRoute } from "openclaw/plugin-sdk/routing";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
 import {
   resolveDiscordBoundConversationRoute,
   resolveDiscordEffectiveRoute,
@@ -14,7 +20,7 @@ type ConfiguredBindingResolution = NonNullable<
   NonNullable<ResolvedConfiguredBindingRoute>["bindingResolution"]
 >;
 
-export type DiscordNativeInteractionRouteState = {
+type DiscordNativeInteractionRouteState = {
   route: ResolvedAgentRoute;
   effectiveRoute: ResolvedAgentRoute;
   boundSessionKey?: string;
@@ -63,9 +69,9 @@ export async function resolveDiscordNativeInteractionRouteState(params: {
         })
       : null;
   const configuredBinding = configuredRoute?.bindingResolution ?? null;
-  const configuredBoundSessionKey = configuredRoute?.boundSessionKey?.trim() || undefined;
+  const configuredBoundSessionKey = normalizeOptionalString(configuredRoute?.boundSessionKey);
   const boundSessionKey =
-    params.threadBinding?.targetSessionKey?.trim() || configuredBoundSessionKey;
+    normalizeOptionalString(params.threadBinding?.targetSessionKey) ?? configuredBoundSessionKey;
   const effectiveRoute = resolveDiscordEffectiveRoute({
     route,
     boundSessionKey,

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Type } from "@sinclair/typebox";
 import type { OpenClawConfig } from "../../config/config.js";
 import { loadConfig } from "../../config/config.js";
@@ -8,6 +9,34 @@ import { readSnakeCaseParamRaw } from "../../param-key.js";
 import { resolveUserPath } from "../../utils.js";
 import type { DeliveryContext } from "../../utils/delivery-context.js";
 import { resolveVideoGenerationSupportedDurations } from "../../video-generation/duration-support.js";
+=======
+/**
+ * video_generate built-in tool.
+ *
+ * Validates media references, resolves provider/model capabilities, and schedules video generation.
+ */
+import { Type, type TSchema } from "typebox";
+import { getRuntimeConfig } from "../../config/config.js";
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
+import type { SsrFPolicy } from "../../infra/net/ssrf.js";
+import { createSubsystemLogger } from "../../logging/subsystem.js";
+import { resolveGeneratedMediaMaxBytes } from "../../media/configured-max-bytes.js";
+import {
+  classifyMediaReferenceSource,
+  normalizeMediaReferenceSource,
+} from "../../media/media-reference.js";
+import { saveMediaBuffer } from "../../media/store.js";
+import { loadWebMedia } from "../../media/web-media.js";
+import { readSnakeCaseParamRaw } from "../../param-key.js";
+import { isManifestPluginAvailableForControlPlane } from "../../plugins/manifest-contract-eligibility.js";
+import type { PluginMetadataSnapshot } from "../../plugins/plugin-metadata-snapshot.types.js";
+import { resolveUserPath } from "../../utils.js";
+import type { DeliveryContext } from "../../utils/delivery-context.js";
+import {
+  resolveVideoGenerationMode,
+  resolveVideoGenerationModeCapabilities,
+} from "../../video-generation/capabilities.js";
+>>>>>>> upstream/main
 import { parseVideoGenerationModelRef } from "../../video-generation/model-ref.js";
 import {
   generateVideo,
@@ -19,6 +48,7 @@ import type {
   VideoGenerationResolution,
   VideoGenerationSourceAsset,
 } from "../../video-generation/types.js";
+<<<<<<< HEAD
 import {
   ToolInputError,
   readNumberParam,
@@ -33,6 +63,54 @@ import {
   resolveMediaToolLocalRoots,
 } from "./media-tool-shared.js";
 import { type ToolModelConfig } from "./model-config.helpers.js";
+=======
+import type { AuthProfileStore } from "../auth-profiles/types.js";
+import {
+  formatGeneratedAttachmentLines,
+  type AgentGeneratedAttachment,
+} from "../generated-attachments.js";
+import {
+  buildMediaGenerationRequestKey,
+  recordRecentMediaGenerationTaskStartForSession,
+} from "../media-generation-task-status-shared.js";
+import { getCustomProviderApiKey } from "../model-auth.js";
+import { resolveProviderIdForAuth } from "../provider-auth-aliases.js";
+import { ToolInputError, readNumberParam, readStringParam } from "./common.js";
+import { decodeDataUrl } from "./image-tool.helpers.js";
+import {
+  hasSnapshotCapabilityProviderAvailability,
+  loadCapabilityMetadataSnapshot,
+} from "./manifest-capability-availability.js";
+import {
+  buildMediaGenerationStartedToolResult,
+  createDefaultMediaGenerateBackgroundScheduler,
+  notifyMediaGenerationAsyncTaskStarted,
+  scheduleMediaGenerationTaskCompletion,
+  shouldDetachMediaGenerationTask,
+  type MediaGenerateAsyncStartCallback,
+  type MediaGenerateBackgroundScheduler,
+} from "./media-generate-background-shared.js";
+import {
+  applyVideoGenerationModelConfigDefaults,
+  buildMediaReferenceDetails,
+  buildTaskRunDetails,
+  hasGenerationToolAvailability,
+  normalizeMediaReferenceInputs,
+  readBooleanToolParam,
+  readGenerationTimeoutMs,
+  resolveCapabilityModelConfigForTool,
+  resolveGenerateAction,
+  resolveMediaToolLocalRoots,
+  resolveRemoteMediaSsrfPolicy,
+  resolveSelectedCapabilityProvider,
+} from "./media-tool-shared.js";
+import {
+  hasAuthForProvider,
+  coerceToolModelConfig,
+  hasToolModelConfig,
+  type ToolModelConfig,
+} from "./model-config.helpers.js";
+>>>>>>> upstream/main
 import {
   createSandboxBridgeReadFile,
   resolveSandboxedBridgeMediaPath,
@@ -45,8 +123,13 @@ import {
   createVideoGenerationTaskRun,
   failVideoGenerationTaskRun,
   recordVideoGenerationTaskProgress,
+<<<<<<< HEAD
   type VideoGenerationTaskHandle,
   wakeVideoGenerationTaskCompletion,
+=======
+  videoGenerationTaskLifecycle,
+  type VideoGenerationTaskHandle,
+>>>>>>> upstream/main
 } from "./video-generate-background.js";
 import {
   createVideoGenerateDuplicateGuardResult,
@@ -55,6 +138,7 @@ import {
 } from "./video-generate-tool.actions.js";
 
 const log = createSubsystemLogger("agents/tools/video-generate");
+<<<<<<< HEAD
 const MAX_INPUT_IMAGES = 5;
 const MAX_INPUT_VIDEOS = 4;
 const SUPPORTED_ASPECT_RATIOS = new Set([
@@ -81,20 +165,51 @@ const VideoGenerateToolSchema = Type.Object({
   image: Type.Optional(
     Type.String({
       description: "Optional single reference image path or URL.",
+=======
+const MAX_INPUT_IMAGES = 9;
+const MAX_INPUT_VIDEOS = 4;
+const MAX_INPUT_AUDIOS = 3;
+
+const VideoGenerateToolProperties = {
+  action: Type.Optional(
+    Type.String({
+      description: '"generate" default, "status" active task, "list" providers/models.',
+    }),
+  ),
+  prompt: Type.Optional(Type.String({ description: "Video prompt." })),
+  image: Type.Optional(
+    Type.String({
+      description: "One reference image path/URL.",
+>>>>>>> upstream/main
     }),
   ),
   images: Type.Optional(
     Type.Array(Type.String(), {
+<<<<<<< HEAD
       description: `Optional reference images (up to ${MAX_INPUT_IMAGES}).`,
+=======
+      description: `Reference images; max ${MAX_INPUT_IMAGES}.`,
+    }),
+  ),
+  imageRoles: Type.Optional(
+    Type.Array(Type.String(), {
+      description:
+        "`image` + `images` roles by index after de-dupe. Values: first_frame, last_frame, reference_image; empty string leaves unset.",
+>>>>>>> upstream/main
     }),
   ),
   video: Type.Optional(
     Type.String({
+<<<<<<< HEAD
       description: "Optional single reference video path or URL.",
+=======
+      description: "One reference video path/URL.",
+>>>>>>> upstream/main
     }),
   ),
   videos: Type.Optional(
     Type.Array(Type.String(), {
+<<<<<<< HEAD
       description: `Optional reference videos (up to ${MAX_INPUT_VIDEOS}).`,
     }),
   ),
@@ -105,21 +220,63 @@ const VideoGenerateToolSchema = Type.Object({
     Type.String({
       description:
         "Optional output filename hint. OpenClaw preserves the basename and saves under its managed media directory.",
+=======
+      description: `Reference videos; max ${MAX_INPUT_VIDEOS}.`,
+    }),
+  ),
+  videoRoles: Type.Optional(
+    Type.Array(Type.String(), {
+      description:
+        "`video` + `videos` roles by index after de-dupe. Value: reference_video; empty string leaves unset.",
+    }),
+  ),
+  audioRef: Type.Optional(
+    Type.String({
+      description: "One reference audio path/URL, e.g. music.",
+    }),
+  ),
+  audioRefs: Type.Optional(
+    Type.Array(Type.String(), {
+      description: `Reference audios; max ${MAX_INPUT_AUDIOS}.`,
+    }),
+  ),
+  audioRoles: Type.Optional(
+    Type.Array(Type.String(), {
+      description:
+        "`audioRef` + `audioRefs` roles by index after de-dupe. Value: reference_audio; empty string leaves unset.",
+    }),
+  ),
+  model: Type.Optional(
+    Type.String({ description: "Provider/model override, e.g. qwen/wan2.6-t2v." }),
+  ),
+  filename: Type.Optional(
+    Type.String({
+      description: "Output filename hint; basename preserved in managed media dir.",
+>>>>>>> upstream/main
     }),
   ),
   size: Type.Optional(
     Type.String({
+<<<<<<< HEAD
       description: "Optional size hint like 1280x720 or 1920x1080 when the provider supports it.",
+=======
+      description: "Size hint, e.g. 1280x720, 1920x1080.",
+>>>>>>> upstream/main
     }),
   ),
   aspectRatio: Type.Optional(
     Type.String({
       description:
+<<<<<<< HEAD
         "Optional aspect ratio hint: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, or 21:9.",
+=======
+        'Aspect ratio: 1:1, 16:9, 9:16, "adaptive", or provider value; unsupported normalized/ignored.',
+>>>>>>> upstream/main
     }),
   ),
   resolution: Type.Optional(
     Type.String({
+<<<<<<< HEAD
       description: "Optional resolution hint: 480P, 720P, or 1080P.",
     }),
   ),
@@ -127,16 +284,30 @@ const VideoGenerateToolSchema = Type.Object({
     Type.Number({
       description:
         "Optional target duration in seconds. OpenClaw may round this to the nearest provider-supported duration.",
+=======
+      description:
+        "Resolution: 360P, 480P, 540P, 720P, 768P, 1080P, 4K, or provider value; unsupported normalized/ignored.",
+    }),
+  ),
+  durationSeconds: Type.Optional(
+    Type.Integer({
+      description: "Target seconds; may round to nearest supported duration.",
+>>>>>>> upstream/main
       minimum: 1,
     }),
   ),
   audio: Type.Optional(
     Type.Boolean({
+<<<<<<< HEAD
       description: "Optional audio toggle when the provider supports generated audio.",
+=======
+      description: "Generated-audio toggle.",
+>>>>>>> upstream/main
     }),
   ),
   watermark: Type.Optional(
     Type.Boolean({
+<<<<<<< HEAD
       description: "Optional watermark toggle when the provider supports it.",
     }),
   ),
@@ -175,6 +346,184 @@ function normalizeResolution(raw: string | undefined): VideoGenerationResolution
     return normalized;
   }
   throw new ToolInputError("resolution must be one of 480P, 720P, or 1080P");
+=======
+      description: "Watermark toggle.",
+    }),
+  ),
+  providerOptions: Type.Optional(
+    Type.Record(Type.String(), Type.Unknown(), {
+      description:
+        'Provider JSON options, e.g. {"seed":42}. Keys/types must match provider capabilities; mismatch skips candidate. Use action=list for accepted keys.',
+    }),
+  ),
+  timeoutMs: Type.Optional(
+    Type.Integer({
+      description: "Provider timeout ms.",
+      minimum: 1,
+    }),
+  ),
+} satisfies Record<string, TSchema>;
+
+function createVideoGenerateToolSchema(params: { includeAudioReferences: boolean }) {
+  const properties: Record<string, TSchema> = { ...VideoGenerateToolProperties };
+  if (!params.includeAudioReferences) {
+    delete properties.audioRef;
+    delete properties.audioRefs;
+    delete properties.audioRoles;
+  }
+  return Type.Object(properties);
+}
+
+export function resolveVideoGenerationModelConfigForTool(params: {
+  cfg?: OpenClawConfig;
+  workspaceDir?: string;
+  agentDir?: string;
+  authStore?: AuthProfileStore;
+}): ToolModelConfig | null {
+  return resolveCapabilityModelConfigForTool({
+    cfg: params.cfg,
+    workspaceDir: params.workspaceDir,
+    agentDir: params.agentDir,
+    authStore: params.authStore,
+    modelConfig: params.cfg?.agents?.defaults?.videoGenerationModel,
+    providers: () => listRuntimeVideoGenerationProviders({ config: params.cfg }),
+  });
+}
+
+function hasExplicitVideoGenerationModelConfig(cfg?: OpenClawConfig): boolean {
+  return hasToolModelConfig(coerceToolModelConfig(cfg?.agents?.defaults?.videoGenerationModel));
+}
+
+function collectVideoGenerationModelProviderIds(params: {
+  cfg: OpenClawConfig;
+  modelConfig: ToolModelConfig;
+  workspaceDir?: string;
+}): Set<string> {
+  const providerIds = new Set<string>();
+  for (const modelRef of [params.modelConfig.primary, ...(params.modelConfig.fallbacks ?? [])]) {
+    const parsed = parseVideoGenerationModelRef(modelRef);
+    if (parsed?.provider) {
+      providerIds.add(
+        resolveProviderIdForAuth(parsed.provider, {
+          config: params.cfg,
+          ...(params.workspaceDir !== undefined ? { workspaceDir: params.workspaceDir } : {}),
+        }),
+      );
+    }
+  }
+  return providerIds;
+}
+
+function isVideoGenerationProviderConfigured(params: {
+  snapshot: Pick<PluginMetadataSnapshot, "index" | "plugins">;
+  cfg: OpenClawConfig;
+  agentDir?: string;
+  authStore?: AuthProfileStore;
+  providerId: string;
+}): boolean {
+  return (
+    getCustomProviderApiKey(params.cfg, params.providerId) !== undefined ||
+    hasSnapshotCapabilityProviderAvailability({
+      snapshot: params.snapshot,
+      key: "videoGenerationProviders",
+      providerId: params.providerId,
+      config: params.cfg,
+      authStore: params.authStore,
+    }) ||
+    hasAuthForProvider({
+      provider: params.providerId,
+      agentDir: params.agentDir,
+      authStore: params.authStore,
+    })
+  );
+}
+
+function shouldExposeVideoReferenceAudioParams(params: {
+  cfg: OpenClawConfig;
+  agentDir?: string;
+  authStore?: AuthProfileStore;
+  workspaceDir?: string;
+}): boolean {
+  const snapshot = loadCapabilityMetadataSnapshot({
+    config: params.cfg,
+    workspaceDir: params.workspaceDir,
+  });
+  const knownProviderIds = new Set<string>();
+  const audioCandidateProviderIds = new Set<string>();
+  const explicitProviderIds = collectVideoGenerationModelProviderIds({
+    cfg: params.cfg,
+    modelConfig: coerceToolModelConfig(params.cfg.agents?.defaults?.videoGenerationModel),
+    ...(params.workspaceDir !== undefined ? { workspaceDir: params.workspaceDir } : {}),
+  });
+
+  for (const plugin of snapshot.plugins) {
+    if (
+      !isManifestPluginAvailableForControlPlane({
+        snapshot,
+        plugin,
+        config: params.cfg,
+      })
+    ) {
+      continue;
+    }
+    const providerIds = plugin.contracts?.videoGenerationProviders ?? [];
+    for (const providerId of providerIds) {
+      knownProviderIds.add(providerId);
+      const metadata = plugin.videoGenerationProviderMetadata?.[providerId];
+      const providerCanUseReferenceAudio = metadata?.referenceAudioInputs === true;
+      for (const alias of metadata?.aliases ?? []) {
+        knownProviderIds.add(alias);
+        if (providerCanUseReferenceAudio) {
+          audioCandidateProviderIds.add(alias);
+        }
+      }
+      if (providerCanUseReferenceAudio) {
+        audioCandidateProviderIds.add(providerId);
+      }
+    }
+  }
+
+  for (const providerId of explicitProviderIds) {
+    if (!knownProviderIds.has(providerId) || audioCandidateProviderIds.has(providerId)) {
+      return true;
+    }
+  }
+
+  for (const providerId of audioCandidateProviderIds) {
+    if (
+      isVideoGenerationProviderConfigured({
+        snapshot,
+        cfg: params.cfg,
+        agentDir: params.agentDir,
+        authStore: params.authStore,
+        providerId,
+      })
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function resolveAction(args: Record<string, unknown>): "generate" | "list" | "status" {
+  return resolveGenerateAction({
+    args,
+    allowed: ["generate", "status", "list"],
+    defaultAction: "generate",
+  });
+}
+
+function normalizeResolution(raw: string | undefined): VideoGenerationResolution | undefined {
+  const normalized = raw?.trim();
+  if (!normalized) {
+    return undefined;
+  }
+  const uppercase = normalized.toUpperCase();
+  if (/^\d+P$/.test(uppercase) || /^\d+K$/.test(uppercase)) {
+    return uppercase;
+  }
+  return normalized;
+>>>>>>> upstream/main
 }
 
 function normalizeAspectRatio(raw: string | undefined): string | undefined {
@@ -182,6 +531,7 @@ function normalizeAspectRatio(raw: string | undefined): string | undefined {
   if (!normalized) {
     return undefined;
   }
+<<<<<<< HEAD
   if (SUPPORTED_ASPECT_RATIOS.has(normalized)) {
     return normalized;
   }
@@ -205,10 +555,44 @@ function readBooleanParam(params: Record<string, unknown>, key: string): boolean
     }
   }
   return undefined;
+=======
+  return normalized;
+}
+
+/**
+ * Parse a `*Roles` parallel string array for `video_generate`. Throws when
+ * the caller supplies more roles than assets so off-by-one alignment bugs
+ * fail loudly at the tool boundary instead of silently dropping the
+ * trailing roles. Empty strings in the array are allowed and mean "no
+ * role at this position". Non-string entries are coerced to empty strings
+ * and treated as "unset" so providers can leave individual slots empty.
+ */
+function parseRoleArray(params: {
+  raw: unknown;
+  kind: "imageRoles" | "videoRoles" | "audioRoles";
+  assetCount: number;
+}): string[] {
+  if (params.raw === undefined || params.raw === null) {
+    return [];
+  }
+  if (!Array.isArray(params.raw)) {
+    throw new ToolInputError(
+      `${params.kind} must be a JSON array of role strings, parallel to the reference list.`,
+    );
+  }
+  const roles = params.raw.map((entry) => (typeof entry === "string" ? entry.trim() : ""));
+  if (roles.length > params.assetCount) {
+    throw new ToolInputError(
+      `${params.kind} has ${roles.length} entries but only ${params.assetCount} reference ${params.kind === "imageRoles" ? "image" : params.kind === "videoRoles" ? "video" : "audio"}${params.assetCount === 1 ? "" : "s"} were provided; extra roles cannot be aligned positionally.`,
+    );
+  }
+  return roles;
+>>>>>>> upstream/main
 }
 
 function normalizeReferenceInputs(params: {
   args: Record<string, unknown>;
+<<<<<<< HEAD
   singularKey: "image" | "video";
   pluralKey: "images" | "videos";
   maxCount: number;
@@ -233,6 +617,19 @@ function normalizeReferenceInputs(params: {
     );
   }
   return deduped;
+=======
+  singularKey: "image" | "video" | "audioRef";
+  pluralKey: "images" | "videos" | "audioRefs";
+  maxCount: number;
+}): string[] {
+  return normalizeMediaReferenceInputs({
+    args: params.args,
+    singularKey: params.singularKey,
+    pluralKey: params.pluralKey,
+    maxCount: params.maxCount,
+    label: `reference ${params.pluralKey}`,
+  });
+>>>>>>> upstream/main
 }
 
 function resolveSelectedVideoGenerationProvider(params: {
@@ -240,6 +637,7 @@ function resolveSelectedVideoGenerationProvider(params: {
   videoGenerationModelConfig: ToolModelConfig;
   modelOverride?: string;
 }): VideoGenerationProvider | undefined {
+<<<<<<< HEAD
   const selectedRef =
     parseVideoGenerationModelRef(params.modelOverride) ??
     parseVideoGenerationModelRef(params.videoGenerationModelConfig.primary);
@@ -249,6 +647,13 @@ function resolveSelectedVideoGenerationProvider(params: {
   return findCapabilityProviderById({
     providers: listRuntimeVideoGenerationProviders({ config: params.config }),
     providerId: selectedRef.provider,
+=======
+  return resolveSelectedCapabilityProvider({
+    providers: listRuntimeVideoGenerationProviders({ config: params.config }),
+    modelConfig: params.videoGenerationModelConfig,
+    modelOverride: params.modelOverride,
+    parseModelRef: parseVideoGenerationModelRef,
+>>>>>>> upstream/main
   });
 }
 
@@ -257,6 +662,10 @@ function validateVideoGenerationCapabilities(params: {
   model?: string;
   inputImageCount: number;
   inputVideoCount: number;
+<<<<<<< HEAD
+=======
+  inputAudioCount: number;
+>>>>>>> upstream/main
   size?: string;
   aspectRatio?: string;
   resolution?: VideoGenerationResolution;
@@ -268,7 +677,45 @@ function validateVideoGenerationCapabilities(params: {
   if (!provider) {
     return;
   }
+<<<<<<< HEAD
   const caps = provider.capabilities;
+=======
+  const mode = resolveVideoGenerationMode({
+    inputImageCount: params.inputImageCount,
+    inputVideoCount: params.inputVideoCount,
+  });
+  const { capabilities: caps } = resolveVideoGenerationModeCapabilities({
+    provider,
+    model: params.model,
+    inputImageCount: params.inputImageCount,
+    inputVideoCount: params.inputVideoCount,
+  });
+  if (!caps && mode === "imageToVideo" && params.inputVideoCount === 0) {
+    throw new ToolInputError(`${provider.id} does not support image-to-video reference inputs.`);
+  }
+  if (!caps && mode === "videoToVideo" && params.inputImageCount === 0) {
+    throw new ToolInputError(`${provider.id} does not support video-to-video reference inputs.`);
+  }
+  if (!caps) {
+    return;
+  }
+  if (
+    mode === "imageToVideo" &&
+    "enabled" in caps &&
+    !caps.enabled &&
+    params.inputVideoCount === 0
+  ) {
+    throw new ToolInputError(`${provider.id} does not support image-to-video reference inputs.`);
+  }
+  if (
+    mode === "videoToVideo" &&
+    "enabled" in caps &&
+    !caps.enabled &&
+    params.inputImageCount === 0
+  ) {
+    throw new ToolInputError(`${provider.id} does not support video-to-video reference inputs.`);
+  }
+>>>>>>> upstream/main
   if (params.inputImageCount > 0) {
     const maxInputImages = caps.maxInputImages ?? MAX_INPUT_IMAGES;
     if (params.inputImageCount > maxInputImages) {
@@ -285,6 +732,7 @@ function validateVideoGenerationCapabilities(params: {
       );
     }
   }
+<<<<<<< HEAD
   if (
     typeof params.durationSeconds === "number" &&
     Number.isFinite(params.durationSeconds) &&
@@ -299,6 +747,17 @@ function validateVideoGenerationCapabilities(params: {
       `${provider.id} supports at most ${caps.maxDurationSeconds} seconds per video.`,
     );
   }
+=======
+  // Audio-count validation is intentionally deferred to runtime.ts (generateVideo).
+  // The runtime guard skips per-candidate providers that lack audio support, allowing
+  // fallback candidates that do support audio to run. A ToolInputError here would fire
+  // against only the primary provider and prevent valid fallback-based audio requests.
+  // maxDurationSeconds validation is intentionally deferred to runtime.ts (generateVideo).
+  // The runtime guard skips per-candidate providers whose hard cap is below the requested
+  // duration, allowing a fallback with a higher cap to run — same rationale as the audio
+  // check above. When providers declare an explicit supportedDurationSeconds list, runtime
+  // normalization snaps to the nearest valid value instead of skipping.
+>>>>>>> upstream/main
 }
 
 function formatIgnoredVideoGenerationOverride(override: VideoGenerationIgnoredOverride): string {
@@ -310,6 +769,7 @@ type VideoGenerateSandboxConfig = {
   bridge: SandboxFsBridge;
 };
 
+<<<<<<< HEAD
 type VideoGenerateBackgroundScheduler = (work: () => Promise<void>) => void;
 
 function defaultScheduleVideoGenerateBackgroundWork(work: () => Promise<void>) {
@@ -328,6 +788,20 @@ async function loadReferenceAssets(params: {
   maxBytes?: number;
   workspaceDir?: string;
   sandboxConfig: { root: string; bridge: SandboxFsBridge; workspaceOnly: boolean } | null;
+=======
+const defaultScheduleVideoGenerateBackgroundWork = createDefaultMediaGenerateBackgroundScheduler({
+  toolName: "video_generate",
+  onCrash: (message, meta) => log.error(message, meta),
+});
+
+async function loadReferenceAssets(params: {
+  inputs: string[];
+  expectedKind: "image" | "video" | "audio";
+  maxBytes?: number;
+  workspaceDir?: string;
+  sandboxConfig: { root: string; bridge: SandboxFsBridge; workspaceOnly: boolean } | null;
+  ssrfPolicy?: SsrFPolicy;
+>>>>>>> upstream/main
 }): Promise<
   Array<{
     sourceAsset: VideoGenerationSourceAsset;
@@ -343,6 +817,7 @@ async function loadReferenceAssets(params: {
 
   for (const rawInput of params.inputs) {
     const trimmed = rawInput.trim();
+<<<<<<< HEAD
     const inputRaw = trimmed.startsWith("@") ? trimmed.slice(1).trim() : trimmed;
     if (!inputRaw) {
       throw new ToolInputError(`${params.expectedKind} required (empty string in array)`);
@@ -353,6 +828,17 @@ async function loadReferenceAssets(params: {
     const isHttpUrl = /^https?:\/\//i.test(inputRaw);
     const isDataUrl = /^data:/i.test(inputRaw);
     if (hasScheme && !looksLikeWindowsDrivePath && !isFileUrl && !isHttpUrl && !isDataUrl) {
+=======
+    const inputRaw = normalizeMediaReferenceSource(
+      trimmed.startsWith("@") ? trimmed.slice(1).trim() : trimmed,
+    );
+    if (!inputRaw) {
+      throw new ToolInputError(`${params.expectedKind} required (empty string in array)`);
+    }
+    const refInfo = classifyMediaReferenceSource(inputRaw);
+    const { isDataUrl, isHttpUrl } = refInfo;
+    if (refInfo.hasUnsupportedScheme) {
+>>>>>>> upstream/main
       throw new ToolInputError(
         `Unsupported ${params.expectedKind} reference: ${rawInput}. Use a file path, a file:// URL, a data: URL, or an http(s) URL.`,
       );
@@ -406,7 +892,13 @@ async function loadReferenceAssets(params: {
       ? params.expectedKind === "image"
         ? decodeDataUrl(resolvedInput)
         : (() => {
+<<<<<<< HEAD
             throw new ToolInputError("Video data: URLs are not supported for video_generate.");
+=======
+            throw new ToolInputError(
+              `${params.expectedKind} data: URLs are not supported for video_generate.`,
+            );
+>>>>>>> upstream/main
           })()
       : params.sandboxConfig
         ? await loadWebMedia(resolvedPath ?? resolvedInput, {
@@ -417,6 +909,10 @@ async function loadReferenceAssets(params: {
         : await loadWebMedia(resolvedPath ?? resolvedInput, {
             maxBytes: params.maxBytes,
             localRoots,
+<<<<<<< HEAD
+=======
+            ssrfPolicy: params.ssrfPolicy,
+>>>>>>> upstream/main
           });
     if (media.kind !== params.expectedKind) {
       throw new ToolInputError(`Unsupported media type: ${media.kind ?? "unknown"}`);
@@ -443,11 +939,28 @@ type ExecutedVideoGeneration = {
   provider: string;
   model: string;
   savedPaths: string[];
+<<<<<<< HEAD
+=======
+  /** URLs of url-only assets that were not saved locally. */
+  urlOnlyUrls: string[];
+  /** Total generated video count, including url-only assets. */
+  count: number;
+  paths: string[];
+  mediaUrls: string[];
+  attachments: AgentGeneratedAttachment[];
+>>>>>>> upstream/main
   contentText: string;
   details: Record<string, unknown>;
   wakeResult: string;
 };
 
+<<<<<<< HEAD
+=======
+function isGeneratedMediaSizeLimitError(error: unknown): boolean {
+  return error instanceof Error && /^Media exceeds \d+MB limit$/.test(error.message);
+}
+
+>>>>>>> upstream/main
 async function executeVideoGenerationJob(params: {
   effectiveCfg: OpenClawConfig;
   prompt: string;
@@ -462,7 +975,15 @@ async function executeVideoGenerationJob(params: {
   filename?: string;
   loadedReferenceImages: LoadedReferenceAsset[];
   loadedReferenceVideos: LoadedReferenceAsset[];
+<<<<<<< HEAD
   taskHandle?: VideoGenerationTaskHandle | null;
+=======
+  loadedReferenceAudios: LoadedReferenceAsset[];
+  taskHandle?: VideoGenerationTaskHandle | null;
+  providerOptions?: Record<string, unknown>;
+  autoProviderFallback?: boolean;
+  timeoutMs?: number;
+>>>>>>> upstream/main
 }): Promise<ExecutedVideoGeneration> {
   if (params.taskHandle) {
     recordVideoGenerationTaskProgress({
@@ -483,6 +1004,13 @@ async function executeVideoGenerationJob(params: {
     watermark: params.watermark,
     inputImages: params.loadedReferenceImages.map((entry) => entry.sourceAsset),
     inputVideos: params.loadedReferenceVideos.map((entry) => entry.sourceAsset),
+<<<<<<< HEAD
+=======
+    inputAudios: params.loadedReferenceAudios.map((entry) => entry.sourceAsset),
+    autoProviderFallback: params.autoProviderFallback,
+    providerOptions: params.providerOptions,
+    timeoutMs: params.timeoutMs,
+>>>>>>> upstream/main
   });
   if (params.taskHandle) {
     recordVideoGenerationTaskProgress({
@@ -490,6 +1018,7 @@ async function executeVideoGenerationJob(params: {
       progressSummary: "Saving generated video",
     });
   }
+<<<<<<< HEAD
   const savedVideos = await Promise.all(
     result.videos.map((video) =>
       saveMediaBuffer(
@@ -506,6 +1035,60 @@ async function executeVideoGenerationJob(params: {
     Number.isFinite(result.metadata.requestedDurationSeconds)
       ? result.metadata.requestedDurationSeconds
       : params.durationSeconds;
+=======
+
+  const urlOnlyVideos: Array<{ url: string; mimeType: string; fileName?: string }> = [];
+  const bufferVideos: Array<(typeof result.videos)[number] & { buffer: Buffer }> = [];
+  for (const video of result.videos) {
+    if (video.buffer) {
+      bufferVideos.push(video as (typeof result.videos)[number] & { buffer: Buffer });
+      continue;
+    }
+    if (video.url) {
+      urlOnlyVideos.push({
+        url: video.url,
+        mimeType: video.mimeType,
+        fileName: video.fileName,
+      });
+      continue;
+    }
+    throw new Error(
+      `Provider ${result.provider} returned a video asset with neither buffer nor url — cannot deliver.`,
+    );
+  }
+
+  const mediaMaxBytes = resolveGeneratedMediaMaxBytes(params.effectiveCfg, "video");
+  const savedVideos: Array<Awaited<ReturnType<typeof saveMediaBuffer>>> = [];
+  for (const video of bufferVideos) {
+    try {
+      const saved = await saveMediaBuffer(
+        video.buffer,
+        video.mimeType,
+        "tool-video-generation",
+        mediaMaxBytes,
+        params.filename || video.fileName,
+      );
+      savedVideos.push(saved);
+    } catch (error) {
+      if (video.url && isGeneratedMediaSizeLimitError(error)) {
+        urlOnlyVideos.push({
+          url: video.url,
+          mimeType: video.mimeType,
+          fileName: video.fileName,
+        });
+        continue;
+      }
+      throw error;
+    }
+  }
+  const totalCount = savedVideos.length + urlOnlyVideos.length;
+  const requestedDurationSeconds =
+    result.normalization?.durationSeconds?.requested ??
+    (typeof result.metadata?.requestedDurationSeconds === "number" &&
+    Number.isFinite(result.metadata.requestedDurationSeconds)
+      ? result.metadata.requestedDurationSeconds
+      : params.durationSeconds);
+>>>>>>> upstream/main
   const ignoredOverrides = result.ignoredOverrides ?? [];
   const ignoredOverrideKeys = new Set(ignoredOverrides.map((entry) => entry.key));
   const warning =
@@ -513,6 +1096,7 @@ async function executeVideoGenerationJob(params: {
       ? `Ignored unsupported overrides for ${result.provider}/${result.model}: ${ignoredOverrides.map(formatIgnoredVideoGenerationOverride).join(", ")}.`
       : undefined;
   const normalizedDurationSeconds =
+<<<<<<< HEAD
     typeof result.metadata?.normalizedDurationSeconds === "number" &&
     Number.isFinite(result.metadata.normalizedDurationSeconds)
       ? result.metadata.normalizedDurationSeconds
@@ -524,24 +1108,94 @@ async function executeVideoGenerationJob(params: {
     : undefined;
   const lines = [
     `Generated ${savedVideos.length} video${savedVideos.length === 1 ? "" : "s"} with ${result.provider}/${result.model}.`,
+=======
+    result.normalization?.durationSeconds?.applied ??
+    (typeof result.metadata?.normalizedDurationSeconds === "number" &&
+    Number.isFinite(result.metadata.normalizedDurationSeconds)
+      ? result.metadata.normalizedDurationSeconds
+      : requestedDurationSeconds);
+  const supportedDurationSeconds =
+    result.normalization?.durationSeconds?.supportedValues ??
+    (Array.isArray(result.metadata?.supportedDurationSeconds)
+      ? result.metadata.supportedDurationSeconds.filter(
+          (entry): entry is number => typeof entry === "number" && Number.isFinite(entry),
+        )
+      : undefined);
+  const normalizedSize =
+    result.normalization?.size?.applied ??
+    (typeof result.metadata?.normalizedSize === "string" && result.metadata.normalizedSize.trim()
+      ? result.metadata.normalizedSize
+      : undefined);
+  const normalizedAspectRatio =
+    result.normalization?.aspectRatio?.applied ??
+    (typeof result.metadata?.normalizedAspectRatio === "string" &&
+    result.metadata.normalizedAspectRatio.trim()
+      ? result.metadata.normalizedAspectRatio
+      : undefined);
+  const normalizedResolution =
+    result.normalization?.resolution?.applied ??
+    (typeof result.metadata?.normalizedResolution === "string" &&
+    result.metadata.normalizedResolution.trim()
+      ? result.metadata.normalizedResolution
+      : undefined);
+  const sizeTranslatedToAspectRatio =
+    result.normalization?.aspectRatio?.derivedFrom === "size" ||
+    (!normalizedSize &&
+      typeof result.metadata?.requestedSize === "string" &&
+      result.metadata.requestedSize === params.size &&
+      Boolean(normalizedAspectRatio));
+  const allMediaUrls = [
+    ...savedVideos.map((video) => video.path),
+    ...urlOnlyVideos.map((video) => video.url),
+  ];
+  const attachments: AgentGeneratedAttachment[] = [
+    ...savedVideos.map((video) => ({
+      type: "video" as const,
+      path: video.path,
+      mimeType: video.contentType,
+      name: video.id,
+    })),
+    ...urlOnlyVideos.map((video) => ({
+      type: "video" as const,
+      url: video.url,
+      mimeType: video.mimeType,
+      name: video.fileName,
+    })),
+  ];
+  const lines = [
+    `Generated ${totalCount} video${totalCount === 1 ? "" : "s"} with ${result.provider}/${result.model}.`,
+>>>>>>> upstream/main
     ...(warning ? [`Warning: ${warning}`] : []),
     typeof requestedDurationSeconds === "number" &&
     typeof normalizedDurationSeconds === "number" &&
     requestedDurationSeconds !== normalizedDurationSeconds
       ? `Duration normalized: requested ${requestedDurationSeconds}s; used ${normalizedDurationSeconds}s.`
       : null,
+<<<<<<< HEAD
     ...savedVideos.map((video) => `MEDIA:${video.path}`),
+=======
+    ...formatGeneratedAttachmentLines(attachments),
+>>>>>>> upstream/main
   ].filter((entry): entry is string => Boolean(entry));
 
   return {
     provider: result.provider,
     model: result.model,
     savedPaths: savedVideos.map((video) => video.path),
+<<<<<<< HEAD
+=======
+    urlOnlyUrls: urlOnlyVideos.map((video) => video.url),
+    count: totalCount,
+    paths: savedVideos.map((video) => video.path),
+    mediaUrls: allMediaUrls,
+    attachments,
+>>>>>>> upstream/main
     contentText: lines.join("\n"),
     wakeResult: lines.join("\n"),
     details: {
       provider: result.provider,
       model: result.model,
+<<<<<<< HEAD
       count: savedVideos.length,
       media: {
         mediaUrls: savedVideos.map((video) => video.path),
@@ -591,6 +1245,38 @@ async function executeVideoGenerationJob(params: {
         : {}),
       ...(!ignoredOverrideKeys.has("resolution") && params.resolution
         ? { resolution: params.resolution }
+=======
+      count: totalCount,
+      media: {
+        mediaUrls: allMediaUrls,
+        attachments,
+      },
+      attachments,
+      paths: allMediaUrls,
+      ...buildTaskRunDetails(params.taskHandle),
+      ...buildMediaReferenceDetails({
+        entries: params.loadedReferenceImages,
+        singleKey: "image",
+        pluralKey: "images",
+        getResolvedInput: (entry) => entry.resolvedInput,
+      }),
+      ...buildMediaReferenceDetails({
+        entries: params.loadedReferenceVideos,
+        singleKey: "video",
+        pluralKey: "videos",
+        getResolvedInput: (entry) => entry.resolvedInput,
+        singleRewriteKey: "videoRewrittenFrom",
+      }),
+      ...(normalizedSize ||
+      (!ignoredOverrideKeys.has("size") && params.size && !sizeTranslatedToAspectRatio)
+        ? { size: normalizedSize ?? params.size }
+        : {}),
+      ...(normalizedAspectRatio || (!ignoredOverrideKeys.has("aspectRatio") && params.aspectRatio)
+        ? { aspectRatio: normalizedAspectRatio ?? params.aspectRatio }
+        : {}),
+      ...(normalizedResolution || (!ignoredOverrideKeys.has("resolution") && params.resolution)
+        ? { resolution: normalizedResolution ?? params.resolution }
+>>>>>>> upstream/main
         : {}),
       ...(typeof normalizedDurationSeconds === "number"
         ? { durationSeconds: normalizedDurationSeconds }
@@ -610,7 +1296,13 @@ async function executeVideoGenerationJob(params: {
         ? { watermark: params.watermark }
         : {}),
       ...(params.filename ? { filename: params.filename } : {}),
+<<<<<<< HEAD
       attempts: result.attempts,
+=======
+      ...(params.timeoutMs !== undefined ? { timeoutMs: params.timeoutMs } : {}),
+      attempts: result.attempts,
+      ...(result.normalization ? { normalization: result.normalization } : {}),
+>>>>>>> upstream/main
       metadata: result.metadata,
       ...(warning ? { warning } : {}),
       ...(ignoredOverrides.length > 0 ? { ignoredOverrides } : {}),
@@ -621,11 +1313,16 @@ async function executeVideoGenerationJob(params: {
 export function createVideoGenerateTool(options?: {
   config?: OpenClawConfig;
   agentDir?: string;
+<<<<<<< HEAD
+=======
+  authProfileStore?: AuthProfileStore;
+>>>>>>> upstream/main
   agentSessionKey?: string;
   requesterOrigin?: DeliveryContext;
   workspaceDir?: string;
   sandbox?: VideoGenerateSandboxConfig;
   fsPolicy?: ToolFsPolicy;
+<<<<<<< HEAD
   scheduleBackgroundWork?: VideoGenerateBackgroundScheduler;
 }): AnyAgentTool | null {
   const cfg: OpenClawConfig = options?.config ?? loadConfig();
@@ -634,6 +1331,22 @@ export function createVideoGenerateTool(options?: {
     agentDir: options?.agentDir,
   });
   if (!videoGenerationModelConfig) {
+=======
+  scheduleBackgroundWork?: MediaGenerateBackgroundScheduler;
+  onAsyncTaskStarted?: MediaGenerateAsyncStartCallback;
+}): AnyAgentTool | null {
+  const cfg: OpenClawConfig = options?.config ?? getRuntimeConfig();
+  if (
+    !hasGenerationToolAvailability({
+      cfg,
+      agentDir: options?.agentDir,
+      workspaceDir: options?.workspaceDir,
+      authStore: options?.authProfileStore,
+      modelConfig: cfg.agents?.defaults?.videoGenerationModel,
+      providerKey: "videoGenerationProviders",
+    })
+  ) {
+>>>>>>> upstream/main
     return null;
   }
 
@@ -646,12 +1359,22 @@ export function createVideoGenerateTool(options?: {
     : null;
   const scheduleBackgroundWork =
     options?.scheduleBackgroundWork ?? defaultScheduleVideoGenerateBackgroundWork;
+<<<<<<< HEAD
+=======
+  const includeAudioReferences = shouldExposeVideoReferenceAudioParams({
+    cfg,
+    agentDir: options?.agentDir,
+    authStore: options?.authProfileStore,
+    workspaceDir: options?.workspaceDir,
+  });
+>>>>>>> upstream/main
 
   return {
     label: "Video Generation",
     name: "video_generate",
     displaySummary: "Generate videos",
     description:
+<<<<<<< HEAD
       "Generate videos using configured providers. Generated videos are saved under OpenClaw-managed media storage and delivered automatically as attachments. Duration requests may be rounded to the nearest provider-supported value.",
     parameters: VideoGenerateToolSchema,
     execute: async (_toolCallId, rawArgs) => {
@@ -662,12 +1385,27 @@ export function createVideoGenerateTool(options?: {
 
       if (action === "list") {
         return createVideoGenerateListActionResult(effectiveCfg);
+=======
+      'Create videos. Session chats: background task; do not call video_generate again for same request; wait completion, then report through the current visible-reply contract with generated media attached using structured media fields. "status" checks active task. Duration may round to provider-supported value.',
+    parameters: createVideoGenerateToolSchema({ includeAudioReferences }),
+    execute: async (_toolCallId, rawArgs) => {
+      const args = rawArgs as Record<string, unknown>;
+      const action = resolveAction(args);
+
+      if (action === "list") {
+        return createVideoGenerateListActionResult(cfg, {
+          workspaceDir: options?.workspaceDir,
+          agentDir: options?.agentDir,
+          authStore: options?.authProfileStore,
+        });
+>>>>>>> upstream/main
       }
 
       if (action === "status") {
         return createVideoGenerateStatusActionResult(options?.agentSessionKey);
       }
 
+<<<<<<< HEAD
       const duplicateGuardResult = createVideoGenerateDuplicateGuardResult(
         options?.agentSessionKey,
       );
@@ -676,53 +1414,213 @@ export function createVideoGenerateTool(options?: {
       }
 
       const prompt = readStringParam(args, "prompt", { required: true });
+=======
+      const videoGenerationModelConfig = resolveVideoGenerationModelConfigForTool({
+        cfg,
+        workspaceDir: options?.workspaceDir,
+        agentDir: options?.agentDir,
+        authStore: options?.authProfileStore,
+      });
+      if (!videoGenerationModelConfig) {
+        throw new ToolInputError("No video-generation model configured.");
+      }
+      const explicitModelConfig = hasExplicitVideoGenerationModelConfig(cfg);
+      const effectiveCfg =
+        applyVideoGenerationModelConfigDefaults(cfg, videoGenerationModelConfig) ?? cfg;
+      const remoteMediaSsrfPolicy = resolveRemoteMediaSsrfPolicy(effectiveCfg);
+      const prompt = readStringParam(args, "prompt", { required: true });
+
+      const activeDuplicateGuardResult = createVideoGenerateDuplicateGuardResult(
+        options?.agentSessionKey,
+      );
+      if (activeDuplicateGuardResult) {
+        return activeDuplicateGuardResult;
+      }
+
+>>>>>>> upstream/main
       const model = readStringParam(args, "model");
       const filename = readStringParam(args, "filename");
       const size = readStringParam(args, "size");
       const aspectRatio = normalizeAspectRatio(readStringParam(args, "aspectRatio"));
       const resolution = normalizeResolution(readStringParam(args, "resolution"));
       const durationSeconds = readNumberParam(args, "durationSeconds", {
+<<<<<<< HEAD
         integer: true,
         strict: true,
       });
       const audio = readBooleanParam(args, "audio");
       const watermark = readBooleanParam(args, "watermark");
+=======
+        positiveInteger: true,
+        strict: true,
+      });
+      if (
+        durationSeconds === undefined &&
+        readSnakeCaseParamRaw(args, "durationSeconds") !== undefined
+      ) {
+        throw new ToolInputError("durationSeconds must be a positive integer");
+      }
+      const audio = readBooleanToolParam(args, "audio");
+      const watermark = readBooleanToolParam(args, "watermark");
+      const timeoutMs = readGenerationTimeoutMs(args) ?? videoGenerationModelConfig.timeoutMs;
+      // providerOptions must be a plain object. Arrays are objects in JS, so
+      // exclude them explicitly — a bogus call like `providerOptions: ["seed", 42]`
+      // would otherwise be cast to `Record<string, unknown>` with numeric-string
+      // keys and silently forwarded to the provider.
+      const providerOptionsRaw = readSnakeCaseParamRaw(args, "providerOptions");
+      if (
+        providerOptionsRaw != null &&
+        (typeof providerOptionsRaw !== "object" || Array.isArray(providerOptionsRaw))
+      ) {
+        throw new ToolInputError(
+          "providerOptions must be a JSON object keyed by provider-specific option name.",
+        );
+      }
+      const providerOptions =
+        providerOptionsRaw != null ? (providerOptionsRaw as Record<string, unknown>) : undefined;
+>>>>>>> upstream/main
       const imageInputs = normalizeReferenceInputs({
         args,
         singularKey: "image",
         pluralKey: "images",
         maxCount: MAX_INPUT_IMAGES,
       });
+<<<<<<< HEAD
+=======
+      // *Roles: parallel string arrays giving each asset a semantic role hint.
+      // Use readSnakeCaseParamRaw so both camelCase and snake_case keys are accepted.
+      const imageRoles = parseRoleArray({
+        raw: readSnakeCaseParamRaw(args, "imageRoles"),
+        kind: "imageRoles",
+        assetCount: imageInputs.length,
+      });
+>>>>>>> upstream/main
       const videoInputs = normalizeReferenceInputs({
         args,
         singularKey: "video",
         pluralKey: "videos",
         maxCount: MAX_INPUT_VIDEOS,
       });
+<<<<<<< HEAD
+=======
+      const videoRoles = parseRoleArray({
+        raw: readSnakeCaseParamRaw(args, "videoRoles"),
+        kind: "videoRoles",
+        assetCount: videoInputs.length,
+      });
+      const audioInputs = normalizeReferenceInputs({
+        args,
+        singularKey: "audioRef",
+        pluralKey: "audioRefs",
+        maxCount: MAX_INPUT_AUDIOS,
+      });
+      const audioRoles = parseRoleArray({
+        raw: readSnakeCaseParamRaw(args, "audioRoles"),
+        kind: "audioRoles",
+        assetCount: audioInputs.length,
+      });
+>>>>>>> upstream/main
 
       const selectedProvider = resolveSelectedVideoGenerationProvider({
         config: effectiveCfg,
         videoGenerationModelConfig,
         modelOverride: model,
       });
+<<<<<<< HEAD
+=======
+      const explicitModelRef = parseVideoGenerationModelRef(model);
+      const primaryModelRef = parseVideoGenerationModelRef(videoGenerationModelConfig.primary);
+      const requestKey = buildMediaGenerationRequestKey({
+        tool: "video_generate",
+        prompt,
+        provider: selectedProvider?.id ?? explicitModelRef?.provider ?? primaryModelRef?.provider,
+        model:
+          model !== undefined
+            ? (explicitModelRef?.model ?? model)
+            : (primaryModelRef?.model ??
+              videoGenerationModelConfig.primary ??
+              selectedProvider?.defaultModel),
+        size,
+        aspectRatio,
+        resolution,
+        durationSeconds,
+        audio,
+        watermark,
+        filename,
+        providerOptions,
+        imageInputs,
+        imageRoles,
+        videoInputs,
+        videoRoles,
+        audioInputs,
+        audioRoles,
+      });
+      const duplicateGuardResult = createVideoGenerateDuplicateGuardResult(
+        options?.agentSessionKey,
+        { requestKey },
+      );
+      if (duplicateGuardResult) {
+        return duplicateGuardResult;
+      }
+>>>>>>> upstream/main
       const loadedReferenceImages = await loadReferenceAssets({
         inputs: imageInputs,
         expectedKind: "image",
         workspaceDir: options?.workspaceDir,
         sandboxConfig,
+<<<<<<< HEAD
       });
+=======
+        ssrfPolicy: remoteMediaSsrfPolicy,
+      });
+      // Attach roles to the loaded image assets (positional, by index into images[]).
+      for (let i = 0; i < loadedReferenceImages.length; i++) {
+        const role = imageRoles[i];
+        if (role) {
+          loadedReferenceImages[i].sourceAsset.role = role;
+        }
+      }
+>>>>>>> upstream/main
       const loadedReferenceVideos = await loadReferenceAssets({
         inputs: videoInputs,
         expectedKind: "video",
         workspaceDir: options?.workspaceDir,
         sandboxConfig,
+<<<<<<< HEAD
       });
+=======
+        ssrfPolicy: remoteMediaSsrfPolicy,
+      });
+      for (let i = 0; i < loadedReferenceVideos.length; i++) {
+        const role = videoRoles[i];
+        if (role) {
+          loadedReferenceVideos[i].sourceAsset.role = role;
+        }
+      }
+      const loadedReferenceAudios = await loadReferenceAssets({
+        inputs: audioInputs,
+        expectedKind: "audio",
+        workspaceDir: options?.workspaceDir,
+        sandboxConfig,
+        ssrfPolicy: remoteMediaSsrfPolicy,
+      });
+      for (let i = 0; i < loadedReferenceAudios.length; i++) {
+        const role = audioRoles[i];
+        if (role) {
+          loadedReferenceAudios[i].sourceAsset.role = role;
+        }
+      }
+>>>>>>> upstream/main
       validateVideoGenerationCapabilities({
         provider: selectedProvider,
         model:
           parseVideoGenerationModelRef(model)?.model ?? model ?? selectedProvider?.defaultModel,
         inputImageCount: loadedReferenceImages.length,
         inputVideoCount: loadedReferenceVideos.length,
+<<<<<<< HEAD
+=======
+        inputAudioCount: loadedReferenceAudios.length,
+>>>>>>> upstream/main
         size,
         aspectRatio,
         resolution,
@@ -736,12 +1634,41 @@ export function createVideoGenerateTool(options?: {
         prompt,
         providerId: selectedProvider?.id,
       });
+<<<<<<< HEAD
       const shouldDetach = Boolean(taskHandle && options?.agentSessionKey?.trim());
 
       if (shouldDetach) {
         scheduleBackgroundWork(async () => {
           try {
             const executed = await executeVideoGenerationJob({
+=======
+      const shouldDetach = Boolean(
+        taskHandle && shouldDetachMediaGenerationTask(options?.agentSessionKey),
+      );
+
+      if (shouldDetach && taskHandle) {
+        recordRecentMediaGenerationTaskStartForSession({
+          sessionKey: options?.agentSessionKey,
+          taskKind: "video_generation",
+          sourcePrefix: "video_generate",
+          taskId: taskHandle.taskId,
+          runId: taskHandle.runId,
+          taskLabel: prompt,
+          requestKey,
+          providerId: selectedProvider?.id,
+          progressSummary: "Generating video",
+        });
+        scheduleMediaGenerationTaskCompletion({
+          lifecycle: videoGenerationTaskLifecycle,
+          handle: taskHandle,
+          scheduleBackgroundWork,
+          progressSummary: "Generating video",
+          config: effectiveCfg,
+          toolName: "Video generation",
+          onWakeFailure: (message, meta) => log.warn(message, meta),
+          run: () =>
+            executeVideoGenerationJob({
+>>>>>>> upstream/main
               effectiveCfg,
               prompt,
               agentDir: options?.agentDir,
@@ -755,6 +1682,7 @@ export function createVideoGenerateTool(options?: {
               filename,
               loadedReferenceImages,
               loadedReferenceVideos,
+<<<<<<< HEAD
               taskHandle,
             });
             completeVideoGenerationTaskRun({
@@ -844,6 +1772,43 @@ export function createVideoGenerateTool(options?: {
                     })),
                   }
                 : {}),
+=======
+              loadedReferenceAudios,
+              taskHandle,
+              providerOptions,
+              autoProviderFallback: explicitModelConfig ? false : undefined,
+              timeoutMs,
+            }),
+        });
+
+        await notifyMediaGenerationAsyncTaskStarted({
+          callback: options?.onAsyncTaskStarted,
+          message: "Video generation started; wait for the generated video completion event.",
+          toolName: "video_generate",
+          handle: taskHandle,
+          onFailure: (message, meta) => log.warn(message, meta),
+        });
+
+        return buildMediaGenerationStartedToolResult({
+          toolName: "video_generate",
+          generationLabel: "video",
+          completionLabel: "video",
+          taskHandle,
+          detailExtras: {
+            ...buildMediaReferenceDetails({
+              entries: loadedReferenceImages,
+              singleKey: "image",
+              pluralKey: "images",
+              getResolvedInput: (entry) => entry.resolvedInput,
+            }),
+            ...buildMediaReferenceDetails({
+              entries: loadedReferenceVideos,
+              singleKey: "video",
+              pluralKey: "videos",
+              getResolvedInput: (entry) => entry.resolvedInput,
+              singleRewriteKey: "videoRewrittenFrom",
+            }),
+>>>>>>> upstream/main
             ...(model ? { model } : {}),
             ...(size ? { size } : {}),
             ...(aspectRatio ? { aspectRatio } : {}),
@@ -852,8 +1817,14 @@ export function createVideoGenerateTool(options?: {
             ...(typeof audio === "boolean" ? { audio } : {}),
             ...(typeof watermark === "boolean" ? { watermark } : {}),
             ...(filename ? { filename } : {}),
+<<<<<<< HEAD
           },
         };
+=======
+            ...(timeoutMs !== undefined ? { timeoutMs } : {}),
+          },
+        });
+>>>>>>> upstream/main
       }
 
       try {
@@ -871,13 +1842,25 @@ export function createVideoGenerateTool(options?: {
           filename,
           loadedReferenceImages,
           loadedReferenceVideos,
+<<<<<<< HEAD
           taskHandle,
+=======
+          loadedReferenceAudios,
+          taskHandle,
+          providerOptions,
+          autoProviderFallback: explicitModelConfig ? false : undefined,
+          timeoutMs,
+>>>>>>> upstream/main
         });
         completeVideoGenerationTaskRun({
           handle: taskHandle,
           provider: executed.provider,
           model: executed.model,
+<<<<<<< HEAD
           count: executed.savedPaths.length,
+=======
+          count: executed.count,
+>>>>>>> upstream/main
           paths: executed.savedPaths,
         });
 

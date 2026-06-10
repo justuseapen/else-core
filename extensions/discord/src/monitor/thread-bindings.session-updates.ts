@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { normalizeAccountId } from "openclaw/plugin-sdk/routing";
 import {
   BINDINGS_BY_THREAD_ID,
@@ -57,6 +58,15 @@ function updateBindingsForTargetSession(
   }
   return updated;
 }
+=======
+// Discord plugin module implements thread bindings.session updates behavior.
+import {
+  normalizeNonNegativeMs,
+  resolveBindingIdsForTargetSession,
+  updateBindingsForTargetSession,
+} from "./thread-bindings.session-shared.js";
+import type { ThreadBindingRecord } from "./thread-bindings.types.js";
+>>>>>>> upstream/main
 
 export function setThreadBindingIdleTimeoutBySessionKey(params: {
   targetSessionKey: string;

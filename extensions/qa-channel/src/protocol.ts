@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export type QaBusConversationKind = "direct" | "channel";
 
 export type QaBusConversation = {
@@ -178,3 +179,7 @@ export type QaBusWaitForInput =
       kind: "thread-id";
       threadId: string;
     };
+=======
+// Qa Channel plugin module implements protocol behavior.
+export type * from "openclaw/plugin-sdk/qa-channel-protocol";
+>>>>>>> upstream/main

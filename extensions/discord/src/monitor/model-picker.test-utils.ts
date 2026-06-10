@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Discord helper module supports model picker utils behavior.
+>>>>>>> upstream/main
 import type { ModelsProviderData } from "openclaw/plugin-sdk/models-provider-runtime";
 
 export function createModelsProviderData(

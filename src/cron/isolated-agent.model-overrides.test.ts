@@ -1,8 +1,22 @@
+<<<<<<< HEAD
 import "./isolated-agent.mocks.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { loadModelCatalog } from "../agents/model-catalog.js";
 import * as modelSelection from "../agents/model-selection.js";
 import { runEmbeddedPiAgent } from "../agents/pi-embedded.js";
+=======
+// Isolated agent model override tests cover scheduled run model selection.
+import "./isolated-agent.mocks.js";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { runEmbeddedAgent } from "../agents/embedded-agent.js";
+import { loadModelCatalog } from "../agents/model-catalog.js";
+import { BASE_THINKING_LEVELS } from "../auto-reply/thinking.shared.js";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import type { PluginProviderRegistration } from "../plugins/registry.js";
+import { resetPluginRuntimeStateForTest, setActivePluginRegistry } from "../plugins/runtime.js";
+import { createTestRegistry } from "../test-utils/channel-plugins.js";
+>>>>>>> upstream/main
 import {
   DEFAULT_AGENT_TURN_PAYLOAD,
   DEFAULT_MESSAGE,
@@ -13,6 +27,7 @@ import {
   runTurnWithStoredModelOverride,
   withTempHome,
 } from "./isolated-agent.turn-test-helpers.js";
+<<<<<<< HEAD
 
 describe("runCronIsolatedAgentTurn model overrides", () => {
   beforeEach(() => {
@@ -21,6 +36,79 @@ describe("runCronIsolatedAgentTurn model overrides", () => {
     vi.mocked(loadModelCatalog).mockResolvedValue([]);
   });
 
+=======
+import * as isolatedAgentRunRuntime from "./isolated-agent/run.runtime.js";
+
+function installThinkingTestProviders() {
+  const registry = createTestRegistry();
+  registry.providers = ["anthropic", "google", "openai", "openrouter"].map(
+    (providerId): PluginProviderRegistration => ({
+      pluginId: providerId,
+      source: "test",
+      provider: {
+        id: providerId,
+        label: providerId,
+        auth: [],
+        resolveThinkingProfile: ({ modelId }) =>
+          providerId === "google" && modelId === "gemini-3-flash-preview"
+            ? {
+                levels: (["off", "minimal", "low", "medium", "adaptive", "high"] as const).map(
+                  (id) => ({ id }),
+                ),
+                preserveWhenCatalogReasoningFalse: true,
+              }
+            : {
+                levels: BASE_THINKING_LEVELS.map((id) => ({ id })),
+                defaultLevel: "off",
+              },
+      },
+    }),
+  );
+  setActivePluginRegistry(registry);
+}
+
+function mockDeterministicModelCatalog() {
+  vi.mocked(loadModelCatalog).mockResolvedValue([
+    {
+      id: "gpt-4.1-mini",
+      name: "GPT-4.1 Mini",
+      provider: "openai",
+    },
+    {
+      id: "claude-opus-4-6",
+      name: "Claude Opus 4.5",
+      provider: "anthropic",
+    },
+  ]);
+}
+
+const OPENAI_PI_RUNTIME_CONFIG: Partial<OpenClawConfig> = {
+  models: {
+    providers: {
+      openai: {
+        baseUrl: "https://api.openai.com/v1",
+        agentRuntime: { id: "openclaw" },
+        models: [],
+      },
+    },
+  },
+};
+
+describe("runCronIsolatedAgentTurn model overrides", () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    resetPluginRuntimeStateForTest();
+    installThinkingTestProviders();
+    vi.spyOn(isolatedAgentRunRuntime, "resolveThinkingDefault").mockReturnValue("off");
+    vi.mocked(runEmbeddedAgent).mockClear();
+    vi.mocked(loadModelCatalog).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+>>>>>>> upstream/main
   it("treats blank model overrides as unset", async () => {
     await withTempHome(async (home) => {
       const { res } = await runCronTurn(home, {
@@ -28,6 +116,7 @@ describe("runCronIsolatedAgentTurn model overrides", () => {
       });
 
       expect(res.status).toBe("ok");
+<<<<<<< HEAD
       expect(vi.mocked(runEmbeddedPiAgent)).toHaveBeenCalledTimes(1);
     });
   });
@@ -50,6 +139,18 @@ describe("runCronIsolatedAgentTurn model overrides", () => {
 
       let res = (
         await runCronTurn(home, {
+=======
+      expect(vi.mocked(runEmbeddedAgent)).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("applies direct cron model overrides", async () => {
+    await withTempHome(async (home) => {
+      mockDeterministicModelCatalog();
+      const res = (
+        await runCronTurn(home, {
+          cfgOverrides: OPENAI_PI_RUNTIME_CONFIG,
+>>>>>>> upstream/main
           jobPayload: {
             kind: "agentTurn",
             message: DEFAULT_MESSAGE,
@@ -63,16 +164,44 @@ describe("runCronIsolatedAgentTurn model overrides", () => {
         model: "gpt-4.1-mini",
       });
       directModel.assert();
+<<<<<<< HEAD
 
       res = (await runTurnWithStoredModelOverride(home, DEFAULT_AGENT_TURN_PAYLOAD)).res;
+=======
+    });
+  });
+
+  it("uses stored model overrides when cron payload omits a model", async () => {
+    await withTempHome(async (home) => {
+      mockDeterministicModelCatalog();
+      const res = (
+        await runTurnWithStoredModelOverride(
+          home,
+          DEFAULT_AGENT_TURN_PAYLOAD,
+          "gpt-4.1-mini",
+          "openai",
+          OPENAI_PI_RUNTIME_CONFIG,
+        )
+      ).res;
+>>>>>>> upstream/main
       expect(res.status).toBe("ok");
       const storedOverride = expectEmbeddedProviderModel({
         provider: "openai",
         model: "gpt-4.1-mini",
       });
       storedOverride.assert();
+<<<<<<< HEAD
 
       res = (
+=======
+    });
+  });
+
+  it("lets explicit cron model override stored session overrides", async () => {
+    await withTempHome(async (home) => {
+      mockDeterministicModelCatalog();
+      const res = (
+>>>>>>> upstream/main
         await runTurnWithStoredModelOverride(home, {
           kind: "agentTurn",
           message: DEFAULT_MESSAGE,
@@ -98,7 +227,11 @@ describe("runCronIsolatedAgentTurn model overrides", () => {
       });
       gmailModel.assert();
 
+<<<<<<< HEAD
       vi.mocked(runEmbeddedPiAgent).mockClear();
+=======
+      vi.mocked(runEmbeddedAgent).mockClear();
+>>>>>>> upstream/main
       res = (
         await runGmailHookTurn(home, {
           "agent:main:hook:gmail:msg-1": {
@@ -169,21 +302,69 @@ describe("runCronIsolatedAgentTurn model overrides", () => {
       });
 
       expect(res.status).toBe("error");
+<<<<<<< HEAD
       expect(res.error).toMatch("invalid model");
       expect(vi.mocked(runEmbeddedPiAgent)).not.toHaveBeenCalled();
+=======
+      expect(res.error).toMatch("cron payload.model 'openai/' rejected: invalid model");
+      expect(vi.mocked(runEmbeddedAgent)).not.toHaveBeenCalled();
+>>>>>>> upstream/main
     });
   });
 
   it("passes through the resolved default thinking level", async () => {
     await withTempHome(async (home) => {
+<<<<<<< HEAD
       vi.mocked(modelSelection.resolveThinkingDefault).mockReturnValueOnce("low");
+=======
+      vi.mocked(isolatedAgentRunRuntime.resolveThinkingDefault).mockReturnValueOnce("low");
+>>>>>>> upstream/main
 
       await runCronTurn(home, {
         jobPayload: DEFAULT_AGENT_TURN_PAYLOAD,
         mockTexts: ["done"],
       });
 
+<<<<<<< HEAD
       const callArgs = vi.mocked(runEmbeddedPiAgent).mock.calls.at(-1)?.[0];
+=======
+      const calls = vi.mocked(runEmbeddedAgent).mock.calls;
+      const callArgs = calls[calls.length - 1]?.[0];
+      expect(callArgs?.thinkLevel).toBe("low");
+    });
+  });
+
+  it("keeps configured Gemini 3 cron thinking when catalog reasoning metadata is stale", async () => {
+    await withTempHome(async (home) => {
+      vi.mocked(isolatedAgentRunRuntime.resolveThinkingDefault).mockReturnValueOnce("low");
+      vi.mocked(loadModelCatalog).mockResolvedValueOnce([
+        {
+          id: "gemini-3-flash-preview",
+          name: "Gemini 3 Flash Preview",
+          provider: "google",
+          reasoning: false,
+        },
+      ]);
+
+      await runCronTurn(home, {
+        cfgOverrides: {
+          agents: {
+            defaults: {
+              model: "google/gemini-3-flash-preview",
+              workspace: path.join(home, "openclaw"),
+              thinkingDefault: "low",
+            },
+          },
+        },
+        jobPayload: DEFAULT_AGENT_TURN_PAYLOAD,
+        mockTexts: ["done"],
+      });
+
+      const calls = vi.mocked(runEmbeddedAgent).mock.calls;
+      const callArgs = calls[calls.length - 1]?.[0];
+      expect(callArgs?.provider).toBe("google");
+      expect(callArgs?.model).toBe("gemini-3-flash-preview");
+>>>>>>> upstream/main
       expect(callArgs?.thinkLevel).toBe("low");
     });
   });

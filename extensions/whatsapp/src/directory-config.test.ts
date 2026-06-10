@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { describe, expect, it } from "vitest";
 import { createDirectoryTestRuntime } from "../../../test/helpers/plugins/directory.ts";
+=======
+// Whatsapp tests cover directory config plugin behavior.
+import { createDirectoryTestRuntime } from "openclaw/plugin-sdk/channel-test-helpers";
+import { describe, expect, it } from "vitest";
+>>>>>>> upstream/main
 import {
   listWhatsAppDirectoryGroupsFromConfig,
   listWhatsAppDirectoryPeersFromConfig,
@@ -35,12 +41,19 @@ describe("whatsapp directory", () => {
         limit: undefined,
         runtime: runtimeEnv,
       } as never),
+<<<<<<< HEAD
     ).resolves.toEqual(
       expect.arrayContaining([
         { kind: "user", id: "+15551230001" },
         { kind: "user", id: "+15551230002" },
       ]),
     );
+=======
+    ).resolves.toEqual([
+      { kind: "user", id: "+15551230001" },
+      { kind: "user", id: "+15551230002" },
+    ]);
+>>>>>>> upstream/main
 
     await expect(
       listWhatsAppDirectoryGroupsFromConfig({
@@ -50,11 +63,18 @@ describe("whatsapp directory", () => {
         limit: undefined,
         runtime: runtimeEnv,
       } as never),
+<<<<<<< HEAD
     ).resolves.toEqual(
       expect.arrayContaining([
         { kind: "group", id: "120363111111111111@g.us" },
         { kind: "group", id: "120363222222222222@g.us" },
       ]),
     );
+=======
+    ).resolves.toEqual([
+      { kind: "group", id: "120363111111111111@g.us" },
+      { kind: "group", id: "120363222222222222@g.us" },
+    ]);
+>>>>>>> upstream/main
   });
 });

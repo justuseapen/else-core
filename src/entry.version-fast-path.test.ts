@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { importFreshModule } from "../test/helpers/import-fresh.js";
@@ -15,58 +16,27 @@ const resolveCliContainerTargetMock = vi.hoisted(() => vi.fn<() => string | null
 const resolveCommitHashMock = vi.hoisted(() => vi.fn<() => string | null>(() => "abc1234"));
 const runCliMock = vi.hoisted(() => vi.fn(async () => {}));
 const shouldSkipRespawnForArgvMock = vi.hoisted(() => vi.fn(() => true));
+=======
+// Tests version fast-path output before the full entrypoint loads.
+import { describe, expect, it, vi } from "vitest";
+import { tryHandleRootVersionFastPath } from "./entry.version-fast-path.js";
+>>>>>>> upstream/main
 
 vi.mock("./cli/argv.js", () => ({
-  isRootHelpInvocation: isRootHelpInvocationMock,
-  isRootVersionInvocation: isRootVersionInvocationMock,
+  isRootHelpInvocation: () => false,
+  isRootVersionInvocation: (argv: string[]) => argv.includes("--version"),
 }));
 
 vi.mock("./cli/container-target.js", () => ({
   parseCliContainerArgs: (argv: string[]) => ({ ok: true, container: null, argv }),
-  resolveCliContainerTarget: resolveCliContainerTargetMock,
+  resolveCliContainerTarget: (argv: string[], env: NodeJS.ProcessEnv = process.env) =>
+    argv.includes("--container") ? "demo" : (env.OPENCLAW_CONTAINER ?? null),
 }));
 
-vi.mock("./cli/profile.js", () => ({
-  applyCliProfileEnv: applyCliProfileEnvMock,
-  parseCliProfileArgs: parseCliProfileArgsMock,
-}));
-
-vi.mock("./cli/run-main.js", () => ({
-  runCli: runCliMock,
-}));
-
-vi.mock("./cli/respawn-policy.js", () => ({
-  shouldSkipRespawnForArgv: shouldSkipRespawnForArgvMock,
-}));
-
-vi.mock("./cli/windows-argv.js", () => ({
-  normalizeWindowsArgv: normalizeWindowsArgvMock,
-}));
-
-vi.mock("./infra/env.js", () => ({
-  isTruthyEnvValue: () => false,
-  normalizeEnv: normalizeEnvMock,
-}));
-
-vi.mock("./infra/git-commit.js", () => ({
-  resolveCommitHash: resolveCommitHashMock,
-}));
-
-vi.mock("./infra/is-main.js", () => ({
-  isMainModule: isMainModuleMock,
-}));
-
-vi.mock("./infra/warning-filter.js", () => ({
-  installProcessWarningFilter: installProcessWarningFilterMock,
-}));
-
-vi.mock("./process/child-process-bridge.js", () => ({
-  attachChildProcessBridge: attachChildProcessBridgeMock,
-}));
-
-vi.mock("./version.js", () => ({
-  VERSION: "9.9.9-test",
-}));
+async function flushVersionFastPath() {
+  await Promise.resolve();
+  await Promise.resolve();
+}
 
 async function importEntry(scope: string) {
   return await importFreshModule<typeof import("./entry.js")>(
@@ -76,10 +46,20 @@ async function importEntry(scope: string) {
 }
 
 describe("entry root version fast path", () => {
-  let originalArgv: string[];
-  let originalGatewayToken: string | undefined;
-  let exitSpy: ReturnType<typeof vi.spyOn>;
+  it("prints version output and skips host handling when container-targeted", async () => {
+    const output = vi.fn();
+    const exit = vi.fn();
+    const resolveVersion = vi.fn<
+      () => Promise<{
+        VERSION: string;
+        resolveCommitHash: (params: { moduleUrl: string }) => string | null;
+      }>
+    >(async () => ({
+      VERSION: "9.9.9-test",
+      resolveCommitHash: vi.fn(() => "abc1234"),
+    }));
 
+<<<<<<< HEAD
   beforeEach(() => {
     vi.clearAllMocks();
     originalArgv = [...process.argv];
@@ -108,15 +88,51 @@ describe("entry root version fast path", () => {
     await vi.waitFor(() => {
       expect(logSpy).toHaveBeenCalledWith("OpenClaw 9.9.9-test (abc1234)");
       expect(exitSpy).toHaveBeenCalledWith(0);
+=======
+    expect(
+      tryHandleRootVersionFastPath(["node", "openclaw", "--version"], {
+        output,
+        exit,
+        resolveVersion,
+      }),
+    ).toBe(true);
+    await flushVersionFastPath();
+    expect(output).toHaveBeenCalledWith("OpenClaw 9.9.9-test (abc1234)");
+    expect(exit).toHaveBeenCalledWith(0);
+
+    output.mockClear();
+    exit.mockClear();
+    resolveVersion.mockResolvedValueOnce({
+      VERSION: "9.9.9-test",
+      resolveCommitHash: vi.fn(() => null),
+>>>>>>> upstream/main
     });
 
-    logSpy.mockRestore();
-  });
+    expect(
+      tryHandleRootVersionFastPath(["node", "openclaw", "--version"], {
+        output,
+        exit,
+        resolveVersion,
+      }),
+    ).toBe(true);
+    await flushVersionFastPath();
+    expect(output).toHaveBeenCalledWith("OpenClaw 9.9.9-test");
+    expect(exit).toHaveBeenCalledWith(0);
 
-  it("falls back to plain version output when commit metadata is unavailable", async () => {
-    resolveCommitHashMock.mockReturnValueOnce(null);
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    output.mockClear();
+    exit.mockClear();
+    expect(
+      tryHandleRootVersionFastPath(["node", "openclaw", "--container", "demo", "--version"], {
+        output,
+        exit,
+        resolveVersion,
+      }),
+    ).toBe(false);
+    expect(resolveVersion).toHaveBeenCalledTimes(2);
+    expect(output).not.toHaveBeenCalled();
+    expect(exit).not.toHaveBeenCalled();
 
+<<<<<<< HEAD
     await importEntry("plain-version");
     await vi.waitFor(() => {
       expect(logSpy).toHaveBeenCalledWith("OpenClaw 9.9.9-test");
@@ -153,5 +169,15 @@ describe("entry root version fast path", () => {
     expect(exitSpy).not.toHaveBeenCalled();
 
     errorSpy.mockRestore();
+=======
+    expect(
+      tryHandleRootVersionFastPath(["node", "openclaw", "--version"], {
+        env: { OPENCLAW_CONTAINER: "demo" },
+        output,
+        exit,
+        resolveVersion,
+      }),
+    ).toBe(false);
+>>>>>>> upstream/main
   });
 });

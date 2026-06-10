@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Summarizes task registry records for CLI and API surfaces.
+>>>>>>> upstream/main
 import type {
   TaskRecord,
   TaskRegistrySummary,
@@ -5,6 +9,10 @@ import type {
   TaskStatusCounts,
 } from "./task-registry.types.js";
 
+<<<<<<< HEAD
+=======
+// Summary helpers keep task status/runtime counters stable for UI and plugin views.
+>>>>>>> upstream/main
 function createEmptyTaskStatusCounts(): TaskStatusCounts {
   return {
     queued: 0,

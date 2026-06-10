@@ -1,19 +1,33 @@
+<<<<<<< HEAD
+=======
+// Plugin SDK bundle index tests cover bundled SDK export inventory and packaging.
+>>>>>>> upstream/main
 import fs from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { buildPluginSdkEntrySources, pluginSdkEntrypoints } from "../../plugin-sdk/entrypoints.js";
+<<<<<<< HEAD
 import { loadPluginManifestRegistry } from "../manifest-registry.js";
 import { createSuiteTempRootTracker } from "../test-helpers/fs-fixtures.js";
 
 const require = createRequire(import.meta.url);
 const tsdownModuleUrl = pathToFileURL(require.resolve("tsdown")).href;
 const bundledRepresentativeEntrypoints = ["matrix-runtime-heavy"] as const;
+=======
+import { createSuiteTempRootTracker } from "../test-helpers/fs-fixtures.js";
+import { resolveBundledPluginFile } from "./test-helpers/bundled-plugin-roots.js";
+
+const require = createRequire(import.meta.url);
+const tsdownModuleUrl = pathToFileURL(require.resolve("tsdown")).href;
+const bundledRepresentativeEntrypoints = ["browser-config"] as const;
+>>>>>>> upstream/main
 const bundleTempRootTracker = createSuiteTempRootTracker(
   "openclaw-plugin-sdk-build",
   path.join(process.cwd(), "node_modules", ".cache"),
 );
+<<<<<<< HEAD
 const bundledPluginRoots = new Map(
   loadPluginManifestRegistry({ cache: true, config: {} })
     .plugins.filter((plugin) => plugin.origin === "bundled")
@@ -30,6 +44,13 @@ function bundledPluginFile(pluginId: string, relativePath: string): string {
 
 const matrixRuntimeCoverageEntries = {
   "matrix-runtime-sdk": bundledPluginFile("matrix", "src/matrix/sdk.ts"),
+=======
+const matrixRuntimeCoverageEntries = {
+  "matrix-runtime-sdk": resolveBundledPluginFile({
+    pluginId: "matrix",
+    relativePath: "src/matrix/sdk.ts",
+  }),
+>>>>>>> upstream/main
 } as const;
 const bundledCoverageEntrySources = {
   ...buildPluginSdkEntrySources(bundledRepresentativeEntrypoints),
@@ -51,6 +72,15 @@ async function listBuiltJsFiles(rootDir: string): Promise<string[]> {
   return nested.flat();
 }
 
+<<<<<<< HEAD
+=======
+async function expectBuiltJsFile(outDir: string, entry: string): Promise<void> {
+  const stat = await fs.stat(path.join(outDir, `${entry}.js`));
+  expect(stat.isFile()).toBe(true);
+  expect(stat.size).toBeGreaterThan(0);
+}
+
+>>>>>>> upstream/main
 describe("plugin-sdk bundled exports", () => {
   afterAll(() => {
     bundleTempRootTracker.cleanup();
@@ -89,12 +119,20 @@ describe("plugin-sdk bundled exports", () => {
     expect(pluginSdkEntrypoints.length).toBeGreaterThan(bundledRepresentativeEntrypoints.length);
     await Promise.all(
       bundledRepresentativeEntrypoints.map(async (entry) => {
+<<<<<<< HEAD
         await expect(fs.stat(path.join(outDir, `${entry}.js`))).resolves.toBeTruthy();
+=======
+        await expectBuiltJsFile(outDir, entry);
+>>>>>>> upstream/main
       }),
     );
     await Promise.all(
       Object.keys(matrixRuntimeCoverageEntries).map(async (entry) => {
+<<<<<<< HEAD
         await expect(fs.stat(path.join(outDir, `${entry}.js`))).resolves.toBeTruthy();
+=======
+        await expectBuiltJsFile(outDir, entry);
+>>>>>>> upstream/main
       }),
     );
     const builtJsFiles = await listBuiltJsFiles(outDir);
@@ -106,7 +144,11 @@ describe("plugin-sdk bundled exports", () => {
         }),
       )
     ).filter((filePath): filePath is string => filePath !== null);
+<<<<<<< HEAD
     expect(filesWithBareMatrixSdkImports).toEqual([]);
+=======
+    expect(filesWithBareMatrixSdkImports).toStrictEqual([]);
+>>>>>>> upstream/main
 
     // Export list and package-specifier coverage already live in
     // plugin-sdk-package-contract-guardrails.test.ts and plugin-sdk-subpaths.test.ts. Keep this file

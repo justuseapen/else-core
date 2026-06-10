@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import { resolveEmbeddedSessionLane } from "../../../agents/pi-embedded-runner/lanes.js";
+=======
+// Cleans stale queue state and recent dedupe entries.
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { resolveEmbeddedSessionLane } from "../../../agents/embedded-agent-runner/lanes.js";
+>>>>>>> upstream/main
 import { clearCommandLane } from "../../../process/command-queue.js";
 import { clearFollowupDrainCallback } from "./drain.js";
 import { clearFollowupQueue } from "./state.js";
@@ -30,7 +36,11 @@ function resolveQueueCleanupLaneClearer() {
     : defaultQueueCleanupDeps.clearCommandLane;
 }
 
+<<<<<<< HEAD
 export const __testing = {
+=======
+export const testing = {
+>>>>>>> upstream/main
   setDepsForTests(deps: Partial<typeof defaultQueueCleanupDeps> | undefined): void {
     queueCleanupDeps.resolveEmbeddedSessionLane =
       typeof deps?.resolveEmbeddedSessionLane === "function"
@@ -57,7 +67,7 @@ export function clearSessionQueues(keys: Array<string | undefined>): ClearSessio
   const clearLane = resolveQueueCleanupLaneClearer();
 
   for (const key of keys) {
-    const cleaned = key?.trim();
+    const cleaned = normalizeOptionalString(key);
     if (!cleaned || seen.has(cleaned)) {
       continue;
     }
@@ -70,3 +80,4 @@ export function clearSessionQueues(keys: Array<string | undefined>): ClearSessio
 
   return { followupCleared, laneCleared, keys: clearedKeys };
 }
+export { testing as __testing };

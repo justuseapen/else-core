@@ -1,19 +1,38 @@
+<<<<<<< HEAD
+=======
+// Slack plugin module implements exec approvals behavior.
+>>>>>>> upstream/main
 import { resolveApprovalApprovers } from "openclaw/plugin-sdk/approval-auth-runtime";
 import {
   createChannelExecApprovalProfile,
   isChannelExecApprovalTargetRecipient,
 } from "openclaw/plugin-sdk/approval-client-runtime";
 import { doesApprovalRequestMatchChannelAccount } from "openclaw/plugin-sdk/approval-native-runtime";
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { resolveSlackAccount } from "./accounts.js";
 
 export function normalizeSlackApproverId(value: string | number): string | undefined {
   const trimmed = String(value).trim();
+=======
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { normalizeStringifiedOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { resolveSlackAccount } from "./accounts.js";
+
+function normalizeSlackUserLikeId(value: string): string | undefined {
+  const upper = value.toUpperCase();
+  return /^[UW][A-Z0-9]+$/.test(upper) ? upper : undefined;
+}
+
+export function normalizeSlackApproverId(value: string | number): string | undefined {
+  const trimmed = normalizeStringifiedOptionalString(value);
+>>>>>>> upstream/main
   if (!trimmed) {
     return undefined;
   }
   const prefixed = trimmed.match(/^(?:slack|user):([A-Z0-9]+)$/i);
   if (prefixed?.[1]) {
+<<<<<<< HEAD
     return prefixed[1];
   }
   const mention = trimmed.match(/^<@([A-Z0-9]+)>$/i);
@@ -21,6 +40,15 @@ export function normalizeSlackApproverId(value: string | number): string | undef
     return mention[1];
   }
   return /^[UW][A-Z0-9]+$/i.test(trimmed) ? trimmed : undefined;
+=======
+    return normalizeSlackUserLikeId(prefixed[1]);
+  }
+  const mention = trimmed.match(/^<@([A-Z0-9]+)>$/i);
+  if (mention?.[1]) {
+    return normalizeSlackUserLikeId(mention[1]);
+  }
+  return normalizeSlackUserLikeId(trimmed);
+>>>>>>> upstream/main
 }
 
 function resolveSlackOwnerApprovers(cfg: OpenClawConfig): string[] {

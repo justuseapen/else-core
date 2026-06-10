@@ -1,9 +1,22 @@
+<<<<<<< HEAD
+=======
+/**
+ * Browser plugin security audit checks for auth and remote CDP exposure.
+ */
+>>>>>>> upstream/main
 import type { OpenClawPluginSecurityAuditContext } from "openclaw/plugin-sdk/plugin-entry";
 import { hasConfiguredSecretInput } from "openclaw/plugin-sdk/secret-input";
 import { formatCliCommand } from "openclaw/plugin-sdk/setup-tools";
 import { isPrivateNetworkOptInEnabled, isPrivateIpAddress } from "openclaw/plugin-sdk/ssrf-policy";
+<<<<<<< HEAD
 import { redactCdpUrl, resolveBrowserConfig, resolveProfile } from "./browser/config.js";
 import { resolveBrowserControlAuth } from "./browser/control-auth.js";
+=======
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { redactCdpUrl, resolveBrowserConfig, resolveProfile } from "./browser/config.js";
+import { resolveBrowserControlAuth } from "./browser/control-auth.js";
+import { hasNonEmptyString } from "./record-shared.js";
+>>>>>>> upstream/main
 
 const BLOCKED_HOSTNAMES = new Set([
   "localhost",
@@ -11,6 +24,7 @@ const BLOCKED_HOSTNAMES = new Set([
   "metadata.google.internal",
 ]);
 
+<<<<<<< HEAD
 function hasNonEmptyString(value: unknown): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
@@ -20,6 +34,14 @@ function isTrustedPrivateHostname(hostname: string): boolean {
   return normalized.length > 0 && BLOCKED_HOSTNAMES.has(normalized);
 }
 
+=======
+function isTrustedPrivateHostname(hostname: string): boolean {
+  const normalized = normalizeLowercaseStringOrEmpty(hostname);
+  return normalized.length > 0 && BLOCKED_HOSTNAMES.has(normalized);
+}
+
+/** Collects Browser plugin security audit findings for the current config/env. */
+>>>>>>> upstream/main
 export function collectBrowserSecurityAuditFindings(ctx: OpenClawPluginSecurityAuditContext) {
   const findings: Array<{
     checkId: string;

@@ -1,5 +1,6 @@
 // Public ACP runtime helpers for plugins that integrate with ACP control/session state.
 
+<<<<<<< HEAD
 import { __testing as managerTesting, getAcpSessionManager } from "../acp/control-plane/manager.js";
 import { __testing as registryTesting } from "../acp/runtime/registry.js";
 import type {
@@ -7,6 +8,10 @@ import type {
   PluginHookReplyDispatchEvent,
   PluginHookReplyDispatchResult,
 } from "../plugins/types.js";
+=======
+import { testing as managerTesting, getAcpSessionManager } from "../acp/control-plane/manager.js";
+import { testing as registryTesting } from "../acp/runtime/registry.js";
+>>>>>>> upstream/main
 
 export { getAcpSessionManager };
 export { AcpRuntimeError, isAcpRuntimeError } from "../acp/runtime/errors.js";
@@ -25,12 +30,19 @@ export type {
   AcpRuntimeEvent,
   AcpRuntimeHandle,
   AcpRuntimeStatus,
+<<<<<<< HEAD
+=======
+  AcpRuntimeTurn,
+>>>>>>> upstream/main
   AcpRuntimeTurnAttachment,
   AcpRuntimeTurnInput,
+  AcpRuntimeTurnResult,
+  AcpRuntimeTurnResultError,
   AcpSessionUpdateTag,
-} from "../acp/runtime/types.js";
+} from "@openclaw/acp-core/runtime/types";
 export { readAcpSessionEntry } from "../acp/runtime/session-meta.js";
 export type { AcpSessionStoreEntry } from "../acp/runtime/session-meta.js";
+<<<<<<< HEAD
 
 let dispatchAcpRuntimePromise: Promise<
   typeof import("../auto-reply/reply/dispatch-acp.runtime.js")
@@ -105,11 +117,19 @@ export async function tryDispatchAcpReplyHook(
     counts: result.counts,
   };
 }
+=======
+export { tryDispatchAcpReplyHook } from "./acp-runtime-backend.js";
+>>>>>>> upstream/main
 
 // Keep test helpers off the hot init path. Eagerly merging them here can
 // create a back-edge through the bundled ACP runtime chunk before the imported
 // testing bindings finish initialization.
+<<<<<<< HEAD
 export const __testing = new Proxy({} as typeof managerTesting & typeof registryTesting, {
+=======
+/** Lazy ACP test helper facade combining control-plane and runtime registry helpers. */
+export const testing = new Proxy({} as typeof managerTesting & typeof registryTesting, {
+>>>>>>> upstream/main
   get(_target, prop, receiver) {
     if (Reflect.has(managerTesting, prop)) {
       return Reflect.get(managerTesting, prop, receiver);
@@ -134,3 +154,9 @@ export const __testing = new Proxy({} as typeof managerTesting & typeof registry
     return undefined;
   },
 });
+<<<<<<< HEAD
+=======
+
+/** @deprecated Use `testing`. */
+export { testing as __testing };
+>>>>>>> upstream/main

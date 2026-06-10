@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Slack plugin module implements interactive dispatch behavior.
+>>>>>>> upstream/main
 import {
   createInteractiveConversationBindingHelpers,
   dispatchPluginInteractiveHandler,
@@ -6,6 +10,52 @@ import {
   type PluginConversationBindingRequestResult,
   type PluginInteractiveRegistration,
 } from "openclaw/plugin-sdk/plugin-runtime";
+<<<<<<< HEAD
+=======
+import type { ModalInputSummary } from "./monitor/events/modal-input-summary.js";
+
+export type SlackInteractiveHandlerResult = {
+  handled?: boolean;
+  systemEvent?: {
+    summary?: string;
+    reference?: string;
+    data?: Record<string, unknown>;
+  };
+} | void;
+
+type SlackBlockInteractivePayload = {
+  kind: "button" | "select";
+  data: string;
+  namespace: string;
+  payload: string;
+  actionId: string;
+  blockId?: string;
+  messageTs?: string;
+  threadTs?: string;
+  value?: string;
+  selectedValues?: string[];
+  selectedLabels?: string[];
+  triggerId?: string;
+  responseUrl?: string;
+};
+
+type SlackModalInteractivePayload = {
+  kind: "view_submission" | "view_closed";
+  data: string;
+  namespace: string;
+  payload: string;
+  callbackId: string;
+  viewId?: string;
+  rootViewId?: string;
+  previousViewId?: string;
+  externalId?: string;
+  isStackedView?: boolean;
+  isCleared?: boolean;
+  inputs: ModalInputSummary[];
+  stateValues?: unknown;
+  triggerId?: string;
+};
+>>>>>>> upstream/main
 
 export type SlackInteractiveHandlerContext = {
   channel: "slack";
@@ -19,6 +69,7 @@ export type SlackInteractiveHandlerContext = {
   auth: {
     isAuthorizedSender: boolean;
   };
+<<<<<<< HEAD
   interaction: {
     kind: "button" | "select";
     data: string;
@@ -34,6 +85,9 @@ export type SlackInteractiveHandlerContext = {
     triggerId?: string;
     responseUrl?: string;
   };
+=======
+  interaction: SlackBlockInteractivePayload | SlackModalInteractivePayload;
+>>>>>>> upstream/main
   respond: {
     acknowledge: () => Promise<void>;
     reply: (params: { text: string; responseType?: "ephemeral" | "in_channel" }) => Promise<void>;
@@ -52,10 +106,18 @@ export type SlackInteractiveHandlerContext = {
 
 export type SlackInteractiveHandlerRegistration = PluginInteractiveRegistration<
   SlackInteractiveHandlerContext,
+<<<<<<< HEAD
   "slack"
 >;
 
 export type SlackInteractiveDispatchContext = Omit<
+=======
+  "slack",
+  SlackInteractiveHandlerResult
+>;
+
+type SlackInteractiveDispatchContext = Omit<
+>>>>>>> upstream/main
   SlackInteractiveHandlerContext,
   | "interaction"
   | "respond"
@@ -64,10 +126,16 @@ export type SlackInteractiveDispatchContext = Omit<
   | "detachConversationBinding"
   | "getCurrentConversationBinding"
 > & {
+<<<<<<< HEAD
   interaction: Omit<
     SlackInteractiveHandlerContext["interaction"],
     "data" | "namespace" | "payload"
   >;
+=======
+  interaction:
+    | Omit<SlackBlockInteractivePayload, "data" | "namespace" | "payload">
+    | Omit<SlackModalInteractivePayload, "data" | "namespace" | "payload">;
+>>>>>>> upstream/main
 };
 
 export async function dispatchSlackPluginInteractiveHandler(params: {

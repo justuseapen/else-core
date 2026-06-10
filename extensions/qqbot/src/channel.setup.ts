@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
 import {
@@ -91,6 +92,16 @@ export function applyQQBotSetupAccountConfig(params: {
   });
 }
 
+=======
+// Qqbot plugin module implements channel.setup behavior.
+import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
+import "./bridge/bootstrap.js";
+import { qqbotConfigAdapter, qqbotMeta, qqbotSetupAdapterShared } from "./bridge/config-shared.js";
+import { qqbotSetupWizard } from "./bridge/setup/surface.js";
+import { qqbotChannelConfigSchema } from "./config-schema.js";
+import type { ResolvedQQBotAccount } from "./types.js";
+
+>>>>>>> upstream/main
 /**
  * Setup-only QQBot plugin — lightweight subset used during `openclaw onboard`
  * and `openclaw configure` without pulling the full runtime dependencies.
@@ -99,12 +110,16 @@ export const qqbotSetupPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
   id: "qqbot",
   setupWizard: qqbotSetupWizard,
   meta: {
+<<<<<<< HEAD
     id: "qqbot",
     label: "QQ Bot",
     selectionLabel: "QQ Bot",
     docsPath: "/channels/qqbot",
     blurb: "Connect to QQ via official QQ Bot API",
     order: 50,
+=======
+    ...qqbotMeta,
+>>>>>>> upstream/main
   },
   capabilities: {
     chatTypes: ["direct", "group"],
@@ -116,6 +131,7 @@ export const qqbotSetupPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
   reload: { configPrefixes: ["channels.qqbot"] },
   configSchema: qqbotChannelConfigSchema,
   config: {
+<<<<<<< HEAD
     listAccountIds: (cfg) => listQQBotAccountIds(cfg),
     resolveAccount: (cfg, accountId) =>
       resolveQQBotAccount(cfg, accountId, { allowUnresolvedSecretRef: true }),
@@ -168,5 +184,11 @@ export const qqbotSetupPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
     validateInput: ({ accountId, input }) => validateQQBotSetupInput({ accountId, input }),
     applyAccountConfig: ({ cfg, accountId, input }) =>
       applyQQBotSetupAccountConfig({ cfg, accountId, input }),
+=======
+    ...qqbotConfigAdapter,
+  },
+  setup: {
+    ...qqbotSetupAdapterShared,
+>>>>>>> upstream/main
   },
 };

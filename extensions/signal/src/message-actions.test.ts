@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Signal tests cover message actions plugin behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const sendReactionsModule = await import("./send-reactions.js");
@@ -33,7 +38,11 @@ describe("signalMessageActions", () => {
   it("lists actions based on configured accounts and reaction gates", () => {
     expect(
       signalMessageActions.describeMessageTool?.({ cfg: {} as OpenClawConfig })?.actions ?? [],
+<<<<<<< HEAD
     ).toEqual([]);
+=======
+    ).toStrictEqual([]);
+>>>>>>> upstream/main
 
     expect(
       signalMessageActions.describeMessageTool?.({
@@ -136,6 +145,15 @@ describe("signalMessageActions", () => {
 
     for (const testCase of cases) {
       sendReactionSignalMock.mockClear();
+<<<<<<< HEAD
+=======
+      const expectedOptions = testCase.expectedOptions as {
+        accountId?: string;
+        groupId?: string;
+        targetAuthor?: string;
+        targetAuthorUuid?: string;
+      };
+>>>>>>> upstream/main
       await signalMessageActions.handleAction?.({
         channel: "signal",
         action: "react",
@@ -149,10 +167,20 @@ describe("signalMessageActions", () => {
         testCase.expectedRecipient,
         testCase.expectedTimestamp,
         testCase.expectedEmoji,
+<<<<<<< HEAD
         expect.objectContaining({
           cfg: testCase.cfg,
           ...testCase.expectedOptions,
         }),
+=======
+        {
+          cfg: testCase.cfg,
+          accountId: expectedOptions.accountId,
+          groupId: expectedOptions.groupId,
+          targetAuthor: expectedOptions.targetAuthor,
+          targetAuthorUuid: expectedOptions.targetAuthorUuid,
+        },
+>>>>>>> upstream/main
       );
     }
   });
@@ -175,6 +203,19 @@ describe("signalMessageActions", () => {
       signalMessageActions.handleAction?.({
         channel: "signal",
         action: "react",
+<<<<<<< HEAD
+=======
+        params: { to: "+15559999999", messageId: "123abc", emoji: "✅" },
+        cfg,
+      }),
+    ).rejects.toThrow(/Invalid messageId/);
+    expect(sendReactionSignalMock).not.toHaveBeenCalled();
+
+    await expect(
+      signalMessageActions.handleAction?.({
+        channel: "signal",
+        action: "react",
+>>>>>>> upstream/main
         params: { to: "signal:group:group-id", messageId: "123", emoji: "✅" },
         cfg,
       }),

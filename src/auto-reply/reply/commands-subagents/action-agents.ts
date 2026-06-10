@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// Lists available agents for subagent spawn and focus commands.
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+>>>>>>> upstream/main
 import { subagentRuns } from "../../../agents/subagent-registry-memory.js";
 import { countPendingDescendantRunsFromRuns } from "../../../agents/subagent-registry-queries.js";
 import { getSubagentRunsSnapshotForRead } from "../../../agents/subagent-registry-state.js";
@@ -118,10 +123,7 @@ export function handleSubagentsAgentsAction(ctx: SubagentsCommandContext): Comma
   if (requesterBindings.length > 0) {
     lines.push("", "acp/session bindings:", "-----");
     for (const binding of requesterBindings) {
-      const label =
-        typeof binding.metadata?.label === "string" && binding.metadata.label.trim()
-          ? binding.metadata.label.trim()
-          : binding.targetSessionKey;
+      const label = normalizeOptionalString(binding.metadata?.label) ?? binding.targetSessionKey;
       lines.push(
         `- ${label} (${formatConversationBindingText({
           conversationId: binding.conversation.conversationId,

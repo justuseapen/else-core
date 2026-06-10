@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Telegram plugin module implements secret contract behavior.
+>>>>>>> upstream/main
 import {
   collectConditionalChannelFieldAssignments,
   getChannelSurface,
@@ -5,6 +9,7 @@ import {
   hasOwnProperty,
   type ResolverContext,
   type SecretDefaults,
+<<<<<<< HEAD
   type SecretTargetRegistryEntry,
 } from "openclaw/plugin-sdk/security-runtime";
 
@@ -58,6 +63,62 @@ export const secretTargetRegistryEntries = [
 export function collectRuntimeConfigAssignments(params: {
   config: { channels?: Record<string, unknown> };
   defaults: SecretDefaults | undefined;
+=======
+} from "openclaw/plugin-sdk/channel-secret-basic-runtime";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+
+export const secretTargetRegistryEntries: import("openclaw/plugin-sdk/channel-secret-basic-runtime").SecretTargetRegistryEntry[] =
+  [
+    {
+      id: "channels.telegram.accounts.*.botToken",
+      targetType: "channels.telegram.accounts.*.botToken",
+      configFile: "openclaw.json",
+      pathPattern: "channels.telegram.accounts.*.botToken",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.telegram.accounts.*.webhookSecret",
+      targetType: "channels.telegram.accounts.*.webhookSecret",
+      configFile: "openclaw.json",
+      pathPattern: "channels.telegram.accounts.*.webhookSecret",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.telegram.botToken",
+      targetType: "channels.telegram.botToken",
+      configFile: "openclaw.json",
+      pathPattern: "channels.telegram.botToken",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.telegram.webhookSecret",
+      targetType: "channels.telegram.webhookSecret",
+      configFile: "openclaw.json",
+      pathPattern: "channels.telegram.webhookSecret",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+  ];
+
+export function collectRuntimeConfigAssignments(params: {
+  config: { channels?: Record<string, unknown> };
+  defaults?: SecretDefaults;
+>>>>>>> upstream/main
   context: ResolverContext;
 }): void {
   const resolved = getChannelSurface(params.config, "telegram");
@@ -65,9 +126,15 @@ export function collectRuntimeConfigAssignments(params: {
     return;
   }
   const { channel: telegram, surface } = resolved;
+<<<<<<< HEAD
   const baseTokenFile = typeof telegram.tokenFile === "string" ? telegram.tokenFile.trim() : "";
   const accountTokenFile = (account: Record<string, unknown>) =>
     typeof account.tokenFile === "string" ? account.tokenFile.trim() : "";
+=======
+  const baseTokenFile = normalizeOptionalString(telegram.tokenFile) ?? "";
+  const accountTokenFile = (account: Record<string, unknown>) =>
+    normalizeOptionalString(account.tokenFile) ?? "";
+>>>>>>> upstream/main
   collectConditionalChannelFieldAssignments({
     channelKey: "telegram",
     field: "botToken",
@@ -91,12 +158,19 @@ export function collectRuntimeConfigAssignments(params: {
       "no enabled Telegram surface inherits this top-level botToken (tokenFile is configured).",
     accountInactiveReason: "Telegram account is disabled or tokenFile is configured.",
   });
+<<<<<<< HEAD
   const baseWebhookUrl = typeof telegram.webhookUrl === "string" ? telegram.webhookUrl.trim() : "";
   const accountWebhookUrl = (account: Record<string, unknown>) =>
     hasOwnProperty(account, "webhookUrl")
       ? typeof account.webhookUrl === "string"
         ? account.webhookUrl.trim()
         : ""
+=======
+  const baseWebhookUrl = normalizeOptionalString(telegram.webhookUrl) ?? "";
+  const accountWebhookUrl = (account: Record<string, unknown>) =>
+    hasOwnProperty(account, "webhookUrl")
+      ? (normalizeOptionalString(account.webhookUrl) ?? "")
+>>>>>>> upstream/main
       : baseWebhookUrl;
   collectConditionalChannelFieldAssignments({
     channelKey: "telegram",
@@ -115,3 +189,11 @@ export function collectRuntimeConfigAssignments(params: {
       "Telegram account is disabled or webhook mode is not active for this account.",
   });
 }
+<<<<<<< HEAD
+=======
+
+export const channelSecrets = {
+  secretTargetRegistryEntries,
+  collectRuntimeConfigAssignments,
+};
+>>>>>>> upstream/main

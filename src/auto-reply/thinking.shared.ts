@@ -1,16 +1,41 @@
-export type ThinkLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "adaptive";
+/** Shared normalization for thinking, verbosity, tracing, reasoning, and usage directives. */
+import {
+  normalizeFastMode,
+  normalizeLowercaseStringOrEmpty,
+  normalizeOptionalLowercaseString,
+} from "../../packages/normalization-core/src/string-coerce.js";
+
+export { normalizeFastMode };
+
+/** Canonical thinking level values accepted by chat commands and session state. */
+export type ThinkLevel =
+  | "off"
+  | "minimal"
+  | "low"
+  | "medium"
+  | "high"
+  | "xhigh"
+  | "adaptive"
+  | "max";
 export type VerboseLevel = "off" | "on" | "full";
+export type TraceLevel = "off" | "on" | "raw";
 export type NoticeLevel = "off" | "on" | "full";
 export type ElevatedLevel = "off" | "on" | "ask" | "full";
 export type ElevatedMode = "off" | "ask" | "full";
 export type ReasoningLevel = "off" | "on" | "stream";
 export type UsageDisplayLevel = "off" | "tokens" | "full";
+/** Minimal model catalog entry needed to choose thinking defaults. */
 export type ThinkingCatalogEntry = {
   provider: string;
   id: string;
   reasoning?: boolean;
+  compat?: {
+    thinkingFormat?: string;
+    supportedReasoningEfforts?: readonly string[] | null;
+  } | null;
 };
 
+<<<<<<< HEAD
 const BASE_THINKING_LEVELS: ThinkLevel[] = ["off", "minimal", "low", "medium", "high", "adaptive"];
 const NO_THINKING_LEVELS: ThinkLevel[] = [...BASE_THINKING_LEVELS];
 
@@ -29,14 +54,32 @@ export function supportsBuiltInXHighThinking(
 }
 
 // Normalize user-provided thinking level strings to the canonical enum.
+=======
+export const BASE_THINKING_LEVELS: ThinkLevel[] = ["off", "minimal", "low", "medium", "high"];
+export const THINKING_LEVEL_RANKS: Record<ThinkLevel, number> = {
+  off: 0,
+  minimal: 10,
+  low: 20,
+  medium: 30,
+  high: 40,
+  adaptive: 30,
+  xhigh: 60,
+  max: 70,
+};
+
+/** Normalizes user-provided thinking level strings to the canonical enum. */
+>>>>>>> upstream/main
 export function normalizeThinkLevel(raw?: string | null): ThinkLevel | undefined {
-  if (!raw) {
+  const key = normalizeOptionalLowercaseString(raw);
+  if (!key) {
     return undefined;
   }
-  const key = raw.trim().toLowerCase();
   const collapsed = key.replace(/[\s_-]+/g, "");
   if (collapsed === "adaptive" || collapsed === "auto") {
     return "adaptive";
+  }
+  if (collapsed === "max") {
+    return "max";
   }
   if (collapsed === "xhigh" || collapsed === "extrahigh") {
     return "xhigh";
@@ -56,9 +99,7 @@ export function normalizeThinkLevel(raw?: string | null): ThinkLevel | undefined
   if (["mid", "med", "medium", "thinkharder", "think-harder", "harder"].includes(key)) {
     return "medium";
   }
-  if (
-    ["high", "ultra", "ultrathink", "think-hard", "thinkhardest", "highest", "max"].includes(key)
-  ) {
+  if (["high", "ultra", "ultrathink", "think-hard", "thinkhardest", "highest"].includes(key)) {
     return "high";
   }
   if (["think"].includes(key)) {
@@ -67,6 +108,7 @@ export function normalizeThinkLevel(raw?: string | null): ThinkLevel | undefined
   return undefined;
 }
 
+<<<<<<< HEAD
 export function listThinkingLevels(
   _provider?: string | null,
   _model?: string | null,
@@ -77,22 +119,23 @@ export function listThinkingLevels(
 export function listThinkingLevelLabels(provider?: string | null, model?: string | null): string[] {
   if (isBinaryThinkingProvider(provider)) {
     return ["off", "on"];
+=======
+/** Returns true for command values that clear an inherited session override. */
+export function isSessionDefaultDirectiveValue(raw?: string | null): boolean {
+  const key = normalizeOptionalLowercaseString(raw);
+  if (!key) {
+    return false;
+>>>>>>> upstream/main
   }
-  return listThinkingLevels(provider, model);
+  return ["default", "inherit", "inherited", "clear", "reset", "unpin"].includes(key);
 }
 
-export function formatThinkingLevels(
-  provider?: string | null,
-  model?: string | null,
-  separator = ", ",
-): string {
-  return listThinkingLevelLabels(provider, model).join(separator);
-}
-
+/** Human-readable hint for xhigh support in command menus and errors. */
 export function formatXHighModelHint(): string {
   return "provider models that advertise xhigh reasoning";
 }
 
+/** Chooses the default thinking level for one provider/model catalog entry. */
 export function resolveThinkingDefaultForModel(params: {
   provider: string;
   model: string;
@@ -110,10 +153,10 @@ export function resolveThinkingDefaultForModel(params: {
 type OnOffFullLevel = "off" | "on" | "full";
 
 function normalizeOnOffFullLevel(raw?: string | null): OnOffFullLevel | undefined {
-  if (!raw) {
+  const key = normalizeOptionalLowercaseString(raw);
+  if (!key) {
     return undefined;
   }
-  const key = raw.toLowerCase();
   if (["off", "false", "no", "0"].includes(key)) {
     return "off";
   }
@@ -126,19 +169,40 @@ function normalizeOnOffFullLevel(raw?: string | null): OnOffFullLevel | undefine
   return undefined;
 }
 
+/** Normalizes /verbose values. */
 export function normalizeVerboseLevel(raw?: string | null): VerboseLevel | undefined {
   return normalizeOnOffFullLevel(raw);
 }
 
+/** Normalizes /trace values. */
+export function normalizeTraceLevel(raw?: string | null): TraceLevel | undefined {
+  const key = normalizeOptionalLowercaseString(raw);
+  if (!key) {
+    return undefined;
+  }
+  if (["off", "false", "no", "0"].includes(key)) {
+    return "off";
+  }
+  if (["on", "true", "yes", "1"].includes(key)) {
+    return "on";
+  }
+  if (["raw", "unfiltered"].includes(key)) {
+    return "raw";
+  }
+  return undefined;
+}
+
+/** Normalizes notice visibility values. */
 export function normalizeNoticeLevel(raw?: string | null): NoticeLevel | undefined {
   return normalizeOnOffFullLevel(raw);
 }
 
+/** Normalizes response usage display values. */
 export function normalizeUsageDisplay(raw?: string | null): UsageDisplayLevel | undefined {
   if (!raw) {
     return undefined;
   }
-  const key = raw.toLowerCase();
+  const key = normalizeLowercaseStringOrEmpty(raw);
   if (["off", "false", "no", "0", "disable", "disabled"].includes(key)) {
     return "off";
   }
@@ -154,32 +218,17 @@ export function normalizeUsageDisplay(raw?: string | null): UsageDisplayLevel | 
   return undefined;
 }
 
+/** Resolves response usage display mode with the persisted default. */
 export function resolveResponseUsageMode(raw?: string | null): UsageDisplayLevel {
   return normalizeUsageDisplay(raw) ?? "off";
 }
 
-export function normalizeFastMode(raw?: string | boolean | null): boolean | undefined {
-  if (typeof raw === "boolean") {
-    return raw;
-  }
-  if (!raw) {
-    return undefined;
-  }
-  const key = raw.toLowerCase();
-  if (["off", "false", "no", "0", "disable", "disabled", "normal"].includes(key)) {
-    return false;
-  }
-  if (["on", "true", "yes", "1", "enable", "enabled", "fast"].includes(key)) {
-    return true;
-  }
-  return undefined;
-}
-
+/** Normalizes elevated execution policy values. */
 export function normalizeElevatedLevel(raw?: string | null): ElevatedLevel | undefined {
   if (!raw) {
     return undefined;
   }
-  const key = raw.toLowerCase();
+  const key = normalizeLowercaseStringOrEmpty(raw);
   if (["off", "false", "no", "0"].includes(key)) {
     return "off";
   }
@@ -195,6 +244,7 @@ export function normalizeElevatedLevel(raw?: string | null): ElevatedLevel | und
   return undefined;
 }
 
+/** Collapses elevated levels into runtime execution mode. */
 export function resolveElevatedMode(level?: ElevatedLevel | null): ElevatedMode {
   if (!level || level === "off") {
     return "off";
@@ -205,11 +255,12 @@ export function resolveElevatedMode(level?: ElevatedLevel | null): ElevatedMode 
   return "ask";
 }
 
+/** Normalizes reasoning visibility values. */
 export function normalizeReasoningLevel(raw?: string | null): ReasoningLevel | undefined {
   if (!raw) {
     return undefined;
   }
-  const key = raw.toLowerCase();
+  const key = normalizeLowercaseStringOrEmpty(raw);
   if (["off", "false", "no", "0", "hide", "hidden", "disable", "disabled"].includes(key)) {
     return "off";
   }

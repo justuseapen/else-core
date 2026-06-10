@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../config/config.js";
 import { ensureAuthProfileStore, listProfilesForProvider } from "./auth-profiles.js";
 import { resolveDefaultModelForAgent } from "./model-selection.js";
@@ -266,6 +267,32 @@ export function shouldSuppressManagedWebSearchTool(params: {
   return resolveCodexNativeSearchActivation(params).state === "native_active";
 }
 
+=======
+/**
+ * Public Codex native web-search facade. It re-exports core activation helpers
+ * and reports whether native search matters for the configured agent model.
+ */
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import {
+  hasAvailableCodexAuth,
+  isCodexNativeSearchEligibleModel,
+} from "./codex-native-web-search-core.js";
+import { resolveCodexNativeWebSearchConfig } from "./codex-native-web-search.shared.js";
+import { resolveDefaultModelForAgent } from "./model-selection.js";
+
+export {
+  buildCodexNativeWebSearchTool,
+  patchCodexNativeWebSearchPayload,
+  resolveCodexNativeSearchActivation,
+  shouldSuppressManagedWebSearchTool,
+} from "./codex-native-web-search-core.js";
+export {
+  describeCodexNativeWebSearch,
+  resolveCodexNativeWebSearchConfig,
+} from "./codex-native-web-search.shared.js";
+
+/** True when Codex native web search should appear relevant for an agent. */
+>>>>>>> upstream/main
 export function isCodexNativeWebSearchRelevant(params: {
   config: OpenClawConfig;
   agentId?: string;
@@ -286,11 +313,17 @@ export function isCodexNativeWebSearchRelevant(params: {
   const configuredModelApi = configuredProvider?.models?.find(
     (candidate) => candidate.id === defaultModel.model,
   )?.api;
+<<<<<<< HEAD
+=======
+  // If explicit config/auth did not opt in, model API eligibility can still make
+  // native search relevant for Codex-routable defaults.
+>>>>>>> upstream/main
   return isCodexNativeSearchEligibleModel({
     modelProvider: defaultModel.provider,
     modelApi: configuredModelApi ?? configuredProvider?.api,
   });
 }
+<<<<<<< HEAD
 
 export function describeCodexNativeWebSearch(
   config: OpenClawConfig | undefined,
@@ -305,3 +338,5 @@ export function describeCodexNativeWebSearch(
   }
   return `Codex native search: ${nativeConfig.mode} for Codex-capable models`;
 }
+=======
+>>>>>>> upstream/main

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type {
   ChannelDoctorAdapter,
   ChannelDoctorConfigMutation,
@@ -9,12 +10,21 @@ import { isZalouserMutableGroupEntry } from "./security-audit.js";
 
 type ZalouserChannelsConfig = NonNullable<OpenClawConfig["channels"]>;
 
+=======
+// Zalouser plugin module implements doctor behavior.
+import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
+import { createDangerousNameMatchingMutableAllowlistWarningCollector } from "openclaw/plugin-sdk/channel-policy";
+import { legacyConfigRules, normalizeCompatibilityConfig } from "./doctor-contract.js";
+import { isZalouserMutableGroupEntry } from "./security-audit.js";
+
+>>>>>>> upstream/main
 function asObjectRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
 }
 
+<<<<<<< HEAD
 function sanitizeForLog(value: string): string {
   return value.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
 }
@@ -190,13 +200,37 @@ export function collectZalouserMutableAllowlistWarnings(cfg: OpenClawConfig): st
     "- Option B (recommended): resolve mutable group names to stable IDs and rewrite the allowlist entries.",
   ];
 }
+=======
+const collectZalouserMutableAllowlistWarnings =
+  createDangerousNameMatchingMutableAllowlistWarningCollector({
+    channel: "zalouser",
+    detector: isZalouserMutableGroupEntry,
+    collectLists: (scope) => {
+      const groups = asObjectRecord(scope.account.groups);
+      return groups
+        ? [
+            {
+              pathLabel: `${scope.prefix}.groups`,
+              list: Object.keys(groups),
+            },
+          ]
+        : [];
+    },
+  });
+>>>>>>> upstream/main
 
 export const zalouserDoctor: ChannelDoctorAdapter = {
   dmAllowFromMode: "topOnly",
   groupModel: "hybrid",
   groupAllowFromFallbackToAllowFrom: false,
   warnOnEmptyGroupSenderAllowlist: false,
+<<<<<<< HEAD
   legacyConfigRules: ZALOUSER_LEGACY_CONFIG_RULES,
   normalizeCompatibilityConfig: ({ cfg }) => normalizeZalouserCompatibilityConfig(cfg),
   collectMutableAllowlistWarnings: ({ cfg }) => collectZalouserMutableAllowlistWarnings(cfg),
+=======
+  legacyConfigRules,
+  normalizeCompatibilityConfig,
+  collectMutableAllowlistWarnings: collectZalouserMutableAllowlistWarnings,
+>>>>>>> upstream/main
 };

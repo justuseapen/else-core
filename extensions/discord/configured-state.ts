@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Discord helper module supports configured state behavior.
+>>>>>>> upstream/main
 export function hasDiscordConfiguredState(params: { env?: NodeJS.ProcessEnv }): boolean {
   return (
     typeof params.env?.DISCORD_BOT_TOKEN === "string" &&

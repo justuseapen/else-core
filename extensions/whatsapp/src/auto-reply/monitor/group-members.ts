@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Whatsapp plugin module implements group members behavior.
+>>>>>>> upstream/main
 import { normalizeE164 } from "../../text-runtime.js";
 
 function appendNormalizedUnique(entries: Iterable<string>, seen: Set<string>, ordered: string[]) {

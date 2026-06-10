@@ -1,11 +1,15 @@
+// Cross-cuts outbound target/cache behavior through shared fixtures and active
+// plugin registry setup.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
 import { setActivePluginRegistry } from "../../plugins/runtime.js";
 import { createTestRegistry } from "../../test-utils/channel-plugins.js";
-import { typedCases } from "../../test-utils/typed-cases.js";
 import { DirectoryCache } from "./directory-cache.js";
+<<<<<<< HEAD
 import { buildOutboundResultEnvelope } from "./envelope.js";
 import type { OutboundDeliveryJson } from "./format.js";
+=======
+>>>>>>> upstream/main
 
 beforeEach(() => {
   setActivePluginRegistry(createTestRegistry([]));
@@ -58,6 +62,7 @@ describe("DirectoryCache", () => {
     expect(cache.get("c", cfg)).toBe(expected.c);
   });
 });
+<<<<<<< HEAD
 
 describe("buildOutboundResultEnvelope", () => {
   const whatsappDelivery: OutboundDeliveryJson = {
@@ -125,3 +130,5 @@ describe("buildOutboundResultEnvelope", () => {
     expect(buildOutboundResultEnvelope(input)).toEqual(expected);
   });
 });
+=======
+>>>>>>> upstream/main

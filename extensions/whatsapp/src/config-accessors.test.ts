@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Whatsapp tests cover config accessors plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   formatWhatsAppConfigAllowFromEntries,
@@ -29,6 +33,10 @@ describe("whatsapp config accessors", () => {
   it("normalizes allowFrom entries like the channel plugin", () => {
     expect(
       formatWhatsAppConfigAllowFromEntries([" whatsapp:+49123 ", "*", "49124@s.whatsapp.net"]),
+<<<<<<< HEAD
     ).toEqual(["+49123", "*", "+49124"]);
+=======
+    ).toEqual(["49123", "*", "49124"]);
+>>>>>>> upstream/main
   });
 });

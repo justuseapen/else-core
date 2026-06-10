@@ -1,9 +1,17 @@
+<<<<<<< HEAD
+=======
+// Account core contracts re-export config and account types used by plugin account flows.
+>>>>>>> upstream/main
 export type { OpenClawConfig } from "../config/config.js";
 
 export { createAccountActionGate } from "../channels/plugins/account-action-gate.js";
 export {
   createAccountListHelpers,
   describeAccountSnapshot,
+<<<<<<< HEAD
+=======
+  hasConfiguredAccountValue,
+>>>>>>> upstream/main
   listCombinedAccountIds,
   mergeAccountConfig,
   resolveListedDefaultAccountId,
@@ -17,6 +25,10 @@ export {
   normalizeOptionalAccountId,
 } from "../routing/session-key.js";
 export { normalizeE164, pathExists, resolveUserPath } from "../utils.js";
+<<<<<<< HEAD
+=======
+export { listConfiguredAccountIds } from "./account-configured-ids.js";
+>>>>>>> upstream/main
 
 /** Resolve an account by id, then fall back to the default account when the primary lacks credentials. */
 export function resolveAccountWithDefaultFallback<TAccount>(params: {
@@ -43,6 +55,7 @@ export function resolveAccountWithDefaultFallback<TAccount>(params: {
   }
   return fallback;
 }
+<<<<<<< HEAD
 
 /** List normalized configured account ids from a raw channel account record map. */
 export function listConfiguredAccountIds(params: {
@@ -61,3 +74,5 @@ export function listConfiguredAccountIds(params: {
   }
   return [...ids];
 }
+=======
+>>>>>>> upstream/main

@@ -1,2 +1,26 @@
+<<<<<<< HEAD
 export * from "./src/runtime-api.js";
 export * from "./src/runtime.js";
+=======
+// Qa Channel API module exposes the plugin public contract.
+export {
+  buildChannelConfigSchema,
+  buildChannelOutboundSessionRoute,
+  type ChannelGatewayContext,
+  type ChannelMessageActionAdapter,
+  type ChannelMessageActionName,
+  type ChannelPlugin,
+  createChatChannelPlugin,
+  createComputedAccountStatusAdapter,
+  createDefaultChannelRuntimeState,
+  createPluginRuntimeStore,
+  defineChannelPluginEntry,
+  getChatChannelMeta,
+  jsonResult,
+  type OpenClawConfig,
+  type PluginRuntime,
+  readStringParam,
+  type RuntimeEnv,
+} from "./src/runtime-api.js";
+export { getQaChannelRuntime, setQaChannelRuntime } from "./src/runtime.js";
+>>>>>>> upstream/main

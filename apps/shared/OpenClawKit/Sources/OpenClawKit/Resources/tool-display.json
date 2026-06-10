@@ -361,6 +361,29 @@
         }
       }
     },
+<<<<<<< HEAD
+=======
+    "get_goal": {
+      "emoji": "🎯",
+      "title": "Get Goal",
+      "detailKeys": []
+    },
+    "create_goal": {
+      "emoji": "🎯",
+      "title": "Create Goal",
+      "detailKeys": [
+        "objective",
+        "token_budget"
+      ]
+    },
+    "update_goal": {
+      "emoji": "🎯",
+      "title": "Update Goal",
+      "detailKeys": [
+        "status"
+      ]
+    },
+>>>>>>> upstream/main
     "update_plan": {
       "emoji": "🗺️",
       "title": "Update Plan",
@@ -369,6 +392,18 @@
         "plan.0.step"
       ]
     },
+<<<<<<< HEAD
+=======
+    "skill_workshop": {
+      "emoji": "🧰",
+      "title": "Skill Workshop",
+      "detailKeys": [
+        "action",
+        "name",
+        "proposal_id"
+      ]
+    },
+>>>>>>> upstream/main
     "gateway": {
       "emoji": "🔌",
       "title": "Gateway",
@@ -382,22 +417,133 @@
         }
       }
     },
-    "whatsapp_login": {
-      "emoji": "🟢",
-      "title": "WhatsApp Login",
+    "exec": {
+      "emoji": "🛠️",
+      "title": "Exec",
+      "detailKeys": [
+        "command"
+      ]
+    },
+    "tool_call": {
+      "emoji": "🧰",
+      "title": "Tool Call",
+      "detailKeys": []
+    },
+    "tool_call_update": {
+      "emoji": "🧰",
+      "title": "Tool Call",
+      "detailKeys": []
+    },
+    "session_status": {
+      "emoji": "📊",
+      "title": "Session Status",
+      "detailKeys": [
+        "sessionKey",
+        "model"
+      ]
+    },
+    "sessions_list": {
+      "emoji": "🗂️",
+      "title": "Sessions",
+      "detailKeys": [
+        "kinds",
+        "label",
+        "agentId",
+        "search",
+        "limit",
+        "activeMinutes",
+        "includeDerivedTitles",
+        "includeLastMessage",
+        "messageLimit"
+      ]
+    },
+    "sessions_send": {
+      "emoji": "📨",
+      "title": "Session Send",
+      "detailKeys": [
+        "label",
+        "sessionKey",
+        "agentId",
+        "timeoutSeconds"
+      ]
+    },
+    "sessions_history": {
+      "emoji": "🧾",
+      "title": "Session History",
+      "detailKeys": [
+        "sessionKey",
+        "limit",
+        "includeTools"
+      ]
+    },
+    "transcripts": {
+      "emoji": "🎙️",
+      "title": "Transcripts",
       "actions": {
         "start": {
+<<<<<<< HEAD
           "label": "start"
         },
         "wait": {
           "label": "wait"
+=======
+          "label": "start",
+          "detailKeys": [
+            "sessionId",
+            "title",
+            "providerId",
+            "accountId",
+            "guildId",
+            "channelId",
+            "meetingUrl"
+          ]
+        },
+        "stop": {
+          "label": "stop",
+          "detailKeys": [
+            "sessionId"
+          ]
+        },
+        "status": {
+          "label": "status"
+        },
+        "import": {
+          "label": "import",
+          "detailKeys": [
+            "sessionId",
+            "title",
+            "providerId",
+            "meetingUrl",
+            "speakerLabel"
+          ]
+        },
+        "summarize": {
+          "label": "summarize",
+          "detailKeys": [
+            "sessionId"
+          ]
+>>>>>>> upstream/main
         }
       }
     },
-    "discord": {
-      "emoji": "💬",
-      "title": "Discord",
+    "sessions_spawn": {
+      "emoji": "🧑‍🔧",
+      "title": "Sub-agent",
+      "detailKeys": [
+        "label",
+        "task",
+        "agentId",
+        "model",
+        "thinking",
+        "runTimeoutSeconds",
+        "cleanup"
+      ]
+    },
+    "subagents": {
+      "emoji": "🤖",
+      "title": "Subagents",
       "actions": {
+<<<<<<< HEAD
         "react": {
           "label": "react",
           "detailKeys": [
@@ -595,10 +741,29 @@
           "detailKeys": [
             "guildId",
             "userId"
+=======
+        "list": {
+          "label": "list",
+          "detailKeys": [
+            "recentMinutes"
+          ]
+        },
+        "kill": {
+          "label": "kill",
+          "detailKeys": [
+            "target"
+          ]
+        },
+        "steer": {
+          "label": "steer",
+          "detailKeys": [
+            "target"
+>>>>>>> upstream/main
           ]
         }
       }
     },
+<<<<<<< HEAD
     "exec": {
       "emoji": "🛠️",
       "title": "Exec",
@@ -690,6 +855,8 @@
         }
       }
     },
+=======
+>>>>>>> upstream/main
     "agents_list": {
       "emoji": "🧭",
       "title": "Agents",

@@ -6,7 +6,11 @@ struct NotificationSnapshot: @unchecked Sendable {
     let userInfo: [AnyHashable: Any]
 }
 
+<<<<<<< HEAD
 enum NotificationAuthorizationStatus: Sendable {
+=======
+enum NotificationAuthorizationStatus {
+>>>>>>> upstream/main
     case notDetermined
     case denied
     case authorized

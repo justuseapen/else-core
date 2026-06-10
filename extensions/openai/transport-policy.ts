@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Openai plugin module implements transport policy behavior.
+>>>>>>> upstream/main
 import type {
   ProviderResolveTransportTurnStateContext,
   ProviderResolveWebSocketSessionPolicyContext,
@@ -5,6 +9,7 @@ import type {
   ProviderWebSocketSessionPolicy,
 } from "openclaw/plugin-sdk/plugin-entry";
 import { normalizeProviderId } from "openclaw/plugin-sdk/provider-model-shared";
+<<<<<<< HEAD
 import { isOpenAIApiBaseUrl } from "./shared.js";
 
 const DEFAULT_OPENAI_WS_DEGRADE_COOLDOWN_MS = 60_000;
@@ -18,6 +23,13 @@ function isOpenAICodexBaseUrl(baseUrl?: string): boolean {
   }
   return /^https?:\/\/chatgpt\.com\/backend-api\/?$/i.test(trimmed);
 }
+=======
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { isOpenAIApiBaseUrl, isOpenAICodexBaseUrl } from "./base-url.js";
+
+const DEFAULT_OPENAI_WS_DEGRADE_COOLDOWN_MS = 60_000;
+const AZURE_PROVIDER_IDS = new Set(["azure-openai", "azure-openai-responses"]);
+>>>>>>> upstream/main
 
 function isAzureOpenAIBaseUrl(baseUrl?: string): boolean {
   const trimmed = baseUrl?.trim();
@@ -25,7 +37,11 @@ function isAzureOpenAIBaseUrl(baseUrl?: string): boolean {
     return false;
   }
   try {
+<<<<<<< HEAD
     return new URL(trimmed).hostname.toLowerCase().endsWith(".openai.azure.com");
+=======
+    return normalizeLowercaseStringOrEmpty(new URL(trimmed).hostname).endsWith(".openai.azure.com");
+>>>>>>> upstream/main
   } catch {
     return false;
   }
@@ -42,14 +58,21 @@ function usesKnownNativeOpenAIRoute(provider: string, baseUrl?: string): boolean
     return false;
   }
   if (normalizedProvider === "openai") {
+<<<<<<< HEAD
     return !baseUrl || isOpenAIApiBaseUrl(baseUrl);
+=======
+    return !baseUrl || isOpenAIApiBaseUrl(baseUrl) || isOpenAICodexBaseUrl(baseUrl);
+>>>>>>> upstream/main
   }
   if (AZURE_PROVIDER_IDS.has(normalizedProvider)) {
     return !baseUrl || isAzureOpenAIBaseUrl(baseUrl);
   }
+<<<<<<< HEAD
   if (normalizedProvider === OPENAI_CODEX_PROVIDER_ID) {
     return !baseUrl || isOpenAIApiBaseUrl(baseUrl) || isOpenAICodexBaseUrl(baseUrl);
   }
+=======
+>>>>>>> upstream/main
   return false;
 }
 

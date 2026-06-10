@@ -1,12 +1,17 @@
+// Session key continuity tests cover stable route keys across routing changes.
 import { describe, it, expect } from "vitest";
 import { buildAgentSessionKey } from "./resolve-route.js";
 
-describe("Discord Session Key Continuity", () => {
+describe("Channel Session Key Continuity", () => {
   const agentId = "main";
-  const channel = "discord";
+  const channel = "quietchat";
   const accountId = "default";
 
+<<<<<<< HEAD
   function buildDiscordSessionKey(params: {
+=======
+  function buildChannelSessionKey(params: {
+>>>>>>> upstream/main
     peer: { kind: "direct" | "channel"; id: string };
     dmScope?: "main" | "per-peer";
   }) {
@@ -23,22 +28,38 @@ describe("Discord Session Key Continuity", () => {
     dmScope: "main" | "per-peer";
     expectedDmKey: string;
   }) {
+<<<<<<< HEAD
     const dmKey = buildDiscordSessionKey({
+=======
+    const dmKey = buildChannelSessionKey({
+>>>>>>> upstream/main
       peer: { kind: "direct", id: "user123" },
       dmScope: params.dmScope,
     });
 
+<<<<<<< HEAD
     const groupKey = buildDiscordSessionKey({
+=======
+    const groupKey = buildChannelSessionKey({
+>>>>>>> upstream/main
       peer: { kind: "channel", id: "channel456" },
     });
 
     expect(dmKey).toBe(params.expectedDmKey);
+<<<<<<< HEAD
     expect(groupKey).toBe("agent:main:discord:channel:channel456");
+=======
+    expect(groupKey).toBe("agent:main:quietchat:channel:channel456");
+>>>>>>> upstream/main
     expect(dmKey).not.toBe(groupKey);
   }
 
   function expectUnknownChannelKeyCase(channelId: string) {
+<<<<<<< HEAD
     const missingIdKey = buildDiscordSessionKey({
+=======
+    const missingIdKey = buildChannelSessionKey({
+>>>>>>> upstream/main
       peer: { kind: "channel", id: channelId },
     });
 

@@ -1,21 +1,41 @@
+<<<<<<< HEAD
+=======
+// Applies local resource policy and process locks for expensive check commands.
+>>>>>>> upstream/main
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+<<<<<<< HEAD
 const DEFAULT_LOCAL_GO_GC = "30";
 const DEFAULT_LOCAL_GO_MEMORY_LIMIT = "3GiB";
+=======
+const GIB = 1024 ** 3;
+const DEFAULT_LOCAL_GO_GC = "30";
+const DEFAULT_LOCAL_GO_MEMORY_LIMIT = "3GiB";
+const DEFAULT_LOCAL_TSGO_BUILD_INFO_FILE = ".artifacts/tsgo-cache/root.tsbuildinfo";
+>>>>>>> upstream/main
 const DEFAULT_LOCK_TIMEOUT_MS = 10 * 60 * 1000;
 const DEFAULT_LOCK_POLL_MS = 500;
 const DEFAULT_LOCK_PROGRESS_MS = 15 * 1000;
 const DEFAULT_STALE_LOCK_MS = 30 * 1000;
+<<<<<<< HEAD
 const SLEEP_BUFFER = new Int32Array(new SharedArrayBuffer(4));
 
+=======
+const DEFAULT_FAST_LOCAL_CHECK_MIN_MEMORY_BYTES = 48 * GIB;
+const DEFAULT_FAST_LOCAL_CHECK_MIN_CPUS = 12;
+const SLEEP_BUFFER = new Int32Array(new SharedArrayBuffer(4));
+
+/** Return whether local-heavy-check safeguards are enabled for an environment. */
+>>>>>>> upstream/main
 export function isLocalCheckEnabled(env) {
   const raw = env.OPENCLAW_LOCAL_CHECK?.trim().toLowerCase();
   return raw !== "0" && raw !== "false";
 }
 
+<<<<<<< HEAD
 export function hasFlag(args, name) {
   return args.some((arg) => arg === name || arg.startsWith(`${name}=`));
 }
@@ -23,11 +43,43 @@ export function hasFlag(args, name) {
 export function applyLocalTsgoPolicy(args, env) {
   const nextEnv = { ...env };
   const nextArgs = [...args];
+=======
+function isCiLikeEnv(env = process.env) {
+  return env.CI === "true" || env.GITHUB_ACTIONS === "true";
+}
+
+/** Ensure local check runs opt into safeguard environment outside CI. */
+export function resolveLocalHeavyCheckEnv(env = process.env) {
+  if (isCiLikeEnv(env) || isLocalCheckEnabled(env)) {
+    return env;
+  }
+
+  return {
+    ...env,
+    OPENCLAW_LOCAL_CHECK: "1",
+  };
+}
+
+function hasFlag(args, name) {
+  return args.some((arg) => arg === name || arg.startsWith(`${name}=`));
+}
+
+/** Apply local tsgo defaults for declaration skipping, caching, throttling, and profiling. */
+export function applyLocalTsgoPolicy(args, env, hostResources) {
+  const nextEnv = { ...env };
+  const nextArgs = [...args];
+  const defaultProjectRun = nextArgs.length === 0;
+
+  if (!hasFlag(nextArgs, "--declaration") && !nextArgs.includes("-d")) {
+    insertBeforeSeparator(nextArgs, "--declaration", "false");
+  }
+>>>>>>> upstream/main
 
   if (!isLocalCheckEnabled(nextEnv)) {
     return { env: nextEnv, args: nextArgs };
   }
 
+<<<<<<< HEAD
   insertBeforeSeparator(nextArgs, "--singleThreaded");
   insertBeforeSeparator(nextArgs, "--checkers", "1");
 
@@ -36,6 +88,27 @@ export function applyLocalTsgoPolicy(args, env) {
   }
   if (!nextEnv.GOMEMLIMIT) {
     nextEnv.GOMEMLIMIT = DEFAULT_LOCAL_GO_MEMORY_LIMIT;
+=======
+  if (defaultProjectRun) {
+    insertBeforeSeparator(nextArgs, "--incremental");
+    insertBeforeSeparator(
+      nextArgs,
+      "--tsBuildInfoFile",
+      nextEnv.OPENCLAW_TSGO_BUILD_INFO_FILE ?? DEFAULT_LOCAL_TSGO_BUILD_INFO_FILE,
+    );
+  }
+
+  if (shouldThrottleLocalHeavyChecks(nextEnv, hostResources, "auto")) {
+    insertBeforeSeparator(nextArgs, "--singleThreaded");
+    insertBeforeSeparator(nextArgs, "--checkers", "1");
+
+    if (!nextEnv.GOGC) {
+      nextEnv.GOGC = DEFAULT_LOCAL_GO_GC;
+    }
+    if (!nextEnv.GOMEMLIMIT) {
+      nextEnv.GOMEMLIMIT = DEFAULT_LOCAL_GO_MEMORY_LIMIT;
+    }
+>>>>>>> upstream/main
   }
   if (nextEnv.OPENCLAW_TSGO_PPROF_DIR && !hasFlag(nextArgs, "--pprofDir")) {
     insertBeforeSeparator(nextArgs, "--pprofDir", nextEnv.OPENCLAW_TSGO_PPROF_DIR);
@@ -44,20 +117,133 @@ export function applyLocalTsgoPolicy(args, env) {
   return { env: nextEnv, args: nextArgs };
 }
 
+<<<<<<< HEAD
 export function applyLocalOxlintPolicy(args, env) {
+=======
+/** Apply local oxlint defaults for type-aware checking and throttled worker settings. */
+export function applyLocalOxlintPolicy(args, env, hostResources) {
+>>>>>>> upstream/main
   const nextEnv = { ...env };
   const nextArgs = [...args];
 
   insertBeforeSeparator(nextArgs, "--type-aware");
+<<<<<<< HEAD
   insertBeforeSeparator(nextArgs, "--tsconfig", "tsconfig.oxlint.json");
 
   if (isLocalCheckEnabled(nextEnv)) {
     insertBeforeSeparator(nextArgs, "--threads=1");
+=======
+  insertBeforeSeparator(nextArgs, "--tsconfig", "config/tsconfig/oxlint.json");
+  if (
+    !hasFlag(nextArgs, "--report-unused-disable-directives") &&
+    !hasFlag(nextArgs, "--report-unused-disable-directives-severity")
+  ) {
+    insertBeforeSeparator(nextArgs, "--report-unused-disable-directives-severity", "error");
+  }
+
+  if (shouldThrottleLocalHeavyChecks(nextEnv, hostResources)) {
+    if (!hasFlag(nextArgs, "--threads")) {
+      insertBeforeSeparator(nextArgs, "--threads=1");
+    }
+    if (!nextEnv.GOGC) {
+      nextEnv.GOGC = DEFAULT_LOCAL_GO_GC;
+    }
+    if (!nextEnv.GOMEMLIMIT) {
+      nextEnv.GOMEMLIMIT = DEFAULT_LOCAL_GO_MEMORY_LIMIT;
+    }
+>>>>>>> upstream/main
   }
 
   return { env: nextEnv, args: nextArgs };
 }
 
+<<<<<<< HEAD
+=======
+/** Decide whether an oxlint invocation needs the local heavy-check lock. */
+export function shouldAcquireLocalHeavyCheckLockForOxlint(
+  args,
+  { cwd = process.cwd(), env = process.env } = {},
+) {
+  if (env.OPENCLAW_OXLINT_FORCE_LOCK === "1") {
+    return true;
+  }
+
+  if (
+    args.some(
+      (arg) =>
+        arg === "--help" ||
+        arg === "-h" ||
+        arg === "--version" ||
+        arg === "-V" ||
+        arg === "--rules" ||
+        arg === "--print-config" ||
+        arg === "--init",
+    )
+  ) {
+    return false;
+  }
+
+  const separatorIndex = args.indexOf("--");
+  const candidateArgs = (() => {
+    if (separatorIndex !== -1) {
+      return args.slice(separatorIndex + 1);
+    }
+    const firstFlagIndex = args.findIndex((arg) => arg.startsWith("-"));
+    return firstFlagIndex === -1 ? args : args.slice(0, firstFlagIndex);
+  })();
+  const explicitTargets = candidateArgs.filter((arg) => arg.length > 0 && !arg.startsWith("-"));
+  if (explicitTargets.length === 0) {
+    return true;
+  }
+
+  return !explicitTargets.every((target) => {
+    try {
+      return fs.statSync(path.resolve(cwd, target)).isFile();
+    } catch {
+      return false;
+    }
+  });
+}
+
+/** Decide whether a tsgo invocation needs the local heavy-check lock. */
+export function shouldAcquireLocalHeavyCheckLockForTsgo(args, env = process.env) {
+  if (env.OPENCLAW_TSGO_FORCE_LOCK === "1") {
+    return true;
+  }
+
+  return !args.some(
+    (arg) =>
+      arg === "--help" ||
+      arg === "-h" ||
+      arg === "--version" ||
+      arg === "-v" ||
+      arg === "--init" ||
+      arg === "--showConfig",
+  );
+}
+
+function shouldThrottleLocalHeavyChecks(env, hostResources, defaultMode = "throttled") {
+  if (!isLocalCheckEnabled(env)) {
+    return false;
+  }
+
+  const mode = readLocalCheckMode(env, defaultMode);
+  if (mode === "throttled") {
+    return true;
+  }
+  if (mode === "full") {
+    return false;
+  }
+
+  const resolvedHostResources = resolveHostResources(hostResources);
+  return (
+    resolvedHostResources.totalMemoryBytes < DEFAULT_FAST_LOCAL_CHECK_MIN_MEMORY_BYTES ||
+    resolvedHostResources.logicalCpuCount < DEFAULT_FAST_LOCAL_CHECK_MIN_CPUS
+  );
+}
+
+/** Acquire a filesystem lock for one local heavy check and return its release callback. */
+>>>>>>> upstream/main
 export function acquireLocalHeavyCheckLockSync(params) {
   const env = params.env ?? process.env;
 
@@ -65,28 +251,67 @@ export function acquireLocalHeavyCheckLockSync(params) {
     return () => {};
   }
 
+<<<<<<< HEAD
   const commonDir = resolveGitCommonDir(params.cwd);
   const locksDir = path.join(commonDir, "openclaw-local-checks");
+=======
+  const locksDir = resolveHeavyCheckLocksDir(params.cwd, env);
+>>>>>>> upstream/main
   const lockDir = path.join(locksDir, `${params.lockName ?? "heavy-check"}.lock`);
   const ownerPath = path.join(lockDir, "owner.json");
   const timeoutMs = readPositiveInt(
     env.OPENCLAW_HEAVY_CHECK_LOCK_TIMEOUT_MS,
     DEFAULT_LOCK_TIMEOUT_MS,
+<<<<<<< HEAD
   );
   const pollMs = readPositiveInt(env.OPENCLAW_HEAVY_CHECK_LOCK_POLL_MS, DEFAULT_LOCK_POLL_MS);
   const progressMs = readPositiveInt(
     env.OPENCLAW_HEAVY_CHECK_LOCK_PROGRESS_MS,
     DEFAULT_LOCK_PROGRESS_MS,
+=======
+    "OPENCLAW_HEAVY_CHECK_LOCK_TIMEOUT_MS",
+  );
+  const pollMs = readPositiveInt(
+    env.OPENCLAW_HEAVY_CHECK_LOCK_POLL_MS,
+    DEFAULT_LOCK_POLL_MS,
+    "OPENCLAW_HEAVY_CHECK_LOCK_POLL_MS",
+  );
+  const progressMs = readPositiveInt(
+    env.OPENCLAW_HEAVY_CHECK_LOCK_PROGRESS_MS,
+    DEFAULT_LOCK_PROGRESS_MS,
+    "OPENCLAW_HEAVY_CHECK_LOCK_PROGRESS_MS",
+>>>>>>> upstream/main
   );
   const staleLockMs = readPositiveInt(
     env.OPENCLAW_HEAVY_CHECK_STALE_LOCK_MS,
     DEFAULT_STALE_LOCK_MS,
+<<<<<<< HEAD
   );
   const startedAt = Date.now();
   let waitingLogged = false;
   let lastProgressAt = 0;
 
   fs.mkdirSync(locksDir, { recursive: true });
+=======
+    "OPENCLAW_HEAVY_CHECK_STALE_LOCK_MS",
+  );
+  const startedAt = Date.now();
+  let waitLogBudget = 1;
+  let lastProgressAt = startedAt;
+  const consumeInitialWaitLog = () => waitLogBudget-- > 0;
+  const consumeProgressLog = (now) => {
+    if (now - lastProgressAt < progressMs) {
+      return false;
+    }
+    lastProgressAt = now;
+    return true;
+  };
+
+  fs.mkdirSync(locksDir, { recursive: true });
+  if (!params.lockName) {
+    cleanupLegacyLockDirs(locksDir, staleLockMs);
+  }
+>>>>>>> upstream/main
 
   for (;;) {
     try {
@@ -123,23 +348,34 @@ export function acquireLocalHeavyCheckLockSync(params) {
         );
       }
 
+<<<<<<< HEAD
       if (!waitingLogged) {
+=======
+      if (consumeInitialWaitLog()) {
+>>>>>>> upstream/main
         const ownerLabel = describeOwner(owner);
         console.error(
           `[${params.toolName}] queued behind the local heavy-check lock${
             ownerLabel ? ` held by ${ownerLabel}` : ""
           }...`,
         );
+<<<<<<< HEAD
         waitingLogged = true;
         lastProgressAt = Date.now();
       } else if (Date.now() - lastProgressAt >= progressMs) {
+=======
+      } else if (consumeProgressLog(Date.now())) {
+>>>>>>> upstream/main
         const ownerLabel = describeOwner(owner);
         console.error(
           `[${params.toolName}] still waiting ${formatElapsedMs(elapsedMs)} for the local heavy-check lock${
             ownerLabel ? ` held by ${ownerLabel}` : ""
           }...`,
         );
+<<<<<<< HEAD
         lastProgressAt = Date.now();
+=======
+>>>>>>> upstream/main
       }
 
       sleepSync(pollMs);
@@ -147,7 +383,37 @@ export function acquireLocalHeavyCheckLockSync(params) {
   }
 }
 
+<<<<<<< HEAD
 export function resolveGitCommonDir(cwd) {
+=======
+function resolveHeavyCheckLocksDir(cwd, env) {
+  const lockScope = env.OPENCLAW_HEAVY_CHECK_LOCK_SCOPE?.trim().toLowerCase();
+  if (lockScope === "worktree") {
+    return path.join(resolveGitWorktreeRoot(cwd), ".artifacts", "openclaw-local-checks");
+  }
+
+  return path.join(resolveGitCommonDir(cwd), "openclaw-local-checks");
+}
+
+function resolveGitWorktreeRoot(cwd) {
+  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+    cwd,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+
+  if (result.status === 0) {
+    const raw = result.stdout.trim();
+    if (raw.length > 0) {
+      return path.resolve(cwd, raw);
+    }
+  }
+
+  return cwd;
+}
+
+function resolveGitCommonDir(cwd) {
+>>>>>>> upstream/main
   const result = spawnSync("git", ["rev-parse", "--git-common-dir"], {
     cwd,
     encoding: "utf8",
@@ -164,6 +430,23 @@ export function resolveGitCommonDir(cwd) {
   return path.join(cwd, ".git");
 }
 
+<<<<<<< HEAD
+=======
+function cleanupLegacyLockDirs(locksDir, staleLockMs) {
+  for (const legacyLockName of ["test"]) {
+    const legacyLockDir = path.join(locksDir, `${legacyLockName}.lock`);
+    if (!fs.existsSync(legacyLockDir)) {
+      continue;
+    }
+
+    const owner = readOwnerFile(path.join(legacyLockDir, "owner.json"));
+    if (shouldReclaimLock({ owner, lockDir: legacyLockDir, staleLockMs })) {
+      fs.rmSync(legacyLockDir, { recursive: true, force: true });
+    }
+  }
+}
+
+>>>>>>> upstream/main
 function insertBeforeSeparator(args, ...items) {
   if (items.length > 0 && hasFlag(args, items[0])) {
     return;
@@ -174,9 +457,48 @@ function insertBeforeSeparator(args, ...items) {
   args.splice(insertIndex, 0, ...items);
 }
 
+<<<<<<< HEAD
 function readPositiveInt(rawValue, fallback) {
   const parsed = Number.parseInt(rawValue ?? "", 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+=======
+function readLocalCheckMode(env, defaultMode) {
+  const raw = env.OPENCLAW_LOCAL_CHECK_MODE?.trim().toLowerCase();
+  if (raw === "throttled" || raw === "low-memory") {
+    return "throttled";
+  }
+  if (raw === "full" || raw === "fast") {
+    return "full";
+  }
+  return defaultMode;
+}
+
+function resolveHostResources(hostResources) {
+  if (hostResources) {
+    return hostResources;
+  }
+
+  return {
+    totalMemoryBytes: os.totalmem(),
+    logicalCpuCount:
+      typeof os.availableParallelism === "function" ? os.availableParallelism() : os.cpus().length,
+  };
+}
+
+function readPositiveInt(rawValue, fallback, label) {
+  const text = rawValue?.trim();
+  if (!text) {
+    return fallback;
+  }
+  if (!/^\d+$/u.test(text)) {
+    throw new Error(`${label} must be a positive integer; got: ${rawValue}`);
+  }
+  const parsed = Number(text);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new Error(`${label} must be a positive integer; got: ${rawValue}`);
+  }
+  return parsed;
+>>>>>>> upstream/main
 }
 
 function writeOwnerFile(ownerPath, owner) {

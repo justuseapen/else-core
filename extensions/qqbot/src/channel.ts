@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
 import {
@@ -21,40 +22,252 @@ import { qqbotSetupWizard } from "./setup-surface.js";
 // The canonical definition lives in text-utils.ts to avoid a circular
 // dependency: channel.ts → (dynamic) gateway.ts → outbound-deliver.ts → channel.ts.
 export { chunkText, TEXT_CHUNK_LIMIT } from "./text-utils.js";
+=======
+// Qqbot plugin module implements channel behavior.
+import { getExecApprovalReplyMetadata } from "openclaw/plugin-sdk/approval-runtime";
+import {
+  createMessageReceiptFromOutboundResults,
+  defineChannelMessageAdapter,
+  type ChannelMessageSendResult,
+  type MessageReceiptPartKind,
+} from "openclaw/plugin-sdk/channel-outbound";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
+import { sanitizeAssistantVisibleText } from "openclaw/plugin-sdk/text-chunking";
+// Register the PlatformAdapter before any core/ module is used.
+import "./bridge/bootstrap.js";
+import { getQQBotApprovalCapability } from "./bridge/approval/capability.js";
+import { qqbotConfigAdapter, qqbotMeta, qqbotSetupAdapterShared } from "./bridge/config-shared.js";
+import {
+  applyQQBotAccountConfig,
+  DEFAULT_ACCOUNT_ID,
+  resolveQQBotAccount,
+} from "./bridge/config.js";
+import type { GatewayContext } from "./bridge/gateway.js";
+import { toGatewayAccount, writeOpenClawConfigThroughRuntime } from "./bridge/narrowing.js";
+import { getQQBotRuntime } from "./bridge/runtime.js";
+import { qqbotSetupWizard } from "./bridge/setup/surface.js";
+import { qqbotChannelConfigSchema } from "./config-schema.js";
+import { qqbotDoctor } from "./doctor.js";
+import { loadCredentialBackup, saveCredentialBackup } from "./engine/config/credential-backup.js";
+import { clearAccountCredentials } from "./engine/config/credentials.js";
+import {
+  normalizeTarget as coreNormalizeTarget,
+  looksLikeQQBotTarget,
+} from "./engine/messaging/target-parser.js";
+import { resolveQQBotGroupToolPolicy } from "./group-policy.js";
+>>>>>>> upstream/main
 import type { ResolvedQQBotAccount } from "./types.js";
 
 // Shared promise so concurrent multi-account startups serialize the dynamic
 // import of the gateway module, avoiding an ESM circular-dependency race.
+<<<<<<< HEAD
 let _gatewayModulePromise: Promise<typeof import("./gateway.js")> | undefined;
 function loadGatewayModule(): Promise<typeof import("./gateway.js")> {
   _gatewayModulePromise ??= import("./gateway.js");
   return _gatewayModulePromise;
+=======
+let gatewayModulePromise: Promise<typeof import("./bridge/gateway.js")> | undefined;
+function loadGatewayModule(): Promise<typeof import("./bridge/gateway.js")> {
+  gatewayModulePromise ??= import("./bridge/gateway.js");
+  return gatewayModulePromise;
+}
+
+let outboundMessagingModulePromise:
+  | Promise<typeof import("./engine/messaging/outbound.js")>
+  | undefined;
+function loadOutboundMessagingModule(): Promise<typeof import("./engine/messaging/outbound.js")> {
+  outboundMessagingModulePromise ??= import("./engine/messaging/outbound.js");
+  return outboundMessagingModulePromise;
+}
+
+function createQQBotSendReceipt(params: {
+  messageId?: string;
+  target: string;
+  kind: MessageReceiptPartKind;
+}) {
+  const messageId = params.messageId?.trim();
+  return createMessageReceiptFromOutboundResults({
+    results: messageId
+      ? [
+          {
+            channel: "qqbot",
+            messageId,
+            conversationId: params.target,
+          },
+        ]
+      : [],
+    threadId: params.target,
+    kind: params.kind,
+  });
+}
+
+async function sendQQBotText(params: {
+  cfg: OpenClawConfig;
+  to: string;
+  text: string;
+  accountId?: string | null;
+  replyToId?: string | null;
+}) {
+  // Ensure bridge/gateway.ts module-level registrations (audio adapter factory,
+  // platform adapter, etc.) have executed before engine code runs.
+  await loadGatewayModule();
+  const account = resolveQQBotAccount(params.cfg, params.accountId);
+  const { sendText } = await loadOutboundMessagingModule();
+  const result = await sendText({
+    to: params.to,
+    text: params.text,
+    accountId: params.accountId,
+    replyToId: params.replyToId,
+    account: toGatewayAccount(account),
+  });
+  return {
+    channel: "qqbot" as const,
+    messageId: result.messageId ?? "",
+    receipt: createQQBotSendReceipt({
+      messageId: result.messageId,
+      target: params.to,
+      kind: "text",
+    }),
+    meta: result.error ? { error: result.error } : undefined,
+  };
+}
+
+async function sendQQBotMedia(params: {
+  cfg: OpenClawConfig;
+  to: string;
+  text?: string | null;
+  mediaUrl?: string | null;
+  accountId?: string | null;
+  replyToId?: string | null;
+}) {
+  // Same guard as sendText — ensure adapters are registered.
+  await loadGatewayModule();
+  const account = resolveQQBotAccount(params.cfg, params.accountId);
+  const { sendMedia } = await loadOutboundMessagingModule();
+  const result = await sendMedia({
+    to: params.to,
+    text: params.text ?? "",
+    mediaUrl: params.mediaUrl ?? "",
+    accountId: params.accountId,
+    replyToId: params.replyToId,
+    account: toGatewayAccount(account),
+  });
+  return {
+    channel: "qqbot" as const,
+    messageId: result.messageId ?? "",
+    receipt: createQQBotSendReceipt({
+      messageId: result.messageId,
+      target: params.to,
+      kind: "media",
+    }),
+    meta: result.error ? { error: result.error } : undefined,
+  };
+}
+
+function toQQBotMessageSendResult(result: Awaited<ReturnType<typeof sendQQBotText>>) {
+  return {
+    messageId: result.messageId,
+    receipt: result.receipt,
+  } satisfies ChannelMessageSendResult;
+}
+
+const qqbotMessageAdapter = defineChannelMessageAdapter({
+  id: "qqbot",
+  durableFinal: {
+    capabilities: {
+      text: true,
+      media: true,
+      replyTo: true,
+    },
+  },
+  send: {
+    text: async (ctx) =>
+      toQQBotMessageSendResult(
+        await sendQQBotText({
+          cfg: ctx.cfg,
+          to: ctx.to,
+          text: ctx.text,
+          accountId: ctx.accountId,
+          replyToId: ctx.replyToId,
+        }),
+      ),
+    media: async (ctx) =>
+      toQQBotMessageSendResult(
+        await sendQQBotMedia({
+          cfg: ctx.cfg,
+          to: ctx.to,
+          text: ctx.text,
+          mediaUrl: ctx.mediaUrl,
+          accountId: ctx.accountId,
+          replyToId: ctx.replyToId,
+        }),
+      ),
+  },
+});
+
+const EXEC_APPROVAL_COMMAND_RE =
+  /\/approve(?:@[^\s]+)?\s+[A-Za-z0-9][A-Za-z0-9._:-]*\s+(?:allow-once|allow-always|always|deny)\b/i;
+
+function persistAccountCredentialSnapshot(account: ResolvedQQBotAccount): void {
+  if (account.appId && account.clientSecret) {
+    saveCredentialBackup(account.accountId, account.appId, account.clientSecret);
+  }
+}
+
+function shouldSuppressLocalQQBotApprovalPrompt(params: {
+  cfg: OpenClawConfig;
+  accountId?: string | null;
+  payload: { text?: string; channelData?: unknown };
+  hint?: { kind: "approval-pending" | "approval-resolved"; approvalKind: "exec" | "plugin" };
+}): boolean {
+  if (params.hint?.kind !== "approval-pending" || params.hint.approvalKind !== "exec") {
+    return false;
+  }
+  const account = resolveQQBotAccount(params.cfg, params.accountId);
+  if (!account.enabled || account.secretSource === "none") {
+    return false;
+  }
+  if (getExecApprovalReplyMetadata(params.payload as never)) {
+    return true;
+  }
+  const text = typeof params.payload.text === "string" ? params.payload.text : "";
+  return EXEC_APPROVAL_COMMAND_RE.test(text);
+>>>>>>> upstream/main
 }
 
 export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
   id: "qqbot",
   setupWizard: qqbotSetupWizard,
   meta: {
+<<<<<<< HEAD
     id: "qqbot",
     label: "QQ Bot",
     selectionLabel: "QQ Bot",
     docsPath: "/channels/qqbot",
     blurb: "Connect to QQ via official QQ Bot API",
     order: 50,
+=======
+    ...qqbotMeta,
+>>>>>>> upstream/main
   },
   capabilities: {
     chatTypes: ["direct", "group"],
     media: true,
     reactions: false,
     threads: false,
+<<<<<<< HEAD
     /**
      * blockStreaming=true means the channel supports block streaming.
      * The framework collects streamed blocks and sends them through deliver().
      */
+=======
+>>>>>>> upstream/main
     blockStreaming: true,
   },
   reload: { configPrefixes: ["channels.qqbot"] },
   configSchema: qqbotChannelConfigSchema,
+<<<<<<< HEAD
 
   config: {
     listAccountIds: (cfg) => listQQBotAccountIds(cfg),
@@ -157,6 +370,43 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
         return openIdPattern.test(id);
       },
+=======
+  doctor: qqbotDoctor,
+  config: {
+    ...qqbotConfigAdapter,
+    /**
+     * Treat an account as configured when either the live config has
+     * credentials OR a recoverable credential backup exists. This mirrors
+     * the standalone plugin and lets the gateway survive a hot upgrade
+     * that wiped openclaw.json mid-flight.
+     */
+    isConfigured: (account: ResolvedQQBotAccount | undefined) => {
+      if (qqbotConfigAdapter.isConfigured(account)) {
+        return true;
+      }
+      if (!account) {
+        return false;
+      }
+      const backup = loadCredentialBackup(account.accountId);
+      return Boolean(backup?.appId && backup?.clientSecret);
+    },
+  },
+  setup: {
+    ...qqbotSetupAdapterShared,
+  },
+  approvalCapability: getQQBotApprovalCapability(),
+  groups: {
+    resolveToolPolicy: resolveQQBotGroupToolPolicy,
+  },
+  message: qqbotMessageAdapter,
+  messaging: {
+    targetPrefixes: ["qqbot"],
+    /** Normalize common QQ Bot target formats into the canonical qqbot:... form. */
+    normalizeTarget: coreNormalizeTarget,
+    targetResolver: {
+      /** Return true when the id looks like a QQ Bot target. */
+      looksLikeId: looksLikeQQBotTarget,
+>>>>>>> upstream/main
       hint: "QQ Bot target format: qqbot:c2c:openid (direct) or qqbot:group:groupid (group)",
     },
   },
@@ -165,6 +415,7 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
     chunker: (text, limit) => getQQBotRuntime().channel.text.chunkMarkdownText(text, limit),
     chunkerMode: "markdown",
     textChunkLimit: 5000,
+<<<<<<< HEAD
     sendText: async ({ to, text, accountId, replyToId, cfg }) => {
       const account = resolveQQBotAccount(cfg, accountId);
       const { sendText } = await import("./outbound.js");
@@ -199,6 +450,65 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
     startAccount: async (ctx) => {
       const { account } = ctx;
       const { abortSignal, log, cfg } = ctx;
+=======
+    sanitizeText: ({ text }) => sanitizeAssistantVisibleText(text),
+    shouldSuppressLocalPayloadPrompt: ({ cfg, accountId, payload, hint }) =>
+      shouldSuppressLocalQQBotApprovalPrompt({
+        cfg,
+        accountId,
+        payload,
+        hint,
+      }),
+    sendText: async ({ to, text, accountId, replyToId, cfg }) =>
+      await sendQQBotText({
+        cfg,
+        to,
+        text,
+        accountId,
+        replyToId,
+      }),
+    sendMedia: async ({ to, text, mediaUrl, accountId, replyToId, cfg }) =>
+      await sendQQBotMedia({
+        cfg,
+        to,
+        text,
+        mediaUrl,
+        accountId,
+        replyToId,
+      }),
+  },
+  gateway: {
+    startAccount: async (ctx) => {
+      let { account, cfg } = ctx;
+      const { abortSignal, log } = ctx;
+
+      // Recover credentials from the per-account backup if the live
+      // config is missing appId/secret (e.g. a hot-upgrade wiped
+      // openclaw.json). We only restore when both fields are empty so a
+      // user's intentional clear isn't silently undone.
+      if (!account.appId || !account.clientSecret) {
+        const backup = loadCredentialBackup(account.accountId);
+        if (backup?.appId && backup?.clientSecret) {
+          try {
+            const nextCfg = applyQQBotAccountConfig(cfg, account.accountId, {
+              appId: backup.appId,
+              clientSecret: backup.clientSecret,
+            });
+            await writeOpenClawConfigThroughRuntime(getQQBotRuntime(), nextCfg);
+            cfg = nextCfg;
+            account = resolveQQBotAccount(nextCfg, account.accountId);
+            log?.info(
+              `[qqbot:${account.accountId}] Restored credentials from backup (appId=${account.appId})`,
+            );
+          } catch (err) {
+            log?.error(
+              `[qqbot:${account.accountId}] Failed to restore credentials from backup: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }
+      }
+
+>>>>>>> upstream/main
       // Serialize the dynamic import so concurrent multi-account startups
       // do not hit an ESM circular-dependency race where the gateway chunk's
       // transitive imports have not finished evaluating yet.
@@ -213,6 +523,10 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
         abortSignal,
         cfg,
         log,
+<<<<<<< HEAD
+=======
+        channelRuntime: ctx.channelRuntime as GatewayContext["channelRuntime"],
+>>>>>>> upstream/main
         onReady: () => {
           log?.info(`[qqbot:${account.accountId}] Gateway ready`);
           ctx.setStatus({
@@ -221,6 +535,22 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
             connected: true,
             lastConnectedAt: Date.now(),
           });
+<<<<<<< HEAD
+=======
+          // Snapshot credentials so we can recover from the next hot
+          // upgrade that might wipe openclaw.json mid-flight.
+          persistAccountCredentialSnapshot(account);
+        },
+        onResumed: () => {
+          log?.info(`[qqbot:${account.accountId}] Gateway resumed`);
+          ctx.setStatus({
+            ...ctx.getStatus(),
+            running: true,
+            connected: true,
+            lastConnectedAt: Date.now(),
+          });
+          persistAccountCredentialSnapshot(account);
+>>>>>>> upstream/main
         },
         onError: (error) => {
           log?.error(`[qqbot:${account.accountId}] Gateway error: ${error.message}`);
@@ -232,6 +562,7 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
       });
     },
     logoutAccount: async ({ accountId, cfg }) => {
+<<<<<<< HEAD
       const nextCfg = { ...cfg } as OpenClawConfig;
       const nextQQBot = cfg.channels?.qqbot ? { ...cfg.channels.qqbot } : undefined;
       let cleared = false;
@@ -281,6 +612,18 @@ export const qqbotPlugin: ChannelPlugin<ResolvedQQBotAccount> = {
       }
 
       const resolved = resolveQQBotAccount(changed ? nextCfg : cfg, accountId);
+=======
+      const { nextCfg, cleared, changed } = clearAccountCredentials(
+        cfg as unknown as Record<string, unknown>,
+        accountId,
+      );
+
+      if (changed) {
+        await writeOpenClawConfigThroughRuntime(getQQBotRuntime(), nextCfg as OpenClawConfig);
+      }
+
+      const resolved = resolveQQBotAccount((changed ? nextCfg : cfg) as OpenClawConfig, accountId);
+>>>>>>> upstream/main
       const loggedOut = resolved.secretSource === "none";
       const envToken = Boolean(process.env.QQBOT_CLIENT_SECRET);
 

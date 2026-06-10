@@ -1,3 +1,4 @@
+// Tests filesystem-backed state migration behavior.
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -16,7 +17,11 @@ describe("state migration fs helpers", () => {
     await withTempDir({ prefix: "openclaw-state-migrations-fs-" }, async (base) => {
       const nested = path.join(base, "nested");
 
+<<<<<<< HEAD
       expect(safeReadDir(nested)).toEqual([]);
+=======
+      expect(safeReadDir(nested)).toStrictEqual([]);
+>>>>>>> upstream/main
       ensureDir(nested);
       fs.writeFileSync(path.join(nested, "file.txt"), "ok", "utf8");
 
@@ -51,10 +56,18 @@ describe("state migration fs helpers", () => {
   it("parses json5 session stores and rejects invalid shapes", async () => {
     await withTempDir({ prefix: "openclaw-state-migrations-fs-" }, async (base) => {
       const okPath = path.join(base, "store.json");
+<<<<<<< HEAD
+=======
+      const jsonPath = path.join(base, "plain.json");
+>>>>>>> upstream/main
       const badPath = path.join(base, "bad.json");
       const listPath = path.join(base, "list.json");
 
       fs.writeFileSync(okPath, "{session: {sessionId: 'abc', updatedAt: 1}}", "utf8");
+<<<<<<< HEAD
+=======
+      fs.writeFileSync(jsonPath, '{"session":{"sessionId":"json","updatedAt":2}}', "utf8");
+>>>>>>> upstream/main
       fs.writeFileSync(badPath, "{not valid", "utf8");
       fs.writeFileSync(listPath, "[]", "utf8");
 
@@ -67,6 +80,18 @@ describe("state migration fs helpers", () => {
           },
         },
       });
+<<<<<<< HEAD
+=======
+      expect(readSessionStoreJson5(jsonPath)).toEqual({
+        ok: true,
+        store: {
+          session: {
+            sessionId: "json",
+            updatedAt: 2,
+          },
+        },
+      });
+>>>>>>> upstream/main
       expect(readSessionStoreJson5(badPath)).toEqual({ ok: false, store: {} });
       expect(readSessionStoreJson5(listPath)).toEqual({ ok: false, store: {} });
     });

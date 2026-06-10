@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Implements context inspection commands for the active reply session.
+>>>>>>> upstream/main
 import { logVerbose } from "../../globals.js";
 import { buildContextReply } from "./commands-context-report.js";
 import type { CommandHandler } from "./commands-types.js";

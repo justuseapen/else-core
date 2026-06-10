@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { beforeEach, describe, it, vi } from "vitest";
 import {
   expectAugmentedCodexCatalog,
@@ -11,6 +12,22 @@ import {
   registerProviderPlugin,
   requireRegisteredProvider,
 } from "../../../test/helpers/plugins/provider-registration.js";
+=======
+// Openai provider module implements model/runtime integration.
+import {
+  registerProviderPlugin,
+  requireRegisteredProvider,
+} from "openclaw/plugin-sdk/plugin-test-runtime";
+import {
+  expectAugmentedCodexCatalog,
+  expectedOpenaiPluginCodexCatalogEntriesWithGpt55,
+  expectCodexMissingAuthHint,
+  importProviderRuntimeCatalogModule,
+  loadBundledPluginPublicSurface,
+} from "openclaw/plugin-sdk/provider-test-contracts";
+import type { ProviderPlugin } from "openclaw/plugin-sdk/provider-test-contracts";
+import { beforeEach, describe, it, vi } from "vitest";
+>>>>>>> upstream/main
 
 const PROVIDER_CATALOG_CONTRACT_TIMEOUT_MS = 300_000;
 
@@ -26,6 +43,7 @@ const resolveCatalogHookProviderPluginIdsMock = vi.hoisted(() =>
   vi.fn<ResolveCatalogHookProviderPluginIds>((_) => [] as string[]),
 );
 
+<<<<<<< HEAD
 vi.mock("../../../src/plugins/providers.js", () => ({
   resolveOwningPluginIdsForProvider: (params: unknown) =>
     resolveOwningPluginIdsForProviderMock(params as never),
@@ -36,11 +54,47 @@ vi.mock("../../../src/plugins/providers.js", () => ({
 vi.mock("../../../src/plugins/providers.runtime.js", () => ({
   resolvePluginProviders: (params: unknown) => resolvePluginProvidersMock(params as never),
 }));
+=======
+vi.mock("openclaw/plugin-sdk/provider-catalog-runtime", async () => {
+  const actual = await vi.importActual<
+    typeof import("openclaw/plugin-sdk/provider-catalog-runtime")
+  >("openclaw/plugin-sdk/provider-catalog-runtime");
+  const resolveCatalogHookProviders = (params: unknown) =>
+    resolvePluginProvidersMock({
+      onlyPluginIds: resolveCatalogHookProviderPluginIdsMock(params),
+    });
+  return {
+    ...actual,
+    augmentModelCatalogWithProviderPlugins: async (params: {
+      context: Parameters<NonNullable<ProviderPlugin["augmentModelCatalog"]>>[0];
+    }) => {
+      const supplemental = [];
+      for (const provider of resolveCatalogHookProviders(params)) {
+        const entries = await provider.augmentModelCatalog?.(params.context);
+        if (entries?.length) {
+          supplemental.push(...entries);
+        }
+      }
+      return supplemental;
+    },
+    resolveOwningPluginIdsForProvider: (params: unknown) =>
+      resolveOwningPluginIdsForProviderMock(params as never),
+    resolveCatalogHookProviderPluginIds: (params: unknown) =>
+      resolveCatalogHookProviderPluginIdsMock(params as never),
+    isPluginProvidersLoadInFlight: () => false,
+    resolvePluginProviders: (params: unknown) => resolvePluginProvidersMock(params as never),
+  };
+});
+>>>>>>> upstream/main
 
 export function describeOpenAIProviderCatalogContract() {
   const contractDepsPromise = (async () => {
     vi.resetModules();
+<<<<<<< HEAD
     const openaiPlugin = loadBundledPluginPublicSurfaceSync<{
+=======
+    const openaiPlugin = await loadBundledPluginPublicSurface<{
+>>>>>>> upstream/main
       default: Parameters<typeof registerProviderPlugin>[0]["plugin"];
     }>({
       pluginId: "openai",
@@ -54,6 +108,7 @@ export function describeOpenAIProviderCatalogContract() {
       })
     ).providers;
     const openaiProvider = requireRegisteredProvider(openaiProviders, "openai", "provider");
+<<<<<<< HEAD
     const {
       augmentModelCatalogWithProviderPlugins,
       resetProviderRuntimeHookCacheForTest,
@@ -63,6 +118,11 @@ export function describeOpenAIProviderCatalogContract() {
       augmentModelCatalogWithProviderPlugins,
       resetProviderRuntimeHookCacheForTest,
       resolveProviderBuiltInModelSuppression,
+=======
+    const { augmentModelCatalogWithProviderPlugins } = await importProviderRuntimeCatalogModule();
+    return {
+      augmentModelCatalogWithProviderPlugins,
+>>>>>>> upstream/main
       openaiProviders,
       openaiProvider,
     };
@@ -73,8 +133,12 @@ export function describeOpenAIProviderCatalogContract() {
     { timeout: PROVIDER_CATALOG_CONTRACT_TIMEOUT_MS },
     () => {
       beforeEach(async () => {
+<<<<<<< HEAD
         const { resetProviderRuntimeHookCacheForTest, openaiProviders } = await contractDepsPromise;
         resetProviderRuntimeHookCacheForTest();
+=======
+        const { openaiProviders } = await contractDepsPromise;
+>>>>>>> upstream/main
 
         resolvePluginProvidersMock.mockReset();
         resolvePluginProvidersMock.mockImplementation((params?: { onlyPluginIds?: string[] }) => {
@@ -90,7 +154,10 @@ export function describeOpenAIProviderCatalogContract() {
           switch (params.provider) {
             case "azure-openai-responses":
             case "openai":
+<<<<<<< HEAD
             case "openai-codex":
+=======
+>>>>>>> upstream/main
               return ["openai"];
             default:
               return undefined;
@@ -105,6 +172,7 @@ export function describeOpenAIProviderCatalogContract() {
         const { openaiProvider } = await contractDepsPromise;
         expectCodexMissingAuthHint(
           (params) => openaiProvider.buildMissingAuthMessage?.(params.context) ?? undefined,
+<<<<<<< HEAD
         );
       });
 
@@ -116,6 +184,18 @@ export function describeOpenAIProviderCatalogContract() {
       it("keeps bundled model augmentation wired through the provider runtime", async () => {
         const { augmentModelCatalogWithProviderPlugins } = await contractDepsPromise;
         await expectAugmentedCodexCatalog(augmentModelCatalogWithProviderPlugins);
+=======
+          "openai/gpt-5.5",
+        );
+      });
+
+      it("keeps bundled model augmentation wired through the provider runtime", async () => {
+        const { augmentModelCatalogWithProviderPlugins } = await contractDepsPromise;
+        await expectAugmentedCodexCatalog(
+          augmentModelCatalogWithProviderPlugins,
+          expectedOpenaiPluginCodexCatalogEntriesWithGpt55,
+        );
+>>>>>>> upstream/main
       });
     },
   );

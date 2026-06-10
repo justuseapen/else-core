@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../runtime-api.js";
 import {
@@ -44,6 +45,67 @@ describe("pinMessageMSTeams", () => {
   });
 
   it("pins a message in a chat", async () => {
+=======
+// Msteams tests cover graph messages.actions plugin behavior.
+import { beforeAll, describe, expect, it } from "vitest";
+import type { OpenClawConfig } from "../runtime-api.js";
+import {
+  CHANNEL_TO,
+  CHAT_ID,
+  TOKEN,
+  type GraphMessagesTestModule,
+  getGraphMessagesMockState,
+  installGraphMessagesMockDefaults,
+  loadGraphMessagesTestModule,
+} from "./graph-messages.test-helpers.js";
+
+const mockState = getGraphMessagesMockState();
+installGraphMessagesMockDefaults();
+let pinMessageMSTeams: GraphMessagesTestModule["pinMessageMSTeams"];
+let reactMessageMSTeams: GraphMessagesTestModule["reactMessageMSTeams"];
+let unpinMessageMSTeams: GraphMessagesTestModule["unpinMessageMSTeams"];
+let unreactMessageMSTeams: GraphMessagesTestModule["unreactMessageMSTeams"];
+
+beforeAll(async () => {
+  ({ pinMessageMSTeams, reactMessageMSTeams, unpinMessageMSTeams, unreactMessageMSTeams } =
+    await loadGraphMessagesTestModule());
+});
+
+const emptyReactionCases: Array<{
+  name: string;
+  invoke: () => Promise<unknown>;
+}> = [
+  {
+    name: "reactMessageMSTeams",
+    invoke: () =>
+      reactMessageMSTeams({
+        cfg: {} as OpenClawConfig,
+        to: CHAT_ID,
+        messageId: "msg-1",
+        reactionType: "   ",
+      }),
+  },
+  {
+    name: "unreactMessageMSTeams",
+    invoke: () =>
+      unreactMessageMSTeams({
+        cfg: {} as OpenClawConfig,
+        to: CHAT_ID,
+        messageId: "msg-1",
+        reactionType: "",
+      }),
+  },
+];
+
+describe("MSTeams reaction validation", () => {
+  it.each(emptyReactionCases)("$name rejects empty reaction type", async ({ invoke }) => {
+    await expect(invoke()).rejects.toThrow(/Reaction type is required/);
+  });
+});
+
+describe("pinMessageMSTeams", () => {
+  it("pins a message in a chat via message@odata.bind body", async () => {
+>>>>>>> upstream/main
     mockState.postGraphJson.mockResolvedValue({ id: "pinned-1" });
 
     const result = await pinMessageMSTeams({
@@ -56,6 +118,7 @@ describe("pinMessageMSTeams", () => {
     expect(mockState.postGraphJson).toHaveBeenCalledWith({
       token: TOKEN,
       path: `/chats/${encodeURIComponent(CHAT_ID)}/pinnedMessages`,
+<<<<<<< HEAD
       body: { message: { id: "msg-1" } },
     });
   });
@@ -75,15 +138,37 @@ describe("pinMessageMSTeams", () => {
       path: "/teams/team-id-1/channels/channel-id-1/pinnedMessages",
       body: { message: { id: "msg-2" } },
     });
+=======
+      body: {
+        "message@odata.bind": `https://graph.microsoft.com/v1.0/chats/${encodeURIComponent(
+          CHAT_ID,
+        )}/messages/${encodeURIComponent("msg-1")}`,
+      },
+    });
+  });
+
+  it("rejects pinning a message in a channel on Graph v1.0", async () => {
+    await expect(
+      pinMessageMSTeams({
+        cfg: {} as OpenClawConfig,
+        to: CHANNEL_TO,
+        messageId: "msg-2",
+      }),
+    ).rejects.toThrow(/Pin\/unpin is not supported for channel messages/);
+    expect(mockState.postGraphJson).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 });
 
 describe("unpinMessageMSTeams", () => {
+<<<<<<< HEAD
   beforeEach(() => {
     vi.clearAllMocks();
     mockState.resolveGraphToken.mockResolvedValue(TOKEN);
   });
 
+=======
+>>>>>>> upstream/main
   it("unpins a message from a chat", async () => {
     mockState.deleteGraphRequest.mockResolvedValue(undefined);
 
@@ -96,6 +181,7 @@ describe("unpinMessageMSTeams", () => {
     expect(result).toEqual({ ok: true });
     expect(mockState.deleteGraphRequest).toHaveBeenCalledWith({
       token: TOKEN,
+<<<<<<< HEAD
       path: `/chats/${encodeURIComponent(CHAT_ID)}/pinnedMessages/pinned-1`,
     });
   });
@@ -114,15 +200,33 @@ describe("unpinMessageMSTeams", () => {
       token: TOKEN,
       path: "/teams/team-id-1/channels/channel-id-1/pinnedMessages/pinned-2",
     });
+=======
+      path: `/chats/${encodeURIComponent(CHAT_ID)}/pinnedMessages/${encodeURIComponent("pinned-1")}`,
+    });
+  });
+
+  it("rejects unpinning a message from a channel on Graph v1.0", async () => {
+    await expect(
+      unpinMessageMSTeams({
+        cfg: {} as OpenClawConfig,
+        to: CHANNEL_TO,
+        pinnedMessageId: "pinned-2",
+      }),
+    ).rejects.toThrow(/Pin\/unpin is not supported for channel messages/);
+    expect(mockState.deleteGraphRequest).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 });
 
 describe("reactMessageMSTeams", () => {
+<<<<<<< HEAD
   beforeEach(() => {
     vi.clearAllMocks();
     mockState.resolveGraphToken.mockResolvedValue(TOKEN);
   });
 
+=======
+>>>>>>> upstream/main
   it("sets a like reaction on a chat message", async () => {
     mockState.postGraphBetaJson.mockResolvedValue(undefined);
 
@@ -176,6 +280,7 @@ describe("reactMessageMSTeams", () => {
     });
   });
 
+<<<<<<< HEAD
   it("rejects invalid reaction type", async () => {
     await expect(
       reactMessageMSTeams({
@@ -185,6 +290,26 @@ describe("reactMessageMSTeams", () => {
         reactionType: "thumbsup",
       }),
     ).rejects.toThrow('Invalid reaction type "thumbsup"');
+=======
+  it("passes through non-well-known reaction types (e.g. Unicode emoji)", async () => {
+    // Graph setReaction accepts arbitrary Unicode emoji plus the legacy
+    // well-known types; normalizeReactionType only lowercases the legacy set
+    // and lets any other non-empty value through unchanged.
+    mockState.postGraphBetaJson.mockResolvedValue(undefined);
+
+    await reactMessageMSTeams({
+      cfg: {} as OpenClawConfig,
+      to: CHAT_ID,
+      messageId: "msg-1",
+      reactionType: "🎉",
+    });
+
+    expect(mockState.postGraphBetaJson).toHaveBeenCalledWith({
+      token: TOKEN,
+      path: `/chats/${encodeURIComponent(CHAT_ID)}/messages/msg-1/setReaction`,
+      body: { reactionType: "🎉" },
+    });
+>>>>>>> upstream/main
   });
 
   it("resolves user: target through conversation store", async () => {
@@ -211,11 +336,14 @@ describe("reactMessageMSTeams", () => {
 });
 
 describe("unreactMessageMSTeams", () => {
+<<<<<<< HEAD
   beforeEach(() => {
     vi.clearAllMocks();
     mockState.resolveGraphToken.mockResolvedValue(TOKEN);
   });
 
+=======
+>>>>>>> upstream/main
   it("removes a reaction from a chat message", async () => {
     mockState.postGraphBetaJson.mockResolvedValue(undefined);
 
@@ -251,6 +379,7 @@ describe("unreactMessageMSTeams", () => {
       body: { reactionType: "angry" },
     });
   });
+<<<<<<< HEAD
 
   it("rejects invalid reaction type", async () => {
     await expect(
@@ -262,4 +391,6 @@ describe("unreactMessageMSTeams", () => {
       }),
     ).rejects.toThrow('Invalid reaction type "clap"');
   });
+=======
+>>>>>>> upstream/main
 });

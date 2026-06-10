@@ -1,7 +1,9 @@
+<<<<<<< HEAD
+=======
+// Static auth-choice option definitions used before provider manifests are loaded.
+>>>>>>> upstream/main
 import { resolveLegacyAuthChoiceAliasesForCli } from "./auth-choice-legacy.js";
 import type { AuthChoice, AuthChoiceGroupId } from "./onboard-types.js";
-
-export type { AuthChoiceGroupId };
 
 export type AuthChoiceOption = {
   value: AuthChoice;
@@ -12,6 +14,10 @@ export type AuthChoiceOption = {
   groupHint?: string;
   assistantPriority?: number;
   assistantVisibility?: "visible" | "manual-only";
+<<<<<<< HEAD
+=======
+  onboardingFeatured?: boolean;
+>>>>>>> upstream/main
 };
 
 export type AuthChoiceGroup = {
@@ -32,6 +38,7 @@ export const CORE_AUTH_CHOICE_OPTIONS: ReadonlyArray<AuthChoiceOption> = [
   },
 ];
 
+/** Format static auth-choice values for Commander help/validation text. */
 export function formatStaticAuthChoiceChoicesForCli(params?: {
   includeSkip?: boolean;
   includeLegacyAliases?: boolean;

@@ -1,7 +1,15 @@
+<<<<<<< HEAD
+=======
+// Mattermost plugin module implements approval auth behavior.
+>>>>>>> upstream/main
 import {
   createResolvedApproverActionAuthAdapter,
   resolveApprovalApprovers,
 } from "openclaw/plugin-sdk/approval-auth-runtime";
+<<<<<<< HEAD
+=======
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import { resolveMattermostAccount } from "./mattermost/accounts.js";
 
 const MATTERMOST_USER_ID_RE = /^[a-z0-9]{26}$/;
@@ -11,9 +19,15 @@ function normalizeMattermostApproverId(value: string | number): string | undefin
     .trim()
     .replace(/^(mattermost|user):/i, "")
     .replace(/^@/, "")
+<<<<<<< HEAD
     .trim()
     .toLowerCase();
   return MATTERMOST_USER_ID_RE.test(normalized) ? normalized : undefined;
+=======
+    .trim();
+  const lowered = normalizeLowercaseStringOrEmpty(normalized);
+  return MATTERMOST_USER_ID_RE.test(lowered) ? lowered : undefined;
+>>>>>>> upstream/main
 }
 
 export const mattermostApprovalAuth = createResolvedApproverActionAuthAdapter({

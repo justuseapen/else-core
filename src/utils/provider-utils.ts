@@ -7,8 +7,57 @@ const BUILTIN_REASONING_OUTPUT_MODES = {
 } as const;
 
 /**
- * Utility functions for provider-specific logic and capabilities.
+ * Provider behavior helpers shared by reply runners, embedded agents, and provider plugins.
+ * Keep policy here generic; provider-specific reasoning rules belong in provider runtime hooks.
  */
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import type { ProviderRuntimePluginHandle } from "../plugins/provider-hook-runtime.js";
+import type { ProviderRuntimeModel } from "../plugins/provider-runtime-model.types.js";
+import { resolveProviderReasoningOutputModeWithPlugin } from "../plugins/provider-runtime.js";
+
+/**
+ * Resolves whether a provider should emit reasoning via native fields or tagged text,
+ * using provider runtime hooks when available and defaulting to native output.
+ */
+export function resolveReasoningOutputMode(params: {
+  provider: string | undefined | null;
+  config?: OpenClawConfig;
+  workspaceDir?: string;
+  env?: NodeJS.ProcessEnv;
+  modelId?: string;
+  modelApi?: string | null;
+  model?: ProviderRuntimeModel;
+  runtimeHandle?: ProviderRuntimePluginHandle;
+}): "native" | "tagged" {
+  const provider = normalizeOptionalString(params.provider);
+  if (!provider) {
+    return "native";
+  }
+
+  // Provider hooks own model/API-specific reasoning transport rules; core only supplies the default.
+  const pluginMode = resolveProviderReasoningOutputModeWithPlugin({
+    provider,
+    config: params.config,
+    workspaceDir: params.workspaceDir,
+    env: params.env,
+    runtimeHandle: params.runtimeHandle,
+    context: {
+      config: params.config,
+      workspaceDir: params.workspaceDir,
+      env: params.env,
+      provider,
+      modelId: params.modelId,
+      modelApi: params.modelApi,
+      model: params.model,
+    },
+  });
+  if (pluginMode) {
+    return pluginMode;
+  }
+
+  return "native";
+}
 
 export function resolveReasoningOutputMode(params: {
   provider: string | undefined | null;
@@ -68,6 +117,10 @@ export function isReasoningTagProvider(
     modelId?: string;
     modelApi?: string | null;
     model?: ProviderRuntimeModel;
+<<<<<<< HEAD
+=======
+    runtimeHandle?: ProviderRuntimePluginHandle;
+>>>>>>> upstream/main
   },
 ): boolean {
   return (
@@ -79,6 +132,10 @@ export function isReasoningTagProvider(
       modelId: options?.modelId,
       modelApi: options?.modelApi,
       model: options?.model,
+<<<<<<< HEAD
+=======
+      runtimeHandle: options?.runtimeHandle,
+>>>>>>> upstream/main
     }) === "tagged"
   );
 }

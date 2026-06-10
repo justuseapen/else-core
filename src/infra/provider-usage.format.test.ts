@@ -1,3 +1,4 @@
+// Covers provider usage report formatting.
 import { describe, expect, it } from "vitest";
 import {
   formatUsageReportLines,
@@ -93,6 +94,27 @@ describe("provider-usage.format", () => {
     );
   });
 
+  it("formats provider summary text for balance-only providers", () => {
+    const summary: UsageSummary = {
+      updatedAt: now,
+      providers: [
+        {
+          provider: "deepseek",
+          displayName: "DeepSeek",
+          windows: [],
+          summary: "Balance ¥42.50",
+        },
+      ],
+    };
+
+    expect(formatUsageWindowSummary(summary.providers[0], { now })).toBe("Balance ¥42.50");
+    expect(formatUsageSummaryLine(summary, { now })).toBe("📊 Usage: DeepSeek Balance ¥42.50");
+    expect(formatUsageReportLines(summary, { now })).toEqual([
+      "Usage:",
+      "  DeepSeek: Balance ¥42.50",
+    ]);
+  });
+
   it("returns null summary line when providers are errored or have no windows", () => {
     expect(
       formatUsageSummaryLine({
@@ -127,7 +149,11 @@ describe("provider-usage.format", () => {
         updatedAt: now,
         providers: [
           {
+<<<<<<< HEAD
             provider: "openai-codex",
+=======
+            provider: "openai",
+>>>>>>> upstream/main
             displayName: "Codex",
             windows: [],
             error: "Token expired",
@@ -144,6 +170,26 @@ describe("provider-usage.format", () => {
       expected: ["Usage:", "  Codex (Plus): Token expired", "  Xiaomi: no data"],
     },
     {
+<<<<<<< HEAD
+=======
+      name: "formats plan plus summary entries without windows",
+      summary: {
+        updatedAt: now,
+        providers: [
+          {
+            provider: "deepseek",
+            displayName: "DeepSeek",
+            windows: [],
+            summary: "Balance ¥0.00",
+            plan: "Unavailable",
+          },
+        ],
+      } as UsageSummary,
+      opts: undefined,
+      expected: ["Usage:", "  DeepSeek (Unavailable): Balance ¥0.00"],
+    },
+    {
+>>>>>>> upstream/main
       name: "formats detailed report lines with reset windows",
       summary: {
         updatedAt: now,

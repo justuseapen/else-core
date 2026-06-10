@@ -1,25 +1,14 @@
+// Discord plugin module implements agent components behavior.
+import { Modal, type BaseMessageInteractiveComponent } from "../internal/discord.js";
+import type { AgentComponentContext } from "./agent-components-helpers.js";
+import { discordComponentControlHandlers } from "./agent-components.handlers.js";
+import { DiscordComponentModal } from "./agent-components.modal.js";
 import {
-  Button,
-  ChannelSelectMenu,
-  MentionableSelectMenu,
-  Modal,
-  RoleSelectMenu,
-  StringSelectMenu,
-  UserSelectMenu,
-  type ButtonInteraction,
-  type ChannelSelectMenuInteraction,
-  type ComponentData,
-  type MentionableSelectMenuInteraction,
-  type ModalInteraction,
-  type RoleSelectMenuInteraction,
-  type StringSelectMenuInteraction,
-  type TopLevelComponents,
-  type UserSelectMenuInteraction,
-} from "@buape/carbon";
-import type { APIStringSelectComponent } from "discord-api-types/v10";
-import { ButtonStyle, ChannelType } from "discord-api-types/v10";
-import { resolveHumanDelayConfig } from "openclaw/plugin-sdk/agent-runtime";
+  createAgentComponentButton,
+  createAgentSelectMenu,
+} from "./agent-components.system-controls.js";
 import {
+<<<<<<< HEAD
   formatInboundEnvelope,
   resolveEnvelopeFormatOptions,
 } from "openclaw/plugin-sdk/channel-inbound";
@@ -1443,6 +1432,65 @@ export function createDiscordComponentMentionableSelect(
 export function createDiscordComponentChannelSelect(ctx: AgentComponentContext): ChannelSelectMenu {
   return new DiscordComponentChannelSelect(ctx);
 }
+=======
+  createDiscordComponentButtonControl,
+  createDiscordComponentChannelSelectControl,
+  createDiscordComponentMentionableSelectControl,
+  createDiscordComponentRoleSelectControl,
+  createDiscordComponentStringSelectControl,
+  createDiscordComponentUserSelectControl,
+  type DiscordComponentControlHandlers,
+} from "./agent-components.wildcard-controls.js";
+
+export { resolveDiscordComponentOriginatingTo } from "./agent-components.dispatch.js";
+export {
+  AgentComponentButton,
+  AgentSelectMenu,
+  createAgentComponentButton,
+  createAgentSelectMenu,
+} from "./agent-components.system-controls.js";
+
+type ComponentFactory = (ctx: AgentComponentContext) => BaseMessageInteractiveComponent;
+
+function bindDiscordComponentControl<T extends BaseMessageInteractiveComponent>(
+  createControl: (ctx: AgentComponentContext, handlers: DiscordComponentControlHandlers) => T,
+) {
+  return (ctx: AgentComponentContext): T => createControl(ctx, discordComponentControlHandlers);
+}
+
+export const createDiscordComponentButton = bindDiscordComponentControl(
+  createDiscordComponentButtonControl,
+);
+export const createDiscordComponentStringSelect = bindDiscordComponentControl(
+  createDiscordComponentStringSelectControl,
+);
+export const createDiscordComponentUserSelect = bindDiscordComponentControl(
+  createDiscordComponentUserSelectControl,
+);
+export const createDiscordComponentRoleSelect = bindDiscordComponentControl(
+  createDiscordComponentRoleSelectControl,
+);
+export const createDiscordComponentMentionableSelect = bindDiscordComponentControl(
+  createDiscordComponentMentionableSelectControl,
+);
+export const createDiscordComponentChannelSelect = bindDiscordComponentControl(
+  createDiscordComponentChannelSelectControl,
+);
+
+export const createAgentComponentControls = [
+  createAgentComponentButton,
+  createAgentSelectMenu,
+] satisfies readonly ComponentFactory[];
+
+export const createDiscordComponentControls = [
+  createDiscordComponentButton,
+  createDiscordComponentStringSelect,
+  createDiscordComponentUserSelect,
+  createDiscordComponentRoleSelect,
+  createDiscordComponentMentionableSelect,
+  createDiscordComponentChannelSelect,
+] satisfies readonly ComponentFactory[];
+>>>>>>> upstream/main
 
 export function createDiscordComponentModal(ctx: AgentComponentContext): Modal {
   return new DiscordComponentModal(ctx);

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tests shared subagent command text extraction and assistant marker cleanup.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { extractMessageText } from "./commands-subagents-text.js";
 

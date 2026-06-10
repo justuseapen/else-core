@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+=======
+/**
+ * Alibaba Model Studio plugin entry. Registers the DashScope-backed video
+ * generation provider.
+ */
+>>>>>>> upstream/main
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { buildAlibabaVideoGenerationProvider } from "./video-generation-provider.js";
 

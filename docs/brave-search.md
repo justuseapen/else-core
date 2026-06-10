@@ -1,15 +1,14 @@
 ---
-summary: "Brave Search API setup for web_search"
-read_when:
-  - You want to use Brave Search for web_search
-  - You need a BRAVE_API_KEY or plan details
-title: "Brave Search (legacy path)"
+summary: "Redirect to /tools/brave-search"
+title: "Brave search"
+redirect: /tools/brave-search
 ---
 
-# Brave Search API
+This page has moved to [Brave Search](/tools/brave-search).
 
-OpenClaw supports Brave Search API as a `web_search` provider.
+## Related
 
+<<<<<<< HEAD
 ## Get an API key
 
 1. Create a Brave Search API account at [https://brave.com/search/api/](https://brave.com/search/api/)
@@ -101,3 +100,6 @@ await web_search({
 - Results are cached for 15 minutes by default (configurable via `cacheTtlMinutes`).
 
 See [Web tools](/tools/web) for the full web_search configuration.
+=======
+- [Web tools](/tools/web)
+>>>>>>> upstream/main

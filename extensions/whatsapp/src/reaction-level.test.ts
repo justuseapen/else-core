@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { describe, expect, it } from "vitest";
 import { resolveWhatsAppReactionLevel } from "./reaction-level.js";
@@ -20,13 +21,25 @@ describe("resolveWhatsAppReactionLevel", () => {
     expect(result.agentReactionGuidance).toBe(expected.agentReactionGuidance);
   };
 
+=======
+// Whatsapp tests cover reaction level plugin behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { describe, expect, it } from "vitest";
+import { resolveWhatsAppReactionLevel } from "./reaction-level.js";
+
+describe("resolveWhatsAppReactionLevel", () => {
+>>>>>>> upstream/main
   it("defaults to minimal level when reactionLevel is not set", () => {
     const cfg: OpenClawConfig = {
       channels: { whatsapp: {} },
     };
 
     const result = resolveWhatsAppReactionLevel({ cfg });
+<<<<<<< HEAD
     expectReactionFlags(result, {
+=======
+    expect(result).toEqual({
+>>>>>>> upstream/main
       level: "minimal",
       ackEnabled: false,
       agentReactionsEnabled: true,
@@ -40,7 +53,11 @@ describe("resolveWhatsAppReactionLevel", () => {
     };
 
     const result = resolveWhatsAppReactionLevel({ cfg });
+<<<<<<< HEAD
     expectReactionFlags(result, {
+=======
+    expect(result).toEqual({
+>>>>>>> upstream/main
       level: "off",
       ackEnabled: false,
       agentReactionsEnabled: false,
@@ -53,7 +70,11 @@ describe("resolveWhatsAppReactionLevel", () => {
     };
 
     const result = resolveWhatsAppReactionLevel({ cfg });
+<<<<<<< HEAD
     expectReactionFlags(result, {
+=======
+    expect(result).toEqual({
+>>>>>>> upstream/main
       level: "ack",
       ackEnabled: true,
       agentReactionsEnabled: false,
@@ -66,7 +87,11 @@ describe("resolveWhatsAppReactionLevel", () => {
     };
 
     const result = resolveWhatsAppReactionLevel({ cfg });
+<<<<<<< HEAD
     expectReactionFlags(result, {
+=======
+    expect(result).toEqual({
+>>>>>>> upstream/main
       level: "minimal",
       ackEnabled: false,
       agentReactionsEnabled: true,
@@ -80,7 +105,11 @@ describe("resolveWhatsAppReactionLevel", () => {
     };
 
     const result = resolveWhatsAppReactionLevel({ cfg });
+<<<<<<< HEAD
     expectReactionFlags(result, {
+=======
+    expect(result).toEqual({
+>>>>>>> upstream/main
       level: "extensive",
       ackEnabled: false,
       agentReactionsEnabled: true,
@@ -101,7 +130,11 @@ describe("resolveWhatsAppReactionLevel", () => {
     };
 
     const result = resolveWhatsAppReactionLevel({ cfg, accountId: "work" });
+<<<<<<< HEAD
     expectReactionFlags(result, {
+=======
+    expect(result).toEqual({
+>>>>>>> upstream/main
       level: "extensive",
       ackEnabled: false,
       agentReactionsEnabled: true,

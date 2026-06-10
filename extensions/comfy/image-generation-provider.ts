@@ -1,15 +1,27 @@
+<<<<<<< HEAD
+=======
+// Comfy provider module implements model/runtime integration.
+>>>>>>> upstream/main
 import type {
   GeneratedImageAsset,
   ImageGenerationProvider,
 } from "openclaw/plugin-sdk/image-generation";
 import {
   DEFAULT_COMFY_MODEL,
+<<<<<<< HEAD
   _setComfyFetchGuardForTesting,
+=======
+  setComfyFetchGuardForTesting,
+>>>>>>> upstream/main
   isComfyCapabilityConfigured,
   runComfyWorkflow,
 } from "./workflow-runtime.js";
 
+<<<<<<< HEAD
 export { _setComfyFetchGuardForTesting };
+=======
+export { setComfyFetchGuardForTesting };
+>>>>>>> upstream/main
 
 export function buildComfyImageGenerationProvider(): ImageGenerationProvider {
   return {

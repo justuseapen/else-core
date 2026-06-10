@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { isProviderApiKeyConfigured } from "openclaw/plugin-sdk/provider-auth";
 import { resolveApiKeyForProvider } from "openclaw/plugin-sdk/provider-auth-runtime";
 import {
@@ -44,6 +45,30 @@ type AlibabaVideoGenerationResponse = {
   code?: string;
   message?: string;
 };
+=======
+/**
+ * Alibaba Model Studio video provider adapter. It resolves DashScope auth and
+ * HTTP policy before delegating task polling to the shared video helper.
+ */
+import { isProviderApiKeyConfigured } from "openclaw/plugin-sdk/provider-auth";
+import { resolveApiKeyForProvider } from "openclaw/plugin-sdk/provider-auth-runtime";
+import { resolveProviderHttpRequestConfig } from "openclaw/plugin-sdk/provider-http";
+import {
+  DASHSCOPE_WAN_VIDEO_CAPABILITIES,
+  DASHSCOPE_WAN_VIDEO_MODELS,
+  DEFAULT_DASHSCOPE_WAN_VIDEO_MODEL,
+  DEFAULT_VIDEO_GENERATION_TIMEOUT_MS,
+  runDashscopeVideoGenerationTask,
+} from "openclaw/plugin-sdk/video-generation";
+import type {
+  VideoGenerationProvider,
+  VideoGenerationRequest,
+  VideoGenerationResult,
+} from "openclaw/plugin-sdk/video-generation";
+
+const DEFAULT_ALIBABA_VIDEO_BASE_URL = "https://dashscope-intl.aliyuncs.com";
+const DEFAULT_ALIBABA_VIDEO_MODEL = DEFAULT_DASHSCOPE_WAN_VIDEO_MODEL;
+>>>>>>> upstream/main
 
 function resolveAlibabaVideoBaseUrl(req: VideoGenerationRequest): string {
   return req.cfg?.models?.providers?.alibaba?.baseUrl?.trim() || DEFAULT_ALIBABA_VIDEO_BASE_URL;
@@ -53,6 +78,7 @@ function resolveDashscopeAigcApiBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/+$/u, "");
 }
 
+<<<<<<< HEAD
 function resolveReferenceUrls(
   inputImages: VideoGenerationSourceAsset[] | undefined,
   inputVideos: VideoGenerationSourceAsset[] | undefined,
@@ -186,17 +212,25 @@ async function downloadGeneratedVideos(params: {
   return videos;
 }
 
+=======
+/** Build the Alibaba/DashScope video generation provider descriptor. */
+>>>>>>> upstream/main
 export function buildAlibabaVideoGenerationProvider(): VideoGenerationProvider {
   return {
     id: "alibaba",
     label: "Alibaba Model Studio",
     defaultModel: DEFAULT_ALIBABA_VIDEO_MODEL,
+<<<<<<< HEAD
     models: ["wan2.6-t2v", "wan2.6-i2v", "wan2.6-r2v", "wan2.6-r2v-flash", "wan2.7-r2v"],
+=======
+    models: [...DASHSCOPE_WAN_VIDEO_MODELS],
+>>>>>>> upstream/main
     isConfigured: ({ agentDir }) =>
       isProviderApiKeyConfigured({
         provider: "alibaba",
         agentDir,
       }),
+<<<<<<< HEAD
     capabilities: {
       maxVideos: 1,
       maxInputImages: 1,
@@ -208,6 +242,9 @@ export function buildAlibabaVideoGenerationProvider(): VideoGenerationProvider {
       supportsAudio: true,
       supportsWatermark: true,
     },
+=======
+    capabilities: DASHSCOPE_WAN_VIDEO_CAPABILITIES,
+>>>>>>> upstream/main
     async generateVideo(req): Promise<VideoGenerationResult> {
       const fetchFn = fetch;
       const auth = await resolveApiKeyForProvider({
@@ -236,6 +273,7 @@ export function buildAlibabaVideoGenerationProvider(): VideoGenerationProvider {
         });
 
       const model = req.model?.trim() || DEFAULT_ALIBABA_VIDEO_MODEL;
+<<<<<<< HEAD
       const { response, release } = await postJsonRequest({
         url: `${resolveDashscopeAigcApiBaseUrl(baseUrl)}/api/v1/services/aigc/video-generation/video-synthesis`,
         headers,
@@ -247,10 +285,20 @@ export function buildAlibabaVideoGenerationProvider(): VideoGenerationProvider {
             durationSeconds: req.durationSeconds ?? DEFAULT_DURATION_SECONDS,
           }),
         },
+=======
+      return await runDashscopeVideoGenerationTask({
+        providerLabel: "Alibaba Wan",
+        model,
+        req,
+        url: `${resolveDashscopeAigcApiBaseUrl(baseUrl)}/api/v1/services/aigc/video-generation/video-synthesis`,
+        headers,
+        baseUrl: resolveDashscopeAigcApiBaseUrl(baseUrl),
+>>>>>>> upstream/main
         timeoutMs: req.timeoutMs,
         fetchFn,
         allowPrivateNetwork,
         dispatcherPolicy,
+<<<<<<< HEAD
       });
 
       try {
@@ -288,6 +336,10 @@ export function buildAlibabaVideoGenerationProvider(): VideoGenerationProvider {
       } finally {
         await release();
       }
+=======
+        defaultTimeoutMs: DEFAULT_VIDEO_GENERATION_TIMEOUT_MS,
+      });
+>>>>>>> upstream/main
     },
   };
 }

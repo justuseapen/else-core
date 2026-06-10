@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Feishu tests cover tool account plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { resolveFeishuToolAccount } from "./tool-account.js";
 

@@ -1,6 +1,7 @@
-import type { OpenClawConfig } from "../config/config.js";
+/** Applies mutually exclusive plugin slot selection for memory and context-engine plugins. */
+import type { OpenClawConfig } from "../config/types.js";
 import type { PluginSlotsConfig } from "../config/types.plugins.js";
-import type { PluginKind } from "./types.js";
+import type { PluginKind } from "./plugin-kind.types.js";
 
 export type PluginSlotKey = keyof PluginSlotsConfig;
 
@@ -21,6 +22,7 @@ const DEFAULT_SLOT_BY_KEY: Record<PluginSlotKey, string> = {
 
 /** Normalize a kind field to an array for uniform iteration. */
 export function normalizeKinds(kind?: PluginKind | PluginKind[]): PluginKind[] {
+<<<<<<< HEAD
   if (!kind) {
     return [];
   }
@@ -40,12 +42,25 @@ export function hasKind(kind: PluginKind | PluginKind[] | undefined, target: Plu
  * For multi-kind plugins use `slotKeysForPluginKind` instead.
  */
 export function slotKeyForPluginKind(kind?: PluginKind): PluginSlotKey | null {
+=======
+>>>>>>> upstream/main
   if (!kind) {
-    return null;
+    return [];
   }
-  return SLOT_BY_KIND[kind] ?? null;
+  return Array.isArray(kind) ? kind : [kind];
 }
 
+<<<<<<< HEAD
+=======
+/** Check whether a plugin's kind field includes a specific kind. */
+export function hasKind(kind: PluginKind | PluginKind[] | undefined, target: PluginKind): boolean {
+  if (!kind) {
+    return false;
+  }
+  return Array.isArray(kind) ? kind.includes(target) : kind === target;
+}
+
+>>>>>>> upstream/main
 /** Order-insensitive equality check for two kind values (string or array). */
 export function kindsEqual(
   a: PluginKind | PluginKind[] | undefined,
@@ -63,6 +78,10 @@ export function slotKeysForPluginKind(kind?: PluginKind | PluginKind[]): PluginS
     .filter((k): k is PluginSlotKey => k != null);
 }
 
+<<<<<<< HEAD
+=======
+/** Returns the implicit plugin id that owns a slot before config overrides it. */
+>>>>>>> upstream/main
 export function defaultSlotIdForKey(slotKey: PluginSlotKey): string {
   return DEFAULT_SLOT_BY_KEY[slotKey];
 }
@@ -73,6 +92,7 @@ export type SlotSelectionResult = {
   changed: boolean;
 };
 
+/** Updates config so the selected plugin owns all slots implied by its kind. */
 export function applyExclusiveSlotSelection(params: {
   config: OpenClawConfig;
   selectedId: string;
@@ -85,6 +105,7 @@ export function applyExclusiveSlotSelection(params: {
   }
 
   const warnings: string[] = [];
+<<<<<<< HEAD
   let pluginsConfig = params.config.plugins ?? {};
   let anyChanged = false;
   let entries = { ...pluginsConfig.entries };
@@ -93,6 +114,16 @@ export function applyExclusiveSlotSelection(params: {
   for (const slotKey of slotKeys) {
     const prevSlot = slots[slotKey];
     slots = { ...slots, [slotKey]: params.selectedId };
+=======
+  const pluginsConfig = params.config.plugins ?? {};
+  let anyChanged = false;
+  const entries = { ...pluginsConfig.entries };
+  const slots = { ...pluginsConfig.slots };
+
+  for (const slotKey of slotKeys) {
+    const prevSlot = slots[slotKey];
+    slots[slotKey] = params.selectedId;
+>>>>>>> upstream/main
 
     const inferredPrevSlot = prevSlot ?? defaultSlotIdForKey(slotKey);
     if (inferredPrevSlot && inferredPrevSlot !== params.selectedId) {
@@ -123,10 +154,14 @@ export function applyExclusiveSlotSelection(params: {
         }
         const entry = entries[plugin.id];
         if (!entry || entry.enabled !== false) {
+<<<<<<< HEAD
           entries = {
             ...entries,
             [plugin.id]: { ...entry, enabled: false },
           };
+=======
+          entries[plugin.id] = { ...entry, enabled: false };
+>>>>>>> upstream/main
           disabledIds.push(plugin.id);
         }
       }

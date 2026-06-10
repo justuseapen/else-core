@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { DirectoryConfigParams } from "openclaw/plugin-sdk/directory-runtime";
 import { buildMessagingTarget, type MessagingTarget } from "openclaw/plugin-sdk/messaging-targets";
 import { resolveDiscordAccount } from "./accounts.js";
@@ -5,6 +6,17 @@ import { rememberDiscordDirectoryUser } from "./directory-cache.js";
 import { listDiscordDirectoryPeersLive } from "./directory-live.js";
 import { parseDiscordSendTarget } from "./send-target-parsing.js";
 import { type DiscordTargetParseOptions } from "./target-parsing.js";
+=======
+// Discord plugin module implements target resolver behavior.
+import { buildMessagingTarget, type MessagingTarget } from "openclaw/plugin-sdk/channel-targets";
+import type { DirectoryConfigParams } from "openclaw/plugin-sdk/directory-runtime";
+import { resolveDiscordAccount, resolveDiscordAccountAllowFrom } from "./accounts.js";
+import { rememberDiscordDirectoryUser } from "./directory-cache.js";
+import { listDiscordDirectoryPeersLive } from "./directory-live.js";
+import { allowFromContainsDiscordUserId } from "./normalize.js";
+import { parseDiscordSendTarget } from "./send-target-parsing.js";
+import type { DiscordTargetParseOptions } from "./target-parsing.js";
+>>>>>>> upstream/main
 
 /**
  * Resolve a Discord username to user ID using the directory lookup.
@@ -23,6 +35,17 @@ export async function resolveDiscordTarget(
   const likelyUsername = isLikelyUsername(trimmed);
   const shouldLookup = isExplicitUserLookup(trimmed, parseOptions) || likelyUsername;
 
+<<<<<<< HEAD
+=======
+  if (
+    /^\d+$/.test(trimmed) &&
+    parseOptions.defaultKind !== "user" &&
+    isConfiguredAllowedDiscordDmUser(trimmed, options)
+  ) {
+    return buildMessagingTarget("user", trimmed, trimmed);
+  }
+
+>>>>>>> upstream/main
   // Parse directly if it's already a known format. Use a safe parse so ambiguous
   // numeric targets don't throw when we still want to attempt username lookup.
   const directParse = safeParseDiscordTarget(trimmed, parseOptions);
@@ -87,6 +110,18 @@ function safeParseDiscordTarget(
   }
 }
 
+<<<<<<< HEAD
+=======
+function isConfiguredAllowedDiscordDmUser(input: string, options: DirectoryConfigParams): boolean {
+  const allowFrom =
+    resolveDiscordAccountAllowFrom({
+      cfg: options.cfg,
+      accountId: options.accountId,
+    }) ?? [];
+  return allowFromContainsDiscordUserId(allowFrom, input);
+}
+
+>>>>>>> upstream/main
 function isExplicitUserLookup(input: string, options: DiscordTargetParseOptions): boolean {
   if (/^<@!?(\d+)>$/.test(input)) {
     return true;

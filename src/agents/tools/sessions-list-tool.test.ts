@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+=======
+// sessions_list tool tests cover session metadata projection, visibility
+// helpers, and numeric argument validation.
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createSessionsListTool } from "./sessions-list-tool.js";
+>>>>>>> upstream/main
 
 const mocks = vi.hoisted(() => ({
   gatewayCall: vi.fn(),
@@ -29,6 +36,30 @@ vi.mock("./sessions-helpers.js", async (importActual) => {
     resolveSandboxedSessionToolContext: () => mocks.resolveSandboxedSessionToolContext(),
   };
 });
+<<<<<<< HEAD
+=======
+
+type SessionsListDetails = {
+  sessions?: Array<{
+    deliveryContext?: {
+      accountId?: string;
+      channel?: string;
+      threadId?: string | number;
+      to?: string;
+    };
+    elevatedLevel?: string;
+    fastMode?: boolean;
+    reasoningLevel?: string;
+    responseUsage?: string;
+    thinkingLevel?: string;
+    verboseLevel?: string;
+  }>;
+};
+
+function getSessionsListDetails(result: { details?: unknown }): SessionsListDetails {
+  return result.details as SessionsListDetails;
+}
+>>>>>>> upstream/main
 
 describe("sessions-list-tool", () => {
   let createSessionsListTool: typeof import("./sessions-list-tool.js").createSessionsListTool;
@@ -53,6 +84,11 @@ describe("sessions-list-tool", () => {
   });
 
   it("keeps deliveryContext.threadId in sessions_list results", async () => {
+<<<<<<< HEAD
+=======
+    // Thread/topic ids are required for channel-specific follow-up routing, so
+    // list results must preserve both string and numeric variants.
+>>>>>>> upstream/main
     mocks.gatewayCall.mockImplementation(async (opts: unknown) => {
       const request = opts as { method?: string };
       if (request.method === "sessions.list") {
@@ -89,6 +125,7 @@ describe("sessions-list-tool", () => {
     const tool = createSessionsListTool({ config: {} as never });
 
     const result = await tool.execute("call-1", {});
+<<<<<<< HEAD
     const details = result.details as {
       sessions?: Array<{
         deliveryContext?: {
@@ -99,6 +136,9 @@ describe("sessions-list-tool", () => {
         };
       }>;
     };
+=======
+    const details = getSessionsListDetails(result);
+>>>>>>> upstream/main
 
     expect(details.sessions?.[0]?.deliveryContext).toEqual({
       channel: "discord",
@@ -140,6 +180,7 @@ describe("sessions-list-tool", () => {
     const tool = createSessionsListTool({ config: {} as never });
 
     const result = await tool.execute("call-2", {});
+<<<<<<< HEAD
     const details = result.details as {
       sessions?: Array<{
         deliveryContext?: {
@@ -150,6 +191,9 @@ describe("sessions-list-tool", () => {
         };
       }>;
     };
+=======
+    const details = getSessionsListDetails(result);
+>>>>>>> upstream/main
 
     expect(details.sessions?.[0]?.deliveryContext).toEqual({
       channel: "telegram",
@@ -185,6 +229,7 @@ describe("sessions-list-tool", () => {
     const tool = createSessionsListTool({ config: {} as never });
 
     const result = await tool.execute("call-3", {});
+<<<<<<< HEAD
     const details = result.details as {
       sessions?: Array<{
         thinkingLevel?: string;
@@ -195,14 +240,30 @@ describe("sessions-list-tool", () => {
         responseUsage?: string;
       }>;
     };
+=======
+    const details = getSessionsListDetails(result);
+>>>>>>> upstream/main
 
-    expect(details.sessions?.[0]).toMatchObject({
-      thinkingLevel: "high",
-      fastMode: true,
-      verboseLevel: "on",
-      reasoningLevel: "deep",
-      elevatedLevel: "on",
-      responseUsage: "full",
-    });
+    const session = details.sessions?.[0];
+    expect(session?.thinkingLevel).toBe("high");
+    expect(session?.fastMode).toBe(true);
+    expect(session?.verboseLevel).toBe("on");
+    expect(session?.reasoningLevel).toBe("deep");
+    expect(session?.elevatedLevel).toBe("on");
+    expect(session?.responseUsage).toBe("full");
+  });
+
+  it.each([
+    [{ limit: 1.5 }, "limit must be a positive integer"],
+    [{ activeMinutes: 0 }, "activeMinutes must be a positive integer"],
+    [{ messageLimit: 1.5 }, "messageLimit must be a non-negative integer"],
+    [{ messageLimit: -1 }, "messageLimit must be a non-negative integer"],
+  ])("rejects invalid numeric parameter %o", async (params, message) => {
+    // Reject before gateway dispatch so malformed limits cannot reach session
+    // store queries.
+    const tool = createSessionsListTool({ config: {} as never });
+
+    await expect(tool.execute("call-4", params)).rejects.toThrow(message);
+    expect(mocks.gatewayCall).not.toHaveBeenCalled();
   });
 });

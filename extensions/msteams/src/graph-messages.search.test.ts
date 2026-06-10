@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../runtime-api.js";
 import { searchMessagesMSTeams } from "./graph-messages.js";
@@ -38,6 +39,41 @@ describe("searchMessagesMSTeams", () => {
     mockState.resolveGraphToken.mockResolvedValue(TOKEN);
   });
 
+=======
+// Msteams tests cover graph messages.search plugin behavior.
+import { beforeAll, describe, expect, it } from "vitest";
+import type { OpenClawConfig } from "../runtime-api.js";
+import {
+  CHANNEL_TO,
+  CHAT_ID,
+  type GraphMessagesTestModule,
+  getGraphMessagesMockState,
+  installGraphMessagesMockDefaults,
+  loadGraphMessagesTestModule,
+} from "./graph-messages.test-helpers.js";
+
+const mockState = getGraphMessagesMockState();
+installGraphMessagesMockDefaults();
+let searchMessagesMSTeams: GraphMessagesTestModule["searchMessagesMSTeams"];
+
+beforeAll(async () => {
+  ({ searchMessagesMSTeams } = await loadGraphMessagesTestModule());
+});
+
+function readFirstGraphPath(): string {
+  const [call] = mockState.fetchGraphJson.mock.calls;
+  if (!call) {
+    throw new Error("Expected Graph fetch call");
+  }
+  const [request] = call;
+  if (!request || typeof request !== "object" || typeof request.path !== "string") {
+    throw new Error("Expected Graph fetch request path");
+  }
+  return request.path;
+}
+
+describe("searchMessagesMSTeams", () => {
+>>>>>>> upstream/main
   it("searches chat messages with query string", async () => {
     mockState.fetchGraphJson.mockResolvedValue({
       value: [
@@ -64,7 +100,11 @@ describe("searchMessagesMSTeams", () => {
         createdAt: "2026-03-25T10:00:00Z",
       },
     ]);
+<<<<<<< HEAD
     const calledPath = mockState.fetchGraphJson.mock.calls[0][0].path as string;
+=======
+    const calledPath = readFirstGraphPath();
+>>>>>>> upstream/main
     expect(calledPath).toContain(`/chats/${encodeURIComponent(CHAT_ID)}/messages?`);
     expect(calledPath).toContain("$search=");
     expect(calledPath).toContain("$top=25");
@@ -91,7 +131,11 @@ describe("searchMessagesMSTeams", () => {
     });
 
     expect(result.messages).toHaveLength(1);
+<<<<<<< HEAD
     const calledPath = mockState.fetchGraphJson.mock.calls[0][0].path as string;
+=======
+    const calledPath = readFirstGraphPath();
+>>>>>>> upstream/main
     expect(calledPath).toContain("/teams/team-id-1/channels/channel-id-1/messages?");
   });
 
@@ -105,7 +149,11 @@ describe("searchMessagesMSTeams", () => {
       limit: 10,
     });
 
+<<<<<<< HEAD
     const calledPath = mockState.fetchGraphJson.mock.calls[0][0].path as string;
+=======
+    const calledPath = readFirstGraphPath();
+>>>>>>> upstream/main
     expect(calledPath).toContain("$top=10");
   });
 
@@ -119,7 +167,11 @@ describe("searchMessagesMSTeams", () => {
       limit: 100,
     });
 
+<<<<<<< HEAD
     const calledPath = mockState.fetchGraphJson.mock.calls[0][0].path as string;
+=======
+    const calledPath = readFirstGraphPath();
+>>>>>>> upstream/main
     expect(calledPath).toContain("$top=50");
   });
 
@@ -133,7 +185,11 @@ describe("searchMessagesMSTeams", () => {
       limit: 0,
     });
 
+<<<<<<< HEAD
     const calledPath = mockState.fetchGraphJson.mock.calls[0][0].path as string;
+=======
+    const calledPath = readFirstGraphPath();
+>>>>>>> upstream/main
     expect(calledPath).toContain("$top=1");
   });
 
@@ -147,7 +203,11 @@ describe("searchMessagesMSTeams", () => {
       from: "Alice",
     });
 
+<<<<<<< HEAD
     const calledPath = mockState.fetchGraphJson.mock.calls[0][0].path as string;
+=======
+    const calledPath = readFirstGraphPath();
+>>>>>>> upstream/main
     expect(calledPath).toContain("$filter=");
     const decoded = decodeURIComponent(calledPath);
     expect(decoded).toContain("from/user/displayName eq 'Alice'");
@@ -163,7 +223,11 @@ describe("searchMessagesMSTeams", () => {
       from: "O'Brien",
     });
 
+<<<<<<< HEAD
     const calledPath = mockState.fetchGraphJson.mock.calls[0][0].path as string;
+=======
+    const calledPath = readFirstGraphPath();
+>>>>>>> upstream/main
     const decoded = decodeURIComponent(calledPath);
     expect(decoded).toContain("O''Brien");
   });
@@ -177,7 +241,11 @@ describe("searchMessagesMSTeams", () => {
       query: 'say "hello" world',
     });
 
+<<<<<<< HEAD
     const calledPath = mockState.fetchGraphJson.mock.calls[0][0].path as string;
+=======
+    const calledPath = readFirstGraphPath();
+>>>>>>> upstream/main
     const decoded = decodeURIComponent(calledPath);
     expect(decoded).toContain('$search="say hello world"');
     expect(decoded).not.toContain('""');
@@ -192,11 +260,21 @@ describe("searchMessagesMSTeams", () => {
       query: "test",
     });
 
+<<<<<<< HEAD
     expect(mockState.fetchGraphJson).toHaveBeenCalledWith(
       expect.objectContaining({
         headers: { ConsistencyLevel: "eventual" },
       }),
     );
+=======
+    expect(mockState.fetchGraphJson).toHaveBeenCalledWith({
+      token: "test-graph-token",
+      path: `/chats/${encodeURIComponent(CHAT_ID)}/messages?$search=${encodeURIComponent(
+        '"test"',
+      )}&$top=25`,
+      headers: { ConsistencyLevel: "eventual" },
+    });
+>>>>>>> upstream/main
   });
 
   it("returns empty array when no messages match", async () => {
@@ -208,7 +286,11 @@ describe("searchMessagesMSTeams", () => {
       query: "nonexistent",
     });
 
+<<<<<<< HEAD
     expect(result.messages).toEqual([]);
+=======
+    expect(result.messages).toStrictEqual([]);
+>>>>>>> upstream/main
   });
 
   it("resolves user: target through conversation store", async () => {
@@ -225,7 +307,11 @@ describe("searchMessagesMSTeams", () => {
     });
 
     expect(mockState.findPreferredDmByUserId).toHaveBeenCalledWith("aad-user-1");
+<<<<<<< HEAD
     const calledPath = mockState.fetchGraphJson.mock.calls[0][0].path as string;
+=======
+    const calledPath = readFirstGraphPath();
+>>>>>>> upstream/main
     expect(calledPath).toContain(
       `/chats/${encodeURIComponent("19:dm-chat@thread.tacv2")}/messages?`,
     );

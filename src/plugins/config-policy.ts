@@ -1,4 +1,16 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../config/config.js";
+=======
+// Evaluates plugin config policy without activating plugin runtime code.
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import {
+  resolveMemorySlotDecisionShared,
+  resolvePluginActivationDecisionShared,
+  toPluginActivationState,
+  type PluginActivationSource,
+  type PluginActivationStateLike,
+} from "./config-activation-shared.js";
+>>>>>>> upstream/main
 import {
   hasExplicitPluginConfig as hasExplicitPluginConfigShared,
   identityNormalizePluginId,
@@ -7,6 +19,7 @@ import {
   type NormalizePluginId,
   type NormalizedPluginsConfig as SharedNormalizedPluginsConfig,
 } from "./config-normalization-shared.js";
+<<<<<<< HEAD
 import { hasKind } from "./slots.js";
 import type { PluginKind, PluginOrigin } from "./types.js";
 
@@ -19,6 +32,13 @@ export type PluginActivationState = {
   source: PluginActivationSource;
   reason?: string;
 };
+=======
+import type { PluginKind } from "./plugin-kind.types.js";
+import type { PluginOrigin } from "./plugin-origin.types.js";
+
+export type { PluginActivationSource };
+export type PluginActivationState = PluginActivationStateLike;
+>>>>>>> upstream/main
 
 export type NormalizedPluginsConfig = SharedNormalizedPluginsConfig;
 
@@ -29,6 +49,7 @@ export function normalizePluginsConfigWithResolver(
   return normalizePluginsConfigWithResolverShared(config, normalizePluginId);
 }
 
+<<<<<<< HEAD
 function resolveExplicitPluginSelection(params: {
   id: string;
   origin: PluginOrigin;
@@ -53,6 +74,8 @@ function resolveExplicitPluginSelection(params: {
   return { explicitlyEnabled: false };
 }
 
+=======
+>>>>>>> upstream/main
 export function resolvePluginActivationState(params: {
   id: string;
   origin: PluginOrigin;
@@ -63,6 +86,7 @@ export function resolvePluginActivationState(params: {
   sourceRootConfig?: OpenClawConfig;
   autoEnabledReason?: string;
 }): PluginActivationState {
+<<<<<<< HEAD
   const explicitSelection = resolveExplicitPluginSelection({
     id: params.id,
     origin: params.origin,
@@ -216,6 +240,24 @@ export function isBundledChannelEnabledByChannelConfig(
 }
 
 export function resolveEffectiveEnableState(params: {
+=======
+  return toPluginActivationState(
+    resolvePluginActivationDecisionShared({
+      ...params,
+      activationSource: {
+        plugins: params.sourceConfig ?? params.config,
+        rootConfig: params.sourceRootConfig ?? params.rootConfig,
+      },
+      isBundledChannelEnabledByChannelConfig,
+    }),
+  );
+}
+export const hasExplicitPluginConfig = hasExplicitPluginConfigShared;
+
+export const isBundledChannelEnabledByChannelConfig = isBundledChannelEnabledByChannelConfigShared;
+
+type PolicyEffectiveActivationParams = {
+>>>>>>> upstream/main
   id: string;
   origin: PluginOrigin;
   config: NormalizedPluginsConfig;
@@ -224,6 +266,7 @@ export function resolveEffectiveEnableState(params: {
   sourceConfig?: NormalizedPluginsConfig;
   sourceRootConfig?: OpenClawConfig;
   autoEnabledReason?: string;
+<<<<<<< HEAD
 }): { enabled: boolean; reason?: string } {
   const state = resolveEffectivePluginActivationState(params);
   return state.enabled ? { enabled: true } : { enabled: false, reason: state.reason };
@@ -239,6 +282,13 @@ export function resolveEffectivePluginActivationState(params: {
   sourceRootConfig?: OpenClawConfig;
   autoEnabledReason?: string;
 }): PluginActivationState {
+=======
+};
+
+export function resolveEffectivePluginActivationState(
+  params: PolicyEffectiveActivationParams,
+): PluginActivationState {
+>>>>>>> upstream/main
   return resolvePluginActivationState(params);
 }
 
@@ -248,6 +298,7 @@ export function resolveMemorySlotDecision(params: {
   slot: string | null | undefined;
   selectedId: string | null;
 }): { enabled: boolean; reason?: string; selected?: boolean } {
+<<<<<<< HEAD
   if (!hasKind(params.kind, "memory")) {
     return { enabled: true };
   }
@@ -271,4 +322,7 @@ export function resolveMemorySlotDecision(params: {
       : { enabled: false, reason: `memory slot already filled by "${params.selectedId}"` };
   }
   return { enabled: true, selected: true };
+=======
+  return resolveMemorySlotDecisionShared(params);
+>>>>>>> upstream/main
 }

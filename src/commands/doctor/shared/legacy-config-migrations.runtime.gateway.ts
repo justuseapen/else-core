@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// Legacy gateway runtime config migrations for bind modes, WebChat, and Control UI origins.
+import { normalizeOptionalLowercaseString } from "@openclaw/normalization-core/string-coerce";
+>>>>>>> upstream/main
 import {
   buildDefaultControlUiAllowedOrigins,
   hasConfiguredControlUiAllowedOrigins,
@@ -20,6 +25,7 @@ const GATEWAY_BIND_RULE: LegacyConfigRule = {
   requireSourceLiteral: true,
 };
 
+<<<<<<< HEAD
 function isLegacyGatewayBindHostAlias(value: unknown): boolean {
   if (typeof value !== "string") {
     return false;
@@ -27,6 +33,21 @@ function isLegacyGatewayBindHostAlias(value: unknown): boolean {
   const normalized = value.trim().toLowerCase();
   if (!normalized) {
     return false;
+=======
+const GATEWAY_WEBCHAT_RULE: LegacyConfigRule = {
+  path: ["gateway", "webchat"],
+  message: 'gateway.webchat is retired. Run "openclaw doctor --fix".',
+};
+
+function isLegacyGatewayBindHostAlias(value: unknown): boolean {
+  return normalizeLegacyGatewayBindHostAlias(value) !== null;
+}
+
+function normalizeLegacyGatewayBindHostAlias(value: unknown): "lan" | "loopback" | null {
+  const normalized = normalizeOptionalLowercaseString(value);
+  if (!normalized) {
+    return null;
+>>>>>>> upstream/main
   }
   if (
     normalized === "auto" ||
@@ -35,6 +56,7 @@ function isLegacyGatewayBindHostAlias(value: unknown): boolean {
     normalized === "tailnet" ||
     normalized === "custom"
   ) {
+<<<<<<< HEAD
     return false;
   }
   return (
@@ -42,19 +64,63 @@ function isLegacyGatewayBindHostAlias(value: unknown): boolean {
     normalized === "::" ||
     normalized === "[::]" ||
     normalized === "*" ||
+=======
+    return null;
+  }
+  if (
+    normalized === "0.0.0.0" ||
+    normalized === "::" ||
+    normalized === "[::]" ||
+    normalized === "*"
+  ) {
+    return "lan";
+  }
+  if (
+>>>>>>> upstream/main
     normalized === "127.0.0.1" ||
     normalized === "localhost" ||
     normalized === "::1" ||
     normalized === "[::1]"
+<<<<<<< HEAD
   );
+=======
+  ) {
+    return "loopback";
+  }
+  return null;
+>>>>>>> upstream/main
 }
 
 function escapeControlForLog(value: string): string {
   return value.replace(/\r/g, "\\r").replace(/\n/g, "\\n").replace(/\t/g, "\\t");
 }
 
+<<<<<<< HEAD
 export const LEGACY_CONFIG_MIGRATIONS_RUNTIME_GATEWAY: LegacyConfigMigrationSpec[] = [
   defineLegacyConfigMigration({
+=======
+/** Legacy config migration specs for gateway runtime config. */
+export const LEGACY_CONFIG_MIGRATIONS_RUNTIME_GATEWAY: LegacyConfigMigrationSpec[] = [
+  defineLegacyConfigMigration({
+    id: "gateway.webchat-remove",
+    describe: "Remove retired WebChat gateway config",
+    legacyRules: [GATEWAY_WEBCHAT_RULE],
+    apply: (raw, changes) => {
+      const gateway = getRecord(raw.gateway);
+      if (!gateway || !Object.hasOwn(gateway, "webchat")) {
+        return;
+      }
+      delete gateway.webchat;
+      if (Object.keys(gateway).length > 0) {
+        raw.gateway = gateway;
+      } else {
+        delete raw.gateway;
+      }
+      changes.push("Removed retired gateway.webchat config.");
+    },
+  }),
+  defineLegacyConfigMigration({
+>>>>>>> upstream/main
     id: "gateway.controlUi.allowedOrigins-seed-for-non-loopback",
     describe: "Seed gateway.controlUi.allowedOrigins for existing non-loopback gateway installs",
     apply: (raw, changes) => {
@@ -62,7 +128,11 @@ export const LEGACY_CONFIG_MIGRATIONS_RUNTIME_GATEWAY: LegacyConfigMigrationSpec
       if (!gateway) {
         return;
       }
+<<<<<<< HEAD
       const bind = gateway.bind;
+=======
+      const bind = normalizeLegacyGatewayBindHostAlias(gateway.bind) ?? gateway.bind;
+>>>>>>> upstream/main
       if (!isGatewayNonLoopbackBindMode(bind)) {
         return;
       }
@@ -86,7 +156,11 @@ export const LEGACY_CONFIG_MIGRATIONS_RUNTIME_GATEWAY: LegacyConfigMigrationSpec
       gateway.controlUi = { ...controlUi, allowedOrigins: origins };
       raw.gateway = gateway;
       changes.push(
+<<<<<<< HEAD
         `Seeded gateway.controlUi.allowedOrigins ${JSON.stringify(origins)} for bind=${String(bind)}. ` +
+=======
+        `Seeded gateway.controlUi.allowedOrigins ${JSON.stringify(origins)} for bind=${bind}. ` +
+>>>>>>> upstream/main
           "Required since v2026.2.26. Add other machine origins to gateway.controlUi.allowedOrigins if needed.",
       );
     },
@@ -105,6 +179,7 @@ export const LEGACY_CONFIG_MIGRATIONS_RUNTIME_GATEWAY: LegacyConfigMigrationSpec
         return;
       }
 
+<<<<<<< HEAD
       const normalized = bindRaw.trim().toLowerCase();
       let mapped: "lan" | "loopback" | undefined;
       if (
@@ -122,6 +197,13 @@ export const LEGACY_CONFIG_MIGRATIONS_RUNTIME_GATEWAY: LegacyConfigMigrationSpec
       ) {
         mapped = "loopback";
       }
+=======
+      const normalized = normalizeOptionalLowercaseString(bindRaw);
+      if (!normalized) {
+        return;
+      }
+      const mapped = normalizeLegacyGatewayBindHostAlias(bindRaw);
+>>>>>>> upstream/main
 
       if (!mapped || normalized === mapped) {
         return;

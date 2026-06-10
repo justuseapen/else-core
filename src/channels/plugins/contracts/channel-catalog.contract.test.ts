@@ -1,8 +1,16 @@
+<<<<<<< HEAD
+=======
+// Channel catalog contract tests cover bundled and registry-backed channel catalog invariants.
+>>>>>>> upstream/main
 import {
   describeBundledMetadataOnlyChannelCatalogContract,
   describeChannelCatalogEntryContract,
   describeOfficialFallbackChannelCatalogContract,
+<<<<<<< HEAD
 } from "../../../../test/helpers/channels/channel-catalog-contract.js";
+=======
+} from "./test-helpers/channel-catalog-contract.js";
+>>>>>>> upstream/main
 
 describeChannelCatalogEntryContract({
   channelId: "msteams",
@@ -36,3 +44,18 @@ describeOfficialFallbackChannelCatalogContract({
   externalNpmSpec: "@vendor/whatsapp-fork",
   externalLabel: "WhatsApp Fork",
 });
+<<<<<<< HEAD
+=======
+
+describeChannelCatalogEntryContract({
+  channelId: "wecom",
+  npmSpec: "@wecom/wecom-openclaw-plugin@2026.5.7",
+  alias: "wework",
+});
+
+describeChannelCatalogEntryContract({
+  channelId: "yuanbao",
+  npmSpec: "openclaw-plugin-yuanbao@2.13.1",
+  alias: "yb",
+});
+>>>>>>> upstream/main

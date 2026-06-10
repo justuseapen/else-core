@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Covers task status snapshots and user-facing task status formatting.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import type { TaskRecord } from "./task-registry.types.js";
 import {

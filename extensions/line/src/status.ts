@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Line plugin module implements status behavior.
+>>>>>>> upstream/main
 import { createLazyRuntimeModule } from "openclaw/plugin-sdk/lazy-runtime";
 import {
   buildTokenChannelStatusSummary,

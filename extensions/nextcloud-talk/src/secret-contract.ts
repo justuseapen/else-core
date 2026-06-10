@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Nextcloud Talk plugin module implements secret contract behavior.
+>>>>>>> upstream/main
 import {
   collectConditionalChannelFieldAssignments,
   getChannelSurface,
@@ -5,6 +9,7 @@ import {
   type ChannelAccountEntry,
   type ResolverContext,
   type SecretDefaults,
+<<<<<<< HEAD
   type SecretTargetRegistryEntry,
 } from "openclaw/plugin-sdk/security-runtime";
 
@@ -58,6 +63,61 @@ export const secretTargetRegistryEntries = [
 export function collectRuntimeConfigAssignments(params: {
   config: { channels?: Record<string, unknown> };
   defaults: SecretDefaults | undefined;
+=======
+} from "openclaw/plugin-sdk/channel-secret-basic-runtime";
+
+export const secretTargetRegistryEntries: import("openclaw/plugin-sdk/channel-secret-basic-runtime").SecretTargetRegistryEntry[] =
+  [
+    {
+      id: "channels.nextcloud-talk.accounts.*.apiPassword",
+      targetType: "channels.nextcloud-talk.accounts.*.apiPassword",
+      configFile: "openclaw.json",
+      pathPattern: "channels.nextcloud-talk.accounts.*.apiPassword",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.nextcloud-talk.accounts.*.botSecret",
+      targetType: "channels.nextcloud-talk.accounts.*.botSecret",
+      configFile: "openclaw.json",
+      pathPattern: "channels.nextcloud-talk.accounts.*.botSecret",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.nextcloud-talk.apiPassword",
+      targetType: "channels.nextcloud-talk.apiPassword",
+      configFile: "openclaw.json",
+      pathPattern: "channels.nextcloud-talk.apiPassword",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+    {
+      id: "channels.nextcloud-talk.botSecret",
+      targetType: "channels.nextcloud-talk.botSecret",
+      configFile: "openclaw.json",
+      pathPattern: "channels.nextcloud-talk.botSecret",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+  ];
+
+export function collectRuntimeConfigAssignments(params: {
+  config: { channels?: Record<string, unknown> };
+  defaults?: SecretDefaults;
+>>>>>>> upstream/main
   context: ResolverContext;
 }): void {
   const resolved = getChannelSurface(params.config, "nextcloud-talk");
@@ -96,3 +156,11 @@ export function collectRuntimeConfigAssignments(params: {
     accountInactiveReason: "Nextcloud Talk account is disabled.",
   });
 }
+<<<<<<< HEAD
+=======
+
+export const channelSecrets = {
+  secretTargetRegistryEntries,
+  collectRuntimeConfigAssignments,
+};
+>>>>>>> upstream/main

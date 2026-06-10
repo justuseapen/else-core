@@ -1,8 +1,10 @@
+// Defines the public plugin API and runtime extension contracts.
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import type { StreamFn } from "@mariozechner/pi-agent-core";
-import type { Api, Model } from "@mariozechner/pi-ai";
-import type { ModelRegistry } from "@mariozechner/pi-coding-agent";
+import type { Duplex } from "node:stream";
+import type {
+  UnifiedModelCatalogEntry,
+  UnifiedModelCatalogKind,
+} from "@openclaw/model-catalog-core/model-catalog-types";
 import type { Command } from "commander";
 import type {
   ApiKeyCredential,
@@ -10,6 +12,7 @@ import type {
   OAuthCredential,
   AuthProfileStore,
 } from "../agents/auth-profiles/types.js";
+<<<<<<< HEAD
 import type { ModelCatalogEntry } from "../agents/model-catalog.js";
 import type { FailoverReason } from "../agents/pi-embedded-helpers/types.js";
 import type { ProviderRequestTransportOverrides } from "../agents/provider-request-config.js";
@@ -26,11 +29,34 @@ import type { ModelProviderAuthMode, ModelProviderConfig } from "../config/types
 import type { ModelCompatConfig } from "../config/types.models.js";
 import type { TtsAutoMode } from "../config/types.tts.js";
 import type { OperatorScope } from "../gateway/method-scopes.js";
+=======
+import type { FailoverReason } from "../agents/embedded-agent-helpers/types.js";
+import type { AgentHarness } from "../agents/harness/types.js";
+import type { ModelCatalogEntry } from "../agents/model-catalog.types.js";
+import type { AgentMessage } from "../agents/runtime/index.js";
+import type { StreamFn } from "../agents/runtime/index.js";
+import type { ProviderSystemPromptContribution } from "../agents/system-prompt-contribution.js";
+import type { PromptMode } from "../agents/system-prompt.types.js";
+import type { AnyAgentTool } from "../agents/tools/common.js";
+import type { ReplyPayload } from "../auto-reply/reply-payload.js";
+import type { ThinkLevel } from "../auto-reply/thinking.shared.js";
+import type { ChannelPlugin } from "../channels/plugins/types.plugin.js";
+import type { ChannelId } from "../channels/plugins/types.public.js";
+import type { ModelProviderConfig } from "../config/types.js";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import type { OperatorScope } from "../gateway/operator-scopes.js";
+>>>>>>> upstream/main
 import type { GatewayRequestHandler } from "../gateway/server-methods/types.js";
-import type { InternalHookHandler } from "../hooks/internal-hooks.js";
-import type { HookEntry } from "../hooks/types.js";
+import type { InternalHookHandler } from "../hooks/internal-hook-types.js";
 import type { ImageGenerationProvider } from "../image-generation/types.js";
+import type {
+  DiagnosticEventPrivateData,
+  DiagnosticEventInput,
+  DiagnosticEventMetadata,
+  DiagnosticEventPayload,
+} from "../infra/diagnostic-events.js";
 import type { ProviderUsageSnapshot } from "../infra/provider-usage.types.js";
+import type { ModelRegistry } from "../llm/model-registry.js";
 import type { MediaUnderstandingProvider } from "../media-understanding/types.js";
 import type { MusicGenerationProvider } from "../music-generation/types.js";
 import type {
@@ -41,6 +67,7 @@ import type {
   RealtimeTranscriptionSession,
   RealtimeTranscriptionSessionCreateRequest,
 } from "../realtime-transcription/provider-types.js";
+<<<<<<< HEAD
 import type {
   RealtimeVoiceBridge,
   RealtimeVoiceBridgeCreateRequest,
@@ -55,6 +82,23 @@ import type {
   RuntimeWebSearchMetadata,
 } from "../secrets/runtime-web-tools.types.js";
 import type { SecurityAuditFinding } from "../security/audit.js";
+=======
+import type { RuntimeEnv } from "../runtime.js";
+import type { SecurityAuditFinding } from "../security/audit.types.js";
+import type { JsonSchemaObject } from "../shared/json-schema.types.js";
+import type {
+  RealtimeVoiceBridge,
+  RealtimeVoiceBrowserSession,
+  RealtimeVoiceBrowserSessionCreateRequest,
+  RealtimeVoiceBridgeCreateRequest,
+  RealtimeVoiceProviderCapabilities,
+  RealtimeVoiceProviderConfig,
+  RealtimeVoiceProviderConfiguredContext,
+  RealtimeVoiceProviderId,
+  RealtimeVoiceProviderResolveConfigContext,
+} from "../talk/provider-types.js";
+import type { TranscriptSourceProvider as TranscriptsSourceProviderCapability } from "../transcripts/provider-types.js";
+>>>>>>> upstream/main
 import type {
   SpeechDirectiveTokenParseContext,
   SpeechDirectiveTokenParseResult,
@@ -64,22 +108,173 @@ import type {
   SpeechProviderResolveTalkConfigContext,
   SpeechProviderResolveTalkOverridesContext,
   SpeechListVoicesRequest,
+  SpeechProviderPrepareSynthesisContext,
+  SpeechProviderPreparedSynthesis,
   SpeechProviderId,
   SpeechSynthesisRequest,
   SpeechSynthesisResult,
+  SpeechSynthesisStreamRequest,
+  SpeechSynthesisStreamResult,
   SpeechTelephonySynthesisRequest,
   SpeechTelephonySynthesisResult,
   SpeechVoiceOption,
 } from "../tts/provider-types.js";
+<<<<<<< HEAD
 import type { DeliveryContext } from "../utils/delivery-context.js";
+=======
+>>>>>>> upstream/main
 import type { VideoGenerationProvider } from "../video-generation/types.js";
 import type { WizardPrompter } from "../wizard/prompts.js";
+import type {
+  AgentToolResultMiddleware,
+  AgentToolResultMiddlewareOptions,
+} from "./agent-tool-result-middleware-types.js";
+import type { CliBackendPlugin, PluginTextTransforms } from "./cli-backend.types.js";
+import type { CodexAppServerExtensionFactory } from "./codex-app-server-extension-types.js";
+import type {
+  PluginConversationBinding,
+  PluginConversationBindingRequestParams,
+  PluginConversationBindingRequestResult,
+  PluginConversationBindingResolvedEvent,
+} from "./conversation-binding.types.js";
+import type { PluginHookHandlerMap, PluginHookName } from "./hook-types.js";
+import type {
+  PluginAgentEventEmitParams,
+  PluginAgentEventEmitResult,
+  PluginAgentEventSubscriptionRegistration,
+  PluginControlUiDescriptor,
+  PluginJsonValue,
+  PluginNextTurnInjection,
+  PluginNextTurnInjectionEnqueueResult,
+  PluginRunContextGetParams,
+  PluginRunContextPatch,
+  PluginRuntimeLifecycleRegistration,
+  PluginSessionActionRegistration,
+  PluginSessionAttachmentParams,
+  PluginSessionAttachmentResult,
+  PluginSessionSchedulerJobHandle,
+  PluginSessionSchedulerJobRegistration,
+  PluginSessionExtensionRegistration,
+  PluginSessionTurnScheduleParams,
+  PluginSessionTurnUnscheduleByTagParams,
+  PluginSessionTurnUnscheduleByTagResult,
+  PluginToolMetadataRegistration,
+  PluginTrustedToolPolicyRegistration,
+} from "./host-hooks.js";
+import type { PluginConfigUiHint } from "./manifest-types.js";
+import type { PluginKind } from "./plugin-kind.types.js";
 import type { SecretInputMode } from "./provider-auth-types.js";
+import type {
+  ProviderApplyConfigDefaultsContext,
+  ProviderNormalizeConfigContext,
+  ProviderResolveConfigApiKeyContext,
+} from "./provider-config-context.types.js";
+import type {
+  ProviderExternalAuthProfile,
+  ProviderExternalOAuthProfile,
+  ProviderResolveExternalAuthProfilesContext,
+  ProviderResolveExternalOAuthProfilesContext,
+  ProviderResolveSyntheticAuthContext,
+  ProviderSyntheticAuthResult,
+} from "./provider-external-auth.types.js";
 import type { createVpsAwareOAuthHandlers } from "./provider-oauth-flow.js";
+import type { ProviderRuntimeModel } from "./provider-runtime-model.types.js";
+import type {
+  ProviderDefaultThinkingPolicyContext,
+  ProviderThinkingProfile,
+  ProviderThinkingPolicyContext,
+} from "./provider-thinking.types.js";
 import type { PluginRuntime } from "./runtime/types.js";
+import type {
+  OpenClawPluginHookOptions,
+  OpenClawPluginToolFactory,
+  OpenClawPluginToolOptions,
+} from "./tool-types.js";
+import type { WebFetchProviderPlugin, WebSearchProviderPlugin } from "./web-provider-types.js";
+
+type ModelProviderRequestTransportOverrides =
+  import("../agents/provider-request-config.js").ModelProviderRequestTransportOverrides;
 
 export type { PluginRuntime } from "./runtime/types.js";
+export type { PluginOrigin } from "./plugin-origin.types.js";
+export type {
+  PluginBundleFormat,
+  PluginConfigUiHint,
+  PluginDiagnostic,
+  PluginFormat,
+} from "./manifest-types.js";
+export type {
+  OpenClawPluginActiveModelContext,
+  OpenClawPluginHookOptions,
+  OpenClawPluginToolContext,
+  OpenClawPluginToolFactory,
+  OpenClawPluginToolOptions,
+} from "./tool-types.js";
 export type { AnyAgentTool } from "../agents/tools/common.js";
+export type { AgentHarness } from "../agents/harness/types.js";
+export type {
+  AgentToolResultMiddleware,
+  AgentToolResultMiddlewareContext,
+  AgentToolResultMiddlewareEvent,
+  AgentToolResultMiddlewareHarness,
+  AgentToolResultMiddlewareOptions,
+  AgentToolResultMiddlewareResult,
+  AgentToolResultMiddlewareRuntime,
+  OpenClawAgentToolResult,
+} from "./agent-tool-result-middleware-types.js";
+export type {
+  PluginConversationBinding,
+  PluginConversationBindingRequestParams,
+  PluginConversationBindingRequestResult,
+  PluginConversationBindingResolvedEvent,
+  PluginConversationBindingResolutionDecision,
+} from "./conversation-binding.types.js";
+export type {
+  CliBackendAuthEpochMode,
+  CliBackendNormalizeConfigContext,
+  CliBackendNativeToolMode,
+  CliBackendPreparedExecution,
+  CliBackendPrepareExecutionContext,
+  CliBackendResolveExecutionArgs,
+  CliBackendResolveExecutionArgsContext,
+  CliBackendThinkingLevel,
+  CliBackendPlugin,
+  CliBundleMcpMode,
+  PluginTextReplacement,
+  PluginTextTransforms,
+} from "./cli-backend.types.js";
+export * from "./hook-types.js";
+export type {
+  PluginAgentEventEmitParams,
+  PluginAgentEventEmitResult,
+  PluginAgentEventSubscriptionRegistration,
+  PluginAgentTurnPrepareEvent,
+  PluginAgentTurnPrepareResult,
+  PluginControlUiDescriptor,
+  PluginHeartbeatPromptContributionEvent,
+  PluginHeartbeatPromptContributionResult,
+  PluginJsonValue,
+  PluginNextTurnInjection,
+  PluginNextTurnInjectionEnqueueResult,
+  PluginNextTurnInjectionRecord,
+  PluginRunContextGetParams,
+  PluginRunContextPatch,
+  PluginRuntimeLifecycleRegistration,
+  PluginSessionAttachmentParams,
+  PluginSessionAttachmentResult,
+  PluginSessionSchedulerJobHandle,
+  PluginSessionSchedulerJobRegistration,
+  PluginSessionExtensionRegistration,
+  PluginSessionExtensionProjection,
+  PluginSessionActionContext,
+  PluginSessionActionRegistration,
+  PluginSessionActionResult,
+  PluginSessionTurnScheduleParams,
+  PluginSessionTurnUnscheduleByTagParams,
+  PluginSessionTurnUnscheduleByTagResult,
+  PluginToolMetadataRegistration,
+  PluginTrustedToolPolicyRegistration,
+} from "./host-hooks.js";
 
 export type ProviderAuthOptionBag = {
   token?: string;
@@ -96,16 +291,34 @@ export type PluginLogger = {
   error: (message: string) => void;
 };
 
-export type PluginConfigUiHint = {
-  label?: string;
-  help?: string;
-  tags?: string[];
-  advanced?: boolean;
-  sensitive?: boolean;
-  placeholder?: string;
-};
-
-export type PluginKind = "memory" | "context-engine";
+export type { PluginKind } from "./plugin-kind.types.js";
+export type {
+  ProviderExternalAuthProfile,
+  ProviderExternalOAuthProfile,
+  ProviderResolveExternalAuthProfilesContext,
+  ProviderResolveExternalOAuthProfilesContext,
+  ProviderResolveSyntheticAuthContext,
+  ProviderSyntheticAuthResult,
+} from "./provider-external-auth.types.js";
+export type {
+  PluginWebFetchProviderEntry,
+  PluginWebSearchProviderEntry,
+  WebFetchCredentialResolutionSource,
+  WebFetchProviderContext,
+  WebFetchProviderId,
+  WebFetchProviderPlugin,
+  WebFetchProviderToolDefinition,
+  WebFetchRuntimeMetadataContext,
+  WebSearchCredentialResolutionSource,
+  WebSearchProviderContext,
+  WebSearchProviderId,
+  WebSearchProviderPlugin,
+  WebSearchProviderSetupContext,
+  WebSearchProviderToolDefinition,
+  WebSearchProviderToolExecutionContext,
+  WebSearchRuntimeMetadataContext,
+} from "./web-provider-types.js";
+export type { ProviderRuntimeModel } from "./provider-runtime-model.types.js";
 
 export type PluginConfigValidation =
   | { ok: true; value?: unknown }
@@ -129,6 +342,7 @@ export type OpenClawPluginConfigSchema = {
   parse?: (value: unknown) => unknown;
   validate?: (value: unknown) => PluginConfigValidation;
   uiHints?: Record<string, PluginConfigUiHint>;
+<<<<<<< HEAD
   jsonSchema?: Record<string, unknown>;
 };
 
@@ -173,6 +387,9 @@ export type OpenClawPluginHookOptions = {
   name?: string;
   description?: string;
   register?: boolean;
+=======
+  jsonSchema?: JsonSchemaObject;
+>>>>>>> upstream/main
 };
 
 export type ProviderAuthKind = "oauth" | "api_key" | "token" | "device_code" | "custom";
@@ -190,6 +407,12 @@ export type ProviderAuthResult = {
   configPatch?: Partial<OpenClawConfig>;
   defaultModel?: string;
   notes?: string[];
+  /**
+   * Opt in to replace `agents.defaults.models` wholesale with the patch map.
+   * Default behavior merges the map so other providers' entries survive.
+   * Set only from migrations that intentionally rename/remove model keys.
+   */
+  replaceDefaultModels?: boolean;
 };
 
 /** Interactive auth context passed to provider login/setup methods. */
@@ -310,7 +533,7 @@ export type ProviderCatalogContext = {
   ) => {
     apiKey: string | undefined;
     discoveryApiKey?: string;
-    mode: "api_key" | "oauth" | "token" | "none";
+    mode: "api_key" | "aws-sdk" | "oauth" | "token" | "none";
     source: "env" | "profile" | "none";
     profileId?: string;
   };
@@ -327,6 +550,7 @@ export type ProviderPluginCatalog = {
   run: (ctx: ProviderCatalogContext) => Promise<ProviderCatalogResult>;
 };
 
+<<<<<<< HEAD
 /**
  * Fully-resolved runtime model shape used by the embedded runner.
  *
@@ -336,11 +560,37 @@ export type ProviderPluginCatalog = {
  */
 export type ProviderRuntimeModel = Model<Api> & {
   contextTokens?: number;
+=======
+export type UnifiedModelCatalogProviderContext = ProviderCatalogContext & {
+  signal?: AbortSignal;
+  includeLive?: boolean;
+  timeoutMs?: number;
+};
+
+export type UnifiedModelCatalogProviderPlugin = {
+  provider: string;
+  kinds: readonly UnifiedModelCatalogKind[];
+  staticCatalog?: (
+    ctx: UnifiedModelCatalogProviderContext,
+  ) =>
+    | readonly UnifiedModelCatalogEntry[]
+    | Promise<readonly UnifiedModelCatalogEntry[] | null | undefined>
+    | null
+    | undefined;
+  liveCatalog?: (
+    ctx: UnifiedModelCatalogProviderContext,
+  ) =>
+    | readonly UnifiedModelCatalogEntry[]
+    | Promise<readonly UnifiedModelCatalogEntry[] | null | undefined>
+    | null
+    | undefined;
+>>>>>>> upstream/main
 };
 
 export type ProviderRuntimeProviderConfig = {
   baseUrl?: string;
   api?: ModelProviderConfig["api"];
+  auth?: ModelProviderConfig["auth"];
   models?: ModelProviderConfig["models"];
   headers?: unknown;
 };
@@ -361,6 +611,8 @@ export type ProviderResolveDynamicModelContext = {
   modelId: string;
   modelRegistry: ModelRegistry;
   providerConfig?: ProviderRuntimeProviderConfig;
+  authProfileId?: string;
+  authProfileMode?: AuthProfileCredential["type"] | "aws-sdk";
 };
 
 /**
@@ -371,6 +623,14 @@ export type ProviderResolveDynamicModelContext = {
  * metadata over the network.
  */
 export type ProviderPrepareDynamicModelContext = ProviderResolveDynamicModelContext;
+
+export type ProviderPreferRuntimeResolvedModelContext = {
+  config?: OpenClawConfig;
+  agentDir?: string;
+  workspaceDir?: string;
+  provider: string;
+  modelId: string;
+};
 
 /**
  * Last-chance rewrite hook for provider-owned transport normalization.
@@ -399,6 +659,7 @@ export type ProviderNormalizeModelIdContext = {
   modelId: string;
 };
 
+<<<<<<< HEAD
 /**
  * Provider-owned config normalization for `models.providers.<id>` entries.
  *
@@ -409,6 +670,13 @@ export type ProviderNormalizeConfigContext = {
   provider: string;
   providerConfig: ModelProviderConfig;
 };
+=======
+export type {
+  ProviderApplyConfigDefaultsContext,
+  ProviderNormalizeConfigContext,
+  ProviderResolveConfigApiKeyContext,
+} from "./provider-config-context.types.js";
+>>>>>>> upstream/main
 
 /**
  * Provider-owned transport normalization for arbitrary provider/model config.
@@ -418,12 +686,20 @@ export type ProviderNormalizeConfigContext = {
  * plugin-owned transport family.
  */
 export type ProviderNormalizeTransportContext = {
+<<<<<<< HEAD
   provider: string;
+=======
+  config?: OpenClawConfig;
+  workspaceDir?: string;
+  provider: string;
+  modelId?: string;
+>>>>>>> upstream/main
   api?: string | null;
   baseUrl?: string;
 };
 
 /**
+<<<<<<< HEAD
  * Provider-owned env/config auth marker resolution for `models.providers`.
  *
  * Use this when a provider resolves auth from env vars that do not follow the
@@ -435,6 +711,8 @@ export type ProviderResolveConfigApiKeyContext = {
 };
 
 /**
+=======
+>>>>>>> upstream/main
  * Runtime auth input for providers that need an extra exchange step before
  * inference. The incoming `apiKey` is the raw credential resolved from auth
  * profiles/env/config. The returned value should be the actual token/key to use
@@ -464,7 +742,11 @@ export type ProviderPrepareRuntimeAuthContext = {
 export type ProviderPreparedRuntimeAuth = {
   apiKey: string;
   baseUrl?: string;
+<<<<<<< HEAD
   request?: ProviderRequestTransportOverrides;
+=======
+  request?: ModelProviderRequestTransportOverrides;
+>>>>>>> upstream/main
   expiresAt?: number;
 };
 
@@ -494,19 +776,28 @@ export type ProviderResolveUsageAuthContext = {
     providerIds?: string[];
     envDirect?: Array<string | undefined>;
   }) => string | undefined;
+<<<<<<< HEAD
   resolveOAuthToken: (params?: { provider?: string }) => Promise<ProviderResolvedUsageAuth | null>;
+=======
+  resolveOAuthToken: (params?: { provider?: string }) => Promise<ProviderUsageAuthToken | null>;
+>>>>>>> upstream/main
 };
+
+export type ProviderUsageAuthToken = { token: string; accountId?: string };
 
 /**
  * Result of `resolveUsageAuth`.
  *
- * `token` is the credential used for provider usage/billing endpoints.
- * `accountId` is optional provider-specific metadata used by some usage APIs.
+ * Two shapes are supported:
+ * - `{ token: string; accountId?: string }` — use this token for provider usage endpoints.
+ * - `{ handled: true }` — this provider handled the request but has no usable
+ *   usage token; core must skip further fallback (generic API-key/OAuth fallback
+ *   must not run).
+ *
+ * Returning `null` or `undefined` means "not handled by this provider"; core
+ * proceeds to generic fallback resolution.
  */
-export type ProviderResolvedUsageAuth = {
-  token: string;
-  accountId?: string;
-};
+export type ProviderResolvedUsageAuth = ProviderUsageAuthToken | { handled: true };
 
 /**
  * Usage/quota snapshot input for providers that own their usage endpoint
@@ -524,6 +815,7 @@ export type ProviderFetchUsageSnapshotContext = {
   provider: string;
   token: string;
   accountId?: string;
+  authProfileId?: string;
   timeoutMs: number;
   fetchFn: typeof fetch;
 };
@@ -553,12 +845,65 @@ export type ProviderPrepareExtraParamsContext = {
   config?: OpenClawConfig;
   agentDir?: string;
   workspaceDir?: string;
+  agentId?: string;
+  nativeWebSearchAllowedByToolPolicy?: boolean;
   provider: string;
   modelId: string;
+  model?: ProviderRuntimeModel;
   extraParams?: Record<string, unknown>;
   thinkingLevel?: ThinkLevel;
 };
 
+<<<<<<< HEAD
+=======
+export type ProviderExtraParamsForTransportContext = Omit<
+  ProviderPrepareExtraParamsContext,
+  "extraParams"
+> & {
+  model?: ProviderRuntimeModel;
+  transport?: "sse" | "websocket" | "auto";
+  extraParams: Record<string, unknown>;
+};
+
+export type ProviderExtraParamsForTransportResult = {
+  patch?: Record<string, unknown> | null;
+};
+
+export type ProviderResolvePromptOverlayContext = ProviderSystemPromptContributionContext & {
+  baseOverlay?: ProviderSystemPromptContribution;
+};
+
+export type ProviderFollowupFallbackRouteContext = {
+  config?: OpenClawConfig;
+  agentDir?: string;
+  workspaceDir?: string;
+  provider: string;
+  modelId: string;
+  payload: ReplyPayload;
+  originatingChannel?: string;
+  originatingTo?: string;
+  originRoutable: boolean;
+  dispatcherAvailable: boolean;
+};
+
+export type ProviderFollowupFallbackRouteResult = {
+  route?: "origin" | "dispatcher" | "drop";
+  reason?: string;
+};
+
+export type ProviderResolveAuthProfileIdContext = {
+  config?: OpenClawConfig;
+  agentDir?: string;
+  workspaceDir?: string;
+  provider: string;
+  modelId: string;
+  preferredProfileId?: string;
+  lockedProfileId?: string;
+  profileOrder: string[];
+  authStore: AuthProfileStore;
+};
+
+>>>>>>> upstream/main
 export type ProviderReplaySanitizeMode = "full" | "images-only";
 
 export type ProviderReplayToolCallIdMode = "strict" | "strict9";
@@ -593,6 +938,10 @@ export type ProviderReplayPolicy = {
     includeCamelCase?: boolean;
   };
   dropThinkingBlocks?: boolean;
+<<<<<<< HEAD
+=======
+  dropReasoningFromHistory?: boolean;
+>>>>>>> upstream/main
   repairToolUseResultPairing?: boolean;
   applyAssistantFirstOrderingFix?: boolean;
   validateGeminiTurns?: boolean;
@@ -679,7 +1028,7 @@ export type ProviderReasoningOutputModeContext = ProviderReplayPolicyContext;
 /**
  * Provider-owned transport creation.
  *
- * Use this when the provider needs to replace pi-ai's default transport with a
+ * Use this when the provider needs to replace shared model runtime's default transport with a
  * custom StreamFn (for example a native API transport that cannot be expressed
  * as a wrapper around `streamSimple`).
  */
@@ -697,7 +1046,7 @@ export type ProviderCreateStreamFnContext = {
  * transport-independent wrappers.
  *
  * Use this for provider-specific payload/header/model mutations that still run
- * through the normal `pi-ai` stream path.
+ * through the normal `shared model runtime` stream path.
  */
 export type ProviderWrapStreamFnContext = ProviderPrepareExtraParamsContext & {
   model?: ProviderRuntimeModel;
@@ -765,6 +1114,7 @@ export type ProviderFailoverErrorContext = {
   provider?: string;
   modelId?: string;
   errorMessage: string;
+<<<<<<< HEAD
 };
 
 /**
@@ -777,6 +1127,11 @@ export type ProviderApplyConfigDefaultsContext = {
   provider: string;
   config: OpenClawConfig;
   env: NodeJS.ProcessEnv;
+=======
+  status?: number;
+  code?: string;
+  errorType?: string;
+>>>>>>> upstream/main
 };
 
 /**
@@ -789,9 +1144,9 @@ export type PluginEmbeddingProvider = {
   id: string;
   model: string;
   maxInputTokens?: number;
-  embedQuery: (text: string) => Promise<number[]>;
-  embedBatch: (texts: string[]) => Promise<number[][]>;
-  embedBatchInputs?: (inputs: unknown[]) => Promise<number[][]>;
+  embedQuery: (text: string, options?: { signal?: AbortSignal }) => Promise<number[]>;
+  embedBatch: (texts: string[], options?: { signal?: AbortSignal }) => Promise<number[][]>;
+  embedBatchInputs?: (inputs: unknown[], options?: { signal?: AbortSignal }) => Promise<number[][]>;
   client?: unknown;
 };
 
@@ -813,6 +1168,9 @@ export type ProviderCreateEmbeddingProviderContext = {
     headers?: Record<string, string>;
   };
   providerApiKey?: string;
+  inputType?: string;
+  queryInputType?: string;
+  documentInputType?: string;
   outputDimensionality?: number;
   taskType?: string;
 };
@@ -859,14 +1217,14 @@ export type ProviderBuildUnknownModelHintContext = {
   env: NodeJS.ProcessEnv;
   provider: string;
   modelId: string;
+  baseUrl?: string;
 };
 
 /**
- * Built-in model suppression hook.
+ * Built-in model suppression hook context.
  *
- * Use this when a provider/plugin needs to hide stale upstream catalog rows or
- * replace them with a vendor-specific hint. This hook is consulted by model
- * resolution, model listing, and catalog loading.
+ * @deprecated Use manifest `modelCatalog.suppressions`. Runtime suppression
+ * hooks are no longer called by model resolution.
  */
 export type ProviderBuiltInModelSuppressionContext = {
   config?: OpenClawConfig;
@@ -875,6 +1233,7 @@ export type ProviderBuiltInModelSuppressionContext = {
   env: NodeJS.ProcessEnv;
   provider: string;
   modelId: string;
+  baseUrl?: string;
 };
 
 export type ProviderBuiltInModelSuppressionResult = {
@@ -882,28 +1241,11 @@ export type ProviderBuiltInModelSuppressionResult = {
   errorMessage?: string;
 };
 
-/**
- * Provider-owned thinking policy input.
- *
- * Used by shared `/think`, ACP controls, and directive parsing to ask a
- * provider whether a model supports special reasoning UX such as xhigh or a
- * binary on/off toggle.
- */
-export type ProviderThinkingPolicyContext = {
-  provider: string;
-  modelId: string;
-};
-
-/**
- * Provider-owned default thinking policy input.
- *
- * `reasoning` is the merged catalog hint for the selected model when one is
- * available. Providers can use it to keep "reasoning model => low" behavior
- * without re-reading the catalog themselves.
- */
-export type ProviderDefaultThinkingPolicyContext = ProviderThinkingPolicyContext & {
-  reasoning?: boolean;
-};
+export type {
+  ProviderDefaultThinkingPolicyContext,
+  ProviderThinkingProfile,
+  ProviderThinkingPolicyContext,
+} from "./provider-thinking.types.js";
 
 /**
  * Provider-owned "modern model" policy input.
@@ -929,6 +1271,7 @@ export type ProviderAugmentModelCatalogContext = {
   agentDir?: string;
   workspaceDir?: string;
   env: NodeJS.ProcessEnv;
+  resolveProviderApiKey?: ProviderCatalogContext["resolveProviderApiKey"];
   entries: ModelCatalogEntry[];
 };
 
@@ -958,6 +1301,10 @@ export type ProviderPluginWizardSetup = {
   choiceHint?: string;
   assistantPriority?: number;
   assistantVisibility?: "visible" | "manual-only";
+<<<<<<< HEAD
+=======
+  onboardingFeatured?: boolean;
+>>>>>>> upstream/main
   groupId?: string;
   groupLabel?: string;
   groupHint?: string;
@@ -966,7 +1313,7 @@ export type ProviderPluginWizardSetup = {
    * Interactive onboarding surfaces where this auth choice should appear.
    * Defaults to `["text-inference"]` when omitted.
    */
-  onboardingScopes?: Array<"text-inference" | "image-generation">;
+  onboardingScopes?: Array<"text-inference" | "image-generation" | "music-generation">;
   /**
    * Optional model-allowlist prompt policy applied after this auth choice is
    * selected in configure/onboarding flows.
@@ -977,6 +1324,7 @@ export type ProviderPluginWizardSetup = {
   modelAllowlist?: {
     allowedKeys?: string[];
     initialSelections?: string[];
+    loadCatalog?: boolean;
     message?: string;
   };
   /**
@@ -1028,18 +1376,27 @@ export type ProviderModelSelectedContext = {
   workspaceDir?: string;
 };
 
-export type ProviderResolveSyntheticAuthContext = {
+export type ProviderDeferSyntheticProfileAuthContext = {
   config?: OpenClawConfig;
   provider: string;
   providerConfig?: ModelProviderConfig;
+  resolvedApiKey?: string;
 };
 
-export type ProviderSyntheticAuthResult = {
-  apiKey: string;
-  source: string;
-  mode: Exclude<ModelProviderAuthMode, "aws-sdk">;
+export type ProviderSystemPromptContributionContext = {
+  config?: OpenClawConfig;
+  agentDir?: string;
+  workspaceDir?: string;
+  provider: string;
+  modelId: string;
+  promptMode: PromptMode;
+  runtimeChannel?: string;
+  runtimeCapabilities?: string[];
+  agentId?: string;
+  trigger?: "cron" | "heartbeat" | "manual" | "memory" | "overflow" | "user";
 };
 
+<<<<<<< HEAD
 export type ProviderDeferSyntheticProfileAuthContext = {
   config?: OpenClawConfig;
   provider: string;
@@ -1058,6 +1415,13 @@ export type ProviderSystemPromptContributionContext = {
   runtimeCapabilities?: string[];
   agentId?: string;
 };
+=======
+export type ProviderTransformSystemPromptContext = ProviderSystemPromptContributionContext & {
+  systemPrompt: string;
+};
+
+export type PluginTextTransformRegistration = PluginTextTransforms;
+>>>>>>> upstream/main
 
 /** Text-inference provider capability registered by a plugin. */
 export type ProviderPlugin = {
@@ -1083,11 +1447,41 @@ export type ProviderPlugin = {
   envVars?: string[];
   auth: ProviderAuthMethod[];
   /**
-   * Preferred hook for plugin-defined provider catalogs.
+   * Legacy text-provider catalog hook.
+   *
+   * @deprecated New catalog/control-plane surfaces should use
+   * `api.registerModelCatalogProvider`. This hook remains the text runtime
+   * source until the unified loader fully replaces it.
    * Returns provider config/model definitions that merge into models.providers.
    */
   catalog?: ProviderPluginCatalog;
   /**
+   * Legacy offline text-provider catalog hook for display-only surfaces.
+   *
+   * @deprecated New static rows should be registered with
+   * `api.registerModelCatalogProvider`.
+   *
+   * Unlike `catalog`, this hook must not perform network I/O or require real
+   * credentials. Use it for bundled/static rows that can be shown before auth is
+   * configured.
+   */
+  staticCatalog?: ProviderPluginCatalog;
+  /**
+   * Show catalog row labels as the literal `<provider>/<entry.id>`
+   * composition instead of the canonical (deduped) key.
+   *
+   * `modelKey` strips a duplicate `<provider>/` prefix so storage and
+   * lookups stay stable. This flag only changes the picker label — the
+   * option value and persisted config remain canonical.
+   *
+   * Set when the leading `<provider>/` segment in the native model id is
+   * a meaningful vendor namespace (e.g. NVIDIA's `nvidia/nemotron-...`
+   * alongside `moonshotai/kimi-k2.5`).
+   */
+  preserveLiteralProviderPrefix?: boolean;
+  /**
+   * @deprecated Use catalog.
+   *
    * Legacy alias for catalog.
    * Kept for compatibility with existing provider plugins.
    */
@@ -1115,6 +1509,12 @@ export type ProviderPlugin = {
    */
   prepareDynamicModel?: (ctx: ProviderPrepareDynamicModelContext) => Promise<void>;
   /**
+   * Lets a provider plugin opt exact configured models into a runtime
+   * metadata comparison pass before the embedded runner returns the explicit
+   * entry unchanged.
+   */
+  preferRuntimeResolvedModel?: (ctx: ProviderPreferRuntimeResolvedModelContext) => boolean;
+  /**
    * Provider-owned transport normalization.
    *
    * Use this to rewrite a resolved model without forking the generic runner:
@@ -1125,6 +1525,7 @@ export type ProviderPlugin = {
     ctx: ProviderNormalizeResolvedModelContext,
   ) => ProviderRuntimeModel | null | undefined;
   /**
+<<<<<<< HEAD
    * Provider-owned compat contribution for resolved models outside direct
    * provider ownership.
    *
@@ -1141,6 +1542,13 @@ export type ProviderPlugin = {
    * Runs before model lookup/canonicalization. Use this for alias cleanup such
    * as provider-owned preview/legacy model ids.
    */
+=======
+   * Provider-owned model-id normalization.
+   *
+   * Runs before model lookup/canonicalization. Use this for alias cleanup such
+   * as provider-owned preview/legacy model ids.
+   */
+>>>>>>> upstream/main
   normalizeModelId?: (ctx: ProviderNormalizeModelIdContext) => string | null | undefined;
   /**
    * Provider-owned transport-family normalization before generic model
@@ -1247,6 +1655,15 @@ export type ProviderPlugin = {
   prepareExtraParams?: (
     ctx: ProviderPrepareExtraParamsContext,
   ) => Record<string, unknown> | null | undefined;
+  /**
+   * Provider-owned request params after transport/model resolution.
+   *
+   * Use this for transport-family request knobs that should be keyed by the
+   * resolved model API/transport rather than a hardcoded core allowlist.
+   */
+  extraParamsForTransport?: (
+    ctx: ProviderExtraParamsForTransportContext,
+  ) => ProviderExtraParamsForTransportResult | null | undefined;
   /**
    * Provider-owned transport factory.
    *
@@ -1375,12 +1792,19 @@ export type ProviderPlugin = {
    * Return `{ suppress: true }` to hide a stale upstream row. Include
    * `errorMessage` when OpenClaw should surface a provider-specific hint for
    * direct model resolution failures.
+   *
+   * @deprecated Use manifest `modelCatalog.suppressions`. Runtime suppression
+   * hooks are no longer called by model resolution.
    */
   suppressBuiltInModel?: (
     ctx: ProviderBuiltInModelSuppressionContext,
   ) => ProviderBuiltInModelSuppressionResult | null | undefined;
   /**
    * Provider-owned final catalog augmentation.
+   *
+   * @deprecated Use `api.registerModelCatalogProvider` for supplemental catalog
+   * rows. This hook is kept only for existing text-provider runtime
+   * compatibility during the migration window.
    *
    * Return extra rows to append to the final catalog after discovery/config
    * merging. OpenClaw deduplicates by `provider/id`, so plugins only need to
@@ -1399,19 +1823,36 @@ export type ProviderPlugin = {
    *
    * Return true when the provider exposes a coarse on/off reasoning control
    * instead of the normal multi-level ladder shown by `/think`.
+   *
+   * @deprecated Prefer `resolveThinkingProfile`.
    */
   isBinaryThinking?: (ctx: ProviderThinkingPolicyContext) => boolean | undefined;
   /**
    * Provider-owned xhigh reasoning support.
    *
    * Return true only for models that should expose the `xhigh` thinking level.
+   *
+   * @deprecated Prefer `resolveThinkingProfile`.
    */
   supportsXHighThinking?: (ctx: ProviderThinkingPolicyContext) => boolean | undefined;
+  /**
+   * Provider-owned thinking level profile.
+   *
+   * Prefer this over the individual thinking capability hooks when a provider
+   * or model exposes a custom set of thinking levels. OpenClaw stores the
+   * canonical `id`, shows `label` when provided, and downgrades stale stored
+   * values by profile rank.
+   */
+  resolveThinkingProfile?: (
+    ctx: ProviderDefaultThinkingPolicyContext,
+  ) => ProviderThinkingProfile | null | undefined;
   /**
    * Provider-owned default thinking level.
    *
    * Use this to keep model-family defaults (for example Claude 4.6 =>
    * adaptive) out of core command logic.
+   *
+   * @deprecated Prefer `resolveThinkingProfile`.
    */
   resolveDefaultThinkingLevel?: (
     ctx: ProviderDefaultThinkingPolicyContext,
@@ -1426,6 +1867,49 @@ export type ProviderPlugin = {
     ctx: ProviderSystemPromptContributionContext,
   ) => ProviderSystemPromptContribution | null | undefined;
   /**
+<<<<<<< HEAD
+=======
+   * Provider-owned GPT/model prompt overlay seam.
+   *
+   * Runs after OpenClaw's built-in overlay is resolved and before the
+   * provider's regular system-prompt contribution is merged.
+   */
+  resolvePromptOverlay?: (
+    ctx: ProviderResolvePromptOverlayContext,
+  ) => ProviderSystemPromptContribution | null | undefined;
+  /**
+   * Provider-owned fallback route override for model/profile failure handling.
+   *
+   * Return undefined/null to keep OpenClaw's default fallback policy.
+   */
+  followupFallbackRoute?: (
+    ctx: ProviderFollowupFallbackRouteContext,
+  ) => ProviderFollowupFallbackRouteResult | null | undefined;
+  /**
+   * Provider-owned auth profile resolver.
+   *
+   * Return a profile id from the supplied order to prefer it for this attempt;
+   * invalid or missing ids are ignored by core.
+   */
+  resolveAuthProfileId?: (ctx: ProviderResolveAuthProfileIdContext) => string | null | undefined;
+  /**
+   * Provider-owned final system-prompt transform.
+   *
+   * Use this sparingly when a provider transport needs small compatibility
+   * rewrites after OpenClaw has assembled the complete prompt. Return
+   * `undefined`/`null` to leave the prompt unchanged.
+   */
+  transformSystemPrompt?: (ctx: ProviderTransformSystemPromptContext) => string | null | undefined;
+  /**
+   * Provider-owned bidirectional text replacements.
+   *
+   * `input` applies to system prompts and text message content before transport.
+   * `output` applies to assistant text deltas/final text before OpenClaw handles
+   * its own control markers or channel delivery.
+   */
+  textTransforms?: PluginTextTransforms;
+  /**
+>>>>>>> upstream/main
    * Provider-owned global config defaults.
    *
    * Use this when config materialization needs provider-specific defaults that
@@ -1470,7 +1954,7 @@ export type ProviderPlugin = {
   /**
    * Provider-owned OAuth refresh.
    *
-   * OpenClaw calls this before falling back to the shared `pi-ai` OAuth
+   * OpenClaw calls this before falling back to the shared `shared model runtime` OAuth
    * refreshers. Use it when the provider has a custom refresh endpoint, or when
    * the provider needs custom refresh-failure behavior that should stay out of
    * core auth-profile code.
@@ -1518,6 +2002,35 @@ export type ProviderPlugin = {
     ctx: ProviderResolveSyntheticAuthContext,
   ) => ProviderSyntheticAuthResult | null | undefined;
   /**
+<<<<<<< HEAD
+=======
+   * Provider-owned external auth profile discovery.
+   *
+   * Use this when credentials are managed by an external tool and should be visible
+   * to runtime auth resolution without being written back into `auth-profiles.json`
+   * by core.
+   */
+  resolveExternalAuthProfiles?: (
+    ctx: ProviderResolveExternalAuthProfilesContext,
+  ) =>
+    | Array<ProviderExternalAuthProfile>
+    | ReadonlyArray<ProviderExternalAuthProfile>
+    | null
+    | undefined;
+  /**
+   * @deprecated Declare `contracts.externalAuthProviders` in the plugin manifest
+   * and implement `resolveExternalAuthProfiles` instead. Kept at the public
+   * plugin boundary until the SDK removal window closes.
+   */
+  resolveExternalOAuthProfiles?: (
+    ctx: ProviderResolveExternalOAuthProfilesContext,
+  ) =>
+    | Array<ProviderExternalOAuthProfile>
+    | ReadonlyArray<ProviderExternalOAuthProfile>
+    | null
+    | undefined;
+  /**
+>>>>>>> upstream/main
    * Provider-owned precedence rule for stored synthetic auth profiles.
    *
    * Return true when a stored profile API key is only a provider-owned
@@ -1530,6 +2043,7 @@ export type ProviderPlugin = {
   onModelSelected?: (ctx: ProviderModelSelectedContext) => Promise<void>;
 };
 
+<<<<<<< HEAD
 export type WebSearchProviderId = string;
 export type WebFetchProviderId = string;
 
@@ -1664,12 +2178,17 @@ export type PluginWebFetchProviderEntry = WebFetchProviderPlugin & {
   pluginId: string;
 };
 
+=======
+>>>>>>> upstream/main
 /** Speech capability registered by a plugin. */
 export type SpeechProviderPlugin = {
   id: SpeechProviderId;
   label: string;
   aliases?: string[];
   autoSelectOrder?: number;
+  /** Default provider operation timeout in milliseconds when caller/config omit timeoutMs. */
+  defaultTimeoutMs?: number;
+  defaultModel?: string;
   models?: readonly string[];
   voices?: readonly string[];
   resolveConfig?: (ctx: SpeechProviderResolveConfigContext) => SpeechProviderConfig;
@@ -1678,8 +2197,15 @@ export type SpeechProviderPlugin = {
   resolveTalkOverrides?: (
     ctx: SpeechProviderResolveTalkOverridesContext,
   ) => SpeechProviderConfig | undefined;
+  prepareSynthesis?: (
+    ctx: SpeechProviderPrepareSynthesisContext,
+  ) =>
+    | SpeechProviderPreparedSynthesis
+    | undefined
+    | Promise<SpeechProviderPreparedSynthesis | undefined>;
   isConfigured: (ctx: SpeechProviderConfiguredContext) => boolean;
   synthesize: (req: SpeechSynthesisRequest) => Promise<SpeechSynthesisResult>;
+  streamSynthesize?: (req: SpeechSynthesisStreamRequest) => Promise<SpeechSynthesisStreamResult>;
   synthesizeTelephony?: (
     req: SpeechTelephonySynthesisRequest,
   ) => Promise<SpeechTelephonySynthesisResult>;
@@ -1695,6 +2221,11 @@ export type RealtimeTranscriptionProviderPlugin = {
   id: RealtimeTranscriptionProviderId;
   label: string;
   aliases?: string[];
+<<<<<<< HEAD
+=======
+  defaultModel?: string;
+  models?: readonly string[];
+>>>>>>> upstream/main
   autoSelectOrder?: number;
   resolveConfig?: (
     ctx: RealtimeTranscriptionProviderResolveConfigContext,
@@ -1707,15 +2238,38 @@ export type PluginRealtimeTranscriptionProviderEntry = RealtimeTranscriptionProv
   pluginId: string;
 };
 
+<<<<<<< HEAD
+=======
+/** Transcript source capability registered by a channel or meeting plugin. */
+export type TranscriptSourceProvider = TranscriptsSourceProviderCapability;
+
+export type PluginTranscriptsSourceProviderEntry = TranscriptSourceProvider & {
+  pluginId: string;
+};
+
+>>>>>>> upstream/main
 /** Realtime voice capability registered by a plugin. */
 export type RealtimeVoiceProviderPlugin = {
   id: RealtimeVoiceProviderId;
   label: string;
   aliases?: string[];
+<<<<<<< HEAD
   autoSelectOrder?: number;
   resolveConfig?: (ctx: RealtimeVoiceProviderResolveConfigContext) => RealtimeVoiceProviderConfig;
   isConfigured: (ctx: RealtimeVoiceProviderConfiguredContext) => boolean;
   createBridge: (req: RealtimeVoiceBridgeCreateRequest) => RealtimeVoiceBridge;
+=======
+  defaultModel?: string;
+  models?: readonly string[];
+  autoSelectOrder?: number;
+  capabilities?: RealtimeVoiceProviderCapabilities;
+  resolveConfig?: (ctx: RealtimeVoiceProviderResolveConfigContext) => RealtimeVoiceProviderConfig;
+  isConfigured: (ctx: RealtimeVoiceProviderConfiguredContext) => boolean;
+  createBridge: (req: RealtimeVoiceBridgeCreateRequest) => RealtimeVoiceBridge;
+  createBrowserSession?: (
+    req: RealtimeVoiceBrowserSessionCreateRequest,
+  ) => Promise<RealtimeVoiceBrowserSession>;
+>>>>>>> upstream/main
 };
 
 export type PluginRealtimeVoiceProviderEntry = RealtimeVoiceProviderPlugin & {
@@ -1736,24 +2290,52 @@ export type OpenClawPluginGatewayMethod = {
 // Plugin Commands
 // =============================================================================
 
+export type PluginCommandDiagnosticsSession = {
+  /** Stable host session key when available. */
+  sessionKey?: string;
+  /** Ephemeral OpenClaw session id when available. */
+  sessionId?: string;
+  /** Transcript file for this OpenClaw session when available. */
+  sessionFile?: string;
+  /** Embedded agent harness selected for this session. */
+  agentHarnessId?: string;
+  /** Channel/provider for this session when available. */
+  channel?: string;
+  /** Provider channel id when available. */
+  channelId?: ChannelId;
+  /** Account id for multi-account channels when available. */
+  accountId?: string;
+  /** Thread/topic id when available. */
+  messageThreadId?: string | number;
+  /** Parent conversation id for thread-capable channels when available. */
+  threadParentId?: string;
+};
+
 /**
  * Context passed to plugin command handlers.
  */
 export type PluginCommandContext = {
-  /** The sender's identifier (e.g., Telegram user ID) */
+  /** The sender's identifier (for example a channel-scoped user ID) */
   senderId?: string;
-  /** The channel/surface (e.g., "telegram", "discord") */
+  /** The channel/surface (for example "chat" or "team-chat") */
   channel: string;
-  /** Provider channel id (e.g., "telegram") */
+  /** Provider channel id */
   channelId?: ChannelId;
   /** Whether the sender is on the allowlist */
   isAuthorizedSender: boolean;
+  /** Whether the sender is an owner for owner-only command surfaces. */
+  senderIsOwner?: boolean;
   /** Gateway client scopes for internal control-plane callers */
   gatewayClientScopes?: string[];
   /** Stable host session key for the active conversation when available. */
   sessionKey?: string;
   /** Ephemeral host session id for the active conversation when available. */
   sessionId?: string;
+<<<<<<< HEAD
+=======
+  /** Transcript file for the active OpenClaw session when available. */
+  sessionFile?: string;
+>>>>>>> upstream/main
   /** Raw command arguments after the command name */
   args?: string;
   /** The full normalized command body */
@@ -1770,6 +2352,21 @@ export type PluginCommandContext = {
   messageThreadId?: string | number;
   /** Parent conversation id for thread-capable channels */
   threadParentId?: string;
+<<<<<<< HEAD
+=======
+  /** Sensitive diagnostics-only session inventory for owner-gated commands. */
+  diagnosticsSessions?: PluginCommandDiagnosticsSession[];
+  /** Host-bound runtime capabilities scoped to this command invocation. */
+  runtimeContext?: {
+    llm?: import("./runtime/types-core.js").PluginRuntimeCore["llm"];
+  };
+  /** Internal diagnostics-only marker that exec approval already authorized upload. */
+  diagnosticsUploadApproved?: boolean;
+  /** Internal diagnostics-only marker to preview upload effects without exposing ids. */
+  diagnosticsPreviewOnly?: boolean;
+  /** Internal diagnostics-only marker for owner-private routed confirmations. */
+  diagnosticsPrivateRouted?: boolean;
+>>>>>>> upstream/main
   requestConversationBinding: (
     params?: PluginConversationBindingRequestParams,
   ) => Promise<PluginConversationBindingRequestResult>;
@@ -1777,65 +2374,10 @@ export type PluginCommandContext = {
   getCurrentConversationBinding: () => Promise<PluginConversationBinding | null>;
 };
 
-export type PluginConversationBindingRequestParams = {
-  summary?: string;
-  detachHint?: string;
-};
-
-export type PluginConversationBindingResolutionDecision = "allow-once" | "allow-always" | "deny";
-
-export type PluginConversationBinding = {
-  bindingId: string;
-  pluginId: string;
-  pluginName?: string;
-  pluginRoot: string;
-  channel: string;
-  accountId: string;
-  conversationId: string;
-  parentConversationId?: string;
-  threadId?: string | number;
-  boundAt: number;
-  summary?: string;
-  detachHint?: string;
-};
-
-export type PluginConversationBindingRequestResult =
-  | {
-      status: "bound";
-      binding: PluginConversationBinding;
-    }
-  | {
-      status: "pending";
-      approvalId: string;
-      reply: ReplyPayload;
-    }
-  | {
-      status: "error";
-      message: string;
-    };
-
-export type PluginConversationBindingResolvedEvent = {
-  status: "approved" | "denied";
-  binding?: PluginConversationBinding;
-  decision: PluginConversationBindingResolutionDecision;
-  request: {
-    summary?: string;
-    detachHint?: string;
-    requestedBySenderId?: string;
-    conversation: {
-      channel: string;
-      accountId: string;
-      conversationId: string;
-      parentConversationId?: string;
-      threadId?: string | number;
-    };
-  };
-};
-
 /**
  * Result returned by a plugin command handler.
  */
-export type PluginCommandResult = ReplyPayload;
+export type PluginCommandResult = ReplyPayload & { continueAgent?: boolean };
 
 /**
  * Handler function for plugin commands.
@@ -1847,13 +2389,32 @@ export type PluginCommandHandler = (
 /**
  * Definition for a plugin-registered command.
  */
+export const AGENT_PROMPT_SURFACE_KINDS = [
+  "openclaw_main",
+  /** @deprecated Use openclaw_main. */
+  "pi_main",
+  "codex_app_server",
+  "cli_backend",
+  "acp_backend",
+  "subagent",
+] as const;
+
+export type AgentPromptSurfaceKind = (typeof AGENT_PROMPT_SURFACE_KINDS)[number];
+
+export type AgentPromptGuidanceEntry = {
+  text: string;
+  surfaces?: readonly AgentPromptSurfaceKind[];
+};
+
+export type AgentPromptGuidance = string | AgentPromptGuidanceEntry;
+
 export type OpenClawPluginCommandDefinition = {
   /** Command name without leading slash (e.g., "tts") */
   name: string;
   /**
    * Optional native-command aliases for slash/menu surfaces.
    * `default` applies to all native providers unless a provider-specific
-   * override exists (for example `{ default: "talkvoice", discord: "voice2" }`).
+   * override exists (for example `{ default: "talkvoice", teamChat: "voice2" }`).
    */
   nativeNames?: Partial<Record<string, string>> & { default?: string };
   /**
@@ -1861,13 +2422,37 @@ export type OpenClawPluginCommandDefinition = {
    * `default` applies to all native providers unless a provider-specific
    * override exists.
    */
+<<<<<<< HEAD
   nativeProgressMessages?: Partial<Record<string, string>> & { default?: string };
+=======
+  nativeProgressMessages?: Partial<Record<string, string>> & {
+    default?: string;
+  };
+>>>>>>> upstream/main
   /** Description shown in /help and command menus */
   description: string;
+  /** Localized descriptions for native command surfaces that support them. */
+  descriptionLocalizations?: Record<string, string>;
+  /**
+   * Optional channel ids this command belongs to.
+   * Omit to keep the command available on every channel surface.
+   */
+  channels?: readonly string[];
+  /** Optional system-prompt guidance for agents when this command is registered. */
+  agentPromptGuidance?: readonly AgentPromptGuidance[];
   /** Whether this command accepts arguments */
   acceptsArgs?: boolean;
   /** Whether only authorized senders can use this command (default: true) */
   requireAuth?: boolean;
+  /** Operator scopes required by gateway clients; command owners may satisfy this on chat surfaces. */
+  requiredScopes?: OperatorScope[];
+  /** Whether a trusted bundled handler needs owner status for subcommand-level authorization. */
+  exposeSenderIsOwner?: boolean;
+  /**
+   * Allows a bundled plugin to claim a command name that is otherwise reserved
+   * by core. External plugins cannot use this field.
+   */
+  ownership?: "plugin" | "reserved";
   /** The handler function */
   handler: PluginCommandHandler;
 };
@@ -1876,10 +2461,13 @@ export type PluginInteractiveHandlerResult = {
   handled?: boolean;
 } | void;
 
+<<<<<<< HEAD
 type BivariantInteractiveHandler<TContext, TResult> = {
   bivarianceHack: (ctx: TContext) => Promise<TResult> | TResult;
 }["bivarianceHack"];
 
+=======
+>>>>>>> upstream/main
 export type PluginInteractiveRegistration<
   TContext = unknown,
   TChannel extends string = string,
@@ -1887,29 +2475,57 @@ export type PluginInteractiveRegistration<
 > = {
   channel: TChannel;
   namespace: string;
+<<<<<<< HEAD
   handler: BivariantInteractiveHandler<TContext, TResult>;
+=======
+  handler: (ctx: TContext) => Promise<TResult> | TResult;
+>>>>>>> upstream/main
 };
 
 export type PluginInteractiveHandlerRegistration = PluginInteractiveRegistration;
 
 export type OpenClawPluginHttpRouteAuth = "gateway" | "plugin";
 export type OpenClawPluginHttpRouteMatch = "exact" | "prefix";
+export type OpenClawPluginGatewayRuntimeScopeSurface = "write-default" | "trusted-operator";
 
 export type OpenClawPluginHttpRouteHandler = (
   req: IncomingMessage,
   res: ServerResponse,
 ) => Promise<boolean | void> | boolean | void;
 
+export type OpenClawPluginHttpRouteUpgradeHandler = (
+  req: IncomingMessage,
+  socket: Duplex,
+  head: Buffer,
+) => Promise<boolean | void> | boolean | void;
+
 export type OpenClawPluginHttpRouteParams = {
   path: string;
   handler: OpenClawPluginHttpRouteHandler;
+  handleUpgrade?: OpenClawPluginHttpRouteUpgradeHandler;
   auth: OpenClawPluginHttpRouteAuth;
   match?: OpenClawPluginHttpRouteMatch;
+  gatewayRuntimeScopeSurface?: OpenClawPluginGatewayRuntimeScopeSurface;
+  nodeCapability?: {
+    surface: string;
+    ttlMs?: number;
+  };
   replaceExisting?: boolean;
 };
 
+export type OpenClawPluginHostedMediaResolver = (
+  mediaUrl: string,
+) => string | null | undefined | Promise<string | null | undefined>;
+
 export type OpenClawPluginCliContext = {
+  /**
+   * Command object where this plugin should register its commands.
+   *
+   * For root CLI registrations this is the root `openclaw` program. For nested
+   * registrations it is the resolved parent command from `parentPath`.
+   */
   program: Command;
+  parentPath: readonly string[];
   config: OpenClawConfig;
   workspaceDir?: string;
   logger: PluginLogger;
@@ -1931,6 +2547,21 @@ export type OpenClawPluginCliCommandDescriptor = {
   hasSubcommands: boolean;
 };
 
+<<<<<<< HEAD
+=======
+export type OpenClawPluginNodeCliFeatureOptions = {
+  /** Explicit node feature command names owned under `openclaw nodes`. */
+  commands?: string[];
+  /**
+   * Parse-time command descriptors for lazy node feature CLI registration.
+   *
+   * Descriptors are registered under `openclaw nodes`, so a descriptor named
+   * `"camera"` exposes `openclaw nodes camera`.
+   */
+  descriptors?: OpenClawPluginCliCommandDescriptor[];
+};
+
+>>>>>>> upstream/main
 export type OpenClawPluginReloadRegistration = {
   restartPrefixes?: string[];
   hotPrefixes?: string[];
@@ -1940,9 +2571,110 @@ export type OpenClawPluginReloadRegistration = {
 export type OpenClawPluginNodeHostCommand = {
   command: string;
   cap?: string;
+<<<<<<< HEAD
   handle: (paramsJSON?: string | null) => Promise<string>;
 };
 
+=======
+  dangerous?: boolean;
+  handle: (paramsJSON?: string | null) => Promise<string>;
+};
+
+export type OpenClawPluginNodeInvokeTransportResult =
+  | {
+      ok: true;
+      payload?: unknown;
+      payloadJSON?: string | null;
+    }
+  | {
+      ok: false;
+      code?: string;
+      message: string;
+      details?: Record<string, unknown>;
+    };
+
+export type OpenClawPluginNodeInvokeApprovalDecision = "allow-once" | "allow-always" | "deny";
+
+export type OpenClawPluginNodeInvokePolicyApprovalRuntime = {
+  request: (input: {
+    title: string;
+    description: string;
+    severity?: "info" | "warning" | "critical";
+    toolName?: string;
+    toolCallId?: string;
+    agentId?: string;
+    sessionKey?: string;
+    timeoutMs?: number;
+  }) => Promise<{
+    id?: string;
+    decision?: OpenClawPluginNodeInvokeApprovalDecision | null;
+  }>;
+};
+
+export type OpenClawPluginNodeInvokePolicyContext = {
+  nodeId: string;
+  command: string;
+  params: unknown;
+  timeoutMs?: number;
+  idempotencyKey?: string;
+  config: OpenClawConfig;
+  pluginConfig?: Record<string, unknown>;
+  node?: {
+    nodeId: string;
+    displayName?: string;
+    platform?: string;
+    deviceFamily?: string;
+    commands?: string[];
+  };
+  client?: {
+    connId?: string;
+    scopes?: string[];
+  } | null;
+  approvals?: OpenClawPluginNodeInvokePolicyApprovalRuntime;
+  invokeNode: (input?: {
+    params?: unknown;
+    timeoutMs?: number;
+    idempotencyKey?: string;
+  }) => Promise<OpenClawPluginNodeInvokeTransportResult>;
+};
+
+export type OpenClawPluginNodeInvokePolicyResult =
+  | {
+      ok: true;
+      payload?: unknown;
+      payloadJSON?: string | null;
+    }
+  | {
+      ok: false;
+      message: string;
+      code?: string;
+      details?: Record<string, unknown>;
+      unavailable?: boolean;
+    };
+
+export type OpenClawPluginNodeInvokePolicy = {
+  commands: string[];
+  /**
+   * Platforms where these node-handled commands should be allowlisted by default.
+   * Omit for commands that require explicit `gateway.nodes.allowCommands`.
+   */
+  defaultPlatforms?: Array<"ios" | "android" | "macos" | "windows" | "linux" | "unknown">;
+  /**
+   * Dangerous policy commands are filtered out of default allowlists unless
+   * explicitly allowed by config.
+   */
+  dangerous?: boolean;
+  /**
+   * iOS foreground-restricted commands should be queued for foreground delivery
+   * when an iOS node reports BACKGROUND_UNAVAILABLE.
+   */
+  foregroundRestrictedOnIos?: boolean;
+  handle: (
+    ctx: OpenClawPluginNodeInvokePolicyContext,
+  ) => Promise<OpenClawPluginNodeInvokePolicyResult> | OpenClawPluginNodeInvokePolicyResult;
+};
+
+>>>>>>> upstream/main
 export type OpenClawPluginSecurityAuditContext = {
   config: OpenClawConfig;
   sourceConfig: OpenClawConfig;
@@ -1955,12 +2687,49 @@ export type OpenClawPluginSecurityAuditCollector = (
   ctx: OpenClawPluginSecurityAuditContext,
 ) => SecurityAuditFinding[] | Promise<SecurityAuditFinding[]>;
 
+<<<<<<< HEAD
+=======
+export type OpenClawGatewayDiscoveryAdvertiseContext = {
+  machineDisplayName: string;
+  gatewayPort: number;
+  gatewayTlsEnabled: boolean;
+  gatewayTlsFingerprintSha256?: string;
+  gatewayDirectReachable: boolean;
+  canvasPort?: number;
+  tailnetDns?: string;
+  sshPort?: number;
+  cliPath?: string;
+  minimal: boolean;
+};
+
+export type OpenClawGatewayDiscoveryService = {
+  id: string;
+  advertise: (
+    ctx: OpenClawGatewayDiscoveryAdvertiseContext,
+  ) => void | Promise<void | { stop?: () => void | Promise<void> }>;
+};
+
+>>>>>>> upstream/main
 /** Context passed to long-lived plugin services. */
 export type OpenClawPluginServiceContext = {
   config: OpenClawConfig;
   workspaceDir?: string;
   stateDir: string;
   logger: PluginLogger;
+  startupTrace?: {
+    detail?: (name: string, metrics: ReadonlyArray<readonly [string, number | string]>) => void;
+    measure: <T>(name: string, run: () => T | Promise<T>) => Promise<T>;
+  };
+  internalDiagnostics?: {
+    emit: (event: DiagnosticEventInput, privateData?: DiagnosticEventPrivateData) => void;
+    onEvent: (
+      listener: (
+        event: DiagnosticEventPayload,
+        metadata: DiagnosticEventMetadata,
+        privateData: DiagnosticEventPrivateData,
+      ) => void,
+    ) => () => void;
+  };
 };
 
 /** Background service registered by a plugin during `register(api)`. */
@@ -1980,20 +2749,56 @@ export type OpenClawPluginDefinition = {
   name?: string;
   description?: string;
   version?: string;
+<<<<<<< HEAD
+=======
+  /**
+   * @deprecated Declare exclusive plugin kind in `openclaw.plugin.json` via
+   * manifest `kind`. Runtime-exported `kind` is kept as a compatibility
+   * fallback for older plugins and may require loading plugin runtime on
+   * metadata-only command paths.
+   */
+>>>>>>> upstream/main
   kind?: PluginKind | PluginKind[];
   configSchema?: OpenClawPluginConfigSchema;
   reload?: OpenClawPluginReloadRegistration;
   nodeHostCommands?: OpenClawPluginNodeHostCommand[];
   securityAuditCollectors?: OpenClawPluginSecurityAuditCollector[];
+<<<<<<< HEAD
   register?: (api: OpenClawPluginApi) => void | Promise<void>;
   activate?: (api: OpenClawPluginApi) => void | Promise<void>;
+=======
+  register?: (api: OpenClawPluginApi) => void;
+  activate?: (api: OpenClawPluginApi) => void;
+>>>>>>> upstream/main
 };
 
-export type OpenClawPluginModule =
-  | OpenClawPluginDefinition
-  | ((api: OpenClawPluginApi) => void | Promise<void>);
+export type OpenClawPluginModule = OpenClawPluginDefinition | ((api: OpenClawPluginApi) => void);
 
+<<<<<<< HEAD
 export type PluginRegistrationMode = "full" | "setup-only" | "setup-runtime" | "cli-metadata";
+=======
+/**
+ * Public label exposed to plugin `register(api)` calls.
+ *
+ * Keep this as a compatibility signal for plugin authors. Loader internals
+ * should derive explicit capability booleans from the mode instead of branching
+ * on raw strings throughout the code path.
+ *
+ * - `full`: live runtime activation; long-lived side effects may start.
+ * - `discovery`: read-only capability discovery; skip sockets/workers/clients.
+ * - `tool-discovery`: capability discovery for executable tools; skip channel runtime hydration.
+ * - `setup-only`: lightweight channel setup entry only.
+ * - `setup-runtime`: setup flow that also needs the runtime channel entry.
+ * - `cli-metadata`: CLI command metadata collection.
+ */
+export type PluginRegistrationMode =
+  | "full"
+  | "discovery"
+  | "tool-discovery"
+  | "setup-only"
+  | "setup-runtime"
+  | "cli-metadata";
+>>>>>>> upstream/main
 
 export type PluginConfigMigration = (config: OpenClawConfig) =>
   | {
@@ -2003,6 +2808,118 @@ export type PluginConfigMigration = (config: OpenClawConfig) =>
   | null
   | undefined;
 
+<<<<<<< HEAD
+=======
+export type MigrationItemStatus =
+  | "planned"
+  | "migrated"
+  | "skipped"
+  | "warning"
+  | "conflict"
+  | "error";
+export type MigrationItemKind =
+  | "auth"
+  | "config"
+  | "secret"
+  | "memory"
+  | "skill"
+  | "workspace"
+  | "session"
+  | "file"
+  | "archive"
+  | "manual";
+export type MigrationItemAction =
+  | "copy"
+  | "create"
+  | "update"
+  | "merge"
+  | "append"
+  | "archive"
+  | "skip"
+  | "manual";
+
+export type MigrationItem = {
+  id: string;
+  kind: MigrationItemKind | (string & {});
+  action: MigrationItemAction | (string & {});
+  status: MigrationItemStatus;
+  source?: string;
+  target?: string;
+  message?: string;
+  reason?: string;
+  sensitive?: boolean;
+  details?: Record<string, unknown>;
+};
+
+export type MigrationSummary = {
+  total: number;
+  planned: number;
+  migrated: number;
+  skipped: number;
+  conflicts: number;
+  errors: number;
+  sensitive: number;
+};
+
+export type MigrationDetection = {
+  found: boolean;
+  source?: string;
+  label?: string;
+  confidence?: "low" | "medium" | "high";
+  message?: string;
+};
+
+export type MigrationPlan = {
+  providerId: string;
+  source: string;
+  target?: string;
+  summary: MigrationSummary;
+  items: MigrationItem[];
+  warnings?: string[];
+  nextSteps?: string[];
+  metadata?: Record<string, unknown>;
+};
+
+export type MigrationApplyResult = MigrationPlan & {
+  backupPath?: string;
+  reportDir?: string;
+};
+
+export type MigrationProviderPreparation = {
+  dispose?: () => void | Promise<void>;
+};
+
+export type MigrationProviderContext = {
+  config: OpenClawConfig;
+  runtime?: PluginRuntime;
+  logger: PluginLogger;
+  stateDir: string;
+  source?: string;
+  includeSecrets?: boolean;
+  overwrite?: boolean;
+  providerOptions?: Record<string, unknown>;
+  backupPath?: string;
+  reportDir?: string;
+  signal?: AbortSignal;
+};
+
+/** Migration source implemented by a plugin and orchestrated by `openclaw migrate`. */
+export type MigrationProviderPlugin = {
+  id: string;
+  label: string;
+  description?: string;
+  detect?: (ctx: MigrationProviderContext) => MigrationDetection | Promise<MigrationDetection>;
+  prepareApply?: (
+    ctx: MigrationProviderContext,
+  ) => MigrationProviderPreparation | Promise<MigrationProviderPreparation | undefined> | undefined;
+  plan: (ctx: MigrationProviderContext) => MigrationPlan | Promise<MigrationPlan>;
+  apply: (
+    ctx: MigrationProviderContext,
+    plan?: MigrationPlan,
+  ) => MigrationApplyResult | Promise<MigrationApplyResult>;
+};
+
+>>>>>>> upstream/main
 export type PluginSetupAutoEnableContext = {
   config: OpenClawConfig;
   env: NodeJS.ProcessEnv;
@@ -2011,6 +2928,82 @@ export type PluginSetupAutoEnableContext = {
 export type PluginSetupAutoEnableProbe = (
   ctx: PluginSetupAutoEnableContext,
 ) => string | string[] | null | undefined;
+<<<<<<< HEAD
+=======
+
+export type OpenClawPluginSessionStateApi = {
+  /** Register plugin-owned session state projected into Gateway session rows. */
+  registerSessionExtension: (extension: PluginSessionExtensionRegistration) => void;
+};
+
+export type OpenClawPluginSessionWorkflowApi = {
+  /** Queue one plugin-owned context injection for the next agent turn in a session. */
+  enqueueNextTurnInjection: (
+    injection: PluginNextTurnInjection,
+  ) => Promise<PluginNextTurnInjectionEnqueueResult>;
+  /**
+   * Register cleanup metadata for a plugin-owned session scheduler job.
+   * This does not schedule work or create task records; it only lets the host
+   * clean external scheduler state during reset/delete/disable.
+   */
+  registerSessionSchedulerJob: (
+    job: PluginSessionSchedulerJobRegistration,
+  ) => PluginSessionSchedulerJobHandle | undefined;
+  /** Send host-validated files to the active direct-outbound route for a session. */
+  sendSessionAttachment: (
+    params: PluginSessionAttachmentParams,
+  ) => Promise<PluginSessionAttachmentResult>;
+  /**
+   * Schedule a future agent turn in a session through Cron.
+   * Cron owns timing and creates the task ledger entry when the turn runs.
+   */
+  scheduleSessionTurn: (
+    params: PluginSessionTurnScheduleParams,
+  ) => Promise<PluginSessionSchedulerJobHandle | undefined>;
+  /** Remove Cron-backed scheduled session turns that share a plugin-owned tag. */
+  unscheduleSessionTurnsByTag: (
+    params: PluginSessionTurnUnscheduleByTagParams,
+  ) => Promise<PluginSessionTurnUnscheduleByTagResult>;
+};
+
+export type OpenClawPluginSessionControlsApi = {
+  /** Register a typed session action that clients can dispatch through the Gateway. */
+  registerSessionAction: (action: PluginSessionActionRegistration) => void;
+  /** Register a generic Control UI contribution descriptor. */
+  registerControlUiDescriptor: (descriptor: PluginControlUiDescriptor) => void;
+};
+
+export type OpenClawPluginSessionApi = {
+  state: OpenClawPluginSessionStateApi;
+  workflow: OpenClawPluginSessionWorkflowApi;
+  controls: OpenClawPluginSessionControlsApi;
+};
+
+export type OpenClawPluginAgentEventsApi = {
+  /** Subscribe to sanitized agent events through the host-owned plugin lifecycle. */
+  registerAgentEventSubscription: (subscription: PluginAgentEventSubscriptionRegistration) => void;
+  /** Emit a host-routed, plugin-attributed event for workflow/UI subscribers. */
+  emitAgentEvent: (params: PluginAgentEventEmitParams) => PluginAgentEventEmitResult;
+};
+
+export type OpenClawPluginAgentApi = {
+  events: OpenClawPluginAgentEventsApi;
+};
+
+export type OpenClawPluginRunContextApi = {
+  /** Store namespaced, JSON-compatible data for the active run. Cleared on run end/error. */
+  setRunContext: (patch: PluginRunContextPatch) => boolean;
+  /** Read namespaced plugin data for a run. */
+  getRunContext: (params: PluginRunContextGetParams) => PluginJsonValue | undefined;
+  /** Clear one namespace or all namespaces this plugin owns for a run. */
+  clearRunContext: (params: { runId: string; namespace?: string }) => void;
+};
+
+export type OpenClawPluginLifecycleApi = {
+  /** Register cleanup hooks for plugin-owned host state and background work. */
+  registerRuntimeLifecycle: (lifecycle: PluginRuntimeLifecycleRegistration) => void;
+};
+>>>>>>> upstream/main
 
 /** Main registration API injected into native plugin entry files. */
 export type OpenClawPluginApi = {
@@ -2031,6 +3024,17 @@ export type OpenClawPluginApi = {
    */
   runtime: PluginRuntime;
   logger: PluginLogger;
+  /**
+   * Grouped facade over the existing flat session-related plugin API.
+   * Flat methods remain supported for compatibility.
+   */
+  session: OpenClawPluginSessionApi;
+  /** Grouped facade for agent-event workflow seams. */
+  agent: OpenClawPluginAgentApi;
+  /** Grouped facade for run-scoped plugin scratch state. */
+  runContext: OpenClawPluginRunContextApi;
+  /** Grouped facade for plugin-owned lifecycle cleanup hooks. */
+  lifecycle: OpenClawPluginLifecycleApi;
   registerTool: (
     tool: AnyAgentTool | OpenClawPluginToolFactory,
     opts?: OpenClawPluginToolOptions,
@@ -2041,6 +3045,8 @@ export type OpenClawPluginApi = {
     opts?: OpenClawPluginHookOptions,
   ) => void;
   registerHttpRoute: (params: OpenClawPluginHttpRouteParams) => void;
+  /** Register a plugin-owned resolver for browser-style hosted media URLs. */
+  registerHostedMediaResolver: (resolver: OpenClawPluginHostedMediaResolver) => void;
   /** Register a native messaging channel plugin (channel capability). */
   registerChannel: (registration: OpenClawPluginChannelRegistration | ChannelPlugin) => void;
   /**
@@ -2058,6 +3064,7 @@ export type OpenClawPluginApi = {
   registerCli: (
     registrar: OpenClawPluginCliRegistrar,
     opts?: {
+<<<<<<< HEAD
       /** Explicit top-level command roots owned by this registrar. */
       commands?: string[];
       /**
@@ -2066,20 +3073,66 @@ export type OpenClawPluginApi = {
        * When descriptors cover every top-level command root, OpenClaw can keep
        * the plugin registrar lazy in the normal root CLI path. Command-only
        * registrations stay on the eager compatibility path.
+=======
+      /** Parent command path for nested command groups, for example `["nodes"]`. */
+      parentPath?: string[];
+      /** Explicit command names owned by this registrar at `parentPath`. */
+      commands?: string[];
+      /**
+       * Parse-time command descriptors for lazy CLI registration.
+       *
+       * When descriptors cover every command exposed at `parentPath`, OpenClaw
+       * can keep the plugin registrar lazy. Command-only registrations stay on
+       * the eager compatibility path.
+>>>>>>> upstream/main
        */
       descriptors?: OpenClawPluginCliCommandDescriptor[];
     },
   ) => void;
+<<<<<<< HEAD
   registerReload: (registration: OpenClawPluginReloadRegistration) => void;
   registerNodeHostCommand: (command: OpenClawPluginNodeHostCommand) => void;
   registerSecurityAuditCollector: (collector: OpenClawPluginSecurityAuditCollector) => void;
   registerService: (service: OpenClawPluginService) => void;
   /** Register a lightweight config migration that can run before plugin runtime loads. */
   registerConfigMigration: (migrate: PluginConfigMigration) => void;
+=======
+  /**
+   * Register a plugin-owned node feature command group under `openclaw nodes`.
+   *
+   * This is equivalent to `registerCli(registrar, { parentPath: ["nodes"], ... })`
+   * and is intended for paired-node capabilities such as camera, screen, or Canvas.
+   */
+  registerNodeCliFeature: (
+    registrar: OpenClawPluginCliRegistrar,
+    opts?: OpenClawPluginNodeCliFeatureOptions,
+  ) => void;
+  registerReload: (registration: OpenClawPluginReloadRegistration) => void;
+  registerNodeHostCommand: (command: OpenClawPluginNodeHostCommand) => void;
+  registerNodeInvokePolicy: (policy: OpenClawPluginNodeInvokePolicy) => void;
+  registerSecurityAuditCollector: (collector: OpenClawPluginSecurityAuditCollector) => void;
+  registerService: (service: OpenClawPluginService) => void;
+  /** Register a local gateway discovery advertiser such as mDNS/Bonjour. */
+  registerGatewayDiscoveryService: (service: OpenClawGatewayDiscoveryService) => void;
+  /** Register a text-only CLI backend used by the local CLI runner. */
+  registerCliBackend: (backend: CliBackendPlugin) => void;
+  /** Register plugin-owned prompt/message compatibility text transforms. */
+  registerTextTransforms: (transforms: PluginTextTransformRegistration) => void;
+  /** Register a lightweight config migration that can run before plugin runtime loads. */
+  registerConfigMigration: (migrate: PluginConfigMigration) => void;
+  /** Register an importer for `openclaw migrate` (migration capability). */
+  registerMigrationProvider: (provider: MigrationProviderPlugin) => void;
+>>>>>>> upstream/main
   /** Register a lightweight config probe that can auto-enable this plugin generically. */
   registerAutoEnableProbe: (probe: PluginSetupAutoEnableProbe) => void;
   /** Register a native model/provider plugin (text inference capability). */
   registerProvider: (provider: ProviderPlugin) => void;
+  /** Register provider-owned model catalog rows for text and media generation. */
+  registerModelCatalogProvider: (provider: UnifiedModelCatalogProviderPlugin) => void;
+  /** Register a general embedding provider (embedding capability). */
+  registerEmbeddingProvider: (
+    adapter: import("./embedding-providers.js").EmbeddingProviderAdapter,
+  ) => void;
   /** Register a speech synthesis provider (speech capability). */
   registerSpeechProvider: (provider: SpeechProviderPlugin) => void;
   /** Register a realtime transcription provider (streaming STT capability). */
@@ -2088,6 +3141,8 @@ export type OpenClawPluginApi = {
   registerRealtimeVoiceProvider: (provider: RealtimeVoiceProviderPlugin) => void;
   /** Register a media understanding provider (media understanding capability). */
   registerMediaUnderstandingProvider: (provider: MediaUnderstandingProviderPlugin) => void;
+  /** Register a transcripts source provider (live or imported meeting transcript capability). */
+  registerTranscriptSourceProvider: (provider: TranscriptSourceProvider) => void;
   /** Register an image generation provider (image generation capability). */
   registerImageGenerationProvider: (provider: ImageGenerationProviderPlugin) => void;
   /** Register a video generation provider (video generation capability). */
@@ -2113,7 +3168,143 @@ export type OpenClawPluginApi = {
     id: string,
     factory: import("../context-engine/registry.js").ContextEngineFactory,
   ) => void;
-  /** Register the system prompt section builder for this memory plugin (exclusive slot). */
+  /** Register a compaction provider (pluggable summarization backend). */
+  registerCompactionProvider: (
+    provider: import("./compaction-provider.js").CompactionProvider,
+  ) => void;
+  /** Register an agent harness implementation. */
+  registerAgentHarness: (harness: AgentHarness) => void;
+  /**
+   * Register a Codex app-server extension factory for Codex harness tool-result
+   * middleware. Only bundled plugins may use this seam, and
+   * `contracts.embeddedExtensionFactories` must include `"codex-app-server"`.
+   */
+  registerCodexAppServerExtensionFactory: (factory: CodexAppServerExtensionFactory) => void;
+  /**
+   * Register runtime-neutral tool-result middleware. Declare
+   * `contracts.agentToolResultMiddleware` for every targeted runtime.
+   */
+  registerAgentToolResultMiddleware: (
+    handler: AgentToolResultMiddleware,
+    options?: AgentToolResultMiddlewareOptions,
+  ) => void;
+  /**
+   * Register plugin-owned session state that can be projected into Gateway session rows.
+   * @deprecated Use `api.session.state.registerSessionExtension(...)`.
+   */
+  registerSessionExtension: (extension: PluginSessionExtensionRegistration) => void;
+  /**
+   * Queue one plugin-owned context injection for the next agent turn in a session.
+   * @deprecated Use `api.session.workflow.enqueueNextTurnInjection(...)`.
+   */
+  enqueueNextTurnInjection: (
+    injection: PluginNextTurnInjection,
+  ) => Promise<PluginNextTurnInjectionEnqueueResult>;
+  /**
+   * Register a trusted pre-tool policy. Installed plugins must declare the
+   * policy id in `contracts.trustedToolPolicies`.
+   */
+  registerTrustedToolPolicy: (policy: PluginTrustedToolPolicyRegistration) => void;
+  /**
+   * Register display/policy metadata for a plugin-owned tool. Metadata is
+   * scoped to the (pluginId, toolName) pair at projection time, so plugins
+   * cannot decorate other plugins' tools or core tools through this surface.
+   */
+  registerToolMetadata: (metadata: PluginToolMetadataRegistration) => void;
+  /**
+   * Register a generic Control UI contribution descriptor.
+   * @deprecated Use `api.session.controls.registerControlUiDescriptor(...)`.
+   */
+  registerControlUiDescriptor: (descriptor: PluginControlUiDescriptor) => void;
+  /**
+   * Register cleanup hooks for plugin-owned host state and background work.
+   * @deprecated Use `api.lifecycle.registerRuntimeLifecycle(...)`.
+   */
+  registerRuntimeLifecycle: (lifecycle: PluginRuntimeLifecycleRegistration) => void;
+  /**
+   * Subscribe to sanitized agent events through the host-owned plugin lifecycle.
+   * @deprecated Use `api.agent.events.registerAgentEventSubscription(...)`.
+   */
+  registerAgentEventSubscription: (subscription: PluginAgentEventSubscriptionRegistration) => void;
+  /**
+   * Emit a host-routed, plugin-attributed agent event for workflow/UI subscribers.
+   * @deprecated Use `api.agent.events.emitAgentEvent(...)`.
+   */
+  emitAgentEvent: (params: PluginAgentEventEmitParams) => PluginAgentEventEmitResult;
+  /**
+   * Store namespaced, JSON-compatible data for the active run. Cleared on run end/error.
+   * @deprecated Use `api.runContext.setRunContext(...)`.
+   */
+  setRunContext: (patch: PluginRunContextPatch) => boolean;
+  /**
+   * Read namespaced plugin data for a run.
+   * @deprecated Use `api.runContext.getRunContext(...)`.
+   */
+  getRunContext: (params: PluginRunContextGetParams) => PluginJsonValue | undefined;
+  /**
+   * Clear one namespace or all namespaces this plugin owns for a run.
+   * @deprecated Use `api.runContext.clearRunContext(...)`.
+   */
+  clearRunContext: (params: { runId: string; namespace?: string }) => void;
+  /**
+   * Register cleanup metadata for a plugin-owned session scheduler job.
+   * This does not schedule work or create task records; it only lets the host
+   * clean external scheduler state during reset/delete/disable.
+   *
+   * @deprecated Use `api.session.workflow.registerSessionSchedulerJob(...)`.
+   */
+  registerSessionSchedulerJob: (
+    job: PluginSessionSchedulerJobRegistration,
+  ) => PluginSessionSchedulerJobHandle | undefined;
+  /**
+   * Register a typed session action that clients can dispatch through the Gateway.
+   * @deprecated Use `api.session.controls.registerSessionAction(...)`.
+   */
+  registerSessionAction: (action: PluginSessionActionRegistration) => void;
+  /**
+   * Send one or more host-validated files to the active direct-outbound channel for a session.
+   *
+   * This API is intended for bundled plugins running with the host channel/session
+   * integration available. Calls may resolve to `{ ok: false }` instead of attaching
+   * files when global side effects are disabled or when the required plugin/channel
+   * runtime is not loaded, so callers must handle rejection via the returned result.
+   *
+   * @deprecated Use `api.session.workflow.sendSessionAttachment(...)`.
+   */
+  sendSessionAttachment: (
+    params: PluginSessionAttachmentParams,
+  ) => Promise<PluginSessionAttachmentResult>;
+  /**
+   * Schedule a future agent turn in a session through Cron.
+   * Cron owns timing and creates the task ledger entry when the turn runs.
+   * Bundled plugins only; workspace plugins receive undefined.
+   *
+   * @deprecated Use `api.session.workflow.scheduleSessionTurn(...)`.
+   */
+  scheduleSessionTurn: (
+    params: PluginSessionTurnScheduleParams,
+  ) => Promise<PluginSessionSchedulerJobHandle | undefined>;
+  /**
+   * Remove Cron-backed scheduled session turns that share the same plugin-owned tag.
+   * Bundled plugins only; workspace plugins receive a zero-count result.
+   *
+   * @deprecated Use `api.session.workflow.unscheduleSessionTurnsByTag(...)`.
+   */
+  unscheduleSessionTurnsByTag: (
+    params: PluginSessionTurnUnscheduleByTagParams,
+  ) => Promise<PluginSessionTurnUnscheduleByTagResult>;
+  /** Register the active detached task runtime for this plugin (exclusive slot). */
+  registerDetachedTaskRuntime: (
+    runtime: import("./runtime/runtime-tasks.types.js").DetachedTaskLifecycleRuntime,
+  ) => void;
+  /** Register the active memory capability for this memory plugin (exclusive slot). */
+  registerMemoryCapability: (
+    capability: import("./memory-state.js").MemoryPluginCapability,
+  ) => void;
+  /**
+   * Register the system prompt section builder for this memory plugin (exclusive slot).
+   * @deprecated Use registerMemoryCapability({ promptBuilder }) instead.
+   */
   registerMemoryPromptSection: (
     builder: import("./memory-state.js").MemoryPromptSectionBuilder,
   ) => void;
@@ -2125,11 +3316,26 @@ export type OpenClawPluginApi = {
   registerMemoryCorpusSupplement: (
     supplement: import("./memory-state.js").MemoryCorpusSupplement,
   ) => void;
+<<<<<<< HEAD
   /** Register the pre-compaction flush plan resolver for this memory plugin (exclusive slot). */
+=======
+  /**
+   * Register the pre-compaction flush plan resolver for this memory plugin (exclusive slot).
+   * @deprecated Use registerMemoryCapability({ flushPlanResolver }) instead.
+   */
+>>>>>>> upstream/main
   registerMemoryFlushPlan: (resolver: import("./memory-state.js").MemoryFlushPlanResolver) => void;
-  /** Register the active memory runtime adapter for this memory plugin (exclusive slot). */
+  /**
+   * Register the active memory runtime adapter for this memory plugin (exclusive slot).
+   * @deprecated Use registerMemoryCapability({ runtime }) instead.
+   */
   registerMemoryRuntime: (runtime: import("./memory-state.js").MemoryPluginRuntime) => void;
-  /** Register a memory embedding provider adapter. Multiple adapters may coexist. */
+  /**
+   * Register a memory embedding provider adapter. Multiple adapters may coexist.
+   * @deprecated New embedding providers should use `registerEmbeddingProvider`
+   * and `contracts.embeddingProviders`. This memory-specific seam is retained
+   * while existing memory providers migrate.
+   */
   registerMemoryEmbeddingProvider: (
     adapter: import("./memory-embedding-providers.js").MemoryEmbeddingProviderAdapter,
   ) => void;
@@ -2138,10 +3344,11 @@ export type OpenClawPluginApi = {
   on: <K extends PluginHookName>(
     hookName: K,
     handler: PluginHookHandlerMap[K],
-    opts?: { priority?: number },
+    opts?: { priority?: number; timeoutMs?: number },
   ) => void;
 };
 
+<<<<<<< HEAD
 export type PluginOrigin = "bundled" | "global" | "workspace" | "config";
 
 export type PluginFormat = "openclaw" | "bundle";
@@ -3034,3 +4241,7 @@ export type PluginHookRegistration<K extends PluginHookName = PluginHookName> = 
   priority?: number;
   source: string;
 };
+=======
+// Plugin hook contracts now live in hook-types.ts so hook runners can import a
+// leaf contract surface instead of pulling the full plugin runtime barrel.
+>>>>>>> upstream/main

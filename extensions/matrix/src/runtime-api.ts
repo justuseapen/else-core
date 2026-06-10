@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   DEFAULT_ACCOUNT_ID,
   normalizeAccountId,
@@ -7,9 +11,17 @@ export {
   createActionGate,
   jsonResult,
   readNumberParam,
+<<<<<<< HEAD
   readReactionParams,
   readStringArrayParam,
   readStringParam,
+=======
+  readPositiveIntegerParam,
+  readReactionParams,
+  readStringArrayParam,
+  readStringParam,
+  ToolAuthorizationError,
+>>>>>>> upstream/main
 } from "openclaw/plugin-sdk/channel-actions";
 export { buildChannelConfigSchema } from "openclaw/plugin-sdk/channel-config-primitives";
 export type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
@@ -28,27 +40,46 @@ export type {
 } from "openclaw/plugin-sdk/channel-contract";
 export {
   formatLocationText,
+<<<<<<< HEAD
   logInboundDrop,
   toLocationContext,
   type NormalizedLocation,
 } from "openclaw/plugin-sdk/channel-inbound";
 export { resolveAckReaction, logTypingFailure } from "openclaw/plugin-sdk/channel-feedback";
+=======
+  toLocationContext,
+  type NormalizedLocation,
+} from "openclaw/plugin-sdk/channel-inbound";
+export { logInboundDrop } from "openclaw/plugin-sdk/channel-inbound";
+export { logTypingFailure } from "openclaw/plugin-sdk/channel-outbound";
+export { resolveAckReaction } from "openclaw/plugin-sdk/channel-feedback";
+>>>>>>> upstream/main
 export type { ChannelSetupInput } from "openclaw/plugin-sdk/setup";
 export type {
   OpenClawConfig,
   ContextVisibilityMode,
   DmPolicy,
   GroupPolicy,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/config-runtime";
 export type { GroupToolPolicyConfig } from "openclaw/plugin-sdk/config-runtime";
 export type { WizardPrompter } from "openclaw/plugin-sdk/matrix-runtime-shared";
+=======
+} from "openclaw/plugin-sdk/config-contracts";
+export type { GroupToolPolicyConfig } from "openclaw/plugin-sdk/config-contracts";
+export type { WizardPrompter } from "openclaw/plugin-sdk/setup";
+>>>>>>> upstream/main
 export type { SecretInput } from "openclaw/plugin-sdk/secret-input";
 export {
   GROUP_POLICY_BLOCKED_LABEL,
   resolveAllowlistProviderRuntimeGroupPolicy,
   resolveDefaultGroupPolicy,
   warnMissingProviderGroupPolicyFallbackOnce,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/config-runtime";
+=======
+} from "openclaw/plugin-sdk/runtime-group-policy";
+>>>>>>> upstream/main
 export {
   addWildcardAllowFrom,
   formatDocsLink,
@@ -57,6 +88,10 @@ export {
   moveSingleAccountChannelSectionToDefaultAccount,
   promptAccountId,
   promptChannelAccessConfig,
+<<<<<<< HEAD
+=======
+  splitSetupEntries,
+>>>>>>> upstream/main
 } from "openclaw/plugin-sdk/setup";
 export type { RuntimeEnv } from "openclaw/plugin-sdk/runtime";
 export {
@@ -70,7 +105,11 @@ export {
   type LookupFn,
   type SsrFPolicy,
 } from "openclaw/plugin-sdk/ssrf-runtime";
+<<<<<<< HEAD
 export { dispatchReplyFromConfigWithSettledDispatcher } from "openclaw/plugin-sdk/inbound-reply-dispatch";
+=======
+export { dispatchReplyFromConfigWithSettledDispatcher } from "openclaw/plugin-sdk/channel-inbound";
+>>>>>>> upstream/main
 export {
   ensureConfiguredAcpBindingReady,
   resolveConfiguredAcpBindingRecord,
@@ -85,17 +124,27 @@ export {
   resolveThreadBindingIdleTimeoutMsForChannel,
   resolveThreadBindingMaxAgeMsForChannel,
 } from "openclaw/plugin-sdk/conversation-runtime";
+<<<<<<< HEAD
 export { resolveOutboundSendDep } from "openclaw/plugin-sdk/outbound-runtime";
 export { resolveAgentIdFromSessionKey } from "openclaw/plugin-sdk/routing";
 export { chunkTextForOutbound } from "openclaw/plugin-sdk/text-chunking";
 export { createChannelReplyPipeline } from "openclaw/plugin-sdk/channel-reply-pipeline";
 export { loadOutboundMediaFromUrl } from "openclaw/plugin-sdk/outbound-media";
 export { normalizePollInput, type PollInput } from "openclaw/plugin-sdk/media-runtime";
+=======
+export { resolveOutboundSendDep } from "openclaw/plugin-sdk/channel-outbound";
+export { resolveAgentIdFromSessionKey } from "openclaw/plugin-sdk/routing";
+export { chunkTextForOutbound } from "openclaw/plugin-sdk/text-chunking";
+export { createChannelMessageReplyPipeline } from "openclaw/plugin-sdk/channel-outbound";
+export { loadOutboundMediaFromUrl } from "openclaw/plugin-sdk/outbound-media";
+export { normalizePollInput, type PollInput } from "openclaw/plugin-sdk/poll-runtime";
+>>>>>>> upstream/main
 export { writeJsonFileAtomically } from "openclaw/plugin-sdk/json-store";
 export {
   buildChannelKeyCandidates,
   resolveChannelEntryMatch,
 } from "openclaw/plugin-sdk/channel-targets";
+<<<<<<< HEAD
 export {
   evaluateGroupRouteAccessForPolicy,
   resolveSenderScopedGroupPolicy,
@@ -140,3 +189,11 @@ export function buildTimeoutAbortSignal(params: { timeoutMs?: number; signal?: A
     },
   };
 }
+=======
+export { buildTimeoutAbortSignal } from "./matrix/sdk/timeout-abort-signal.js";
+export { formatZonedTimestamp } from "openclaw/plugin-sdk/time-runtime";
+export type { PluginRuntime, RuntimeLogger } from "openclaw/plugin-sdk/plugin-runtime";
+export type { ReplyPayload } from "openclaw/plugin-sdk/reply-runtime";
+// resolveMatrixAccountStringValues already comes from the Matrix API barrel.
+// Re-exporting auth-precedence here makes TS source loaders define the export twice.
+>>>>>>> upstream/main

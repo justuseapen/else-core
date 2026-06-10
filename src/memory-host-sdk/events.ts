@@ -1,9 +1,22 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { MemoryDreamingPhaseName } from "./dreaming.js";
 
 export const MEMORY_HOST_EVENT_LOG_RELATIVE_PATH = path.join("memory", ".dreams", "events.jsonl");
 
+=======
+// Memory host event helpers append and read memory host event logs.
+import fs from "node:fs/promises";
+import path from "node:path";
+import { appendRegularFile } from "../infra/fs-safe.js";
+import type { MemoryDreamingPhaseName } from "./dreaming.js";
+
+/** Workspace-relative JSONL audit log for memory recall, promotion, and dream events. */
+export const MEMORY_HOST_EVENT_LOG_RELATIVE_PATH = path.join("memory", ".dreams", "events.jsonl");
+
+/** Event emitted when a recall query records the selected memory snippets. */
+>>>>>>> upstream/main
 export type MemoryHostRecallRecordedEvent = {
   type: "memory.recall.recorded";
   timestamp: string;
@@ -17,6 +30,10 @@ export type MemoryHostRecallRecordedEvent = {
   }>;
 };
 
+<<<<<<< HEAD
+=======
+/** Event emitted when deep-dream candidates are promoted into durable memory. */
+>>>>>>> upstream/main
 export type MemoryHostPromotionAppliedEvent = {
   type: "memory.promotion.applied";
   timestamp: string;
@@ -32,6 +49,10 @@ export type MemoryHostPromotionAppliedEvent = {
   }>;
 };
 
+<<<<<<< HEAD
+=======
+/** Event emitted after a dreaming phase writes inline memory and/or reports. */
+>>>>>>> upstream/main
 export type MemoryHostDreamCompletedEvent = {
   type: "memory.dream.completed";
   timestamp: string;
@@ -42,24 +63,47 @@ export type MemoryHostDreamCompletedEvent = {
   storageMode: "inline" | "separate" | "both";
 };
 
+<<<<<<< HEAD
+=======
+/** Append-only memory host event schema stored as JSONL. */
+>>>>>>> upstream/main
 export type MemoryHostEvent =
   | MemoryHostRecallRecordedEvent
   | MemoryHostPromotionAppliedEvent
   | MemoryHostDreamCompletedEvent;
 
+<<<<<<< HEAD
+=======
+/** Resolve the event log path inside a workspace without touching the filesystem. */
+>>>>>>> upstream/main
 export function resolveMemoryHostEventLogPath(workspaceDir: string): string {
   return path.join(workspaceDir, MEMORY_HOST_EVENT_LOG_RELATIVE_PATH);
 }
 
+<<<<<<< HEAD
+=======
+/** Append one memory host event, creating the dreams directory with symlink-safe writes. */
+>>>>>>> upstream/main
 export async function appendMemoryHostEvent(
   workspaceDir: string,
   event: MemoryHostEvent,
 ): Promise<void> {
   const eventLogPath = resolveMemoryHostEventLogPath(workspaceDir);
   await fs.mkdir(path.dirname(eventLogPath), { recursive: true });
+<<<<<<< HEAD
   await fs.appendFile(eventLogPath, `${JSON.stringify(event)}\n`, "utf8");
 }
 
+=======
+  await appendRegularFile({
+    filePath: eventLogPath,
+    content: `${JSON.stringify(event)}\n`,
+    rejectSymlinkParents: true,
+  });
+}
+
+/** Read recent memory host events, ignoring corrupt JSONL lines left by partial writes. */
+>>>>>>> upstream/main
 export async function readMemoryHostEvents(params: {
   workspaceDir: string;
   limit?: number;
@@ -82,6 +126,11 @@ export async function readMemoryHostEvents(params: {
       try {
         return [JSON.parse(line) as MemoryHostEvent];
       } catch {
+<<<<<<< HEAD
+=======
+        // The log is best-effort diagnostics; one malformed line must not hide
+        // later valid events or break memory status rendering.
+>>>>>>> upstream/main
         return [];
       }
     });

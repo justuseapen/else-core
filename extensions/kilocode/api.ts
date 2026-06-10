@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Kilocode API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export { buildKilocodeProvider, buildKilocodeProviderWithDiscovery } from "./provider-catalog.js";
 export {
   buildKilocodeModelDefinition,

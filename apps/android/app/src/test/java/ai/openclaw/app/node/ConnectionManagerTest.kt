@@ -3,6 +3,7 @@ package ai.openclaw.app.node
 import ai.openclaw.app.LocationMode
 import ai.openclaw.app.SecurePrefs
 import ai.openclaw.app.VoiceWakeMode
+<<<<<<< HEAD
 import ai.openclaw.app.protocol.OpenClawCallLogCommand
 import ai.openclaw.app.protocol.OpenClawCameraCommand
 import ai.openclaw.app.protocol.OpenClawCapability
@@ -12,6 +13,19 @@ import ai.openclaw.app.protocol.OpenClawSmsCommand
 import ai.openclaw.app.gateway.GatewayEndpoint
 import ai.openclaw.app.gateway.isLoopbackGatewayHost
 import ai.openclaw.app.gateway.isPrivateLanGatewayHost
+=======
+import ai.openclaw.app.gateway.GatewayEndpoint
+import ai.openclaw.app.gateway.isLocalCleartextGatewayHost
+import ai.openclaw.app.gateway.isLoopbackGatewayHost
+import ai.openclaw.app.protocol.OpenClawCallLogCommand
+import ai.openclaw.app.protocol.OpenClawCameraCommand
+import ai.openclaw.app.protocol.OpenClawCapability
+import ai.openclaw.app.protocol.OpenClawDeviceCommand
+import ai.openclaw.app.protocol.OpenClawLocationCommand
+import ai.openclaw.app.protocol.OpenClawMotionCommand
+import ai.openclaw.app.protocol.OpenClawPhotosCommand
+import ai.openclaw.app.protocol.OpenClawSmsCommand
+>>>>>>> upstream/main
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -108,7 +122,11 @@ class ConnectionManagerTest {
   }
 
   @Test
+<<<<<<< HEAD
   fun resolveTlsParamsForEndpoint_manualPrivateLanCanStayCleartextWhenToggleIsOff() {
+=======
+  fun resolveTlsParamsForEndpoint_manualPrivateLanRespectsManualTlsToggle() {
+>>>>>>> upstream/main
     val endpoint = GatewayEndpoint.manual(host = "192.168.1.20", port = 18789)
 
     val params =
@@ -122,6 +140,23 @@ class ConnectionManagerTest {
   }
 
   @Test
+<<<<<<< HEAD
+=======
+  fun resolveTlsParamsForEndpoint_manualPrivateLanCleartextCanOverrideStoredPin() {
+    val endpoint = GatewayEndpoint.manual(host = "192.168.1.20", port = 18789)
+
+    val params =
+      ConnectionManager.resolveTlsParamsForEndpoint(
+        endpoint,
+        storedFingerprint = "pinned",
+        manualTlsEnabled = false,
+      )
+
+    assertNull(params)
+  }
+
+  @Test
+>>>>>>> upstream/main
   fun resolveTlsParamsForEndpoint_discoveryTailnetWithoutHintsStillRequiresTls() {
     val endpoint =
       GatewayEndpoint(
@@ -146,7 +181,11 @@ class ConnectionManagerTest {
   }
 
   @Test
+<<<<<<< HEAD
   fun resolveTlsParamsForEndpoint_discoveryPrivateLanWithoutHintsCanStayCleartext() {
+=======
+  fun resolveTlsParamsForEndpoint_discoveryPrivateLanWithoutHintsStillRequiresTls() {
+>>>>>>> upstream/main
     val endpoint =
       GatewayEndpoint(
         stableId = "_openclaw-gw._tcp.|local.|Test",
@@ -164,7 +203,13 @@ class ConnectionManagerTest {
         manualTlsEnabled = false,
       )
 
+<<<<<<< HEAD
     assertNull(params)
+=======
+    assertEquals(true, params?.required)
+    assertNull(params?.expectedFingerprint)
+    assertEquals(false, params?.allowTOFU)
+>>>>>>> upstream/main
   }
 
   @Test
@@ -240,11 +285,19 @@ class ConnectionManagerTest {
   }
 
   @Test
+<<<<<<< HEAD
   fun isPrivateLanGatewayHost_acceptsLanHostsButRejectsTailnetHosts() {
     assertTrue(isPrivateLanGatewayHost("192.168.1.20"))
     assertTrue(isPrivateLanGatewayHost("gateway.local"))
     assertFalse(isPrivateLanGatewayHost("100.64.0.9"))
     assertFalse(isPrivateLanGatewayHost("gateway.tailnet.ts.net"))
+=======
+  fun isLocalCleartextGatewayHost_acceptsLanIpsButRejectsMdnsAndTailnetHosts() {
+    assertTrue(isLocalCleartextGatewayHost("192.168.1.20"))
+    assertFalse(isLocalCleartextGatewayHost("gateway.local"))
+    assertFalse(isLocalCleartextGatewayHost("100.64.0.9"))
+    assertFalse(isLocalCleartextGatewayHost("gateway.tailnet.ts.net"))
+>>>>>>> upstream/main
   }
 
   @Test
@@ -364,6 +417,23 @@ class ConnectionManagerTest {
   }
 
   @Test
+<<<<<<< HEAD
+=======
+  fun buildOperatorConnectOptions_requestsQrBootstrapHandoffScopes() {
+    val options = newManager().buildOperatorConnectOptions()
+
+    assertEquals(
+      listOf(
+        "operator.approvals",
+        "operator.read",
+        "operator.write",
+      ),
+      options.scopes,
+    )
+  }
+
+  @Test
+>>>>>>> upstream/main
   fun buildNodeConnectOptions_advertisesRequestableSmsSearchWithoutSmsCapability() {
     val options =
       newManager(
@@ -427,6 +497,10 @@ class ConnectionManagerTest {
         voiceWakeMode = VoiceWakeMode.Always,
         motionActivityAvailable = true,
         callLogAvailable = true,
+<<<<<<< HEAD
+=======
+        photosAvailable = true,
+>>>>>>> upstream/main
         hasRecordAudioPermission = true,
       ).buildNodeConnectOptions()
 
@@ -434,14 +508,34 @@ class ConnectionManagerTest {
     assertTrue(options.commands.contains(OpenClawLocationCommand.Get.rawValue))
     assertTrue(options.commands.contains(OpenClawMotionCommand.Activity.rawValue))
     assertTrue(options.commands.contains(OpenClawCallLogCommand.Search.rawValue))
+<<<<<<< HEAD
+=======
+    assertTrue(options.commands.contains(OpenClawPhotosCommand.Latest.rawValue))
+>>>>>>> upstream/main
     assertTrue(options.caps.contains(OpenClawCapability.Camera.rawValue))
     assertTrue(options.caps.contains(OpenClawCapability.Location.rawValue))
     assertTrue(options.caps.contains(OpenClawCapability.Motion.rawValue))
     assertTrue(options.caps.contains(OpenClawCapability.CallLog.rawValue))
+<<<<<<< HEAD
+=======
+    assertTrue(options.caps.contains(OpenClawCapability.Photos.rawValue))
+>>>>>>> upstream/main
     assertTrue(options.caps.contains(OpenClawCapability.VoiceWake.rawValue))
   }
 
   @Test
+<<<<<<< HEAD
+=======
+  fun buildNodeConnectOptions_advertisesDeviceAppsOnlyWhenUserOptedIn() {
+    val disabled = newManager(installedAppsSharingEnabled = false).buildNodeConnectOptions()
+    val enabled = newManager(installedAppsSharingEnabled = true).buildNodeConnectOptions()
+
+    assertFalse(disabled.commands.contains(OpenClawDeviceCommand.Apps.rawValue))
+    assertTrue(enabled.commands.contains(OpenClawDeviceCommand.Apps.rawValue))
+  }
+
+  @Test
+>>>>>>> upstream/main
   fun buildNodeConnectOptions_omitsVoiceWakeWithoutMicrophonePermission() {
     val options =
       newManager(
@@ -453,12 +547,20 @@ class ConnectionManagerTest {
   }
 
   @Test
+<<<<<<< HEAD
   fun buildNodeConnectOptions_omitsUnavailableCameraLocationAndCallLogSurfaces() {
+=======
+  fun buildNodeConnectOptions_omitsUnavailableCameraLocationCallLogAndPhotosSurfaces() {
+>>>>>>> upstream/main
     val options =
       newManager(
         cameraEnabled = false,
         locationMode = LocationMode.Off,
         callLogAvailable = false,
+<<<<<<< HEAD
+=======
+        photosAvailable = false,
+>>>>>>> upstream/main
       ).buildNodeConnectOptions()
 
     assertFalse(options.commands.contains(OpenClawCameraCommand.List.rawValue))
@@ -466,9 +568,17 @@ class ConnectionManagerTest {
     assertFalse(options.commands.contains(OpenClawCameraCommand.Clip.rawValue))
     assertFalse(options.commands.contains(OpenClawLocationCommand.Get.rawValue))
     assertFalse(options.commands.contains(OpenClawCallLogCommand.Search.rawValue))
+<<<<<<< HEAD
     assertFalse(options.caps.contains(OpenClawCapability.Camera.rawValue))
     assertFalse(options.caps.contains(OpenClawCapability.Location.rawValue))
     assertFalse(options.caps.contains(OpenClawCapability.CallLog.rawValue))
+=======
+    assertFalse(options.commands.contains(OpenClawPhotosCommand.Latest.rawValue))
+    assertFalse(options.caps.contains(OpenClawCapability.Camera.rawValue))
+    assertFalse(options.caps.contains(OpenClawCapability.Location.rawValue))
+    assertFalse(options.caps.contains(OpenClawCapability.CallLog.rawValue))
+    assertFalse(options.caps.contains(OpenClawCapability.Photos.rawValue))
+>>>>>>> upstream/main
   }
 
   @Test
@@ -507,7 +617,13 @@ class ConnectionManagerTest {
     readSmsAvailable: Boolean = false,
     smsSearchPossible: Boolean = false,
     callLogAvailable: Boolean = false,
+<<<<<<< HEAD
     hasRecordAudioPermission: Boolean = false,
+=======
+    photosAvailable: Boolean = false,
+    hasRecordAudioPermission: Boolean = false,
+    installedAppsSharingEnabled: Boolean = false,
+>>>>>>> upstream/main
   ): ConnectionManager {
     val context = RuntimeEnvironment.getApplication()
     val prefs =
@@ -527,7 +643,13 @@ class ConnectionManagerTest {
       readSmsAvailable = { readSmsAvailable },
       smsSearchPossible = { smsSearchPossible },
       callLogAvailable = { callLogAvailable },
+<<<<<<< HEAD
       hasRecordAudioPermission = { hasRecordAudioPermission },
+=======
+      photosAvailable = { photosAvailable },
+      hasRecordAudioPermission = { hasRecordAudioPermission },
+      installedAppsSharingEnabled = { installedAppsSharingEnabled },
+>>>>>>> upstream/main
       manualTls = { false },
     )
   }

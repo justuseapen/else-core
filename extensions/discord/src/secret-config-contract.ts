@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import {
   collectNestedChannelFieldAssignments,
   collectNestedChannelTtsAssignments,
+=======
+// Discord helper module supports secret config contract behavior.
+import {
+  collectNestedChannelFieldAssignments,
+>>>>>>> upstream/main
   collectSimpleChannelFieldAssignments,
   getChannelSurface,
   isBaseFieldActiveForChannelSurface,
@@ -9,9 +15,16 @@ import {
   type ResolverContext,
   type SecretDefaults,
   type SecretTargetRegistryEntry,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/security-runtime";
 
 export const secretTargetRegistryEntries = [
+=======
+} from "openclaw/plugin-sdk/channel-secret-basic-runtime";
+import { collectNestedChannelTtsAssignments } from "openclaw/plugin-sdk/channel-secret-tts-runtime";
+
+export const secretTargetRegistryEntries: SecretTargetRegistryEntry[] = [
+>>>>>>> upstream/main
   {
     id: "channels.discord.accounts.*.pluralkit.token",
     targetType: "channels.discord.accounts.*.pluralkit.token",
@@ -80,11 +93,19 @@ export const secretTargetRegistryEntries = [
     includeInAudit: true,
     providerIdPathSegmentIndex: 4,
   },
+<<<<<<< HEAD
 ] satisfies SecretTargetRegistryEntry[];
 
 export function collectRuntimeConfigAssignments(params: {
   config: { channels?: Record<string, unknown> };
   defaults: SecretDefaults | undefined;
+=======
+];
+
+export function collectRuntimeConfigAssignments(params: {
+  config: { channels?: Record<string, unknown> };
+  defaults?: SecretDefaults;
+>>>>>>> upstream/main
   context: ResolverContext;
 }): void {
   const resolved = getChannelSurface(params.config, "discord");

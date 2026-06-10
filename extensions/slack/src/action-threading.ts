@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import { isSingleUseReplyToMode } from "openclaw/plugin-sdk/reply-reference";
+=======
+// Slack plugin module implements action threading behavior.
+import { isSingleUseReplyToMode } from "openclaw/plugin-sdk/reply-reference";
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import { parseSlackTarget } from "./targets.js";
 
 export function resolveSlackAutoThreadId(params: {
@@ -8,22 +14,44 @@ export function resolveSlackAutoThreadId(params: {
     currentThreadTs?: string;
     replyToMode?: "off" | "first" | "all" | "batched";
     hasRepliedRef?: { value: boolean };
+    sameChannelThreadRequired?: boolean;
   };
 }): string | undefined {
   const context = params.toolContext;
+<<<<<<< HEAD
   if (!context?.currentThreadTs || !context.currentChannelId) {
     return undefined;
   }
   if (context.replyToMode !== "all" && !isSingleUseReplyToMode(context.replyToMode ?? "off")) {
+=======
+  if (!context?.currentChannelId) {
+>>>>>>> upstream/main
     return undefined;
   }
   const parsedTarget = parseSlackTarget(params.to, { defaultKind: "channel" });
   if (!parsedTarget || parsedTarget.kind !== "channel") {
     return undefined;
   }
-  if (parsedTarget.id.toLowerCase() !== context.currentChannelId.toLowerCase()) {
+  if (
+    normalizeLowercaseStringOrEmpty(parsedTarget.id) !==
+    normalizeLowercaseStringOrEmpty(context.currentChannelId)
+  ) {
     return undefined;
   }
+<<<<<<< HEAD
+=======
+  if (!context.currentThreadTs) {
+    if (context.sameChannelThreadRequired) {
+      throw new Error(
+        "Slack thread context is required for same-channel replies from a threaded Slack turn. Set topLevel=true or threadId=null to post at the channel root.",
+      );
+    }
+    return undefined;
+  }
+  if (context.replyToMode !== "all" && !isSingleUseReplyToMode(context.replyToMode ?? "off")) {
+    return undefined;
+  }
+>>>>>>> upstream/main
   if (isSingleUseReplyToMode(context.replyToMode ?? "off") && context.hasRepliedRef?.value) {
     return undefined;
   }

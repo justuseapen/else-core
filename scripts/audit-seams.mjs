@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Audits repo ownership seams, optional plugin leaks, and nearby test coverage signals.
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -125,7 +126,7 @@ async function walkAllCodeFiles(rootDir, options = {}) {
   const includeTests = options.includeTests === true;
 
   async function walk(dir) {
-    let entries = [];
+    let entries;
     try {
       entries = await fs.readdir(dir, { withFileTypes: true });
     } catch {
@@ -583,7 +584,12 @@ function describeCronSeamKinds(relativePath, source) {
 
   const seamKinds = [];
   const importsAgentRunner = hasAnyImportSource(source, [
+<<<<<<< HEAD
     "../../agents/pi-embedded.js",
+=======
+    "../../agents/cli-runner.js",
+    "../../agents/embedded-agent.js",
+>>>>>>> upstream/main
     "../../agents/model-fallback.js",
     "../../agents/subagent-registry.js",
     "../../infra/agent-events.js",
@@ -624,7 +630,13 @@ function describeCronSeamKinds(relativePath, source) {
 
   if (
     importsAgentRunner &&
+<<<<<<< HEAD
     /\brunEmbeddedPiAgent\b|\brunWithModelFallback\b|\bregisterAgentRunContext\b/.test(source)
+=======
+    /\brunCliAgent\b|\brunEmbeddedAgent\b|\brunWithModelFallback\b|\bregisterAgentRunContext\b/.test(
+      source,
+    )
+>>>>>>> upstream/main
   ) {
     seamKinds.push("cron-agent-handoff");
   }
@@ -743,7 +755,7 @@ function describeSubagentSeamKinds(relativePath, source) {
 
   if (
     (importsAnnounceDelivery || isAnnounceDispatchPath) &&
-    /\brunSubagentAnnounceFlow\b|\brunSubagentAnnounceDispatch\b|\benqueueAnnounce\b|\bcreateBoundDeliveryRouter\b|\bqueueEmbeddedPiMessage\b|\bwaitForEmbeddedPiRunEnd\b|\bqueue-fallback\b|\bdirect-primary\b/.test(
+    /\brunSubagentAnnounceFlow\b|\brunSubagentAnnounceDispatch\b|\benqueueAnnounce\b|\bcreateBoundDeliveryRouter\b|\bqueueEmbeddedAgentMessage\b|\bwaitForEmbeddedAgentRunEnd\b|\bqueue-fallback\b|\bdirect-primary\b/.test(
       source,
     )
   ) {

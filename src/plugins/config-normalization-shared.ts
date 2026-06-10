@@ -1,7 +1,21 @@
+<<<<<<< HEAD
 import { normalizeChatChannelId } from "../channels/ids.js";
 import type { OpenClawConfig } from "../config/config.js";
 import { defaultSlotIdForKey } from "./slots.js";
 
+=======
+// Shares plugin config normalization helpers across control-plane paths.
+import {
+  normalizeOptionalLowercaseString,
+  normalizeOptionalString,
+} from "@openclaw/normalization-core/string-coerce";
+import { normalizeArrayBackedTrimmedStringList } from "@openclaw/normalization-core/string-normalization";
+import { normalizeChatChannelId } from "../channels/ids.js";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { defaultSlotIdForKey } from "./slots.js";
+
+/** Canonical plugin config shape consumed by runtime policy and loaders. */
+>>>>>>> upstream/main
 export type NormalizedPluginsConfig = {
   enabled: boolean;
   allow: string[];
@@ -9,6 +23,10 @@ export type NormalizedPluginsConfig = {
   loadPaths: string[];
   slots: {
     memory?: string | null;
+<<<<<<< HEAD
+=======
+    contextEngine?: string | null;
+>>>>>>> upstream/main
   };
   entries: Record<
     string,
@@ -16,19 +34,41 @@ export type NormalizedPluginsConfig = {
       enabled?: boolean;
       hooks?: {
         allowPromptInjection?: boolean;
+<<<<<<< HEAD
+=======
+        allowConversationAccess?: boolean;
+        timeoutMs?: number;
+        timeouts?: Record<string, number>;
+>>>>>>> upstream/main
       };
       subagent?: {
         allowModelOverride?: boolean;
         allowedModels?: string[];
         hasAllowedModelsConfig?: boolean;
       };
+<<<<<<< HEAD
+=======
+      llm?: {
+        allowModelOverride?: boolean;
+        allowedModels?: string[];
+        hasAllowedModelsConfig?: boolean;
+        allowAgentIdOverride?: boolean;
+      };
+>>>>>>> upstream/main
       config?: unknown;
     }
   >;
 };
 
+<<<<<<< HEAD
 export type NormalizePluginId = (id: string) => string;
 
+=======
+/** Plugin id normalizer used while loading aliases or raw config. */
+export type NormalizePluginId = (id: string) => string;
+
+/** Default plugin id normalizer for already-canonical ids. */
+>>>>>>> upstream/main
 export const identityNormalizePluginId: NormalizePluginId = (id) => id.trim();
 
 function normalizeList(value: unknown, normalizePluginId: NormalizePluginId): string[] {
@@ -41,6 +81,7 @@ function normalizeList(value: unknown, normalizePluginId: NormalizePluginId): st
 }
 
 function normalizeSlotValue(value: unknown): string | null | undefined {
+<<<<<<< HEAD
   if (typeof value !== "string") {
     return undefined;
   }
@@ -49,11 +90,48 @@ function normalizeSlotValue(value: unknown): string | null | undefined {
     return undefined;
   }
   if (trimmed.toLowerCase() === "none") {
+=======
+  const trimmed = normalizeOptionalString(value);
+  if (!trimmed) {
+    return undefined;
+  }
+  if (normalizeOptionalLowercaseString(trimmed) === "none") {
+>>>>>>> upstream/main
     return null;
   }
   return trimmed;
 }
 
+<<<<<<< HEAD
+=======
+function normalizeHookTimeoutMs(value: unknown): number | undefined {
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    !Number.isFinite(value) ||
+    value <= 0 ||
+    value > 600_000
+  ) {
+    return undefined;
+  }
+  return value;
+}
+
+function normalizeHookTimeouts(value: unknown): Record<string, number> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  const normalized: Record<string, number> = {};
+  for (const [hookName, timeoutMs] of Object.entries(value)) {
+    const normalizedTimeoutMs = normalizeHookTimeoutMs(timeoutMs);
+    if (normalizedTimeoutMs !== undefined) {
+      normalized[hookName] = normalizedTimeoutMs;
+    }
+  }
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
+>>>>>>> upstream/main
 function normalizePluginEntries(
   entries: unknown,
   normalizePluginId: NormalizePluginId,
@@ -78,12 +156,36 @@ function normalizePluginEntries(
         ? {
             allowPromptInjection: (hooksRaw as { allowPromptInjection?: unknown })
               .allowPromptInjection,
+<<<<<<< HEAD
           }
         : undefined;
     const normalizedHooks =
       hooks && typeof hooks.allowPromptInjection === "boolean"
         ? {
             allowPromptInjection: hooks.allowPromptInjection,
+=======
+            allowConversationAccess: (hooksRaw as { allowConversationAccess?: unknown })
+              .allowConversationAccess,
+            timeoutMs: normalizeHookTimeoutMs((hooksRaw as { timeoutMs?: unknown }).timeoutMs),
+            timeouts: normalizeHookTimeouts((hooksRaw as { timeouts?: unknown }).timeouts),
+          }
+        : undefined;
+    const normalizedHooks =
+      hooks &&
+      (typeof hooks.allowPromptInjection === "boolean" ||
+        typeof hooks.allowConversationAccess === "boolean" ||
+        hooks.timeoutMs !== undefined ||
+        hooks.timeouts !== undefined)
+        ? {
+            ...(typeof hooks.allowPromptInjection === "boolean"
+              ? { allowPromptInjection: hooks.allowPromptInjection }
+              : {}),
+            ...(typeof hooks.allowConversationAccess === "boolean"
+              ? { allowConversationAccess: hooks.allowConversationAccess }
+              : {}),
+            ...(hooks.timeoutMs !== undefined ? { timeoutMs: hooks.timeoutMs } : {}),
+            ...(hooks.timeouts !== undefined ? { timeouts: hooks.timeouts } : {}),
+>>>>>>> upstream/main
           }
         : undefined;
     const subagentRaw = entry.subagent;
@@ -96,9 +198,15 @@ function normalizePluginEntries(
               (subagentRaw as { allowedModels?: unknown }).allowedModels,
             ),
             allowedModels: Array.isArray((subagentRaw as { allowedModels?: unknown }).allowedModels)
+<<<<<<< HEAD
               ? ((subagentRaw as { allowedModels?: unknown }).allowedModels as unknown[])
                   .map((model) => (typeof model === "string" ? model.trim() : ""))
                   .filter(Boolean)
+=======
+              ? normalizeArrayBackedTrimmedStringList(
+                  (subagentRaw as { allowedModels?: unknown }).allowedModels,
+                )
+>>>>>>> upstream/main
               : undefined,
           }
         : undefined;
@@ -117,18 +225,65 @@ function normalizePluginEntries(
               : {}),
           }
         : undefined;
+<<<<<<< HEAD
+=======
+    const llmRaw = entry.llm;
+    const llm =
+      llmRaw && typeof llmRaw === "object" && !Array.isArray(llmRaw)
+        ? {
+            allowModelOverride: (llmRaw as { allowModelOverride?: unknown }).allowModelOverride,
+            hasAllowedModelsConfig: Array.isArray(
+              (llmRaw as { allowedModels?: unknown }).allowedModels,
+            ),
+            allowedModels: Array.isArray((llmRaw as { allowedModels?: unknown }).allowedModels)
+              ? normalizeArrayBackedTrimmedStringList(
+                  (llmRaw as { allowedModels?: unknown }).allowedModels,
+                )
+              : undefined,
+            allowAgentIdOverride: (llmRaw as { allowAgentIdOverride?: unknown })
+              .allowAgentIdOverride,
+          }
+        : undefined;
+    const normalizedLlm =
+      llm &&
+      (typeof llm.allowModelOverride === "boolean" ||
+        llm.hasAllowedModelsConfig ||
+        (Array.isArray(llm.allowedModels) && llm.allowedModels.length > 0) ||
+        typeof llm.allowAgentIdOverride === "boolean")
+        ? {
+            ...(typeof llm.allowModelOverride === "boolean"
+              ? { allowModelOverride: llm.allowModelOverride }
+              : {}),
+            ...(llm.hasAllowedModelsConfig ? { hasAllowedModelsConfig: true } : {}),
+            ...(Array.isArray(llm.allowedModels) && llm.allowedModels.length > 0
+              ? { allowedModels: llm.allowedModels }
+              : {}),
+            ...(typeof llm.allowAgentIdOverride === "boolean"
+              ? { allowAgentIdOverride: llm.allowAgentIdOverride }
+              : {}),
+          }
+        : undefined;
+>>>>>>> upstream/main
     normalized[normalizedKey] = {
       ...normalized[normalizedKey],
       enabled:
         typeof entry.enabled === "boolean" ? entry.enabled : normalized[normalizedKey]?.enabled,
       hooks: normalizedHooks ?? normalized[normalizedKey]?.hooks,
       subagent: normalizedSubagent ?? normalized[normalizedKey]?.subagent,
+<<<<<<< HEAD
+=======
+      llm: normalizedLlm ?? normalized[normalizedKey]?.llm,
+>>>>>>> upstream/main
       config: "config" in entry ? entry.config : normalized[normalizedKey]?.config,
     };
   }
   return normalized;
 }
 
+<<<<<<< HEAD
+=======
+/** Normalizes plugin config while allowing callers to resolve aliases first. */
+>>>>>>> upstream/main
 export function normalizePluginsConfigWithResolver(
   config?: OpenClawConfig["plugins"],
   normalizePluginId: NormalizePluginId = identityNormalizePluginId,
@@ -141,6 +296,10 @@ export function normalizePluginsConfigWithResolver(
     loadPaths: normalizeList(config?.load?.paths, identityNormalizePluginId),
     slots: {
       memory: memorySlot === undefined ? defaultSlotIdForKey("memory") : memorySlot,
+<<<<<<< HEAD
+=======
+      contextEngine: normalizeSlotValue(config?.slots?.contextEngine),
+>>>>>>> upstream/main
     },
     entries: normalizePluginEntries(config?.entries, normalizePluginId),
   };

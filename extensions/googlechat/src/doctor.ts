@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Googlechat plugin module implements doctor behavior.
+>>>>>>> upstream/main
 import { createDangerousNameMatchingMutableAllowlistWarningCollector } from "openclaw/plugin-sdk/channel-policy";
 
 function asObjectRecord(value: unknown): Record<string, unknown> | null {

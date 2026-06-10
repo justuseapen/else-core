@@ -1,19 +1,32 @@
 {
   "name": "@openclaw/telegram",
+<<<<<<< HEAD
   "version": "2026.4.5",
+=======
+  "version": "2026.6.2",
+>>>>>>> upstream/main
   "private": true,
   "description": "OpenClaw Telegram channel plugin",
   "type": "module",
   "dependencies": {
-    "@grammyjs/runner": "^2.0.3",
-    "@grammyjs/transformer-throttler": "^1.2.1",
-    "grammy": "^1.41.1"
+    "@grammyjs/runner": "2.0.3",
+    "@grammyjs/transformer-throttler": "1.2.1",
+    "grammy": "1.43.0",
+    "typebox": "1.1.39",
+    "undici": "8.3.0"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
   },
   "openclaw": {
     "extensions": [
       "./index.ts"
     ],
     "setupEntry": "./setup-entry.ts",
+    "setupFeatures": {
+      "configPromotion": true,
+      "legacyStateMigrations": true
+    },
     "channel": {
       "id": "telegram",
       "label": "Telegram",
@@ -29,6 +42,7 @@
         "https://openclaw.ai"
       ],
       "markdownCapable": true,
+<<<<<<< HEAD
       "configuredState": {
         "specifier": "./configured-state",
         "exportName": "hasTelegramConfiguredState"
@@ -36,6 +50,21 @@
     },
     "bundle": {
       "stageRuntimeDependencies": true
+=======
+      "commands": {
+        "nativeCommandsAutoEnabled": true,
+        "nativeSkillsAutoEnabled": true
+      },
+      "configuredState": {
+        "env": {
+          "allOf": [
+            "TELEGRAM_BOT_TOKEN"
+          ]
+        },
+        "specifier": "./configured-state",
+        "exportName": "hasTelegramConfiguredState"
+      }
+>>>>>>> upstream/main
     }
   }
 }

@@ -1,5 +1,6 @@
-import type { RequestClient } from "@buape/carbon";
+// Discord plugin module implements reply delivery behavior.
 import { resolveAgentAvatar } from "openclaw/plugin-sdk/agent-runtime";
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import type { MarkdownTableMode, ReplyToMode } from "openclaw/plugin-sdk/config-runtime";
 import type { ChunkMode } from "openclaw/plugin-sdk/reply-chunking";
@@ -16,16 +17,32 @@ import {
   type RetryConfig,
   type RetryRunner,
 } from "openclaw/plugin-sdk/retry-runtime";
+=======
+import {
+  buildOutboundSessionContext,
+  sendDurableMessageBatch,
+  type OutboundDeliveryFormattingOptions,
+  type OutboundIdentity,
+  type OutboundSendDeps,
+} from "openclaw/plugin-sdk/channel-outbound";
+import type {
+  MarkdownTableMode,
+  OpenClawConfig,
+  ReplyToMode,
+} from "openclaw/plugin-sdk/config-contracts";
+import type { OutboundMediaAccess } from "openclaw/plugin-sdk/media-runtime";
+import type { ChunkMode } from "openclaw/plugin-sdk/reply-chunking";
+import type { ReplyPayload } from "openclaw/plugin-sdk/reply-dispatch-runtime";
+>>>>>>> upstream/main
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
-import { convertMarkdownTables } from "openclaw/plugin-sdk/text-runtime";
-import { resolveDiscordAccount } from "../accounts.js";
-import { chunkDiscordTextWithMode } from "../chunk.js";
-import { createDiscordRetryRunner } from "../retry.js";
-import { sendMessageDiscord, sendVoiceMessageDiscord, sendWebhookMessageDiscord } from "../send.js";
-import { sendDiscordText } from "../send.shared.js";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+import type { RequestClient } from "../internal/discord.js";
+import { sendMessageDiscord, sendVoiceMessageDiscord } from "../send.js";
+import { sanitizeDiscordFrontChannelReplyPayloads } from "./reply-safety.js";
 
 export type DiscordThreadBindingLookupRecord = {
   accountId: string;
+  channelId: string;
   threadId: string;
   agentId: string;
   label?: string;
@@ -38,6 +55,7 @@ export type DiscordThreadBindingLookup = {
   touchThread?: (params: { threadId: string; at?: number; persist?: boolean }) => unknown;
 };
 
+<<<<<<< HEAD
 type ResolvedRetryConfig = Required<RetryConfig>;
 
 const DISCORD_VIDEO_MEDIA_EXTENSIONS = new Set([".avi", ".m4v", ".mkv", ".mov", ".mp4", ".webm"]);
@@ -113,6 +131,8 @@ async function sendWithRetry(
   });
 }
 
+=======
+>>>>>>> upstream/main
 function resolveTargetChannelId(target: string): string | undefined {
   if (!target.startsWith("channel:")) {
     return undefined;
@@ -130,17 +150,16 @@ function resolveBoundThreadBinding(params: {
   if (!params.threadBindings || !sessionKey) {
     return undefined;
   }
-  const bindings = params.threadBindings.listBySessionKey(sessionKey);
-  if (bindings.length === 0) {
-    return undefined;
-  }
   const targetChannelId = resolveTargetChannelId(params.target);
   if (!targetChannelId) {
     return undefined;
   }
-  return bindings.find((entry) => entry.threadId === targetChannelId);
+  return params.threadBindings
+    .listBySessionKey(sessionKey)
+    .find((entry) => entry.threadId === targetChannelId);
 }
 
+<<<<<<< HEAD
 function createPayloadReplyToResolver(params: {
   payload: ReplyPayload;
   replyToMode: ReplyToMode;
@@ -169,105 +188,100 @@ function createPayloadReplyToResolver(params: {
 }
 
 function resolveBindingPersona(
+=======
+function resolveBindingIdentity(
+>>>>>>> upstream/main
   cfg: OpenClawConfig,
   binding: DiscordThreadBindingLookupRecord | undefined,
-): {
-  username?: string;
-  avatarUrl?: string;
-} {
+): OutboundIdentity | undefined {
   if (!binding) {
-    return {};
+    return undefined;
   }
   const baseLabel = binding.label?.trim() || binding.agentId;
-  const username = (`🤖 ${baseLabel}`.trim() || "🤖 agent").slice(0, 80);
-
-  let avatarUrl: string | undefined;
+  const identity: OutboundIdentity = {
+    name: (`🤖 ${baseLabel}`.trim() || "🤖 agent").slice(0, 80),
+  };
   try {
     const avatar = resolveAgentAvatar(cfg, binding.agentId);
     if (avatar.kind === "remote") {
-      avatarUrl = avatar.url;
+      identity.avatarUrl = avatar.url;
     }
   } catch {
-    avatarUrl = undefined;
+    // Avatar is cosmetic; delivery should not depend on local identity config.
   }
-  return { username, avatarUrl };
+  return identity;
 }
 
-async function sendDiscordChunkWithFallback(params: {
+function createDiscordDeliveryDeps(params: {
   cfg: OpenClawConfig;
-  target: string;
-  text: string;
   token: string;
-  accountId?: string;
-  maxLinesPerMessage?: number;
   rest?: RequestClient;
-  replyTo?: string;
-  binding?: DiscordThreadBindingLookupRecord;
-  chunkMode?: ChunkMode;
-  username?: string;
-  avatarUrl?: string;
-  /** Pre-resolved channel ID to bypass redundant resolution per chunk. */
-  channelId?: string;
-  /** Pre-created retry runner to avoid creating one per chunk. */
-  request?: RetryRunner;
-  /** Pre-resolved retry config (account-level). */
-  retryConfig: ResolvedRetryConfig;
-}) {
-  if (!params.text.trim()) {
-    return;
-  }
-  const text = params.text;
-  const binding = params.binding;
-  if (binding?.webhookId && binding?.webhookToken) {
-    try {
-      await sendWebhookMessageDiscord(text, {
-        cfg: params.cfg,
-        webhookId: binding.webhookId,
-        webhookToken: binding.webhookToken,
-        accountId: binding.accountId,
-        threadId: binding.threadId,
-        replyTo: params.replyTo,
-        username: params.username,
-        avatarUrl: params.avatarUrl,
-      });
-      return;
-    } catch {
-      // Fall through to the standard bot sender path.
-    }
-  }
-  // When channelId and request are pre-resolved, send directly via sendDiscordText
-  // to avoid per-chunk overhead (channel-type GET, re-chunking, client creation)
-  // that can cause ordering issues under queue contention or rate limiting.
-  if (params.channelId && params.request && params.rest) {
-    const { channelId, request, rest } = params;
-    await sendWithRetry(
-      () =>
-        sendDiscordText(
-          rest,
-          channelId,
-          text,
-          params.replyTo,
-          request,
-          params.maxLinesPerMessage,
-          undefined,
-          undefined,
-          params.chunkMode,
-        ),
-      params.retryConfig,
-    );
-    return;
-  }
-  await sendWithRetry(
-    () =>
-      sendMessageDiscord(params.target, text, {
-        cfg: params.cfg,
+}): OutboundSendDeps {
+  return {
+    discord: (to: string, text: string, opts?: Parameters<typeof sendMessageDiscord>[2]) =>
+      sendMessageDiscord(to, text, {
+        ...opts,
+        cfg: opts?.cfg ?? params.cfg,
         token: params.token,
         rest: params.rest,
-        accountId: params.accountId,
-        replyTo: params.replyTo,
       }),
-    params.retryConfig,
-  );
+    discordVoice: (
+      to: string,
+      audioPath: string,
+      opts?: Parameters<typeof sendVoiceMessageDiscord>[2],
+    ) =>
+      sendVoiceMessageDiscord(to, audioPath, {
+        ...opts,
+        cfg: opts?.cfg ?? params.cfg,
+        token: params.token,
+        rest: params.rest,
+      }),
+  };
+}
+
+type DiscordDeliveryOptions = {
+  to: string;
+  threadId?: string;
+  agentId?: string;
+  identity?: OutboundIdentity;
+  mediaAccess?: OutboundMediaAccess;
+  replyToMode: ReplyToMode;
+  formatting: OutboundDeliveryFormattingOptions;
+};
+
+function resolveDiscordDeliveryOptions(params: {
+  cfg: OpenClawConfig;
+  target: string;
+  sessionKey?: string;
+  threadBindings?: DiscordThreadBindingLookup;
+  textLimit: number;
+  maxLinesPerMessage?: number;
+  tableMode?: MarkdownTableMode;
+  chunkMode?: ChunkMode;
+  replyToMode?: ReplyToMode;
+  mediaLocalRoots?: readonly string[];
+}): DiscordDeliveryOptions {
+  const binding = resolveBoundThreadBinding({
+    threadBindings: params.threadBindings,
+    sessionKey: params.sessionKey,
+    target: params.target,
+  });
+  return {
+    to: binding ? `channel:${binding.channelId}` : params.target,
+    threadId: binding?.threadId,
+    agentId: binding?.agentId,
+    identity: resolveBindingIdentity(params.cfg, binding),
+    mediaAccess: params.mediaLocalRoots?.length
+      ? { localRoots: params.mediaLocalRoots }
+      : undefined,
+    replyToMode: params.replyToMode ?? "all",
+    formatting: {
+      textLimit: params.textLimit,
+      maxLinesPerMessage: params.maxLinesPerMessage,
+      tableMode: params.tableMode,
+      chunkMode: params.chunkMode,
+    },
+  };
 }
 
 export async function deliverDiscordReply(params: {
@@ -287,7 +301,9 @@ export async function deliverDiscordReply(params: {
   sessionKey?: string;
   threadBindings?: DiscordThreadBindingLookup;
   mediaLocalRoots?: readonly string[];
+  kind: "tool" | "block" | "final";
 }) {
+<<<<<<< HEAD
   const chunkLimit = Math.min(params.textLimit, 2000);
   const replyTo = params.replyToId?.trim() || undefined;
   const replyToMode = params.replyToMode ?? "all";
@@ -495,9 +511,45 @@ export async function deliverDiscordReply(params: {
       },
     });
     deliveredAny = true;
+=======
+  void params.runtime;
+
+  const delivery = resolveDiscordDeliveryOptions(params);
+  const payloads = sanitizeDiscordFrontChannelReplyPayloads(params.replies, { kind: params.kind });
+  if (payloads.length === 0) {
+    return;
+>>>>>>> upstream/main
   }
 
-  if (binding && deliveredAny) {
-    params.threadBindings?.touchThread?.({ threadId: binding.threadId });
+  const send = await sendDurableMessageBatch({
+    cfg: params.cfg,
+    channel: "discord",
+    to: delivery.to,
+    accountId: params.accountId,
+    payloads,
+    replyToId: normalizeOptionalString(params.replyToId),
+    replyToMode: delivery.replyToMode,
+    formatting: delivery.formatting,
+    threadId: delivery.threadId,
+    identity: delivery.identity,
+    deps: createDiscordDeliveryDeps({
+      cfg: params.cfg,
+      token: params.token,
+      rest: params.rest,
+    }),
+    mediaAccess: delivery.mediaAccess,
+    session: buildOutboundSessionContext({
+      cfg: params.cfg,
+      sessionKey: params.sessionKey,
+      agentId: delivery.agentId,
+      requesterAccountId: params.accountId,
+    }),
+  });
+  if (send.status === "failed" || send.status === "partial_failed") {
+    throw send.error;
+  }
+  const results = send.status === "sent" ? send.results : [];
+  if (results.length === 0) {
+    throw new Error(`discord final reply produced no delivered message for ${delivery.to}`);
   }
 }

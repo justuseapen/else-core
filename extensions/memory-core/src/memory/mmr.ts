@@ -1,3 +1,6 @@
+// Memory Core plugin module implements mmr behavior.
+import { jaccardSimilarity, textSimilarity, tokenize } from "./tokenize.js";
+
 /**
  * Maximal Marginal Relevance (MMR) re-ranking algorithm.
  *
@@ -25,6 +28,7 @@ export const DEFAULT_MMR_CONFIG: MMRConfig = {
   lambda: 0.7,
 };
 
+<<<<<<< HEAD
 /**
  * Regex matching CJK-family characters that lack whitespace word boundaries:
  * - CJK Unified Ideographs (Chinese hanzi, Japanese kanji, Korean hanja)
@@ -100,6 +104,12 @@ export function jaccardSimilarity(setA: Set<string>, setB: Set<string>): number 
 export function textSimilarity(contentA: string, contentB: string): number {
   return jaccardSimilarity(tokenize(contentA), tokenize(contentB));
 }
+=======
+// Re-export the shared CJK-aware tokenizer + Jaccard helpers so existing
+// `import { tokenize, jaccardSimilarity, textSimilarity } from "./mmr.js"`
+// callers (including `mmr.test.ts`) continue to work without churn.
+export { jaccardSimilarity, textSimilarity, tokenize };
+>>>>>>> upstream/main
 
 /**
  * Compute the maximum similarity between an item and all selected items.

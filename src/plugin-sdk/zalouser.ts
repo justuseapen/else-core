@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Private helper surface for the bundled zalouser plugin.
 // Keep this list additive and scoped to the bundled Zalo user surface.
 
@@ -6,25 +7,18 @@ import { createOptionalChannelSetupSurface } from "./channel-setup.js";
 export type { ReplyPayload } from "../auto-reply/types.js";
 export { mergeAllowlist, summarizeMapping } from "../channels/allowlists/resolve-utils.js";
 export { resolveMentionGatingWithBypass } from "../channels/mention-gating.js";
+=======
+/**
+ * @deprecated Compatibility facade for published Lark/Zalo packages that imported
+ * command authorization through `openclaw/plugin-sdk/zalouser`.
+ */
+>>>>>>> upstream/main
 export {
-  deleteAccountFromConfigSection,
-  setAccountEnabledInConfigSection,
-} from "../channels/plugins/config-helpers.js";
-export { buildChannelConfigSchema } from "../channels/plugins/config-schema.js";
-export { formatPairingApproveHint } from "../channels/plugins/helpers.js";
-export {
-  addWildcardAllowFrom,
-  mergeAllowFromEntries,
-  setTopLevelChannelDmPolicyWithAllowFrom,
-} from "../channels/plugins/setup-wizard-helpers.js";
-export {
-  applyAccountNameToChannelSection,
-  applySetupAccountConfigPatch,
-  migrateBaseNameToDefaultAccount,
-  patchScopedAccountConfig,
-} from "../channels/plugins/setup-helpers.js";
-export { createAccountListHelpers } from "../channels/plugins/account-helpers.js";
+  resolveSenderCommandAuthorization,
+  resolveSenderCommandAuthorizationWithRuntime,
+} from "./command-auth.js";
 export type {
+<<<<<<< HEAD
   BaseProbeResult,
   ChannelAccountSnapshot,
   ChannelDirectoryEntry,
@@ -87,3 +81,9 @@ const zalouserSetup = createOptionalChannelSetupSurface({
 
 export const zalouserSetupAdapter = zalouserSetup.setupAdapter;
 export const zalouserSetupWizard = zalouserSetup.setupWizard;
+=======
+  CommandAuthorizationRuntime,
+  ResolveSenderCommandAuthorizationParams,
+  ResolveSenderCommandAuthorizationWithRuntimeParams,
+} from "./command-auth.js";
+>>>>>>> upstream/main

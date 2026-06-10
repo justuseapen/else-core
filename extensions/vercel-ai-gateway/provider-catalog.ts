@@ -1,5 +1,23 @@
+<<<<<<< HEAD
 import type { ModelProviderConfig } from "openclaw/plugin-sdk/provider-model-shared";
 import { discoverVercelAiGatewayModels, VERCEL_AI_GATEWAY_BASE_URL } from "./api.js";
+=======
+// Vercel Ai Gateway provider module implements model/runtime integration.
+import type { ModelProviderConfig } from "openclaw/plugin-sdk/provider-model-shared";
+import {
+  discoverVercelAiGatewayModels,
+  getStaticVercelAiGatewayModelCatalog,
+  VERCEL_AI_GATEWAY_BASE_URL,
+} from "./models.js";
+
+export function buildStaticVercelAiGatewayProvider(): ModelProviderConfig {
+  return {
+    baseUrl: VERCEL_AI_GATEWAY_BASE_URL,
+    api: "anthropic-messages",
+    models: getStaticVercelAiGatewayModelCatalog(),
+  };
+}
+>>>>>>> upstream/main
 
 export async function buildVercelAiGatewayProvider(): Promise<ModelProviderConfig> {
   return {

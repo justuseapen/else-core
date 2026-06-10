@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   resolveAgentModelFallbackValues,
   resolveAgentModelPrimaryValue,
@@ -8,11 +9,22 @@ import {
   createLegacyProviderConfig,
   EXPECTED_FALLBACKS,
 } from "../../test/helpers/plugins/onboard-config.js";
+=======
+// Minimax tests cover onboard plugin behavior.
+import { resolveAgentModelPrimaryValue } from "openclaw/plugin-sdk/provider-onboard";
+import {
+  expectProviderOnboardMergedLegacyConfig,
+  expectProviderOnboardPreservesPrimary,
+} from "openclaw/plugin-sdk/provider-test-contracts";
+import { describe, expect, it } from "vitest";
+import { buildMinimaxApiModelDefinition } from "./model-definitions.js";
+>>>>>>> upstream/main
 import { applyMinimaxApiConfig, applyMinimaxApiProviderConfig } from "./onboard.js";
 
 describe("minimax onboard", () => {
   it("adds minimax provider with correct settings", () => {
     const cfg = applyMinimaxApiConfig({});
+<<<<<<< HEAD
     expect(cfg.models?.providers?.minimax).toMatchObject({
       baseUrl: "https://api.minimax.io/anthropic",
       api: "anthropic-messages",
@@ -25,6 +37,40 @@ describe("minimax onboard", () => {
     expect(cfg.models?.providers?.minimax?.models[0]?.reasoning).toBe(true);
   });
 
+=======
+    expect(cfg.models?.providers?.minimax).toEqual({
+      baseUrl: "https://api.minimax.io/anthropic",
+      api: "anthropic-messages",
+      authHeader: true,
+      models: [buildMinimaxApiModelDefinition("MiniMax-M3")],
+    });
+    expect(cfg.agents?.defaults?.models?.["minimax/MiniMax-M3"]).toEqual({
+      alias: "Minimax",
+    });
+    expect(cfg.agents?.defaults?.model).toEqual({ primary: "minimax/MiniMax-M3" });
+  });
+
+  it("keeps reasoning enabled for MiniMax-M3", () => {
+    const cfg = applyMinimaxApiConfig({}, "MiniMax-M3");
+    expect(cfg.models?.providers?.minimax?.models[0]?.reasoning).toBe(true);
+  });
+
+  it("keeps MiniMax chat models text-only so image tools use MiniMax-VL-01", () => {
+    const cfg = applyMinimaxApiConfig({}, "MiniMax-M2.7-highspeed");
+    expect(cfg.models?.providers?.minimax?.models).toEqual([
+      {
+        id: "MiniMax-M2.7-highspeed",
+        name: "MiniMax M2.7 Highspeed",
+        reasoning: true,
+        input: ["text"],
+        cost: { input: 0.6, output: 2.4, cacheRead: 0.06, cacheWrite: 0.375 },
+        contextWindow: 204800,
+        maxTokens: 131072,
+      },
+    ]);
+  });
+
+>>>>>>> upstream/main
   it("preserves existing model params when adding alias", () => {
     const cfg = applyMinimaxApiConfig(
       {
@@ -41,13 +87,18 @@ describe("minimax onboard", () => {
       },
       "MiniMax-M2.7",
     );
+<<<<<<< HEAD
     expect(cfg.agents?.defaults?.models?.["minimax/MiniMax-M2.7"]).toMatchObject({
+=======
+    expect(cfg.agents?.defaults?.models?.["minimax/MiniMax-M2.7"]).toEqual({
+>>>>>>> upstream/main
       alias: "Minimax",
       params: { custom: "value" },
     });
   });
 
   it("merges existing minimax provider models", () => {
+<<<<<<< HEAD
     const cfg = applyMinimaxApiConfig(
       createLegacyProviderConfig({
         providerId: "minimax",
@@ -62,6 +113,17 @@ describe("minimax onboard", () => {
       "old-model",
       "MiniMax-M2.7",
     ]);
+=======
+    const provider = expectProviderOnboardMergedLegacyConfig({
+      applyProviderConfig: applyMinimaxApiConfig,
+      providerId: "minimax",
+      providerApi: "anthropic-messages",
+      baseUrl: "https://api.minimax.io/anthropic",
+      legacyApi: "openai-completions",
+    });
+    expect(provider?.authHeader).toBe(true);
+    expect(provider?.models.map((m) => m.id)).toEqual(["old-model", "MiniMax-M3"]);
+>>>>>>> upstream/main
   });
 
   it("preserves other providers when adding minimax", () => {
@@ -87,8 +149,13 @@ describe("minimax onboard", () => {
         },
       },
     });
+<<<<<<< HEAD
     expect(cfg.models?.providers?.anthropic).toBeDefined();
     expect(cfg.models?.providers?.minimax).toBeDefined();
+=======
+    expect(cfg.models?.providers).toHaveProperty("anthropic");
+    expect(cfg.models?.providers).toHaveProperty("minimax");
+>>>>>>> upstream/main
   });
 
   it("preserves existing models mode", () => {
@@ -99,12 +166,19 @@ describe("minimax onboard", () => {
   });
 
   it("does not overwrite existing primary model in provider-only mode", () => {
+<<<<<<< HEAD
     const cfg = applyMinimaxApiProviderConfig({
       agents: { defaults: { model: { primary: "anthropic/claude-opus-4-5" } } },
     });
     expect(resolveAgentModelPrimaryValue(cfg.agents?.defaults?.model)).toBe(
       "anthropic/claude-opus-4-5",
     );
+=======
+    expectProviderOnboardPreservesPrimary({
+      applyProviderConfig: applyMinimaxApiProviderConfig,
+      primaryModelRef: "anthropic/claude-opus-4-5",
+    });
+>>>>>>> upstream/main
   });
 
   it("sets the chosen model as primary in config mode", () => {
@@ -113,6 +187,7 @@ describe("minimax onboard", () => {
       "minimax/MiniMax-M2.7-highspeed",
     );
   });
+<<<<<<< HEAD
 
   it("preserves existing model fallbacks", () => {
     const cfg = applyMinimaxApiConfig(createConfigWithFallbacks());
@@ -120,4 +195,6 @@ describe("minimax onboard", () => {
       ...EXPECTED_FALLBACKS,
     ]);
   });
+=======
+>>>>>>> upstream/main
 });

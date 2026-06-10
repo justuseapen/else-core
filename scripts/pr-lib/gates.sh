@@ -40,12 +40,28 @@ prepare_gates() {
   fi
 
   local has_changelog_update=false
+<<<<<<< HEAD
   if printf '%s\n' "$changed_files" | rg -q '^CHANGELOG\.md$'; then
     has_changelog_update=true
   fi
 
   local unsupported_changelog_fragments
   unsupported_changelog_fragments=$(printf '%s\n' "$changed_files" | rg '^changelog/fragments/' || true)
+=======
+  local unsupported_changelog_fragments=""
+  local changed_path
+  while IFS= read -r changed_path; do
+    [ -n "$changed_path" ] || continue
+    case "$changed_path" in
+      CHANGELOG.md)
+        has_changelog_update=true
+        ;;
+      changelog/fragments/*)
+        unsupported_changelog_fragments="${unsupported_changelog_fragments}${changed_path}"$'\n'
+        ;;
+    esac
+  done <<<"$changed_files"
+>>>>>>> upstream/main
   if [ -n "$unsupported_changelog_fragments" ]; then
     echo "Unsupported changelog fragment files detected:"
     printf '%s\n' "$unsupported_changelog_fragments"
@@ -53,6 +69,7 @@ prepare_gates() {
     exit 1
   fi
 
+<<<<<<< HEAD
   if [ "$changelog_required" = "true" ] && [ "$has_changelog_update" = "false" ]; then
     echo "Missing changelog update. Add CHANGELOG.md changes."
     exit 1
@@ -60,6 +77,11 @@ prepare_gates() {
 
   if [ "$has_changelog_update" = "true" ]; then
     normalize_pr_changelog_entries "$pr"
+=======
+  if [ "$has_changelog_update" = "true" ]; then
+    normalize_pr_changelog_entries "$pr"
+    validate_changelog_attribution_policy
+>>>>>>> upstream/main
   fi
 
   if [ "$changelog_required" = "true" ]; then
@@ -103,11 +125,24 @@ prepare_gates() {
       echo "Docs-only change detected with high confidence; skipping pnpm test."
     else
       gates_mode="full"
+<<<<<<< HEAD
       echo "Running pnpm test with OPENCLAW_VITEST_MAX_WORKERS=${OPENCLAW_VITEST_MAX_WORKERS:-4}."
       run_quiet_logged \
         "pnpm test" \
         ".local/gates-test.log" \
         env OPENCLAW_VITEST_MAX_WORKERS="${OPENCLAW_VITEST_MAX_WORKERS:-4}" pnpm test
+=======
+      if [ -n "${OPENCLAW_VITEST_MAX_WORKERS:-}" ]; then
+        echo "Running pnpm test with OPENCLAW_VITEST_MAX_WORKERS=$OPENCLAW_VITEST_MAX_WORKERS."
+        run_quiet_logged \
+          "pnpm test" \
+          ".local/gates-test.log" \
+          env OPENCLAW_VITEST_MAX_WORKERS="$OPENCLAW_VITEST_MAX_WORKERS" pnpm test
+      else
+        echo "Running pnpm test with host-aware scheduling defaults."
+        run_quiet_logged "pnpm test" ".local/gates-test.log" pnpm test
+      fi
+>>>>>>> upstream/main
       previous_full_gates_head="$current_head"
     fi
   fi

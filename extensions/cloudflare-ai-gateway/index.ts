@@ -1,3 +1,7 @@
+/**
+ * Bundled provider plugin entry for Cloudflare AI Gateway setup, catalog
+ * discovery, failover classification, and stream wrapping.
+ */
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import {
   applyAuthProfileConfig,
@@ -7,6 +11,7 @@ import {
   listProfilesForProvider,
   normalizeApiKeyInput,
   normalizeOptionalSecretInput,
+<<<<<<< HEAD
   type SecretInput,
   upsertAuthProfile,
   validateApiKeyInput,
@@ -18,11 +23,38 @@ import {
   resolveCloudflareAiGatewayBaseUrl,
 } from "./models.js";
 import { applyCloudflareAiGatewayConfig, buildCloudflareAiGatewayConfigPatch } from "./onboard.js";
+=======
+  upsertAuthProfileWithLock,
+  validateApiKeyInput,
+} from "openclaw/plugin-sdk/provider-auth";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { buildCloudflareAiGatewayCatalogProvider } from "./catalog-provider.js";
+import { CLOUDFLARE_AI_GATEWAY_DEFAULT_MODEL_REF } from "./models.js";
+import { applyCloudflareAiGatewayConfig, buildCloudflareAiGatewayConfigPatch } from "./onboard.js";
+import { wrapCloudflareAiGatewayProviderStream } from "./stream-wrappers.js";
+>>>>>>> upstream/main
 
 const PROVIDER_ID = "cloudflare-ai-gateway";
 const PROVIDER_ENV_VAR = "CLOUDFLARE_AI_GATEWAY_API_KEY";
 const PROFILE_ID = "cloudflare-ai-gateway:default";
+type UpsertAuthProfileParams = Parameters<typeof upsertAuthProfileWithLock>[0];
 
+<<<<<<< HEAD
+=======
+async function upsertAuthProfileWithLockOrThrow(params: UpsertAuthProfileParams): Promise<void> {
+  const updated = await upsertAuthProfileWithLock(params);
+  if (!updated) {
+    throw new Error(
+      "Failed to update auth profile store; the auth store lock may be busy. Wait a moment and retry.",
+    );
+  }
+}
+
+function readRequiredTextInput(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+>>>>>>> upstream/main
 async function resolveCloudflareGatewayMetadataInteractive(ctx: {
   accountId?: string;
   gatewayId?: string;
@@ -33,21 +65,21 @@ async function resolveCloudflareGatewayMetadataInteractive(ctx: {
     }) => Promise<unknown>;
   };
 }) {
-  let accountId = ctx.accountId?.trim() ?? "";
-  let gatewayId = ctx.gatewayId?.trim() ?? "";
+  let accountId = normalizeOptionalString(ctx.accountId) ?? "";
+  let gatewayId = normalizeOptionalString(ctx.gatewayId) ?? "";
   if (!accountId) {
     const value = await ctx.prompter.text({
       message: "Enter Cloudflare Account ID",
-      validate: (val) => (String(val ?? "").trim() ? undefined : "Account ID is required"),
+      validate: (val) => (readRequiredTextInput(val) ? undefined : "Account ID is required"),
     });
-    accountId = String(value ?? "").trim();
+    accountId = readRequiredTextInput(value);
   }
   if (!gatewayId) {
     const value = await ctx.prompter.text({
       message: "Enter Cloudflare AI Gateway ID",
-      validate: (val) => (String(val ?? "").trim() ? undefined : "Gateway ID is required"),
+      validate: (val) => (readRequiredTextInput(val) ? undefined : "Gateway ID is required"),
     });
-    gatewayId = String(value ?? "").trim();
+    gatewayId = readRequiredTextInput(value);
   }
   return { accountId, gatewayId };
 }
@@ -82,9 +114,11 @@ export default definePluginEntry({
               gatewayId: normalizeOptionalSecretInput(ctx.opts?.cloudflareAiGatewayGatewayId),
               prompter: ctx.prompter,
             });
-            let capturedSecretInput: SecretInput | undefined;
+            let capturedSecretInput: Parameters<typeof buildApiKeyCredential>[1] = "";
             let capturedCredential = false;
             let capturedMode: "plaintext" | "ref" | undefined;
+            // Capture through the shared provider auth helper so plaintext,
+            // env refs, and secret refs keep the same validation path.
             await ensureApiKeyFromOptionEnvOrPrompt({
               token: normalizeOptionalSecretInput(ctx.opts?.cloudflareAiGatewayApiKey),
               tokenProvider: "cloudflare-ai-gateway",
@@ -136,10 +170,19 @@ export default definePluginEntry({
             const storedMetadata =
               authStore.profiles[PROFILE_ID]?.type === "api_key"
                 ? {
+<<<<<<< HEAD
                     accountId:
                       authStore.profiles[PROFILE_ID]?.metadata?.accountId?.trim() || undefined,
                     gatewayId:
                       authStore.profiles[PROFILE_ID]?.metadata?.gatewayId?.trim() || undefined,
+=======
+                    accountId: normalizeOptionalString(
+                      authStore.profiles[PROFILE_ID]?.metadata?.accountId,
+                    ),
+                    gatewayId: normalizeOptionalString(
+                      authStore.profiles[PROFILE_ID]?.metadata?.gatewayId,
+                    ),
+>>>>>>> upstream/main
                   }
                 : {};
             const accountId =
@@ -165,6 +208,8 @@ export default definePluginEntry({
               return null;
             }
             if (resolved.source !== "profile") {
+              // Persist newly supplied credentials with Gateway metadata; a
+              // profile-sourced key already owns its existing auth-store record.
               const credential = ctx.toApiKeyCredential({
                 provider: PROVIDER_ID,
                 resolved,
@@ -173,7 +218,7 @@ export default definePluginEntry({
               if (!credential) {
                 return null;
               }
-              upsertAuthProfile({
+              await upsertAuthProfileWithLockOrThrow({
                 profileId: PROFILE_ID,
                 credential,
                 agentDir: ctx.agentDir,
@@ -194,7 +239,9 @@ export default definePluginEntry({
           const authStore = ensureAuthProfileStore(ctx.agentDir, {
             allowKeychainPrompt: false,
           });
-          const envManagedApiKey = ctx.env[PROVIDER_ENV_VAR]?.trim() ? PROVIDER_ENV_VAR : undefined;
+          const envManagedApiKey = normalizeOptionalString(ctx.env[PROVIDER_ENV_VAR])
+            ? PROVIDER_ENV_VAR
+            : undefined;
           for (const profileId of listProfilesForProvider(authStore, PROVIDER_ID)) {
             const provider = buildCloudflareAiGatewayCatalogProvider({
               credential: authStore.profiles[profileId],
@@ -212,6 +259,10 @@ export default definePluginEntry({
       },
       classifyFailoverReason: ({ errorMessage }) =>
         /\bworkers?_ai\b.*\b(?:rate|limit|quota)\b/i.test(errorMessage) ? "rate_limit" : undefined,
+<<<<<<< HEAD
+=======
+      wrapStreamFn: wrapCloudflareAiGatewayProviderStream,
+>>>>>>> upstream/main
     });
   },
 });

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+<<<<<<< HEAD
 VM_NAME="Windows 11"
 SNAPSHOT_HINT="pre-openclaw-native-e2e-2026-03-12"
 MODE="both"
@@ -2214,4 +2215,11 @@ fi
 
 if [[ "$FRESH_MAIN_STATUS" == "fail" || "$UPGRADE_STATUS" == "fail" ]]; then
   exit 1
+=======
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+if command -v pnpm >/dev/null 2>&1; then
+  exec pnpm exec tsx scripts/e2e/parallels/windows-smoke.ts "$@"
+>>>>>>> upstream/main
 fi
+exec node --import tsx scripts/e2e/parallels/windows-smoke.ts "$@"

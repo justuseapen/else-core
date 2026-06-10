@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const MAX_SAFE_INTEGER_ABS_STR = String(Number.MAX_SAFE_INTEGER);
 
 function isAsciiDigit(ch: string | undefined): boolean {
@@ -141,3 +142,10 @@ export function parseJsonObjectPreservingUnsafeIntegers(
   }
   return null;
 }
+=======
+// Ollama plugin module implements ollama json behavior.
+export {
+  parseJsonObjectPreservingUnsafeIntegers,
+  parseJsonPreservingUnsafeIntegers,
+} from "openclaw/plugin-sdk/json-unsafe-integers";
+>>>>>>> upstream/main

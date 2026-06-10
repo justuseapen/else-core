@@ -1,6 +1,11 @@
+<<<<<<< HEAD
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { clearPluginDiscoveryCache } from "../../../plugins/discovery.js";
 import { clearPluginManifestRegistryCache } from "../../../plugins/manifest-registry.js";
+=======
+// Plugins core registry contract tests cover channel plugin registry behavior and cleanup.
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+>>>>>>> upstream/main
 import { setActivePluginRegistry } from "../../../plugins/runtime.js";
 import { createTestRegistry } from "../../../test-utils/channel-plugins.js";
 import { listChannelPlugins } from "../index.js";
@@ -40,8 +45,11 @@ describe("channel plugin registry", () => {
 
   afterEach(() => {
     setActivePluginRegistry(emptyRegistry);
+<<<<<<< HEAD
     clearPluginDiscoveryCache();
     clearPluginManifestRegistryCache();
+=======
+>>>>>>> upstream/main
   });
 
   it.each([

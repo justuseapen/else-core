@@ -1,3 +1,5 @@
+// Covers directory cache key dimensions, TTL expiration, config invalidation,
+// recency refresh, bounded eviction, and matching clears.
 import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
 import { DirectoryCache, buildDirectoryCacheKey } from "./directory-cache.js";
@@ -7,6 +9,7 @@ describe("buildDirectoryCacheKey", () => {
   it.each([
     {
       input: {
+<<<<<<< HEAD
         channel: "slack",
         kind: "channel",
         source: "cache",
@@ -16,12 +19,27 @@ describe("buildDirectoryCacheKey", () => {
     {
       input: {
         channel: "discord",
+=======
+        channel: "workspace",
+        kind: "channel",
+        source: "cache",
+      },
+      expected: "workspace:default:channel:cache:default",
+    },
+    {
+      input: {
+        channel: "richchat",
+>>>>>>> upstream/main
         accountId: "work",
         kind: "user",
         source: "live",
         signature: "v2",
       },
+<<<<<<< HEAD
       expected: "discord:work:user:live:v2",
+=======
+      expected: "richchat:work:user:live:v2",
+>>>>>>> upstream/main
     },
   ] satisfies Array<{ input: DirectoryCacheKey; expected: string }>)(
     "includes account and signature fallbacks for %j",
@@ -68,5 +86,17 @@ describe("DirectoryCache", () => {
 
     cache.clear(cfg);
     expect(cache.get("a", cfg)).toBeUndefined();
+  });
+
+  it("uses the default max size when maxSize is non-finite", () => {
+    const cache = new DirectoryCache<number>(60_000, Number.NaN);
+    const cfg = {} as OpenClawConfig;
+
+    for (let i = 0; i <= 2000; i++) {
+      cache.set(`key-${i}`, i, cfg);
+    }
+
+    expect(cache.get("key-0", cfg)).toBeUndefined();
+    expect(cache.get("key-2000", cfg)).toBe(2000);
   });
 });

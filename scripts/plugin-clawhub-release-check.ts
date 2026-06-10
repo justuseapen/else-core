@@ -1,16 +1,31 @@
 #!/usr/bin/env -S node --import tsx
+<<<<<<< HEAD
+=======
+// Plugin Clawhub Release Check script supports OpenClaw repository automation.
+>>>>>>> upstream/main
 
 import { pathToFileURL } from "node:url";
 import {
   collectClawHubPublishablePluginPackages,
   collectClawHubVersionGateErrors,
+<<<<<<< HEAD
+=======
+  assertPluginReleaseVersionFloors,
+>>>>>>> upstream/main
   parsePluginReleaseArgs,
   resolveSelectedClawHubPublishablePluginPackages,
 } from "./lib/plugin-clawhub-release.ts";
 
 export async function runPluginClawHubReleaseCheck(argv: string[]) {
   const { selection, selectionMode, baseRef, headRef } = parsePluginReleaseArgs(argv);
+<<<<<<< HEAD
   const publishable = collectClawHubPublishablePluginPackages();
+=======
+  const publishable = collectClawHubPublishablePluginPackages(".", {
+    packageNames:
+      selectionMode === "all-publishable" || selection.length === 0 ? undefined : selection,
+  });
+>>>>>>> upstream/main
   const gitRange = baseRef && headRef ? { baseRef, headRef } : undefined;
   const selected = resolveSelectedClawHubPublishablePluginPackages({
     plugins: publishable,
@@ -19,6 +34,13 @@ export async function runPluginClawHubReleaseCheck(argv: string[]) {
     gitRange,
   });
 
+<<<<<<< HEAD
+=======
+  if (selectionMode !== undefined || selection.length > 0) {
+    assertPluginReleaseVersionFloors(selected, "plugin-clawhub-release-check");
+  }
+
+>>>>>>> upstream/main
   if (gitRange) {
     const errors = collectClawHubVersionGateErrors({
       plugins: publishable,

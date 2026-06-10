@@ -1,10 +1,19 @@
+// Shared subagent tool test harness for gateway/config/queue dependency overrides.
 import { vi } from "vitest";
+<<<<<<< HEAD
 import { __testing as queueCleanupTesting } from "../auto-reply/reply/queue/cleanup.js";
 import type { MockFn } from "../test-utils/vitest-mock-fn.js";
 import { __testing as subagentAnnounceTesting } from "./subagent-announce.js";
 import { __testing as subagentControlTesting } from "./subagent-control.js";
+=======
+import { testing as queueCleanupTesting } from "../auto-reply/reply/queue/cleanup.js";
+import type { CallGatewayOptions } from "../gateway/call.js";
+import type { MockFn } from "../test-utils/vitest-mock-fn.js";
+import { testing as subagentAnnounceTesting } from "./subagent-announce.js";
+import { testing as subagentControlTesting } from "./subagent-control.js";
+>>>>>>> upstream/main
 
-export type LoadedConfig = ReturnType<(typeof import("../config/config.js"))["loadConfig"]>;
+type LoadedConfig = ReturnType<(typeof import("../config/config.js"))["getRuntimeConfig"]>;
 
 export const callGatewayMock: MockFn = vi.fn();
 
@@ -17,6 +26,13 @@ const defaultConfig: LoadedConfig = {
 
 let configOverride: LoadedConfig = defaultConfig;
 
+async function callGatewayForTest<T = Record<string, unknown>>(
+  opts: CallGatewayOptions,
+): Promise<T> {
+  // Preserve the gateway call shape while giving tests a single mock to assert.
+  return (await callGatewayMock(opts)) as T;
+}
+
 export function setSubagentsConfigOverride(next: LoadedConfig) {
   configOverride = next;
 }
@@ -26,12 +42,22 @@ export function resetSubagentsConfigOverride() {
 }
 
 function applySharedSubagentTestDeps() {
+<<<<<<< HEAD
   subagentControlTesting.setDepsForTest({
     callGateway: (optsUnknown) => callGatewayMock(optsUnknown),
   });
   subagentAnnounceTesting.setDepsForTest({
     callGateway: (optsUnknown) => callGatewayMock(optsUnknown),
     loadConfig: () => configOverride,
+=======
+  // Keep control, announce, and queue cleanup modules on the same mocked gateway.
+  subagentControlTesting.setDepsForTest({
+    callGateway: callGatewayForTest,
+  });
+  subagentAnnounceTesting.setDepsForTest({
+    callGateway: callGatewayForTest,
+    getRuntimeConfig: () => configOverride,
+>>>>>>> upstream/main
   });
   queueCleanupTesting.setDepsForTests({
     resolveEmbeddedSessionLane: (key: string) => `session:${key.trim() || "main"}`,
@@ -41,14 +67,14 @@ function applySharedSubagentTestDeps() {
 applySharedSubagentTestDeps();
 
 vi.mock("../gateway/call.js", () => ({
-  callGateway: (opts: unknown) => callGatewayMock(opts),
+  callGateway: callGatewayForTest,
 }));
 
 vi.mock("../config/config.js", async () => {
   const actual = await vi.importActual<typeof import("../config/config.js")>("../config/config.js");
   return {
     ...actual,
-    loadConfig: () => configOverride,
+    getRuntimeConfig: () => configOverride,
     resolveGatewayPort: () => 18789,
   };
 });

@@ -1,3 +1,4 @@
+// Reasoning tag tests cover parsing and stripping reasoning tag blocks.
 import { describe, expect, it } from "vitest";
 import { stripReasoningTagsFromText } from "./reasoning-tags.js";
 
@@ -121,6 +122,17 @@ describe("stripReasoningTagsFromText", () => {
         expected: "You can start with <think and then close with",
       },
       {
+<<<<<<< HEAD
+=======
+        input: "Internal reasoning </think> final answer",
+        expected: "final answer",
+      },
+      {
+        input: "Use `<think>` to open and `</think>` to close. Final sentence.",
+        expected: "Use `<think>` to open and `</think>` to close. Final sentence.",
+      },
+      {
+>>>>>>> upstream/main
         input: "A < think >content< /think > B",
         expected: "A  B",
       },
@@ -168,7 +180,11 @@ describe("stripReasoningTagsFromText", () => {
     it.each([
       {
         input: "<think>outer <think>inner</think> still outer</think>visible",
+<<<<<<< HEAD
         expected: "still outervisible",
+=======
+        expected: "visible",
+>>>>>>> upstream/main
       },
       {
         input: "A<final>1</final>B<final>2</final>C",
@@ -182,6 +198,41 @@ describe("stripReasoningTagsFromText", () => {
         input: "A <FINAL data-x='1'>visible</Final> B",
         expected: "A visible B",
       },
+<<<<<<< HEAD
+=======
+      {
+        input: "A <final/>visible <final data-model='gemini'>answer</final> B",
+        expected: "A visible answer B",
+      },
+      {
+        input: "A <final data-model=openrouter/google/gemini>answer</final> B",
+        expected: "A answer B",
+      },
+      {
+        input: "A <final-result>visible</final-result> B",
+        expected: "A <final-result>visible</final-result> B",
+      },
+      {
+        input: "  <final-result>visible</final-result>  ",
+        expected: "  <final-result>visible</final-result>  ",
+      },
+      {
+        input: 'A <final reason="a>b">visible B',
+        expected: 'A <final reason="a>b">visible B',
+      },
+      {
+        input: "A <final / nottag>visible B",
+        expected: "A <final / nottag>visible B",
+      },
+      {
+        input: `A <final ${" ".repeat(10_000)} B`,
+        expected: `A <final ${" ".repeat(10_000)} B`,
+      },
+      {
+        input: `A <final ${" ".repeat(10_000)}= > B`,
+        expected: `A <final ${" ".repeat(10_000)}= > B`,
+      },
+>>>>>>> upstream/main
     ] as const)("handles nested/final tag behavior: %j", (testCase) => {
       expectStrippedCase(testCase);
     });
@@ -222,12 +273,31 @@ describe("stripReasoningTagsFromText", () => {
   describe("strict vs preserve mode", () => {
     it.each([
       {
+<<<<<<< HEAD
         name: "applies strict mode to unclosed tags",
+=======
+        name: "keeps strict mode from leaking unclosed trailing reasoning after visible text",
+>>>>>>> upstream/main
         input: "Before <think>unclosed content after",
         expected: "Before",
         opts: { mode: "strict" as const },
       },
       {
+<<<<<<< HEAD
+=======
+        name: "recovers fully wrapped unclosed tags that would otherwise deliver empty text",
+        input: "<think>Answer after malformed opening tag",
+        expected: "Answer after malformed opening tag",
+        opts: { mode: "strict" as const },
+      },
+      {
+        name: "does not recover fully closed reasoning-only blocks in strict mode",
+        input: "<think>hidden reasoning only</think>",
+        expected: "",
+        opts: { mode: "strict" as const },
+      },
+      {
+>>>>>>> upstream/main
         name: "applies preserve mode to unclosed tags",
         input: "Before <think>unclosed content after",
         expected: "Before unclosed content after",

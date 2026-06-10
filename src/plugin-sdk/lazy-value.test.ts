@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+/**
+ * Tests cached lazy value getter behavior and fallback handling.
+ */
+>>>>>>> upstream/main
 import { describe, expect, it, vi } from "vitest";
 import { createCachedLazyValueGetter } from "./lazy-value.js";
 

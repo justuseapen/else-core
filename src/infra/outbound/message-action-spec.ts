@@ -1,8 +1,26 @@
+<<<<<<< HEAD
 import { getBootstrapChannelPlugin } from "../../channels/plugins/bootstrap-registry.js";
 import type { ChannelMessageActionName } from "../../channels/plugins/types.js";
+=======
+// Message-action specs describe which actions need destinations and which
+// legacy/plugin aliases count as an existing target.
+import {
+  normalizeOptionalLowercaseString,
+  normalizeOptionalString,
+} from "@openclaw/normalization-core/string-coerce";
+import { getBootstrapChannelPlugin } from "../../channels/plugins/bootstrap-registry.js";
+import type { ChannelMessageActionName } from "../../channels/plugins/types.public.js";
+import { hasPotentialPluginActionParam } from "./message-action-param-keys.js";
+>>>>>>> upstream/main
 
+/**
+ * Canonical parameter shape used by an outbound message action target.
+ */
 export type MessageActionTargetMode = "to" | "channelId" | "none";
 
+/**
+ * Target-parameter policy for each supported channel message action.
+ */
 export const MESSAGE_ACTION_TARGET_MODE: Record<ChannelMessageActionName, MessageActionTargetMode> =
   {
     send: "to",
@@ -80,6 +98,10 @@ const ACTION_TARGET_ALIASES: Partial<Record<ChannelMessageActionName, ActionTarg
 
 function listActionTargetAliasSpecs(
   action: ChannelMessageActionName,
+<<<<<<< HEAD
+=======
+  params: Record<string, unknown>,
+>>>>>>> upstream/main
   channel?: string,
 ): ActionTargetAliasSpec[] {
   const specs: ActionTargetAliasSpec[] = [];
@@ -87,10 +109,18 @@ function listActionTargetAliasSpecs(
   if (coreSpec) {
     specs.push(coreSpec);
   }
+<<<<<<< HEAD
   const normalizedChannel = channel?.trim().toLowerCase();
   if (!normalizedChannel) {
     return specs;
   }
+=======
+  const normalizedChannel = normalizeOptionalLowercaseString(channel);
+  if (!normalizedChannel || !hasPotentialPluginActionParam(params)) {
+    return specs;
+  }
+  // Plugin aliases are only checked after cheap param-shape screening to avoid bootstrap reads.
+>>>>>>> upstream/main
   const plugin = getBootstrapChannelPlugin(normalizedChannel);
   const channelSpec = plugin?.actions?.messageActionTargetAliases?.[action];
   if (channelSpec) {
@@ -99,24 +129,37 @@ function listActionTargetAliasSpecs(
   return specs;
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Reports whether an action normally needs a destination target.
+ */
+>>>>>>> upstream/main
 export function actionRequiresTarget(action: ChannelMessageActionName): boolean {
   return MESSAGE_ACTION_TARGET_MODE[action] !== "none";
 }
 
+/**
+ * Detects whether an action invocation already carries a usable target.
+ */
 export function actionHasTarget(
   action: ChannelMessageActionName,
   params: Record<string, unknown>,
   options?: { channel?: string },
 ): boolean {
-  const to = typeof params.to === "string" ? params.to.trim() : "";
+  const to = normalizeOptionalString(params.to) ?? "";
   if (to) {
     return true;
   }
-  const channelId = typeof params.channelId === "string" ? params.channelId.trim() : "";
+  const channelId = normalizeOptionalString(params.channelId) ?? "";
   if (channelId) {
     return true;
   }
+<<<<<<< HEAD
   const specs = listActionTargetAliasSpecs(action, options?.channel);
+=======
+  const specs = listActionTargetAliasSpecs(action, params, options?.channel);
+>>>>>>> upstream/main
   if (specs.length === 0) {
     return false;
   }
@@ -124,7 +167,11 @@ export function actionHasTarget(
     spec.aliases.some((alias) => {
       const value = params[alias];
       if (typeof value === "string") {
+<<<<<<< HEAD
         return value.trim().length > 0;
+=======
+        return Boolean(normalizeOptionalString(value));
+>>>>>>> upstream/main
       }
       if (typeof value === "number") {
         return Number.isFinite(value);

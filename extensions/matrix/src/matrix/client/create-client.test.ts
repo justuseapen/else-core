@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix tests cover create client plugin behavior.
+>>>>>>> upstream/main
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const ensureMatrixSdkLoggingConfiguredMock = vi.hoisted(() => vi.fn());
@@ -76,7 +80,11 @@ describe("createMatrixClient", () => {
       encryption: undefined,
       localTimeoutMs: undefined,
       initialSyncLimit: undefined,
+<<<<<<< HEAD
       storagePath: storagePaths.storagePath,
+=======
+      storageRootDir: storagePaths.rootDir,
+>>>>>>> upstream/main
       recoveryKeyPath: storagePaths.recoveryKeyPath,
       idbSnapshotPath: storagePaths.idbSnapshotPath,
       cryptoDatabasePrefix: "openclaw-matrix-default-token-hash",
@@ -86,6 +94,88 @@ describe("createMatrixClient", () => {
     });
   });
 
+<<<<<<< HEAD
+=======
+  it("derives ssrfPolicy from allowPrivateNetwork when no explicit policy is provided", async () => {
+    await createMatrixClient({
+      homeserver: "https://matrix.example.org",
+      userId: "@bot:example.org",
+      accessToken: "tok",
+      persistStorage: false,
+      allowPrivateNetwork: true,
+    });
+
+    expect(MatrixClientMock).toHaveBeenCalledWith("https://matrix.example.org", "tok", {
+      userId: "@bot:example.org",
+      password: undefined,
+      deviceId: undefined,
+      encryption: undefined,
+      localTimeoutMs: undefined,
+      initialSyncLimit: undefined,
+      storageRootDir: undefined,
+      recoveryKeyPath: undefined,
+      idbSnapshotPath: undefined,
+      cryptoDatabasePrefix: undefined,
+      autoBootstrapCrypto: undefined,
+      ssrfPolicy: { allowPrivateNetwork: true },
+      dispatcherPolicy: undefined,
+    });
+  });
+
+  it("prefers explicit ssrfPolicy over allowPrivateNetwork", async () => {
+    const explicitPolicy = { allowPrivateNetwork: true, customField: "test" };
+    await createMatrixClient({
+      homeserver: "https://matrix.example.org",
+      userId: "@bot:example.org",
+      accessToken: "tok",
+      persistStorage: false,
+      allowPrivateNetwork: false,
+      ssrfPolicy: explicitPolicy as never,
+    });
+
+    expect(MatrixClientMock).toHaveBeenCalledWith("https://matrix.example.org", "tok", {
+      userId: "@bot:example.org",
+      password: undefined,
+      deviceId: undefined,
+      encryption: undefined,
+      localTimeoutMs: undefined,
+      initialSyncLimit: undefined,
+      storageRootDir: undefined,
+      recoveryKeyPath: undefined,
+      idbSnapshotPath: undefined,
+      cryptoDatabasePrefix: undefined,
+      autoBootstrapCrypto: undefined,
+      ssrfPolicy: explicitPolicy,
+      dispatcherPolicy: undefined,
+    });
+  });
+
+  it("leaves ssrfPolicy undefined when allowPrivateNetwork is falsy and no explicit policy", async () => {
+    await createMatrixClient({
+      homeserver: "https://matrix.example.org",
+      userId: "@bot:example.org",
+      accessToken: "tok",
+      persistStorage: false,
+    });
+
+    expect(MatrixClientMock).toHaveBeenCalledWith("https://matrix.example.org", "tok", {
+      userId: "@bot:example.org",
+      password: undefined,
+      deviceId: undefined,
+      encryption: undefined,
+      localTimeoutMs: undefined,
+      initialSyncLimit: undefined,
+      storageRootDir: undefined,
+      recoveryKeyPath: undefined,
+      idbSnapshotPath: undefined,
+      cryptoDatabasePrefix: undefined,
+      autoBootstrapCrypto: undefined,
+      ssrfPolicy: undefined,
+      dispatcherPolicy: undefined,
+    });
+  });
+
+>>>>>>> upstream/main
   it("skips persistent storage wiring when persistence is disabled", async () => {
     await createMatrixClient({
       homeserver: "https://matrix.example.org",
@@ -103,7 +193,11 @@ describe("createMatrixClient", () => {
       encryption: undefined,
       localTimeoutMs: undefined,
       initialSyncLimit: undefined,
+<<<<<<< HEAD
       storagePath: undefined,
+=======
+      storageRootDir: undefined,
+>>>>>>> upstream/main
       recoveryKeyPath: undefined,
       idbSnapshotPath: undefined,
       cryptoDatabasePrefix: undefined,

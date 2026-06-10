@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { getChannelStreamingConfigObject } from "openclaw/plugin-sdk/channel-streaming";
 
 export type DiscordPreviewStreamMode = "off" | "partial" | "block";
@@ -30,6 +31,15 @@ function parseDiscordPreviewStreamMode(value: unknown): DiscordPreviewStreamMode
   }
   return parsed === "progress" ? "partial" : parsed;
 }
+=======
+// Discord plugin module implements preview streaming behavior.
+import {
+  resolveChannelPreviewStreamMode,
+  type StreamingMode,
+} from "openclaw/plugin-sdk/channel-outbound";
+
+type DiscordPreviewStreamMode = StreamingMode;
+>>>>>>> upstream/main
 
 export function resolveDiscordPreviewStreamMode(
   params: {
@@ -37,6 +47,7 @@ export function resolveDiscordPreviewStreamMode(
     streaming?: unknown;
   } = {},
 ): DiscordPreviewStreamMode {
+<<<<<<< HEAD
   const parsedStreaming = parseDiscordPreviewStreamMode(
     getChannelStreamingConfigObject(params)?.mode ?? params.streaming,
   );
@@ -52,4 +63,10 @@ export function resolveDiscordPreviewStreamMode(
     return params.streaming ? "partial" : "off";
   }
   return "off";
+=======
+  if (params.streaming === undefined && params.streamMode === undefined) {
+    return "progress";
+  }
+  return resolveChannelPreviewStreamMode(params, "off");
+>>>>>>> upstream/main
 }

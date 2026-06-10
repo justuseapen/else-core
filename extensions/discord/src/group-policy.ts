@@ -1,9 +1,14 @@
+// Discord plugin module implements group policy behavior.
 import type { ChannelGroupContext } from "openclaw/plugin-sdk/channel-contract";
 import {
   resolveToolsBySender,
   type GroupToolPolicyBySenderConfig,
   type GroupToolPolicyConfig,
 } from "openclaw/plugin-sdk/channel-policy";
+<<<<<<< HEAD
+=======
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import { normalizeAtHashSlug } from "openclaw/plugin-sdk/string-normalization-runtime";
 import type { DiscordConfig } from "./runtime-api.js";
 
@@ -21,7 +26,7 @@ function resolveDiscordGuildEntry(guilds: DiscordConfig["guilds"], groupSpace?: 
   if (!guilds || Object.keys(guilds).length === 0) {
     return null;
   }
-  const space = groupSpace?.trim() ?? "";
+  const space = normalizeOptionalString(groupSpace) ?? "";
   if (space && guilds[space]) {
     return guilds[space];
   }

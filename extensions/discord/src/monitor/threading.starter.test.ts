@@ -1,11 +1,18 @@
+<<<<<<< HEAD
 import { ChannelType, type Client } from "@buape/carbon";
+=======
+// Discord tests cover threading.starter plugin behavior.
+>>>>>>> upstream/main
 import { StickerFormatType } from "discord-api-types/v10";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  __resetDiscordThreadStarterCacheForTest,
-  resolveDiscordThreadStarter,
-} from "./threading.js";
+import { ChannelType, type Client } from "../internal/discord.js";
+import { resetDiscordThreadStarterCacheForTest, resolveDiscordThreadStarter } from "./threading.js";
 
+<<<<<<< HEAD
+=======
+type ResolvedThreadStarter = NonNullable<Awaited<ReturnType<typeof resolveDiscordThreadStarter>>>;
+
+>>>>>>> upstream/main
 type ThreadStarterRestMessage = {
   content?: string | null;
   embeds?: Array<{ title?: string | null; description?: string | null }>;
@@ -65,6 +72,26 @@ function createStarterMessage(overrides: ThreadStarterRestMessage = {}): ThreadS
   };
 }
 
+<<<<<<< HEAD
+=======
+function requireThreadStarter(
+  result: Awaited<ReturnType<typeof resolveDiscordThreadStarter>>,
+): ResolvedThreadStarter {
+  if (!result) {
+    throw new Error("expected resolved Discord thread starter");
+  }
+  return result;
+}
+
+function firstRestGetPath(get: ReturnType<typeof vi.fn>): unknown {
+  const [call] = get.mock.calls;
+  if (!call) {
+    throw new Error("expected Discord REST GET call");
+  }
+  return call[0];
+}
+
+>>>>>>> upstream/main
 async function resolveStarter(params: {
   message: ThreadStarterRestMessage;
   parentId?: string;
@@ -87,7 +114,7 @@ async function resolveStarter(params: {
 
 describe("resolveDiscordThreadStarter", () => {
   beforeEach(() => {
-    __resetDiscordThreadStarterCacheForTest();
+    resetDiscordThreadStarterCacheForTest();
   });
 
   it("falls back to joined embed title and description when content is empty", async () => {
@@ -100,10 +127,20 @@ describe("resolveDiscordThreadStarter", () => {
       resolveTimestampMs: () => 123,
     });
 
+<<<<<<< HEAD
     expect(result).toMatchObject({
       text: "Alert\nDetails",
       author: "Alice",
       authorId: "u1",
+=======
+    expect(requireThreadStarter(result)).toEqual({
+      text: "Alert\nDetails",
+      author: "Alice",
+      authorId: "u1",
+      authorName: "Alice",
+      authorTag: "Alice",
+      memberRoleIds: undefined,
+>>>>>>> upstream/main
       timestamp: 123,
     });
   });
@@ -133,12 +170,21 @@ describe("resolveDiscordThreadStarter", () => {
       }),
     });
 
+<<<<<<< HEAD
     expect(result).toMatchObject({
+=======
+    expect(requireThreadStarter(result)).toEqual({
+      text: "starter content",
+>>>>>>> upstream/main
       author: "Alice#1234",
       authorId: "u1",
       authorName: "Alice",
       authorTag: "Alice#1234",
       memberRoleIds: ["role-1", "role-2"],
+<<<<<<< HEAD
+=======
+      timestamp: undefined,
+>>>>>>> upstream/main
     });
   });
 
@@ -152,10 +198,17 @@ describe("resolveDiscordThreadStarter", () => {
       resolveTimestampMs: () => 456,
     });
 
+<<<<<<< HEAD
     expect(result).toBeTruthy();
     expect(result!.text).toContain("forwarded task content");
     expect(result!.author).toBe("Bob");
     expect(result!.timestamp).toBe(456);
+=======
+    const starter = requireThreadStarter(result);
+    expect(starter.text).toContain("forwarded task content");
+    expect(starter.author).toBe("Bob");
+    expect(starter.timestamp).toBe(456);
+>>>>>>> upstream/main
   });
 
   it("prefers content over forwarded message snapshots", async () => {
@@ -167,8 +220,12 @@ describe("resolveDiscordThreadStarter", () => {
       }),
     });
 
+<<<<<<< HEAD
     expect(result).toBeTruthy();
     expect(result!.text).toBe("direct content");
+=======
+    expect(requireThreadStarter(result).text).toBe("direct content");
+>>>>>>> upstream/main
   });
 
   it("joins multiple forwarded message snapshots", async () => {
@@ -182,9 +239,15 @@ describe("resolveDiscordThreadStarter", () => {
       }),
     });
 
+<<<<<<< HEAD
     expect(result).toBeTruthy();
     expect(result!.text).toContain("first forwarded message");
     expect(result!.text).toContain("second forwarded message");
+=======
+    const starter = requireThreadStarter(result);
+    expect(starter.text).toContain("first forwarded message");
+    expect(starter.text).toContain("second forwarded message");
+>>>>>>> upstream/main
   });
 
   it("preserves forwarded attachment placeholders in thread starter context", async () => {
@@ -206,9 +269,15 @@ describe("resolveDiscordThreadStarter", () => {
       }),
     });
 
+<<<<<<< HEAD
     expect(result).toBeTruthy();
     expect(result!.text).toContain("[Forwarded message]");
     expect(result!.text).toContain("<media:image> (1 image)");
+=======
+    const starter = requireThreadStarter(result);
+    expect(starter.text).toContain("[Forwarded message]");
+    expect(starter.text).toContain("<media:image> (1 image)");
+>>>>>>> upstream/main
   });
 
   it("preserves forwarded sticker placeholders in thread starter context", async () => {
@@ -229,9 +298,15 @@ describe("resolveDiscordThreadStarter", () => {
       }),
     });
 
+<<<<<<< HEAD
     expect(result).toBeTruthy();
     expect(result!.text).toContain("[Forwarded message]");
     expect(result!.text).toContain("<media:sticker> (1 sticker)");
+=======
+    const starter = requireThreadStarter(result);
+    expect(starter.text).toContain("[Forwarded message]");
+    expect(starter.text).toContain("<media:sticker> (1 sticker)");
+>>>>>>> upstream/main
   });
 
   it("uses the thread id as the message channel id for forum parents", async () => {
@@ -241,10 +316,16 @@ describe("resolveDiscordThreadStarter", () => {
       parentType: ChannelType.GuildForum,
     });
 
+<<<<<<< HEAD
     expect(result?.text).toBe("starter content");
     expect(get).toHaveBeenCalledWith(
       expect.stringContaining("/channels/thread-1/messages/thread-1"),
     );
+=======
+    expect(requireThreadStarter(result).text).toBe("starter content");
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(firstRestGetPath(get)).toBe("/channels/thread-1/messages/thread-1");
+>>>>>>> upstream/main
   });
 
   it("returns null when content, embeds, and snapshots are all empty", async () => {

@@ -1,4 +1,16 @@
+<<<<<<< HEAD
 import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-shared";
+=======
+// Huggingface plugin module implements models behavior.
+import { resolveTimerTimeoutMs } from "openclaw/plugin-sdk/number-runtime";
+import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-types";
+import {
+  fetchWithSsrFGuard,
+  ssrfPolicyFromHttpBaseUrlAllowedHostname,
+} from "openclaw/plugin-sdk/ssrf-runtime";
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { isHuggingfaceModelDiscoveryTestEnvironment } from "./model-discovery-env.js";
+>>>>>>> upstream/main
 
 export const HUGGINGFACE_BASE_URL = "https://router.huggingface.co/v1";
 export const HUGGINGFACE_POLICY_SUFFIXES = ["cheapest", "fastest"] as const;
@@ -40,7 +52,11 @@ export const HUGGINGFACE_MODEL_CATALOG: ModelDefinitionConfig[] = [
     input: ["text"],
     contextWindow: 131072,
     maxTokens: 8192,
+<<<<<<< HEAD
     cost: { input: 3.0, output: 7.0, cacheRead: 3.0, cacheWrite: 3.0 },
+=======
+    cost: { input: 3, output: 7, cacheRead: 3, cacheWrite: 3 },
+>>>>>>> upstream/main
   },
   {
     id: "deepseek-ai/DeepSeek-V3.1",
@@ -72,7 +88,11 @@ export const HUGGINGFACE_MODEL_CATALOG: ModelDefinitionConfig[] = [
 ];
 
 export function isHuggingfacePolicyLocked(modelRef: string): boolean {
+<<<<<<< HEAD
   const ref = String(modelRef).trim();
+=======
+  const ref = modelRef.trim();
+>>>>>>> upstream/main
   return HUGGINGFACE_POLICY_SUFFIXES.some((suffix) => ref.endsWith(`:${suffix}`) || ref === suffix);
 }
 
@@ -91,7 +111,11 @@ export function buildHuggingfaceModelDefinition(
 }
 
 function isReasoningModelHeuristic(modelId: string): boolean {
+<<<<<<< HEAD
   const lower = modelId.toLowerCase();
+=======
+  const lower = normalizeLowercaseStringOrEmpty(modelId);
+>>>>>>> upstream/main
   return (
     lower.includes("r1") ||
     lower.includes("reason") ||
@@ -128,7 +152,11 @@ export async function discoverHuggingfaceModels(
   apiKey: string,
   timeoutMs = HUGGINGFACE_DISCOVERY_TIMEOUT_MS,
 ): Promise<ModelDefinitionConfig[]> {
+<<<<<<< HEAD
   if (process.env.VITEST === "true" || process.env.NODE_ENV === "test") {
+=======
+  if (isHuggingfaceModelDiscoveryTestEnvironment()) {
+>>>>>>> upstream/main
     return HUGGINGFACE_MODEL_CATALOG.map(buildHuggingfaceModelDefinition);
   }
 
@@ -138,6 +166,7 @@ export async function discoverHuggingfaceModels(
   }
 
   try {
+<<<<<<< HEAD
     const response = await fetch(`${HUGGINGFACE_BASE_URL}/models`, {
       signal: AbortSignal.timeout(timeoutMs),
       headers: {
@@ -197,6 +226,78 @@ export async function discoverHuggingfaceModels(
     return models.length > 0
       ? models
       : HUGGINGFACE_MODEL_CATALOG.map(buildHuggingfaceModelDefinition);
+=======
+    const requestTimeoutMs = resolveTimerTimeoutMs(timeoutMs, HUGGINGFACE_DISCOVERY_TIMEOUT_MS);
+    const { response, release } = await fetchWithSsrFGuard({
+      url: `${HUGGINGFACE_BASE_URL}/models`,
+      init: {
+        signal: AbortSignal.timeout(requestTimeoutMs),
+        headers: {
+          Authorization: `Bearer ${trimmedKey}`,
+          "Content-Type": "application/json",
+        },
+      },
+      timeoutMs: requestTimeoutMs,
+      policy: ssrfPolicyFromHttpBaseUrlAllowedHostname(HUGGINGFACE_BASE_URL),
+      auditContext: "huggingface-model-discovery",
+    });
+    try {
+      if (!response.ok) {
+        return HUGGINGFACE_MODEL_CATALOG.map(buildHuggingfaceModelDefinition);
+      }
+
+      const body = (await response.json()) as OpenAIListModelsResponse;
+      const data = body?.data;
+      if (!Array.isArray(data) || data.length === 0) {
+        return HUGGINGFACE_MODEL_CATALOG.map(buildHuggingfaceModelDefinition);
+      }
+
+      const catalogById = new Map(
+        HUGGINGFACE_MODEL_CATALOG.map((model) => [model.id, model] as const),
+      );
+      const seen = new Set<string>();
+      const models: ModelDefinitionConfig[] = [];
+
+      for (const entry of data) {
+        const id = typeof entry?.id === "string" ? entry.id.trim() : "";
+        if (!id || seen.has(id)) {
+          continue;
+        }
+        seen.add(id);
+
+        const catalogEntry = catalogById.get(id);
+        if (catalogEntry) {
+          models.push(buildHuggingfaceModelDefinition(catalogEntry));
+          continue;
+        }
+
+        const inferred = inferredMetaFromModelId(id);
+        const name = displayNameFromApiEntry(entry, inferred.name);
+        const modalities = entry.architecture?.input_modalities;
+        const input: Array<"text" | "image"> =
+          Array.isArray(modalities) && modalities.includes("image") ? ["text", "image"] : ["text"];
+        const providers = Array.isArray(entry.providers) ? entry.providers : [];
+        const providerWithContext = providers.find(
+          (provider) => typeof provider?.context_length === "number" && provider.context_length > 0,
+        );
+        models.push({
+          id,
+          name,
+          reasoning: inferred.reasoning,
+          input,
+          cost: HUGGINGFACE_DEFAULT_COST,
+          contextWindow: providerWithContext?.context_length ?? HUGGINGFACE_DEFAULT_CONTEXT_WINDOW,
+          maxTokens: HUGGINGFACE_DEFAULT_MAX_TOKENS,
+        });
+      }
+
+      return models.length > 0
+        ? models
+        : HUGGINGFACE_MODEL_CATALOG.map(buildHuggingfaceModelDefinition);
+    } finally {
+      await release();
+    }
+>>>>>>> upstream/main
   } catch {
     return HUGGINGFACE_MODEL_CATALOG.map(buildHuggingfaceModelDefinition);
   }

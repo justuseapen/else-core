@@ -1,6 +1,19 @@
+// Feishu plugin module implements drive behavior.
 import type * as Lark from "@larksuiteoapi/node-sdk";
+import { formatErrorMessage } from "openclaw/plugin-sdk/error-runtime";
 import type { OpenClawPluginApi } from "../runtime-api.js";
 import { listEnabledFeishuAccounts } from "./accounts.js";
+<<<<<<< HEAD
+=======
+import { cleanupAmbientCommentTypingReaction } from "./comment-reaction.js";
+import {
+  encodeQuery,
+  extractReplyText,
+  formatFeishuApiError,
+  isRecord,
+  readString,
+} from "./comment-shared.js";
+>>>>>>> upstream/main
 import { parseFeishuCommentTarget, type CommentFileType } from "./comment-target.js";
 import { FeishuDriveSchema, type FeishuDriveParams } from "./drive-schema.js";
 import { createFeishuToolClient, resolveAnyEnabledFeishuToolsConfig } from "./tool-account.js";
@@ -102,6 +115,10 @@ type FeishuDriveToolContext = {
   deliveryContext?: {
     channel?: string;
     to?: string;
+<<<<<<< HEAD
+=======
+    threadId?: string | number;
+>>>>>>> upstream/main
   };
 };
 
@@ -111,6 +128,7 @@ function getDriveInternalClient(client: Lark.Client): FeishuDriveInternalClient 
   return client as FeishuDriveInternalClient;
 }
 
+<<<<<<< HEAD
 function encodeQuery(params: Record<string, string | undefined>): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -182,6 +200,8 @@ function extractReplyText(reply: FeishuDriveCommentReply | undefined): string | 
   return text || undefined;
 }
 
+=======
+>>>>>>> upstream/main
 function buildReplyElements(content: string) {
   return [{ type: "text", text: content }];
 }
@@ -333,6 +353,7 @@ function applyCommentFileTypeDefault<
 }
 
 function formatDriveApiError(error: unknown): string {
+<<<<<<< HEAD
   if (!isRecord(error)) {
     return String(error);
   }
@@ -350,6 +371,9 @@ function formatDriveApiError(error: unknown): string {
     feishu_msg: readString(responseData?.msg),
     feishu_log_id: readString(responseData?.log_id),
   });
+=======
+  return formatFeishuApiError(error, { includeConfigParams: true });
+>>>>>>> upstream/main
 }
 
 function extractDriveApiErrorMeta(error: unknown): {
@@ -360,12 +384,25 @@ function extractDriveApiErrorMeta(error: unknown): {
   feishuLogId?: string;
 } {
   if (!isRecord(error)) {
+<<<<<<< HEAD
     return { message: String(error) };
+=======
+    return { message: typeof error === "string" ? error : JSON.stringify(error) };
+>>>>>>> upstream/main
   }
   const response = isRecord(error.response) ? error.response : undefined;
   const responseData = isRecord(response?.data) ? response?.data : undefined;
   return {
+<<<<<<< HEAD
     message: typeof error.message === "string" ? error.message : String(error),
+=======
+    message:
+      typeof error.message === "string"
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : JSON.stringify(error),
+>>>>>>> upstream/main
     httpStatus: typeof response?.status === "number" ? response.status : undefined,
     feishuCode:
       typeof responseData?.code === "number" ? responseData.code : readString(responseData?.code),
@@ -665,7 +702,11 @@ export async function replyComment(
   )}/replies`;
   const query = { file_type: params.file_type };
   try {
+<<<<<<< HEAD
     const response = (await requestDriveApi<FeishuDriveApiResponse<Record<string, unknown>>>({
+=======
+    const response = await requestDriveApi<FeishuDriveApiResponse<Record<string, unknown>>>({
+>>>>>>> upstream/main
       client,
       method: "POST",
       url,
@@ -682,7 +723,11 @@ export async function replyComment(
           ],
         },
       },
+<<<<<<< HEAD
     })) as FeishuDriveApiResponse<Record<string, unknown>>;
+=======
+    });
+>>>>>>> upstream/main
     if (response.code === 0) {
       return {
         success: true,
@@ -747,7 +792,11 @@ export async function deliverCommentThreadText(
       console.warn(
         `[feishu_drive] comment metadata preflight failed ` +
           `comment=${params.comment_id} file_type=${params.file_type} ` +
+<<<<<<< HEAD
           `error=${error instanceof Error ? error.message : String(error)}`,
+=======
+          `error=${formatErrorMessage(error)}`,
+>>>>>>> upstream/main
       );
       isWholeComment = false;
     }
@@ -805,19 +854,16 @@ export async function deliverCommentThreadText(
 
 export function registerFeishuDriveTools(api: OpenClawPluginApi) {
   if (!api.config) {
-    api.logger.debug?.("feishu_drive: No config available, skipping drive tools");
     return;
   }
 
   const accounts = listEnabledFeishuAccounts(api.config);
   if (accounts.length === 0) {
-    api.logger.debug?.("feishu_drive: No Feishu accounts configured, skipping drive tools");
     return;
   }
 
   const toolsCfg = resolveAnyEnabledFeishuToolsConfig(accounts);
   if (!toolsCfg.drive) {
-    api.logger.debug?.("feishu_drive: drive tool disabled in config");
     return;
   }
 
@@ -867,14 +913,36 @@ export function registerFeishuDriveTools(api: OpenClawPluginApi) {
               }
               case "add_comment": {
                 const resolved = applyAddCommentDefaults(applyAddCommentAmbientDefaults(p, ctx));
+<<<<<<< HEAD
                 return jsonToolResult(await addComment(client, resolved));
+=======
+                try {
+                  return jsonToolResult(await addComment(client, resolved));
+                } finally {
+                  void cleanupAmbientCommentTypingReaction({
+                    client: getDriveInternalClient(client),
+                    deliveryContext: ctx.deliveryContext,
+                  });
+                }
+>>>>>>> upstream/main
               }
               case "reply_comment": {
                 const resolved = applyCommentFileTypeDefault(
                   applyAmbientCommentDefaults(p, ctx),
                   "reply_comment",
                 );
+<<<<<<< HEAD
                 return jsonToolResult(await deliverCommentThreadText(client, resolved));
+=======
+                try {
+                  return jsonToolResult(await deliverCommentThreadText(client, resolved));
+                } finally {
+                  void cleanupAmbientCommentTypingReaction({
+                    client: getDriveInternalClient(client),
+                    deliveryContext: ctx.deliveryContext,
+                  });
+                }
+>>>>>>> upstream/main
               }
               default:
                 return unknownToolActionResult((p as { action?: unknown }).action);
@@ -887,6 +955,4 @@ export function registerFeishuDriveTools(api: OpenClawPluginApi) {
     },
     { name: "feishu_drive" },
   );
-
-  api.logger.info?.(`feishu_drive: Registered feishu_drive tool`);
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import crypto from "node:crypto";
 import {
   Button,
@@ -217,12 +218,16 @@ export type DiscordComponentBuildResult = {
   entries: DiscordComponentEntry[];
   modals: DiscordModalEntry[];
 };
+=======
+// Discord plugin module implements components behavior.
+>>>>>>> upstream/main
 export {
   DISCORD_COMPONENT_CUSTOM_ID_KEY,
   DISCORD_MODAL_CUSTOM_ID_KEY,
   buildDiscordComponentCustomId,
   buildDiscordModalCustomId,
   parseDiscordComponentCustomId,
+<<<<<<< HEAD
   parseDiscordComponentCustomIdForCarbon,
   parseDiscordModalCustomId,
   parseDiscordModalCustomIdForCarbon,
@@ -1119,6 +1124,42 @@ export function createDiscordFormModal(entry: DiscordModalEntry): Modal {
     fields: entry.fields,
   });
 }
+=======
+  parseDiscordComponentCustomIdForInteraction,
+  parseDiscordModalCustomId,
+  parseDiscordModalCustomIdForInteraction,
+} from "./component-custom-id.js";
+export {
+  buildDiscordComponentMessage,
+  buildDiscordComponentMessageFlags,
+} from "./components.builders.js";
+export {
+  DISCORD_COMPONENT_ATTACHMENT_PREFIX,
+  readDiscordComponentSpec,
+  resolveDiscordComponentAttachmentName,
+} from "./components.parse.js";
+export { DiscordFormModal, createDiscordFormModal } from "./components.modal.js";
+export type {
+  DiscordComponentBlock,
+  DiscordComponentBuildResult,
+  DiscordComponentButtonSpec,
+  DiscordComponentButtonStyle,
+  DiscordComponentCallbackDataKind,
+  DiscordComponentEntry,
+  DiscordComponentMessageSpec,
+  DiscordComponentModalFieldType,
+  DiscordComponentSectionAccessory,
+  DiscordComponentSelectOption,
+  DiscordComponentSelectSpec,
+  DiscordComponentSelectType,
+  DiscordModalEntry,
+  DiscordModalFieldDefinition,
+  DiscordModalFieldSpec,
+  DiscordModalSpec,
+} from "./components.types.js";
+export { buildDiscordInteractiveComponents } from "./shared-interactive.js";
+export { Modal, type ComponentData } from "./internal/discord.js";
+>>>>>>> upstream/main
 
 export function formatDiscordComponentEventText(params: {
   kind: "button" | "select";

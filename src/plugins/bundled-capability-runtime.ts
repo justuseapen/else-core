@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createJiti } from "jiti";
 import { openBoundaryFileSync } from "../infra/boundary-file-read.js";
+=======
+/** Loads capability providers from bundled plugin public runtime artifacts. */
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+import { openRootFileSync } from "../infra/boundary-file-read.js";
+>>>>>>> upstream/main
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import {
   withBundledPluginEnablementCompat,
@@ -9,21 +16,78 @@ import {
 } from "./bundled-compat.js";
 import { resolveBundledPluginRepoEntryPath } from "./bundled-plugin-metadata.js";
 import { createCapturedPluginRegistration } from "./captured-registration.js";
+<<<<<<< HEAD
 import { discoverOpenClawPlugins } from "./discovery.js";
 import type { PluginLoadOptions } from "./loader.js";
 import { loadPluginManifestRegistry } from "./manifest-registry.js";
+=======
+import { resolveOpenClawDevSourceRoot } from "./dev-source-root.js";
+import { discoverOpenClawPlugins, type PluginDiscoveryResult } from "./discovery.js";
+import type { PluginLoadOptions } from "./loader.js";
+import { loadPluginManifestRegistry } from "./manifest-registry.js";
+import { unwrapDefaultModuleExport } from "./module-export.js";
+import {
+  createPluginModuleLoaderCache,
+  getCachedPluginModuleLoader,
+  type PluginModuleLoaderCache,
+} from "./plugin-module-loader-cache.js";
+>>>>>>> upstream/main
 import { createEmptyPluginRegistry } from "./registry-empty.js";
 import type { PluginRecord, PluginRegistry } from "./registry.js";
 import {
   buildPluginLoaderAliasMap,
+<<<<<<< HEAD
   buildPluginLoaderJitiOptions,
   shouldPreferNativeJiti,
   type PluginSdkResolutionPreference,
 } from "./sdk-alias.js";
+=======
+  shouldPreferNativeModuleLoad,
+  type PluginSdkResolutionPreference,
+} from "./sdk-alias.js";
+import {
+  findUndeclaredPluginToolNames,
+  normalizePluginToolContractNames,
+} from "./tool-contracts.js";
+>>>>>>> upstream/main
 import type { OpenClawPluginDefinition, OpenClawPluginModule } from "./types.js";
 
 const log = createSubsystemLogger("plugins");
 
+<<<<<<< HEAD
+=======
+const CAPABILITY_VITEST_SHIM_ALIASES = [
+  {
+    subpath: "config-runtime",
+    target: new URL("./capability-runtime-vitest-shims/config-runtime.ts", import.meta.url),
+  },
+  {
+    subpath: "media-runtime",
+    target: new URL("./capability-runtime-vitest-shims/media-runtime.ts", import.meta.url),
+  },
+  {
+    subpath: "provider-onboard",
+    target: new URL("../plugin-sdk/provider-onboard.ts", import.meta.url),
+  },
+  {
+    subpath: "speech-core",
+    target: new URL("./capability-runtime-vitest-shims/speech-core.ts", import.meta.url),
+  },
+] as const;
+
+export function buildVitestCapabilityShimAliasMap(): Record<string, string> {
+  return Object.fromEntries(
+    CAPABILITY_VITEST_SHIM_ALIASES.flatMap(({ subpath, target }) => {
+      const targetPath = fileURLToPath(target);
+      return [
+        [`openclaw/plugin-sdk/${subpath}`, targetPath],
+        [`@openclaw/plugin-sdk/${subpath}`, targetPath],
+      ];
+    }),
+  );
+}
+
+>>>>>>> upstream/main
 function applyVitestCapabilityAliasOverrides(params: {
   aliasMap: Record<string, string>;
   pluginSdkResolution?: PluginSdkResolutionPreference;
@@ -33,12 +97,21 @@ function applyVitestCapabilityAliasOverrides(params: {
     return params.aliasMap;
   }
 
+<<<<<<< HEAD
   const { ["openclaw/plugin-sdk"]: _ignoredRootAlias, ...scopedAliasMap } = params.aliasMap;
+=======
+  const {
+    "openclaw/plugin-sdk": _ignoredLegacyRootAlias,
+    "@openclaw/plugin-sdk": _ignoredScopedRootAlias,
+    ...scopedAliasMap
+  } = params.aliasMap;
+>>>>>>> upstream/main
   return {
     ...scopedAliasMap,
     // Capability contract loads only need a narrow SDK slice. Keep those
     // helpers on a tiny source graph so Vitest does not pull the dist chunk
     // bundle that also drags Matrix/WhatsApp code into these tests.
+<<<<<<< HEAD
     "openclaw/plugin-sdk/llm-task": fileURLToPath(
       new URL("./capability-runtime-vitest-shims/llm-task.ts", import.meta.url),
     ),
@@ -57,6 +130,19 @@ function applyVitestCapabilityAliasOverrides(params: {
   };
 }
 
+=======
+    ...buildVitestCapabilityShimAliasMap(),
+  };
+}
+
+function shouldApplyVitestCapabilityAliasOverrides(params: {
+  pluginSdkResolution?: PluginSdkResolutionPreference;
+  env?: PluginLoadOptions["env"];
+}): boolean {
+  return Boolean(params.env?.VITEST && params.pluginSdkResolution === "dist");
+}
+
+>>>>>>> upstream/main
 export function buildBundledCapabilityRuntimeConfig(
   pluginIds: readonly string[],
   env?: PluginLoadOptions["env"],
@@ -76,12 +162,16 @@ function resolvePluginModuleExport(moduleExport: unknown): {
   definition?: OpenClawPluginDefinition;
   register?: OpenClawPluginDefinition["register"];
 } {
+<<<<<<< HEAD
   const resolved =
     moduleExport &&
     typeof moduleExport === "object" &&
     "default" in (moduleExport as Record<string, unknown>)
       ? (moduleExport as { default: unknown }).default
       : moduleExport;
+=======
+  const resolved = unwrapDefaultModuleExport(moduleExport);
+>>>>>>> upstream/main
   if (typeof resolved === "function") {
     return {
       register: resolved as OpenClawPluginDefinition["register"],
@@ -120,20 +210,39 @@ function createCapabilityPluginRecord(params: {
     toolNames: [],
     hookNames: [],
     channelIds: [],
+<<<<<<< HEAD
     providerIds: [],
+=======
+    cliBackendIds: [],
+    providerIds: [],
+    embeddingProviderIds: [],
+>>>>>>> upstream/main
     speechProviderIds: [],
     realtimeTranscriptionProviderIds: [],
     realtimeVoiceProviderIds: [],
     mediaUnderstandingProviderIds: [],
+<<<<<<< HEAD
+=======
+    transcriptSourceProviderIds: [],
+>>>>>>> upstream/main
     imageGenerationProviderIds: [],
     videoGenerationProviderIds: [],
     musicGenerationProviderIds: [],
     webFetchProviderIds: [],
     webSearchProviderIds: [],
+<<<<<<< HEAD
     memoryEmbeddingProviderIds: [],
     gatewayMethods: [],
     cliCommands: [],
     services: [],
+=======
+    migrationProviderIds: [],
+    memoryEmbeddingProviderIds: [],
+    agentHarnessIds: [],
+    cliCommands: [],
+    services: [],
+    gatewayDiscoveryServiceIds: [],
+>>>>>>> upstream/main
     commands: [],
     httpRoutes: 0,
     hookCount: 0,
@@ -162,6 +271,7 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
   pluginIds: readonly string[];
   env?: PluginLoadOptions["env"];
   pluginSdkResolution?: PluginSdkResolutionPreference;
+<<<<<<< HEAD
 }) {
   const env = params.env ?? process.env;
   const pluginIds = new Set(params.pluginIds);
@@ -208,6 +318,55 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
     candidates: discovery.candidates,
     diagnostics: discovery.diagnostics,
   });
+=======
+  discovery?: PluginDiscoveryResult;
+}) {
+  const env = params.env ?? process.env;
+  const devSourceRoot = resolveOpenClawDevSourceRoot(env);
+  const pluginIds = new Set(params.pluginIds);
+  const registry = createEmptyPluginRegistry();
+  const moduleLoaders: PluginModuleLoaderCache = createPluginModuleLoaderCache();
+
+  const getModuleLoader = (modulePath: string) => {
+    const tryNative =
+      shouldPreferNativeModuleLoad(modulePath) &&
+      !(env?.VITEST && params.pluginSdkResolution === "dist");
+    const aliasMap = shouldApplyVitestCapabilityAliasOverrides({
+      pluginSdkResolution: params.pluginSdkResolution,
+      env,
+    })
+      ? applyVitestCapabilityAliasOverrides({
+          aliasMap: buildPluginLoaderAliasMap(
+            modulePath,
+            process.argv[1],
+            import.meta.url,
+            params.pluginSdkResolution,
+            devSourceRoot,
+          ),
+          pluginSdkResolution: params.pluginSdkResolution,
+          env,
+        })
+      : undefined;
+    return getCachedPluginModuleLoader({
+      cache: moduleLoaders,
+      modulePath,
+      importerUrl: import.meta.url,
+      devSourceRoot,
+      loaderFilename: import.meta.url,
+      ...(aliasMap ? { aliasMap } : {}),
+      pluginSdkResolution: params.pluginSdkResolution,
+      tryNative,
+    });
+  };
+
+  const discovery = params.discovery ?? discoverOpenClawPlugins({ env });
+  const manifestRegistry = loadPluginManifestRegistry({
+    config: buildBundledCapabilityRuntimeConfig(params.pluginIds, env),
+    env,
+    candidates: discovery.candidates,
+    diagnostics: discovery.diagnostics,
+  });
+>>>>>>> upstream/main
   registry.diagnostics.push(...manifestRegistry.diagnostics);
 
   const manifestByRoot = new Map(
@@ -243,7 +402,11 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
       workspaceDir: candidate.workspaceDir,
     });
 
+<<<<<<< HEAD
     const opened = openBoundaryFileSync({
+=======
+    const opened = openRootFileSync({
+>>>>>>> upstream/main
       absolutePath: record.source,
       rootPath: record.source === candidate.source ? candidate.rootDir : repoRoot,
       boundaryLabel: record.source === candidate.source ? "plugin root" : "repo root",
@@ -262,9 +425,15 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
     const safeSource = opened.path;
     fs.closeSync(opened.fd);
 
+<<<<<<< HEAD
     let mod: OpenClawPluginModule | null = null;
     try {
       mod = getJiti(safeSource)(safeSource) as OpenClawPluginModule;
+=======
+    let mod: OpenClawPluginModule | null;
+    try {
+      mod = getModuleLoader(safeSource)(safeSource) as OpenClawPluginModule;
+>>>>>>> upstream/main
     } catch (error) {
       recordCapabilityLoadError(registry, record, String(error));
       continue;
@@ -281,8 +450,15 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
 
     try {
       const captured = createCapturedPluginRegistration();
+<<<<<<< HEAD
       void register(captured.api);
       record.providerIds.push(...captured.providers.map((entry) => entry.id));
+=======
+      register(captured.api);
+      record.cliBackendIds.push(...captured.cliBackends.map((entry) => entry.id));
+      record.providerIds.push(...captured.providers.map((entry) => entry.id));
+      record.embeddingProviderIds.push(...captured.embeddingProviders.map((entry) => entry.id));
+>>>>>>> upstream/main
       record.speechProviderIds.push(...captured.speechProviders.map((entry) => entry.id));
       record.realtimeTranscriptionProviderIds.push(
         ...captured.realtimeTranscriptionProviders.map((entry) => entry.id),
@@ -293,6 +469,12 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
       record.mediaUnderstandingProviderIds.push(
         ...captured.mediaUnderstandingProviders.map((entry) => entry.id),
       );
+<<<<<<< HEAD
+=======
+      record.transcriptSourceProviderIds.push(
+        ...captured.transcriptSourceProviders.map((entry) => entry.id),
+      );
+>>>>>>> upstream/main
       record.imageGenerationProviderIds.push(
         ...captured.imageGenerationProviders.map((entry) => entry.id),
       );
@@ -304,11 +486,39 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
       );
       record.webFetchProviderIds.push(...captured.webFetchProviders.map((entry) => entry.id));
       record.webSearchProviderIds.push(...captured.webSearchProviders.map((entry) => entry.id));
+<<<<<<< HEAD
       record.memoryEmbeddingProviderIds.push(
         ...captured.memoryEmbeddingProviders.map((entry) => entry.id),
       );
       record.toolNames.push(...captured.tools.map((entry) => entry.name));
 
+=======
+      record.migrationProviderIds.push(...captured.migrationProviders.map((entry) => entry.id));
+      record.memoryEmbeddingProviderIds.push(
+        ...captured.memoryEmbeddingProviders.map((entry) => entry.id),
+      );
+      record.agentHarnessIds.push(...captured.agentHarnesses.map((entry) => entry.id));
+      record.toolNames.push(...captured.tools.map((entry) => entry.name));
+
+      registry.cliBackends?.push(
+        ...captured.cliBackends.map((backend) => ({
+          pluginId: record.id,
+          pluginName: record.name,
+          backend,
+          source: record.source,
+          rootDir: record.rootDir,
+        })),
+      );
+      registry.textTransforms.push(
+        ...captured.textTransforms.map((transforms) => ({
+          pluginId: record.id,
+          pluginName: record.name,
+          transforms,
+          source: record.source,
+          rootDir: record.rootDir,
+        })),
+      );
+>>>>>>> upstream/main
       registry.providers.push(
         ...captured.providers.map((provider) => ({
           pluginId: record.id,
@@ -318,6 +528,18 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
           rootDir: record.rootDir,
         })),
       );
+<<<<<<< HEAD
+=======
+      registry.embeddingProviders.push(
+        ...captured.embeddingProviders.map((provider) => ({
+          pluginId: record.id,
+          pluginName: record.name,
+          provider,
+          source: record.source,
+          rootDir: record.rootDir,
+        })),
+      );
+>>>>>>> upstream/main
       registry.speechProviders.push(
         ...captured.speechProviders.map((provider) => ({
           pluginId: record.id,
@@ -354,6 +576,18 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
           rootDir: record.rootDir,
         })),
       );
+<<<<<<< HEAD
+=======
+      registry.transcriptSourceProviders.push(
+        ...captured.transcriptSourceProviders.map((provider) => ({
+          pluginId: record.id,
+          pluginName: record.name,
+          provider,
+          source: record.source,
+          rootDir: record.rootDir,
+        })),
+      );
+>>>>>>> upstream/main
       registry.imageGenerationProviders.push(
         ...captured.imageGenerationProviders.map((provider) => ({
           pluginId: record.id,
@@ -399,6 +633,18 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
           rootDir: record.rootDir,
         })),
       );
+<<<<<<< HEAD
+=======
+      registry.migrationProviders.push(
+        ...captured.migrationProviders.map((provider) => ({
+          pluginId: record.id,
+          pluginName: record.name,
+          provider,
+          source: record.source,
+          rootDir: record.rootDir,
+        })),
+      );
+>>>>>>> upstream/main
       registry.memoryEmbeddingProviders.push(
         ...captured.memoryEmbeddingProviders.map((provider) => ({
           pluginId: record.id,
@@ -408,6 +654,7 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
           rootDir: record.rootDir,
         })),
       );
+<<<<<<< HEAD
       registry.tools.push(
         ...captured.tools.map((tool) => ({
           pluginId: record.id,
@@ -415,10 +662,46 @@ export function loadBundledCapabilityRuntimeRegistry(params: {
           factory: () => tool,
           names: [tool.name],
           optional: false,
+=======
+      registry.agentHarnesses.push(
+        ...captured.agentHarnesses.map((harness) => ({
+          pluginId: record.id,
+          pluginName: record.name,
+          harness,
+>>>>>>> upstream/main
           source: record.source,
           rootDir: record.rootDir,
         })),
       );
+<<<<<<< HEAD
+=======
+      const declaredToolNames = normalizePluginToolContractNames(record.contracts);
+      for (const tool of captured.tools) {
+        const undeclared = findUndeclaredPluginToolNames({
+          declaredNames: declaredToolNames,
+          toolNames: [tool.name],
+        });
+        if (undeclared.length > 0) {
+          registry.diagnostics.push({
+            level: "error",
+            pluginId: record.id,
+            source: record.source,
+            message: `plugin must declare contracts.tools for: ${undeclared.join(", ")}`,
+          });
+          continue;
+        }
+        registry.tools.push({
+          pluginId: record.id,
+          pluginName: record.name,
+          factory: () => tool,
+          names: [tool.name],
+          declaredNames: declaredToolNames,
+          optional: false,
+          source: record.source,
+          rootDir: record.rootDir,
+        });
+      }
+>>>>>>> upstream/main
       registry.plugins.push(record);
     } catch (error) {
       recordCapabilityLoadError(registry, record, String(error));

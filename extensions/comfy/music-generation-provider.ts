@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Comfy provider module implements model/runtime integration.
+>>>>>>> upstream/main
 import type {
   GeneratedMusicAsset,
   MusicGenerationProvider,
@@ -50,7 +54,15 @@ export function buildComfyMusicGenerationProvider(): MusicGenerationProvider {
         capability: "music",
       }),
     capabilities: {
+<<<<<<< HEAD
       maxInputImages: COMFY_MAX_INPUT_IMAGES,
+=======
+      generate: {},
+      edit: {
+        enabled: true,
+        maxInputImages: COMFY_MAX_INPUT_IMAGES,
+      },
+>>>>>>> upstream/main
     },
     async generateMusic(req) {
       if ((req.inputImages?.length ?? 0) > COMFY_MAX_INPUT_IMAGES) {

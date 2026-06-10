@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
+=======
+// Feishu tests cover reasoning preview plugin behavior.
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ClawdbotConfig } from "./bot-runtime-api.js";
+>>>>>>> upstream/main
 import { resolveFeishuReasoningPreviewEnabled } from "./reasoning-preview.js";
 
 const { loadSessionStoreMock } = vi.hoisted(() => ({
@@ -14,7 +20,18 @@ vi.mock("./bot-runtime-api.js", async () => {
   };
 });
 
+<<<<<<< HEAD
 describe("resolveFeishuReasoningPreviewEnabled", () => {
+=======
+afterAll(() => {
+  vi.doUnmock("./bot-runtime-api.js");
+  vi.resetModules();
+});
+
+describe("resolveFeishuReasoningPreviewEnabled", () => {
+  const emptyCfg: ClawdbotConfig = {};
+
+>>>>>>> upstream/main
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -27,12 +44,22 @@ describe("resolveFeishuReasoningPreviewEnabled", () => {
 
     expect(
       resolveFeishuReasoningPreviewEnabled({
+<<<<<<< HEAD
+=======
+        cfg: emptyCfg,
+        agentId: "main",
+>>>>>>> upstream/main
         storePath: "/tmp/feishu-sessions.json",
         sessionKey: "agent:main:feishu:dm:ou_sender_1",
       }),
     ).toBe(true);
     expect(
       resolveFeishuReasoningPreviewEnabled({
+<<<<<<< HEAD
+=======
+        cfg: emptyCfg,
+        agentId: "main",
+>>>>>>> upstream/main
         storePath: "/tmp/feishu-sessions.json",
         sessionKey: "agent:main:feishu:dm:ou_sender_2",
       }),
@@ -46,14 +73,65 @@ describe("resolveFeishuReasoningPreviewEnabled", () => {
 
     expect(
       resolveFeishuReasoningPreviewEnabled({
+<<<<<<< HEAD
+=======
+        cfg: emptyCfg,
+        agentId: "main",
+>>>>>>> upstream/main
         storePath: "/tmp/feishu-sessions.json",
         sessionKey: "agent:main:feishu:dm:ou_sender_1",
       }),
     ).toBe(false);
     expect(
       resolveFeishuReasoningPreviewEnabled({
+<<<<<<< HEAD
+=======
+        cfg: emptyCfg,
+        agentId: "main",
+>>>>>>> upstream/main
         storePath: "/tmp/feishu-sessions.json",
       }),
     ).toBe(false);
   });
+<<<<<<< HEAD
+=======
+
+  it("falls back to configured stream defaults", () => {
+    loadSessionStoreMock.mockReturnValue({
+      "agent:main:feishu:dm:ou_sender_1": {},
+      "agent:main:feishu:dm:ou_sender_2": { reasoningLevel: "off" },
+    });
+
+    const cfg: ClawdbotConfig = {
+      agents: {
+        defaults: { reasoningDefault: "stream" },
+        list: [{ id: "Ops", reasoningDefault: "off" }],
+      },
+    };
+
+    expect(
+      resolveFeishuReasoningPreviewEnabled({
+        cfg,
+        agentId: "main",
+        storePath: "/tmp/feishu-sessions.json",
+        sessionKey: "agent:main:feishu:dm:ou_sender_1",
+      }),
+    ).toBe(true);
+    expect(
+      resolveFeishuReasoningPreviewEnabled({
+        cfg,
+        agentId: "ops",
+        storePath: "/tmp/feishu-sessions.json",
+      }),
+    ).toBe(false);
+    expect(
+      resolveFeishuReasoningPreviewEnabled({
+        cfg,
+        agentId: "main",
+        storePath: "/tmp/feishu-sessions.json",
+        sessionKey: "agent:main:feishu:dm:ou_sender_2",
+      }),
+    ).toBe(false);
+  });
+>>>>>>> upstream/main
 });

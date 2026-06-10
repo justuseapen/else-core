@@ -1,8 +1,17 @@
+<<<<<<< HEAD
 import { describe, expect, it, vi } from "vitest";
 import { renderRootHelpText } from "./root-help.js";
 
 const getPluginCliCommandDescriptorsMock = vi.fn(
   async (_config?: unknown, _env?: unknown, _loaderOptions?: unknown) => [
+=======
+// Root help tests cover top-level help rendering and command visibility.
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderRootHelpText } from "./root-help.js";
+
+const getPluginCliCommandDescriptorsMock = vi.fn(
+  async (_configForTest?: unknown, _env?: unknown, _loaderOptions?: unknown) => [
+>>>>>>> upstream/main
     {
       name: "matrix",
       description: "Matrix channel utilities",
@@ -12,6 +21,16 @@ const getPluginCliCommandDescriptorsMock = vi.fn(
 );
 
 vi.mock("./core-command-descriptors.js", () => ({
+<<<<<<< HEAD
+=======
+  CORE_CLI_COMMAND_DESCRIPTORS: [
+    {
+      name: "status",
+      description: "Show status",
+      hasSubcommands: false,
+    },
+  ],
+>>>>>>> upstream/main
   getCoreCliCommandDescriptors: () => [
     {
       name: "status",
@@ -23,6 +42,16 @@ vi.mock("./core-command-descriptors.js", () => ({
 }));
 
 vi.mock("./subcli-descriptors.js", () => ({
+<<<<<<< HEAD
+=======
+  SUB_CLI_DESCRIPTORS: [
+    {
+      name: "config",
+      description: "Manage config",
+      hasSubcommands: true,
+    },
+  ],
+>>>>>>> upstream/main
   getSubCliEntries: () => [
     {
       name: "config",
@@ -39,6 +68,13 @@ vi.mock("../../plugins/cli.js", () => ({
 }));
 
 describe("root help", () => {
+<<<<<<< HEAD
+=======
+  beforeEach(() => {
+    getPluginCliCommandDescriptorsMock.mockClear();
+  });
+
+>>>>>>> upstream/main
   it("passes isolated config and env through to plugin CLI descriptor loading", async () => {
     const config = {
       agents: {
@@ -57,11 +93,27 @@ describe("root help", () => {
   });
 
   it("includes plugin CLI descriptors alongside core and sub-CLI commands", async () => {
+<<<<<<< HEAD
     const text = await renderRootHelpText();
+=======
+    const text = await renderRootHelpText({ includePluginDescriptors: true });
+>>>>>>> upstream/main
 
     expect(text).toContain("status");
     expect(text).toContain("config");
     expect(text).toContain("matrix");
+<<<<<<< HEAD
     expect(text).toContain("Matrix channel utilities");
   });
+=======
+    expect(text).toContain("matrix *");
+    expect(text).toContain("Matrix channel utilities");
+  });
+
+  it("does not load plugin CLI descriptors by default", async () => {
+    await renderRootHelpText();
+
+    expect(getPluginCliCommandDescriptorsMock).not.toHaveBeenCalled();
+  });
+>>>>>>> upstream/main
 });

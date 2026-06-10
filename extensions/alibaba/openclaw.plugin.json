@@ -1,8 +1,22 @@
 {
   "id": "alibaba",
+<<<<<<< HEAD
   "enabledByDefault": true,
   "providerAuthEnvVars": {
     "alibaba": ["MODELSTUDIO_API_KEY", "DASHSCOPE_API_KEY", "QWEN_API_KEY"]
+=======
+  "activation": {
+    "onStartup": false
+  },
+  "enabledByDefault": true,
+  "setup": {
+    "providers": [
+      {
+        "id": "alibaba",
+        "envVars": ["MODELSTUDIO_API_KEY", "DASHSCOPE_API_KEY", "QWEN_API_KEY"]
+      }
+    ]
+>>>>>>> upstream/main
   },
   "providerAuthChoices": [
     {
@@ -13,6 +27,10 @@
       "groupId": "alibaba",
       "groupLabel": "Alibaba Model Studio",
       "groupHint": "DashScope / Model Studio API key",
+<<<<<<< HEAD
+=======
+      "onboardingScopes": ["image-generation"],
+>>>>>>> upstream/main
       "optionKey": "alibabaModelStudioApiKey",
       "cliFlag": "--alibaba-model-studio-api-key",
       "cliOption": "--alibaba-model-studio-api-key <key>",

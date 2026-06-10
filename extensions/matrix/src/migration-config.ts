@@ -1,8 +1,15 @@
+// Matrix helper module supports migration config behavior.
 import fs from "node:fs";
 import os from "node:os";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { resolveStateDir } from "openclaw/plugin-sdk/state-paths";
+=======
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { resolveStateDir } from "openclaw/plugin-sdk/state-paths";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import {
   findMatrixAccountEntry,
   requiresExplicitMatrixDefaultAccount,
@@ -10,17 +17,25 @@ import {
   resolveMatrixChannelConfig,
   resolveMatrixDefaultOrOnlyAccountId,
 } from "./account-selection.js";
+<<<<<<< HEAD
 import { getMatrixScopedEnvVarNames } from "./env-vars.js";
+=======
+import { resolveMatrixAccountStringValues } from "./auth-precedence.js";
+import {
+  resolveGlobalMatrixEnvConfig,
+  resolveScopedMatrixEnvConfig,
+} from "./matrix/client/env-auth.js";
+>>>>>>> upstream/main
 import { resolveMatrixAccountStorageRoot, resolveMatrixCredentialsPath } from "./storage-paths.js";
 
-export type MatrixStoredCredentials = {
+type MatrixStoredCredentials = {
   homeserver: string;
   userId: string;
   accessToken: string;
   deviceId?: string;
 };
 
-export type MatrixMigrationAccountTarget = {
+type MatrixMigrationAccountTarget = {
   accountId: string;
   homeserver: string;
   userId: string;
@@ -29,7 +44,7 @@ export type MatrixMigrationAccountTarget = {
   storedDeviceId: string | null;
 };
 
-export type MatrixLegacyFlatStoreTarget = MatrixMigrationAccountTarget & {
+type MatrixLegacyFlatStoreTarget = MatrixMigrationAccountTarget & {
   selectionNote?: string;
 };
 
@@ -55,6 +70,7 @@ const MATRIX_DEFAULT_ACCOUNT_AUTH_ONLY_FIELDS = new Set<MatrixResolvedStringFiel
 ]);
 
 function clean(value: unknown): string {
+<<<<<<< HEAD
   return typeof value === "string" ? value.trim() : "";
 }
 
@@ -125,6 +141,9 @@ function resolveGlobalMatrixEnvConfig(env: NodeJS.ProcessEnv): {
     userId: clean(env.MATRIX_USER_ID),
     accessToken: clean(env.MATRIX_ACCESS_TOKEN),
   };
+=======
+  return normalizeOptionalString(value) ?? "";
+>>>>>>> upstream/main
 }
 
 function resolveMatrixAccountConfigEntry(
@@ -147,7 +166,7 @@ function resolveMatrixFlatStoreSelectionNote(
   );
 }
 
-export function resolveMatrixMigrationConfigFields(params: {
+function resolveMatrixMigrationConfigFields(params: {
   cfg: OpenClawConfig;
   env: NodeJS.ProcessEnv;
   accountId: string;
@@ -184,7 +203,7 @@ export function resolveMatrixMigrationConfigFields(params: {
   };
 }
 
-export function loadStoredMatrixCredentials(
+function loadStoredMatrixCredentials(
   env: NodeJS.ProcessEnv,
   accountId: string,
 ): MatrixStoredCredentials | null {
@@ -218,7 +237,7 @@ export function loadStoredMatrixCredentials(
   }
 }
 
-export function credentialsMatchResolvedIdentity(
+function credentialsMatchResolvedIdentity(
   stored: MatrixStoredCredentials | null,
   identity: {
     homeserver: string;

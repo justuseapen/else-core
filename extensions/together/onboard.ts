@@ -1,10 +1,22 @@
+<<<<<<< HEAD
+=======
+// Together setup module handles plugin onboarding behavior.
+>>>>>>> upstream/main
 import {
   createModelCatalogPresetAppliers,
   type OpenClawConfig,
 } from "openclaw/plugin-sdk/provider-onboard";
+<<<<<<< HEAD
 import { buildTogetherModelDefinition, TOGETHER_BASE_URL, TOGETHER_MODEL_CATALOG } from "./api.js";
+=======
+import {
+  buildTogetherModelDefinition,
+  TOGETHER_BASE_URL,
+  TOGETHER_MODEL_CATALOG,
+} from "./models.js";
+>>>>>>> upstream/main
 
-export const TOGETHER_DEFAULT_MODEL_REF = "together/moonshotai/Kimi-K2.5";
+export const TOGETHER_DEFAULT_MODEL_REF = "together/meta-llama/Llama-3.3-70B-Instruct-Turbo";
 
 const togetherPresetAppliers = createModelCatalogPresetAppliers({
   primaryModelRef: TOGETHER_DEFAULT_MODEL_REF,
@@ -16,10 +28,6 @@ const togetherPresetAppliers = createModelCatalogPresetAppliers({
     aliases: [{ modelRef: TOGETHER_DEFAULT_MODEL_REF, alias: "Together AI" }],
   }),
 });
-
-export function applyTogetherProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
-  return togetherPresetAppliers.applyProviderConfig(cfg);
-}
 
 export function applyTogetherConfig(cfg: OpenClawConfig): OpenClawConfig {
   return togetherPresetAppliers.applyConfig(cfg);

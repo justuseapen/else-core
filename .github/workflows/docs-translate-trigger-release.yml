@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 name: Docs Trigger Locale Translate On Release
+=======
+name: Docs Trigger Translations On Release
+>>>>>>> upstream/main
 
 on:
   release:
@@ -12,12 +16,17 @@ jobs:
   dispatch-translate:
     runs-on: ubuntu-latest
     steps:
+<<<<<<< HEAD
       - name: Trigger locale translates in publish repo
+=======
+      - name: Trigger translation coordinator in publish repo
+>>>>>>> upstream/main
         env:
           GH_TOKEN: ${{ secrets.OPENCLAW_DOCS_SYNC_TOKEN }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
+<<<<<<< HEAD
           for event_type in \
             translate-zh-cn-release \
             translate-ja-jp-release \
@@ -40,3 +49,12 @@ jobs:
               -f client_payload[source_repository]="${GITHUB_REPOSITORY}" \
               -f client_payload[source_sha]="${GITHUB_SHA}"
           done
+=======
+          gh api repos/openclaw/docs/dispatches \
+            --method POST \
+            -f event_type="translate-all-release" \
+            -f client_payload[mode]="incremental" \
+            -f client_payload[release_tag]="${RELEASE_TAG}" \
+            -f client_payload[source_repository]="${GITHUB_REPOSITORY}" \
+            -f client_payload[source_sha]="${GITHUB_SHA}"
+>>>>>>> upstream/main

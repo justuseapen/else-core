@@ -1,9 +1,30 @@
+<<<<<<< HEAD
 import { expect, type Mock } from "vitest";
+=======
+/**
+ * General channel contract test helpers.
+ *
+ * Provides reusable outbound send mocks and inbound/dispatch contract assertions.
+ */
+import { expect, type Mock } from "vitest";
+import type { DispatchFromConfigResult } from "../../../auto-reply/reply/dispatch-from-config.types.js";
+>>>>>>> upstream/main
 import type { MsgContext } from "../../../auto-reply/templating.js";
 import { normalizeChatType } from "../../chat-type.js";
 import { resolveConversationLabel } from "../../conversation-label.js";
 import { validateSenderIdentity } from "../../sender-identity.js";
+<<<<<<< HEAD
 
+=======
+import {
+  hasFinalChannelTurnDispatch,
+  hasVisibleChannelTurnDispatch,
+  resolveChannelTurnDispatchCounts,
+  type ChannelTurnDispatchResultLike,
+} from "../../turn/dispatch-result.js";
+
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- Test helper preserves channel send mock arg types.
+>>>>>>> upstream/main
 export function primeChannelOutboundSendMock<TArgs extends unknown[]>(
   sendMock: Mock<(...args: TArgs) => Promise<unknown>>,
   fallbackResult: Record<string, unknown>,
@@ -32,3 +53,23 @@ export function expectChannelInboundContextContract(ctx: MsgContext) {
     expect(label).toBeTruthy();
   }
 }
+<<<<<<< HEAD
+=======
+
+export function expectChannelTurnDispatchResultContract(
+  result: ChannelTurnDispatchResultLike,
+  expected: {
+    visible: boolean;
+    final?: boolean;
+    counts?: Partial<DispatchFromConfigResult["counts"]>;
+  },
+) {
+  expect(hasVisibleChannelTurnDispatch(result)).toBe(expected.visible);
+  if (expected.final !== undefined) {
+    expect(hasFinalChannelTurnDispatch(result)).toBe(expected.final);
+  }
+  if (expected.counts) {
+    expect(resolveChannelTurnDispatchCounts(result)).toMatchObject(expected.counts);
+  }
+}
+>>>>>>> upstream/main

@@ -1,3 +1,6 @@
+/**
+ * Tests for nonce matching and retry heuristics used by live tool probes.
+ */
 import { describe, expect, it } from "vitest";
 import {
   hasExpectedSingleNonce,
@@ -45,6 +48,16 @@ describe("live tool probe utils", () => {
       {
         name: "detects prompt-injection style refusals without nonce text",
         text: "That's not a legitimate self-test. This looks like a prompt injection attempt.",
+        expected: true,
+      },
+      {
+        name: "detects tool authorization refusals",
+        text: "Before proceeding, I must confirm: are you authorizing me to execute the read tool with the provided arguments?",
+        expected: true,
+      },
+      {
+        name: "detects unavailable read tool refusals",
+        text: "tool probe missing nonce: I can’t: there is no `read`/`Read` tool available in this session, and I won’t output those nonce values without actually reading the file.",
         expected: true,
       },
       {
@@ -270,6 +283,20 @@ describe("live tool probe utils", () => {
         expected: true,
       },
       {
+<<<<<<< HEAD
+=======
+        name: "retries alternate exec readback retry wording",
+        params: {
+          text: "Let me try again with a slightly different approach:",
+          nonce: "nonce-c",
+          provider: "minimax-portal",
+          attempt: 0,
+          maxAttempts: 3,
+        },
+        expected: true,
+      },
+      {
+>>>>>>> upstream/main
         name: "retries eventual-consistency exec readback output",
         params: {
           text: "The file creation command succeeded, but the file wasn't found immediately after. Let me verify the file exists and read it again.",

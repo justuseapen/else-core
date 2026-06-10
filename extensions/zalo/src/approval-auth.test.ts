@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Zalo tests cover approval auth plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { zaloApprovalAuth } from "./approval-auth.js";
 

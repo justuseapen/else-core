@@ -1,18 +1,23 @@
+// Global Commander pre-action hook: startup presentation, config guard, logging, and plugin preflight.
 import type { Command } from "commander";
 import { setVerbose } from "../../globals.js";
-import { isTruthyEnvValue } from "../../infra/env.js";
-import { routeLogsToStderr } from "../../logging/console.js";
 import type { LogLevel } from "../../logging/levels.js";
-import { loggingState } from "../../logging/state.js";
 import { defaultRuntime } from "../../runtime.js";
-import { getCommandPathWithRootOptions, getVerboseFlag, hasHelpOrVersion } from "../argv.js";
-import { emitCliBanner } from "../banner.js";
+import { resolveCliArgvInvocation } from "../argv-invocation.js";
+import { getVerboseFlag, isHelpOrVersionInvocation } from "../argv.js";
 import { resolveCliName } from "../cli-name.js";
+import {
+  applyCliExecutionStartupPresentation,
+  ensureCliExecutionBootstrap,
+  resolveCliExecutionStartupContext,
+} from "../command-execution-startup.js";
+import { shouldBypassConfigGuardForCommandPath } from "../command-startup-policy.js";
 import {
   resolvePluginInstallInvalidConfigPolicy,
   resolvePluginInstallPreactionRequest,
 } from "../plugin-install-config-policy.js";
 import { isCommandJsonOutputMode } from "./json-mode.js";
+import { isParentDefaultHelpAction } from "./parent-default-help.js";
 
 function setProcessTitleForCommand(actionCommand: Command) {
   let current: Command = actionCommand;
@@ -27,6 +32,7 @@ function setProcessTitleForCommand(actionCommand: Command) {
   process.title = `${cliName}-${name}`;
 }
 
+<<<<<<< HEAD
 // Commands that need plugins loaded before execution.
 const PLUGIN_REQUIRED_COMMANDS = new Set([
   "agent",
@@ -84,6 +90,8 @@ function shouldLoadPluginsForCommand(commandPath: string[], jsonOutputMode: bool
   }
   return true;
 }
+=======
+>>>>>>> upstream/main
 function shouldAllowInvalidConfigForAction(actionCommand: Command, commandPath: string[]): boolean {
   return (
     resolvePluginInstallInvalidConfigPolicy(
@@ -92,7 +100,11 @@ function shouldAllowInvalidConfigForAction(actionCommand: Command, commandPath: 
         commandPath,
         argv: process.argv,
       }),
+<<<<<<< HEAD
     ) === "allow-bundled-recovery"
+=======
+    ) === "allow-plugin-recovery"
+>>>>>>> upstream/main
   );
 }
 
@@ -116,26 +128,56 @@ function getCliLogLevel(actionCommand: Command): LogLevel | undefined {
   return typeof logLevel === "string" ? (logLevel as LogLevel) : undefined;
 }
 
+function isBareParentDefaultHelpInvocation(actionCommand: Command, argv: string[]): boolean {
+  if (!isParentDefaultHelpAction(actionCommand)) {
+    return false;
+  }
+  const { commandPath } = resolveCliArgvInvocation(argv);
+  const [primary, extra] = commandPath;
+  if (extra !== undefined || !primary) {
+    return false;
+  }
+  return primary === actionCommand.name() || actionCommand.aliases().includes(primary);
+}
+
+function isGuidedConfigAction(actionCommand: Command): boolean {
+  return actionCommand.name() === "config" && !actionCommand.parent?.parent;
+}
+
+function isGuidedConfigCommandPath(commandPath: string[]): boolean {
+  const [primary, secondary, extra] = commandPath;
+  if (primary !== "config" || extra !== undefined) {
+    return false;
+  }
+  return (
+    secondary !== "get" &&
+    secondary !== "set" &&
+    secondary !== "patch" &&
+    secondary !== "unset" &&
+    secondary !== "file" &&
+    secondary !== "schema" &&
+    secondary !== "validate"
+  );
+}
+
+/** Register global pre-action bootstrap hooks for every non-help command invocation. */
 export function registerPreActionHooks(program: Command, programVersion: string) {
   program.hook("preAction", async (_thisCommand, actionCommand) => {
     setProcessTitleForCommand(actionCommand);
     const argv = process.argv;
-    if (hasHelpOrVersion(argv)) {
+    if (isHelpOrVersionInvocation(argv) || isBareParentDefaultHelpInvocation(actionCommand, argv)) {
       return;
     }
-    const commandPath = getCommandPathWithRootOptions(argv, 2);
     const jsonOutputMode = isCommandJsonOutputMode(actionCommand, argv);
-    if (jsonOutputMode) {
-      routeLogsToStderr();
-    }
-    const hideBanner =
-      isTruthyEnvValue(process.env.OPENCLAW_HIDE_BANNER) ||
-      commandPath[0] === "update" ||
-      commandPath[0] === "completion" ||
-      (commandPath[0] === "plugins" && commandPath[1] === "update");
-    if (!hideBanner) {
-      emitCliBanner(programVersion);
-    }
+    const { commandPath, startupPolicy } = resolveCliExecutionStartupContext({
+      argv,
+      jsonOutputMode,
+      env: process.env,
+    });
+    await applyCliExecutionStartupPresentation({
+      startupPolicy,
+      version: programVersion,
+    });
     const verbose = getVerboseFlag(argv, { includeDebug: true });
     setVerbose(verbose);
     const cliLogLevel = getCliLogLevel(actionCommand);
@@ -145,31 +187,19 @@ export function registerPreActionHooks(program: Command, programVersion: string)
     if (!verbose) {
       process.env.NODE_NO_WARNINGS ??= "1";
     }
-    if (shouldBypassConfigGuard(commandPath)) {
+    if (
+      shouldBypassConfigGuardForCommandPath(commandPath) ||
+      isGuidedConfigAction(actionCommand) ||
+      isGuidedConfigCommandPath(commandPath)
+    ) {
       return;
     }
-    const allowInvalid = shouldAllowInvalidConfigForAction(actionCommand, commandPath);
-    const { ensureConfigReady } = await loadConfigGuardModule();
-    await ensureConfigReady({
+    await ensureCliExecutionBootstrap({
       runtime: defaultRuntime,
       commandPath,
-      ...(allowInvalid ? { allowInvalid: true } : {}),
-      ...(jsonOutputMode ? { suppressDoctorStdout: true } : {}),
+      startupPolicy,
+      allowInvalid: shouldAllowInvalidConfigForAction(actionCommand, commandPath),
+      skipConfigGuard: shouldBypassConfigGuardForCommandPath(commandPath),
     });
-    // Load plugins for commands that need channel access.
-    // When --json output is active, temporarily route logs to stderr so plugin
-    // registration messages don't corrupt the JSON payload on stdout.
-    if (shouldLoadPluginsForCommand(commandPath, jsonOutputMode)) {
-      const { ensurePluginRegistryLoaded } = await loadPluginRegistryModule();
-      const prev = loggingState.forceConsoleToStderr;
-      if (jsonOutputMode) {
-        loggingState.forceConsoleToStderr = true;
-      }
-      try {
-        ensurePluginRegistryLoaded({ scope: resolvePluginRegistryScope(commandPath) });
-      } finally {
-        loggingState.forceConsoleToStderr = prev;
-      }
-    }
   });
 }

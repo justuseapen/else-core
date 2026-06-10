@@ -50,6 +50,19 @@ func TestLocalizeBodyLinks(t *testing.T) {
 			want:  `See [Config](/zh-CN/gateway/configuration).`,
 		},
 		{
+<<<<<<< HEAD
+=======
+			name:  "vbscript scheme stays unchanged",
+			input: `<a href="vbscript:msgbox(1)">bad</a>`,
+			want:  `<a href="vbscript:msgbox(1)">bad</a>`,
+		},
+		{
+			name:  "mixed-case javascript scheme stays unchanged",
+			input: `<a href="Javascript:alert(1)">bad</a>`,
+			want:  `<a href="Javascript:alert(1)">bad</a>`,
+		},
+		{
+>>>>>>> upstream/main
 			name:  "missing localized page stays unchanged",
 			input: `See [FAQ](/help/faq).`,
 			want:  `See [FAQ](/help/faq).`,

@@ -1,13 +1,39 @@
+<<<<<<< HEAD
+=======
+// Talk Voice tests cover index plugin behavior.
+>>>>>>> upstream/main
 import type { OpenClawPluginCommandDefinition } from "openclaw/plugin-sdk/core";
 import { describe, expect, it, vi } from "vitest";
 import type { PluginRuntime } from "./api.js";
 import register from "./index.js";
 
-function createHarness(config: Record<string, unknown>) {
+function createHarness(initialConfig: Record<string, unknown>) {
+  let config = initialConfig;
   let command: OpenClawPluginCommandDefinition | undefined;
   const runtime = {
     config: {
+      current: vi.fn(() => config),
       loadConfig: vi.fn(() => config),
+      mutateConfigFile: vi.fn(
+        async ({ mutate }: { mutate: (draft: Record<string, unknown>) => void }) => {
+          const draft = structuredClone(config);
+          mutate(draft);
+          config = draft;
+          return {
+            path: "/tmp/openclaw.json",
+            previousHash: null,
+            persistedHash: null,
+            snapshot: {},
+            nextConfig: config,
+            afterWrite: { mode: "auto" },
+            followUp: { mode: "auto", requiresRestart: false },
+            result: undefined,
+          };
+        },
+      ),
+      replaceConfigFile: vi.fn(async ({ nextConfig }: { nextConfig: Record<string, unknown> }) => {
+        config = nextConfig;
+      }),
       writeConfigFile: vi.fn().mockResolvedValue(undefined),
     },
     tts: {
@@ -27,11 +53,7 @@ function createHarness(config: Record<string, unknown>) {
   return { command, runtime };
 }
 
-function createCommandContext(
-  args: string,
-  channel: string = "discord",
-  gatewayClientScopes?: string[],
-) {
+function createCommandContext(args: string, channel = "discord", gatewayClientScopes?: string[]) {
   return {
     args,
     channel,
@@ -106,7 +128,7 @@ describe("talk-voice plugin", () => {
       { id: "voice-b", name: "Bert" },
     ]);
 
-    const result = await command.handler(createCommandContext("list 1"));
+    const result = await command.handler(createCommandContext("list +01"));
 
     expect(runtime.tts.listVoices).toHaveBeenCalledWith({
       provider: "elevenlabs",
@@ -131,6 +153,29 @@ describe("talk-voice plugin", () => {
         "  id: voice-a\n\n" +
         "(showing first 1)",
     });
+  });
+
+  it("does not coerce partial voice list limits", async () => {
+    const { command, runtime } = createHarness({
+      talk: {
+        provider: "elevenlabs",
+        providers: {
+          elevenlabs: {
+            apiKey: "sk-eleven",
+          },
+        },
+      },
+    });
+    vi.mocked(runtime.tts.listVoices).mockResolvedValue(
+      Array.from({ length: 13 }, (_, index) => ({
+        id: `voice-${index}`,
+        name: `Voice ${index}`,
+      })),
+    );
+
+    const result = await command.handler(createCommandContext("list 1x"));
+
+    expect(result.text).toContain("(showing first 12)");
   });
 
   it("surfaces richer provider voice metadata when available", async () => {
@@ -183,7 +228,11 @@ describe("talk-voice plugin", () => {
       createCommandContext("set Claudia", "webchat", ["operator.admin"]),
     );
 
-    expect(runtime.config.writeConfigFile).toHaveBeenCalledWith({
+    expect(runtime.config.mutateConfigFile).toHaveBeenCalledWith({
+      afterWrite: { mode: "auto" },
+      mutate: expect.any(Function),
+    });
+    expect(runtime.config.current()).toEqual({
       talk: {
         provider: "elevenlabs",
         providers: {
@@ -213,7 +262,11 @@ describe("talk-voice plugin", () => {
 
     await command.handler(createCommandContext("set Ava", "webchat", ["operator.admin"]));
 
-    expect(runtime.config.writeConfigFile).toHaveBeenCalledWith({
+    expect(runtime.config.mutateConfigFile).toHaveBeenCalledWith({
+      afterWrite: { mode: "auto" },
+      mutate: expect.any(Function),
+    });
+    expect(runtime.config.current()).toEqual({
       talk: {
         provider: "microsoft",
         providers: {
@@ -230,7 +283,15 @@ describe("talk-voice plugin", () => {
     const result = await run();
 
     expect(result.text).toContain("requires operator.admin");
-    expect(runtime.config.writeConfigFile).not.toHaveBeenCalled();
+    expect(runtime.config.mutateConfigFile).not.toHaveBeenCalled();
+  });
+
+  it("rejects /voice set from non-webchat gateway callers missing operator.admin", async () => {
+    const { runtime, run } = createElevenlabsVoiceSetHarness("telegram", ["operator.write"]);
+    const result = await run();
+
+    expect(result.text).toContain("requires operator.admin");
+    expect(runtime.config.mutateConfigFile).not.toHaveBeenCalled();
   });
 
   it("rejects /voice set from non-webchat gateway callers missing operator.admin", async () => {
@@ -245,7 +306,7 @@ describe("talk-voice plugin", () => {
     const { runtime, run } = createElevenlabsVoiceSetHarness("webchat", ["operator.admin"]);
     const result = await run();
 
-    expect(runtime.config.writeConfigFile).toHaveBeenCalled();
+    expect(runtime.config.mutateConfigFile).toHaveBeenCalled();
     expect(result.text).toContain("voice-a");
   });
 
@@ -254,14 +315,22 @@ describe("talk-voice plugin", () => {
     const result = await run();
 
     expect(result.text).toContain("requires operator.admin");
-    expect(runtime.config.writeConfigFile).not.toHaveBeenCalled();
+    expect(runtime.config.mutateConfigFile).not.toHaveBeenCalled();
   });
 
   it("allows /voice set from non-gateway channels without operator.admin", async () => {
     const { runtime, run } = createElevenlabsVoiceSetHarness("telegram");
     const result = await run();
 
-    expect(runtime.config.writeConfigFile).toHaveBeenCalled();
+    expect(runtime.config.mutateConfigFile).toHaveBeenCalled();
+    expect(result.text).toContain("voice-a");
+  });
+
+  it("allows /voice set when operator.admin is present on a non-webchat channel", async () => {
+    const { runtime, run } = createElevenlabsVoiceSetHarness("telegram", ["operator.admin"]);
+    const result = await run();
+
+    expect(runtime.config.mutateConfigFile).toHaveBeenCalled();
     expect(result.text).toContain("voice-a");
   });
 

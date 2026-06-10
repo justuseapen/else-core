@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Verifies readonly channel audit resolution behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import type { ChannelPlugin } from "../channels/plugins/types.js";
 import type { OpenClawConfig } from "../config/config.js";
@@ -23,6 +27,10 @@ function stubChannelPlugin(params: {
     security: {},
     config: {
       listAccountIds: () => ["default"],
+<<<<<<< HEAD
+=======
+      inspectAccount: () => null,
+>>>>>>> upstream/main
       resolveAccount: (cfg, accountId) => params.resolveAccount(cfg, accountId),
       isEnabled: () => true,
       isConfigured: () => true,
@@ -30,6 +38,21 @@ function stubChannelPlugin(params: {
   };
 }
 
+<<<<<<< HEAD
+=======
+function requireReadOnlyResolutionFinding(
+  findings: Awaited<ReturnType<typeof collectChannelSecurityFindings>>,
+) {
+  const finding = findings.find(
+    (entry) => entry.checkId === "channels.zalouser.account.read_only_resolution",
+  );
+  if (!finding) {
+    throw new Error("Expected Zalo read-only resolution warning");
+  }
+  return finding;
+}
+
+>>>>>>> upstream/main
 describe("security audit channel read-only resolution", () => {
   it("adds a read-only resolution warning when channel account resolveAccount throws", async () => {
     const plugin = stubChannelPlugin({
@@ -53,6 +76,7 @@ describe("security audit channel read-only resolution", () => {
       plugins: [plugin],
     });
 
+<<<<<<< HEAD
     const finding = findings.find(
       (entry) => entry.checkId === "channels.zalouser.account.read_only_resolution",
     );
@@ -60,5 +84,12 @@ describe("security audit channel read-only resolution", () => {
     expect(finding?.title).toContain("could not be fully resolved");
     expect(finding?.detail).toContain("zalouser:default: failed to resolve account");
     expect(finding?.detail).toContain("missing SecretRef");
+=======
+    const finding = requireReadOnlyResolutionFinding(findings);
+    expect(finding.severity).toBe("warn");
+    expect(finding.title).toContain("could not be fully resolved");
+    expect(finding.detail).toContain("zalouser:default: failed to resolve account");
+    expect(finding.detail).toContain("missing SecretRef");
+>>>>>>> upstream/main
   });
 });

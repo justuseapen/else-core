@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 import { Type } from "@sinclair/typebox";
 import { getRuntimeConfigSnapshot } from "openclaw/plugin-sdk/config-runtime";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/plugin-entry";
+=======
+// Xai plugin module implements x search behavior.
+>>>>>>> upstream/main
 import {
   jsonResult,
   readCache,
@@ -10,6 +14,7 @@ import {
   resolveTimeoutSeconds,
   writeCache,
 } from "openclaw/plugin-sdk/provider-web-search";
+<<<<<<< HEAD
 import { isXaiToolEnabled, resolveXaiToolApiKey } from "./src/tool-auth-shared.js";
 import {
   resolveEffectiveXSearchConfig,
@@ -18,11 +23,31 @@ import {
 import {
   buildXaiXSearchPayload,
   requestXaiXSearch,
+=======
+import { getRuntimeConfigSnapshot } from "openclaw/plugin-sdk/runtime-config-snapshot";
+import {
+  isXaiToolEnabled,
+  resolveXaiToolApiKeyWithAuth,
+  type XaiToolAuthContext,
+} from "./src/tool-auth-shared.js";
+import { resolveEffectiveXSearchConfig } from "./src/x-search-config.js";
+import {
+  buildXaiXSearchPayload,
+  requestXaiXSearch,
+  resolveXaiXSearchEndpoint,
+>>>>>>> upstream/main
   resolveXaiXSearchInlineCitations,
   resolveXaiXSearchMaxTurns,
   resolveXaiXSearchModel,
   type XaiXSearchOptions,
 } from "./src/x-search-shared.js";
+<<<<<<< HEAD
+=======
+import {
+  buildMissingXSearchApiKeyPayload,
+  createXSearchToolDefinition,
+} from "./x-search-tool-shared.js";
+>>>>>>> upstream/main
 
 class PluginToolInputError extends Error {
   constructor(message: string) {
@@ -52,6 +77,7 @@ function getSharedXSearchCache(): Map<string, XSearchCacheEntry> {
 
 const X_SEARCH_CACHE = getSharedXSearchCache();
 
+<<<<<<< HEAD
 function resolveXSearchConfig(cfg?: OpenClawConfig): Record<string, unknown> | undefined {
   return resolveEffectiveXSearchConfig(cfg);
 }
@@ -73,6 +99,32 @@ function resolveXSearchApiKey(params: {
   runtimeConfig?: OpenClawConfig;
 }): string | undefined {
   return resolveXaiToolApiKey(params);
+=======
+function resolveXSearchConfig(cfg?: unknown): Record<string, unknown> | undefined {
+  return resolveEffectiveXSearchConfig(cfg as never);
+}
+
+function resolveXSearchEnabled(params: {
+  cfg?: unknown;
+  config?: Record<string, unknown>;
+  runtimeConfig?: unknown;
+  auth?: XaiToolAuthContext;
+}): boolean {
+  return isXaiToolEnabled({
+    enabled: params.config?.enabled as boolean | undefined,
+    runtimeConfig: params.runtimeConfig as never,
+    sourceConfig: params.cfg as never,
+    auth: params.auth,
+  });
+}
+
+async function resolveXSearchApiKey(params: {
+  sourceConfig?: unknown;
+  runtimeConfig?: unknown;
+  auth?: XaiToolAuthContext;
+}): Promise<string | undefined> {
+  return await resolveXaiToolApiKeyWithAuth(params as never);
+>>>>>>> upstream/main
 }
 
 function normalizeOptionalIsoDate(value: string | undefined, label: string): string | undefined {
@@ -101,6 +153,10 @@ function normalizeOptionalIsoDate(value: string | undefined, label: string): str
 function buildXSearchCacheKey(params: {
   query: string;
   model: string;
+<<<<<<< HEAD
+=======
+  endpoint: string;
+>>>>>>> upstream/main
   inlineCitations: boolean;
   maxTurns?: number;
   options: Omit<XaiXSearchOptions, "query">;
@@ -108,6 +164,10 @@ function buildXSearchCacheKey(params: {
   return JSON.stringify([
     "x_search",
     params.model,
+<<<<<<< HEAD
+=======
+    params.endpoint,
+>>>>>>> upstream/main
     params.query,
     params.inlineCitations,
     params.maxTurns ?? null,
@@ -121,8 +181,14 @@ function buildXSearchCacheKey(params: {
 }
 
 export function createXSearchTool(options?: {
+<<<<<<< HEAD
   config?: OpenClawConfig;
   runtimeConfig?: OpenClawConfig | null;
+=======
+  config?: unknown;
+  runtimeConfig?: Record<string, unknown> | null;
+  auth?: XaiToolAuthContext;
+>>>>>>> upstream/main
 }) {
   const xSearchConfig = resolveXSearchConfig(options?.config);
   const runtimeConfig = options?.runtimeConfig ?? getRuntimeConfigSnapshot();
@@ -131,11 +197,16 @@ export function createXSearchTool(options?: {
       cfg: options?.config,
       config: xSearchConfig,
       runtimeConfig: runtimeConfig ?? undefined,
+<<<<<<< HEAD
+=======
+      auth: options?.auth,
+>>>>>>> upstream/main
     })
   ) {
     return null;
   }
 
+<<<<<<< HEAD
   return {
     label: "X Search",
     name: "x_search",
@@ -191,10 +262,53 @@ export function createXSearchTool(options?: {
 
       const xSearchOptions: XaiXSearchOptions = {
         query,
+=======
+  return createXSearchToolDefinition(async (_toolCallId: string, args: Record<string, unknown>) => {
+    const apiKey = await resolveXSearchApiKey({
+      sourceConfig: options?.config,
+      runtimeConfig: runtimeConfig ?? undefined,
+      auth: options?.auth,
+    });
+    if (!apiKey) {
+      return jsonResult(buildMissingXSearchApiKeyPayload());
+    }
+
+    const query = readStringParam(args, "query", { required: true });
+    const allowedXHandles = readStringArrayParam(args, "allowed_x_handles");
+    const excludedXHandles = readStringArrayParam(args, "excluded_x_handles");
+    const fromDate = normalizeOptionalIsoDate(readStringParam(args, "from_date"), "from_date");
+    const toDate = normalizeOptionalIsoDate(readStringParam(args, "to_date"), "to_date");
+    if (fromDate && toDate && fromDate > toDate) {
+      throw new PluginToolInputError("from_date must be on or before to_date");
+    }
+
+    const xSearchOptions: XaiXSearchOptions = {
+      query,
+      allowedXHandles,
+      excludedXHandles,
+      fromDate,
+      toDate,
+      enableImageUnderstanding: args.enable_image_understanding === true,
+      enableVideoUnderstanding: args.enable_video_understanding === true,
+    };
+    const xSearchConfigRecord = xSearchConfig;
+    const model = resolveXaiXSearchModel(xSearchConfigRecord);
+    const endpoint = resolveXaiXSearchEndpoint(xSearchConfigRecord);
+    const inlineCitations = resolveXaiXSearchInlineCitations(xSearchConfigRecord);
+    const maxTurns = resolveXaiXSearchMaxTurns(xSearchConfigRecord);
+    const cacheKey = buildXSearchCacheKey({
+      query,
+      model,
+      endpoint,
+      inlineCitations,
+      maxTurns,
+      options: {
+>>>>>>> upstream/main
         allowedXHandles,
         excludedXHandles,
         fromDate,
         toDate,
+<<<<<<< HEAD
         enableImageUnderstanding: args.enable_image_understanding === true,
         enableVideoUnderstanding: args.enable_video_understanding === true,
       };
@@ -248,4 +362,42 @@ export function createXSearchTool(options?: {
       return jsonResult(payload);
     },
   };
+=======
+        enableImageUnderstanding: xSearchOptions.enableImageUnderstanding,
+        enableVideoUnderstanding: xSearchOptions.enableVideoUnderstanding,
+      },
+    });
+    const cached = readCache(X_SEARCH_CACHE, cacheKey);
+    if (cached) {
+      return jsonResult({ ...cached.value, cached: true });
+    }
+
+    const startedAt = Date.now();
+    const result = await requestXaiXSearch({
+      apiKey,
+      endpoint,
+      model,
+      timeoutSeconds: resolveTimeoutSeconds(xSearchConfig?.timeoutSeconds, 30),
+      inlineCitations,
+      maxTurns,
+      options: xSearchOptions,
+    });
+    const payload = buildXaiXSearchPayload({
+      query,
+      model,
+      tookMs: Date.now() - startedAt,
+      content: result.content,
+      citations: result.citations,
+      inlineCitations: result.inlineCitations,
+      options: xSearchOptions,
+    });
+    writeCache(
+      X_SEARCH_CACHE,
+      cacheKey,
+      payload,
+      resolveCacheTtlMs(xSearchConfig?.cacheTtlMinutes, 15),
+    );
+    return jsonResult(payload);
+  });
+>>>>>>> upstream/main
 }

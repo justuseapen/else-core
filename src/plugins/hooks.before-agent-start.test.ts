@@ -27,6 +27,15 @@ function addBeforeAgentStartHook(
 }
 
 const stubCtx = TEST_PLUGIN_AGENT_CTX;
+const EMPTY_BEFORE_AGENT_START_RESULT = {
+  appendContext: undefined,
+  appendSystemContext: undefined,
+  modelOverride: undefined,
+  prependContext: undefined,
+  prependSystemContext: undefined,
+  providerOverride: undefined,
+  systemPrompt: undefined,
+} satisfies PluginHookBeforeAgentStartResult;
 
 describe("before_agent_start hook merger", () => {
   let registry: PluginRegistry;
@@ -53,10 +62,17 @@ describe("before_agent_start hook merger", () => {
       result: PluginHookBeforeAgentStartResult;
       priority?: number;
     }>,
+<<<<<<< HEAD
     expected: Partial<PluginHookBeforeAgentStartResult>,
   ) => {
     const result = await runWithHooks(hooks);
     expect(result).toEqual(expect.objectContaining(expected));
+=======
+    expected: PluginHookBeforeAgentStartResult,
+  ) => {
+    const result = await runWithHooks(hooks);
+    expect(result).toEqual(expected);
+>>>>>>> upstream/main
     return result;
   };
 
@@ -80,6 +96,10 @@ describe("before_agent_start hook merger", () => {
       "returns modelOverride from a single plugin",
       { modelOverride: "llama3.3:8b" },
       {
+<<<<<<< HEAD
+=======
+        ...EMPTY_BEFORE_AGENT_START_RESULT,
+>>>>>>> upstream/main
         modelOverride: "llama3.3:8b",
       },
     ],
@@ -87,6 +107,10 @@ describe("before_agent_start hook merger", () => {
       "returns providerOverride from a single plugin",
       { providerOverride: "ollama" },
       {
+<<<<<<< HEAD
+=======
+        ...EMPTY_BEFORE_AGENT_START_RESULT,
+>>>>>>> upstream/main
         providerOverride: "ollama",
       },
     ],
@@ -97,6 +121,10 @@ describe("before_agent_start hook merger", () => {
         providerOverride: "ollama",
       },
       {
+<<<<<<< HEAD
+=======
+        ...EMPTY_BEFORE_AGENT_START_RESULT,
+>>>>>>> upstream/main
         modelOverride: "llama3.3:8b",
         providerOverride: "ollama",
       },
@@ -109,6 +137,10 @@ describe("before_agent_start hook merger", () => {
         providerOverride: "ollama",
       },
       {
+<<<<<<< HEAD
+=======
+        ...EMPTY_BEFORE_AGENT_START_RESULT,
+>>>>>>> upstream/main
         systemPrompt: "You are a helpful assistant",
         modelOverride: "llama3.3:8b",
         providerOverride: "ollama",
@@ -124,7 +156,11 @@ describe("before_agent_start hook merger", () => {
         { pluginId: "low-priority", result: { modelOverride: "gpt-5.4" }, priority: 1 },
         { pluginId: "high-priority", result: { modelOverride: "llama3.3:8b" }, priority: 10 },
       ],
+<<<<<<< HEAD
       { modelOverride: "llama3.3:8b" },
+=======
+      { ...EMPTY_BEFORE_AGENT_START_RESULT, modelOverride: "llama3.3:8b" },
+>>>>>>> upstream/main
     );
     expect(result?.modelOverride).toBe("llama3.3:8b");
   });
@@ -189,6 +225,7 @@ describe("before_agent_start hook merger", () => {
   });
 
   it("passes runId through the agent context to hook handlers", async () => {
+<<<<<<< HEAD
     const registry = createEmptyPluginRegistry();
     let capturedCtx: typeof stubCtx | undefined;
     addTestHook({
@@ -196,15 +233,31 @@ describe("before_agent_start hook merger", () => {
       pluginId: "ctx-spy",
       hookName: "before_agent_start",
       handler: ((_event: unknown, ctx: typeof stubCtx) => {
+=======
+    const registryLocal = createEmptyPluginRegistry();
+    let capturedCtx: typeof stubCtx | undefined;
+    addTestHook({
+      registry: registryLocal,
+      pluginId: "ctx-spy",
+      hookName: "before_agent_start",
+      handler: ((eventValue: unknown, ctx: typeof stubCtx) => {
+>>>>>>> upstream/main
         capturedCtx = ctx;
         return {};
       }) as PluginHookRegistration["handler"],
     });
 
+<<<<<<< HEAD
     const runner = createHookRunner(registry);
     await runner.runBeforeAgentStart({ prompt: "test" }, stubCtx);
 
     expect(capturedCtx).toBeDefined();
     expect(capturedCtx?.runId).toBe("test-run-id");
+=======
+    const runner = createHookRunner(registryLocal);
+    await runner.runBeforeAgentStart({ prompt: "test" }, stubCtx);
+
+    expect(capturedCtx).toBe(stubCtx);
+>>>>>>> upstream/main
   });
 });

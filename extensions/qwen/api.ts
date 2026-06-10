@@ -1,8 +1,20 @@
+<<<<<<< HEAD
+=======
+// Qwen API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   applyQwenNativeStreamingUsageCompat,
   buildQwenDefaultModelDefinition,
   buildQwenModelDefinition,
+<<<<<<< HEAD
   isNativeQwenBaseUrl,
+=======
+  buildQwenModelCatalogForBaseUrl,
+  isNativeQwenBaseUrl,
+  isQwen36PlusSupportedBaseUrl,
+  isQwenCodingPlanBaseUrl,
+  QWEN_36_PLUS_MODEL_ID,
+>>>>>>> upstream/main
   QWEN_BASE_URL,
   QWEN_CN_BASE_URL,
   QWEN_DEFAULT_COST,
@@ -27,3 +39,7 @@ export {
   MODELSTUDIO_MODEL_CATALOG,
 } from "./models.js";
 export { buildModelStudioProvider, buildQwenProvider } from "./provider-catalog.js";
+<<<<<<< HEAD
+=======
+export { createQwenThinkingWrapper, wrapQwenProviderStream } from "./stream.js";
+>>>>>>> upstream/main

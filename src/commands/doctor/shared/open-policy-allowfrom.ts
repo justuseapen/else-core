@@ -1,12 +1,11 @@
-import type { OpenClawConfig } from "../../../config/config.js";
-import { sanitizeForLog } from "../../../terminal/ansi.js";
+// Doctor repair for open DM policies that still need explicit allowFrom wildcards.
+import { sanitizeForLog } from "../../../../packages/terminal-core/src/ansi.js";
+import { ensureOpenDmPolicyAllowFromWildcard } from "../../../channels/plugins/dm-access.js";
+import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import { resolveAllowFromMode, type AllowFromMode } from "./allow-from-mode.js";
 import { asObjectRecord } from "./object.js";
 
-function hasWildcard(list?: Array<string | number>) {
-  return list?.some((v) => String(v).trim() === "*") ?? false;
-}
-
+/** Format doctor warnings for open DM policies missing allowFrom wildcards. */
 export function collectOpenPolicyAllowFromWarnings(params: {
   changes: string[];
   doctorFixCommand: string;
@@ -20,6 +19,7 @@ export function collectOpenPolicyAllowFromWarnings(params: {
   ];
 }
 
+/** Add allowFrom wildcards for open DM policies where channel metadata requires them. */
 export function maybeRepairOpenPolicyAllowFrom(cfg: OpenClawConfig): {
   config: OpenClawConfig;
   changes: string[];
@@ -37,6 +37,7 @@ export function maybeRepairOpenPolicyAllowFrom(cfg: OpenClawConfig): {
     prefix: string,
     mode: AllowFromMode,
   ) => {
+<<<<<<< HEAD
     const dmEntry = account.dm;
     const dm =
       dmEntry && typeof dmEntry === "object" && !Array.isArray(dmEntry)
@@ -121,6 +122,14 @@ export function maybeRepairOpenPolicyAllowFrom(cfg: OpenClawConfig): {
       account.allowFrom = ["*"];
       changes.push(`- ${prefix}.allowFrom: set to ["*"] (required by dmPolicy="open")`);
     }
+=======
+    ensureOpenDmPolicyAllowFromWildcard({
+      entry: account,
+      mode,
+      pathPrefix: prefix,
+      changes,
+    });
+>>>>>>> upstream/main
   };
 
   const nextChannels = next.channels as Record<string, Record<string, unknown>>;

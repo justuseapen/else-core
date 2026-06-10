@@ -1,3 +1,4 @@
+// Covers channel API retry policy behavior.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createChannelApiRetryRunner } from "./retry-policy.js";
 
@@ -157,6 +158,27 @@ describe("createChannelApiRetryRunner", () => {
         expectedValue,
         expectedError,
       });
+<<<<<<< HEAD
+=======
+    });
+  });
+
+  describe("default retry behavior", () => {
+    it("retries misdirected request errors from Telegram edge nodes", async () => {
+      await runRetryCase({
+        runnerOptions: { retry: ZERO_DELAY_RETRY },
+        fnSteps: [
+          {
+            type: "reject" as const,
+            value: Object.assign(new Error("421 Misdirected Request"), {
+              status: 421,
+            }),
+          },
+        ],
+        expectedCalls: 3,
+        expectedError: "421 Misdirected Request",
+      });
+>>>>>>> upstream/main
     });
   });
 

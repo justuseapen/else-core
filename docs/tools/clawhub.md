@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 summary: "ClawHub guide: public registry, native OpenClaw install flows, and ClawHub CLI workflows"
 read_when:
   - Introducing ClawHub to new users
@@ -346,3 +347,9 @@ export CLAWHUB_DISABLE_TELEMETRY=1
 - `CLAWHUB_CONFIG_PATH`: Override where the CLI stores the token/config.
 - `CLAWHUB_WORKDIR`: Override the default workdir.
 - `CLAWHUB_DISABLE_TELEMETRY=1`: Disable telemetry on `sync`.
+=======
+summary: "Redirect to /clawhub"
+title: "ClawHub (redirect)"
+redirect: /clawhub
+---
+>>>>>>> upstream/main

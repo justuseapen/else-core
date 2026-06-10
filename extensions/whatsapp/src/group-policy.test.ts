@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Whatsapp tests cover group policy plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   resolveWhatsAppGroupRequireMention,

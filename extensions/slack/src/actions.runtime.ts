@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Slack plugin module implements actions behavior.
+>>>>>>> upstream/main
 export {
   deleteSlackMessage,
   downloadSlackFile,

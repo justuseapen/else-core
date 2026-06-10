@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Bundled extension config API guardrail tests cover config API usage in bundled extensions.
+>>>>>>> upstream/main
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,10 +37,17 @@ const BUNDLED_EXTENSION_CONFIG_IMPORT_GUARDS = [
   },
   {
     path: "extensions/googlechat/src/config-schema.ts",
+<<<<<<< HEAD
     allowedSpecifier: "openclaw/plugin-sdk/googlechat",
   },
   // Teams keeps a package-local config barrel so production code does not
   // self-import via openclaw/plugin-sdk/msteams from inside the same extension.
+=======
+    allowedSpecifier: "../config-api.js",
+  },
+  // Teams keeps a package-local config barrel so production code does not
+  // reach through a public plugin-sdk helper seam from inside the same extension.
+>>>>>>> upstream/main
   {
     path: "extensions/msteams/src/config-schema.ts",
     allowedSpecifier: "../config-api.js",

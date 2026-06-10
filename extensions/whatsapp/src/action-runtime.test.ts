@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Whatsapp tests cover action runtime plugin behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/routing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handleWhatsAppAction, whatsAppActionRuntime } from "./action-runtime.js";
@@ -17,6 +22,37 @@ describe("handleWhatsAppAction", () => {
     } as OpenClawConfig;
   }
 
+<<<<<<< HEAD
+=======
+  function expectLastReactionSend(expected: {
+    chat: string;
+    messageId: string;
+    emoji: string;
+    accountId: string;
+    fromMe?: boolean;
+    participant?: string;
+  }) {
+    const calls = sendReactionWhatsApp.mock.calls as unknown[][];
+    const call = calls.at(-1);
+    if (!call) {
+      throw new Error("expected WhatsApp reaction send");
+    }
+    expect(call[0]).toBe(expected.chat);
+    expect(call[1]).toBe(expected.messageId);
+    expect(call[2]).toBe(expected.emoji);
+    const options = call[3] as {
+      verbose?: unknown;
+      fromMe?: unknown;
+      participant?: unknown;
+      accountId?: unknown;
+    };
+    expect(options.verbose).toBe(false);
+    expect(options.fromMe).toBe(expected.fromMe);
+    expect(options.participant).toBe(expected.participant);
+    expect(options.accountId).toBe(expected.accountId);
+  }
+
+>>>>>>> upstream/main
   beforeEach(() => {
     vi.clearAllMocks();
     Object.assign(whatsAppActionRuntime, originalWhatsAppActionRuntime, {
@@ -34,10 +70,46 @@ describe("handleWhatsAppAction", () => {
       },
       enabledConfig,
     );
-    expect(sendReactionWhatsApp).toHaveBeenLastCalledWith("+123", "msg1", "✅", {
-      verbose: false,
-      fromMe: undefined,
-      participant: undefined,
+    expectLastReactionSend({
+      chat: "+123",
+      messageId: "msg1",
+      emoji: "✅",
+      accountId: DEFAULT_ACCOUNT_ID,
+    });
+  });
+
+  it("adds reactions when reactionLevel is minimal", async () => {
+    await handleWhatsAppAction(
+      {
+        action: "react",
+        chatJid: "123@s.whatsapp.net",
+        messageId: "msg1",
+        emoji: "✅",
+      },
+      reactionConfig("minimal"),
+    );
+    expectLastReactionSend({
+      chat: "+123",
+      messageId: "msg1",
+      emoji: "✅",
+      accountId: DEFAULT_ACCOUNT_ID,
+    });
+  });
+
+  it("adds reactions when reactionLevel is extensive", async () => {
+    await handleWhatsAppAction(
+      {
+        action: "react",
+        chatJid: "123@s.whatsapp.net",
+        messageId: "msg1",
+        emoji: "✅",
+      },
+      reactionConfig("extensive"),
+    );
+    expectLastReactionSend({
+      chat: "+123",
+      messageId: "msg1",
+      emoji: "✅",
       accountId: DEFAULT_ACCOUNT_ID,
     });
   });
@@ -88,10 +160,10 @@ describe("handleWhatsAppAction", () => {
       },
       enabledConfig,
     );
-    expect(sendReactionWhatsApp).toHaveBeenLastCalledWith("+123", "msg1", "", {
-      verbose: false,
-      fromMe: undefined,
-      participant: undefined,
+    expectLastReactionSend({
+      chat: "+123",
+      messageId: "msg1",
+      emoji: "",
       accountId: DEFAULT_ACCOUNT_ID,
     });
   });
@@ -107,10 +179,10 @@ describe("handleWhatsAppAction", () => {
       },
       enabledConfig,
     );
-    expect(sendReactionWhatsApp).toHaveBeenLastCalledWith("+123", "msg1", "", {
-      verbose: false,
-      fromMe: undefined,
-      participant: undefined,
+    expectLastReactionSend({
+      chat: "+123",
+      messageId: "msg1",
+      emoji: "",
       accountId: DEFAULT_ACCOUNT_ID,
     });
   });
@@ -128,11 +200,33 @@ describe("handleWhatsAppAction", () => {
       },
       enabledConfig,
     );
-    expect(sendReactionWhatsApp).toHaveBeenLastCalledWith("+123", "msg1", "🎉", {
-      verbose: false,
+    expectLastReactionSend({
+      chat: "+123",
+      messageId: "msg1",
+      emoji: "🎉",
+      accountId: "work",
       fromMe: true,
       participant: "999@s.whatsapp.net",
-      accountId: "work",
+    });
+  });
+
+  it("preserves LID participant ids when forwarding reactions", async () => {
+    await handleWhatsAppAction(
+      {
+        action: "react",
+        chatJid: "12345@g.us",
+        messageId: "msg1",
+        emoji: "🎉",
+        participant: "123@lid",
+      },
+      enabledConfig,
+    );
+    expectLastReactionSend({
+      chat: "12345@g.us",
+      messageId: "msg1",
+      emoji: "🎉",
+      accountId: DEFAULT_ACCOUNT_ID,
+      participant: "123@lid",
     });
   });
 
@@ -200,7 +294,11 @@ describe("handleWhatsAppAction", () => {
           reactionConfig(reactionLevel),
         ),
       ).rejects.toThrow(
+<<<<<<< HEAD
         new RegExp(`WhatsApp agent reactions disabled \\(reactionLevel=\"${reactionLevel}\"\\)`),
+=======
+        new RegExp(`WhatsApp agent reactions disabled \\(reactionLevel="${reactionLevel}"\\)`),
+>>>>>>> upstream/main
       );
       expect(sendReactionWhatsApp).not.toHaveBeenCalled();
     },
@@ -221,8 +319,8 @@ describe("handleWhatsAppAction", () => {
       },
     } as OpenClawConfig;
 
-    await expect(
-      handleWhatsAppAction(
+    try {
+      await handleWhatsAppAction(
         {
           action: "react",
           chatJid: "111@s.whatsapp.net",
@@ -230,11 +328,12 @@ describe("handleWhatsAppAction", () => {
           emoji: "✅",
         },
         cfg,
-      ),
-    ).rejects.toMatchObject({
-      name: "ToolAuthorizationError",
-      status: 403,
-    });
+      );
+      throw new Error("expected WhatsApp action authorization error");
+    } catch (error) {
+      expect((error as { name?: unknown }).name).toBe("ToolAuthorizationError");
+      expect((error as { status?: unknown }).status).toBe(403);
+    }
   });
 
   it("routes to resolved default account when no accountId is provided", async () => {
@@ -261,10 +360,10 @@ describe("handleWhatsAppAction", () => {
       cfg,
     );
 
-    expect(sendReactionWhatsApp).toHaveBeenLastCalledWith("+123", "msg1", "✅", {
-      verbose: false,
-      fromMe: undefined,
-      participant: undefined,
+    expectLastReactionSend({
+      chat: "+123",
+      messageId: "msg1",
+      emoji: "✅",
       accountId: "work",
     });
   });

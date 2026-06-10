@@ -1,3 +1,4 @@
+/** Interactive stdio ACP client used to connect a terminal session to an OpenClaw ACP server. */
 import { spawn, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -9,9 +10,9 @@ import {
   PROTOCOL_VERSION,
   ndJsonStream,
   type RequestPermissionRequest,
-  type RequestPermissionResponse,
   type SessionNotification,
 } from "@agentclientprotocol/sdk";
+<<<<<<< HEAD
 import { ensureOpenClawCliOnPath } from "../infra/path-env.js";
 import {
   materializeWindowsSpawnProgram,
@@ -160,6 +161,19 @@ export async function resolvePermissionRequest(
 }
 
 export type AcpClientOptions = {
+=======
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { ensureOpenClawCliOnPath } from "../infra/path-env.js";
+import {
+  buildAcpClientStripKeys,
+  resolveAcpClientSpawnEnv,
+  resolveAcpClientSpawnInvocation,
+  resolvePermissionRequest,
+  shouldStripProviderAuthEnvVarsForAcpServer,
+} from "./client-helpers.js";
+
+type AcpClientOptions = {
+>>>>>>> upstream/main
   cwd?: string;
   serverCommand?: string;
   serverArgs?: string[];
@@ -167,7 +181,7 @@ export type AcpClientOptions = {
   verbose?: boolean;
 };
 
-export type AcpClientHandle = {
+type AcpClientHandle = {
   client: ClientSideConnection;
   agent: ChildProcess;
   sessionId: string;
@@ -188,6 +202,7 @@ function buildServerArgs(opts: AcpClientOptions): string[] {
   return args;
 }
 
+<<<<<<< HEAD
 type AcpClientSpawnEnvOptions = {
   stripKeys?: Iterable<string>;
 };
@@ -270,6 +285,8 @@ export function resolveAcpClientSpawnInvocation(
   };
 }
 
+=======
+>>>>>>> upstream/main
 function resolveSelfEntryPath(): string | null {
   // Prefer a path relative to the built module location (dist/acp/client.js -> dist/entry.js).
   try {
@@ -282,7 +299,7 @@ function resolveSelfEntryPath(): string | null {
     // ignore
   }
 
-  const argv1 = process.argv[1]?.trim();
+  const argv1 = normalizeOptionalString(process.argv[1]);
   if (argv1) {
     return path.isAbsolute(argv1) ? argv1 : path.resolve(process.cwd(), argv1);
   }
@@ -317,14 +334,12 @@ function printSessionUpdate(notification: SessionNotification): void {
       if (names) {
         console.log(`\n[commands] ${names}`);
       }
-      return;
     }
     default:
-      return;
   }
 }
 
-export async function createAcpClient(opts: AcpClientOptions = {}): Promise<AcpClientHandle> {
+async function createAcpClient(opts: AcpClientOptions = {}): Promise<AcpClientHandle> {
   const cwd = opts.cwd ?? process.cwd();
   const verbose = Boolean(opts.verbose);
   const log = verbose ? (msg: string) => console.error(`[acp-client] ${msg}`) : () => {};
@@ -337,7 +352,7 @@ export async function createAcpClient(opts: AcpClientOptions = {}): Promise<AcpC
   const defaultServerArgs = entryPath ? [entryPath, ...serverArgs] : serverArgs;
   const serverCommand = opts.serverCommand ?? defaultServerCommand;
   const effectiveArgs = opts.serverCommand || !entryPath ? serverArgs : defaultServerArgs;
-  const { getActiveSkillEnvKeys } = await import("../agents/skills/env-overrides.runtime.js");
+  const { getActiveSkillEnvKeys } = await import("../skills/runtime/env-overrides.runtime.js");
   const stripProviderAuthEnvVars = shouldStripProviderAuthEnvVarsForAcpServer({
     serverCommand,
     serverArgs: effectiveArgs,
@@ -411,6 +426,7 @@ export async function createAcpClient(opts: AcpClientOptions = {}): Promise<AcpC
   };
 }
 
+/** Starts the terminal prompt loop for a local ACP client session. */
 export async function runAcpClientInteractive(opts: AcpClientOptions = {}): Promise<void> {
   const { client, agent, sessionId } = await createAcpClient(opts);
 
@@ -424,29 +440,31 @@ export async function runAcpClientInteractive(opts: AcpClientOptions = {}): Prom
   console.log('Type a prompt, or "exit" to quit.\n');
 
   const prompt = () => {
-    rl.question("> ", async (input) => {
-      const text = input.trim();
-      if (!text) {
+    rl.question("> ", (input) => {
+      void (async () => {
+        const text = input.trim();
+        if (!text) {
+          prompt();
+          return;
+        }
+        if (text === "exit" || text === "quit") {
+          agent.kill();
+          rl.close();
+          process.exit(0);
+        }
+
+        try {
+          const response = await client.prompt({
+            sessionId,
+            prompt: [{ type: "text", text }],
+          });
+          console.log(`\n[${response.stopReason}]\n`);
+        } catch (err) {
+          console.error(`\n[error] ${String(err)}\n`);
+        }
+
         prompt();
-        return;
-      }
-      if (text === "exit" || text === "quit") {
-        agent.kill();
-        rl.close();
-        process.exit(0);
-      }
-
-      try {
-        const response = await client.prompt({
-          sessionId,
-          prompt: [{ type: "text", text }],
-        });
-        console.log(`\n[${response.stopReason}]\n`);
-      } catch (err) {
-        console.error(`\n[error] ${String(err)}\n`);
-      }
-
-      prompt();
+      })();
     });
   };
 

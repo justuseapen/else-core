@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Slack plugin module implements security doctor behavior.
+>>>>>>> upstream/main
 export function isSlackMutableAllowEntry(raw: string): boolean {
   const text = raw.trim();
   if (!text || text === "*") {

@@ -1,5 +1,6 @@
+/** Resolves preferred provider auth choices from config and plugin metadata. */
 import { normalizeLegacyOnboardAuthChoice } from "../commands/auth-choice-legacy.js";
-import type { OpenClawConfig } from "../config/config.js";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { resolveManifestProviderAuthChoice } from "./provider-auth-choices.js";
 
 function normalizeLegacyAuthChoice(choice: string, env?: NodeJS.ProcessEnv): string {
@@ -26,6 +27,10 @@ export async function resolvePreferredProviderForAuthChoice(params: {
     workspaceDir: params.workspaceDir,
     env: params.env,
     mode: "setup",
+<<<<<<< HEAD
+=======
+    includeUntrustedWorkspacePlugins: params.includeUntrustedWorkspacePlugins,
+>>>>>>> upstream/main
   });
   const pluginResolved = resolveProviderPluginChoice({
     providers,

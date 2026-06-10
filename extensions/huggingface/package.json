@@ -1,9 +1,16 @@
 {
   "name": "@openclaw/huggingface-provider",
+<<<<<<< HEAD
   "version": "2026.4.5",
+=======
+  "version": "2026.6.2",
+>>>>>>> upstream/main
   "private": true,
   "description": "OpenClaw Hugging Face provider plugin",
   "type": "module",
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
   "openclaw": {
     "extensions": [
       "./index.ts"

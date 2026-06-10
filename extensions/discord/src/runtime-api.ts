@@ -1,3 +1,4 @@
+// Discord API module exposes the plugin public contract.
 export {
   buildComputedAccountStatusSnapshot,
   buildTokenChannelStatusSummary,
@@ -21,10 +22,16 @@ export type {
   DiscordActionConfig,
   DiscordConfig,
   OpenClawConfig,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/config-runtime";
+=======
+} from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 export {
   jsonResult,
+  readNonNegativeIntegerParam,
   readNumberParam,
+  readPositiveIntegerParam,
   readStringArrayParam,
   readStringParam,
   resolvePollMaxSelections,

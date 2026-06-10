@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type {
   ChannelDoctorAdapter,
   ChannelDoctorConfigMutation,
@@ -102,4 +103,16 @@ const TLON_LEGACY_CONFIG_RULES: ChannelDoctorLegacyConfigRule[] = [
 export const tlonDoctor: ChannelDoctorAdapter = {
   legacyConfigRules: TLON_LEGACY_CONFIG_RULES,
   normalizeCompatibilityConfig: ({ cfg }) => normalizeTlonCompatibilityConfig(cfg),
+=======
+// Tlon plugin module implements doctor behavior.
+import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
+import {
+  legacyConfigRules as TLON_LEGACY_CONFIG_RULES,
+  normalizeCompatibilityConfig as normalizeTlonCompatibilityConfig,
+} from "./doctor-contract.js";
+
+export const tlonDoctor: ChannelDoctorAdapter = {
+  legacyConfigRules: TLON_LEGACY_CONFIG_RULES,
+  normalizeCompatibilityConfig: normalizeTlonCompatibilityConfig,
+>>>>>>> upstream/main
 };

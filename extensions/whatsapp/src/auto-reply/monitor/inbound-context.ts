@@ -1,7 +1,13 @@
+<<<<<<< HEAD
 import {
   evaluateSupplementalContextVisibility,
   filterSupplementalContextItems,
 } from "openclaw/plugin-sdk/security-runtime";
+=======
+// Whatsapp plugin module implements inbound context behavior.
+import { filterChannelInboundQuoteContext } from "openclaw/plugin-sdk/channel-inbound";
+import { filterSupplementalContextItems } from "openclaw/plugin-sdk/security-runtime";
+>>>>>>> upstream/main
 import {
   getComparableIdentityValues,
   getReplyContext,
@@ -21,7 +27,11 @@ export type GroupHistoryEntry = {
 
 type ContextVisibilityMode = "all" | "allowlist" | "allowlist_quote";
 
+<<<<<<< HEAD
 export function isWhatsAppSupplementalSenderAllowed(params: {
+=======
+function isWhatsAppSupplementalSenderAllowed(params: {
+>>>>>>> upstream/main
   allowFrom: string[];
   sender?: WhatsAppIdentity | null;
 }): boolean {
@@ -33,7 +43,11 @@ export function isWhatsAppSupplementalSenderAllowed(params: {
     return false;
   }
   for (const entry of params.allowFrom) {
+<<<<<<< HEAD
     const rawEntry = String(entry).trim();
+=======
+    const rawEntry = entry.trim();
+>>>>>>> upstream/main
     if (!rawEntry) {
       continue;
     }
@@ -77,6 +91,7 @@ export function resolveVisibleWhatsAppReplyContext(params: {
   if (!replyTo) {
     return null;
   }
+<<<<<<< HEAD
   const include = evaluateSupplementalContextVisibility({
     mode: params.mode,
     kind: "quote",
@@ -89,4 +104,20 @@ export function resolveVisibleWhatsAppReplyContext(params: {
           }),
   }).include;
   return include ? replyTo : null;
+=======
+  const senderAllowed =
+    params.msg.chatType !== "group" || params.groupPolicy !== "allowlist"
+      ? true
+      : isWhatsAppSupplementalSenderAllowed({
+          allowFrom: params.groupAllowFrom,
+          sender: replyTo.sender,
+        });
+  const visible = filterChannelInboundQuoteContext(params.mode, {
+    id: replyTo.id,
+    body: replyTo.body,
+    sender: replyTo.sender?.label ?? undefined,
+    senderAllowed,
+  });
+  return visible ? replyTo : null;
+>>>>>>> upstream/main
 }

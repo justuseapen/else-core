@@ -1,5 +1,18 @@
 package ai.openclaw.app.ui.chat
 
+import ai.openclaw.app.ui.mobileAccent
+import ai.openclaw.app.ui.mobileAccentBorderStrong
+import ai.openclaw.app.ui.mobileAccentSoft
+import ai.openclaw.app.ui.mobileBorder
+import ai.openclaw.app.ui.mobileBorderStrong
+import ai.openclaw.app.ui.mobileCallout
+import ai.openclaw.app.ui.mobileCaption1
+import ai.openclaw.app.ui.mobileCardSurface
+import ai.openclaw.app.ui.mobileHeadline
+import ai.openclaw.app.ui.mobileSurface
+import ai.openclaw.app.ui.mobileText
+import ai.openclaw.app.ui.mobileTextSecondary
+import ai.openclaw.app.ui.mobileTextTertiary
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -46,26 +59,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ai.openclaw.app.ui.mobileAccent
-import ai.openclaw.app.ui.mobileAccentBorderStrong
-import ai.openclaw.app.ui.mobileAccentSoft
-import ai.openclaw.app.ui.mobileBorder
-import ai.openclaw.app.ui.mobileBorderStrong
-import ai.openclaw.app.ui.mobileCallout
-import ai.openclaw.app.ui.mobileCaption1
-import ai.openclaw.app.ui.mobileCardSurface
-import ai.openclaw.app.ui.mobileHeadline
-import ai.openclaw.app.ui.mobileSurface
-import ai.openclaw.app.ui.mobileText
-import ai.openclaw.app.ui.mobileTextSecondary
-import ai.openclaw.app.ui.mobileTextTertiary
 
+<<<<<<< HEAD
+=======
+/** Result of applying a stored chat draft to the current composer input. */
+>>>>>>> upstream/main
 internal data class DraftApplication(
   val input: String,
   val lastAppliedDraft: String?,
   val consumed: Boolean,
 )
 
+<<<<<<< HEAD
+=======
+/** Applies a draft exactly once so restored prompts do not overwrite user edits. */
+>>>>>>> upstream/main
 internal fun applyDraftText(
   draftText: String?,
   currentInput: String,
@@ -91,6 +99,10 @@ internal fun applyDraftText(
   )
 }
 
+<<<<<<< HEAD
+=======
+/** Chat input surface for text, image attachments, thinking level, and run controls. */
+>>>>>>> upstream/main
 @Composable
 fun ChatComposer(
   draftText: String?,
@@ -115,10 +127,20 @@ fun ChatComposer(
     input = next.input
     lastAppliedDraft = next.lastAppliedDraft
     if (next.consumed) {
+<<<<<<< HEAD
+=======
+      // Consume only after the composer state has accepted the draft so
+      // recomposition cannot reapply it over user edits.
+>>>>>>> upstream/main
       onDraftApplied()
     }
   }
 
+<<<<<<< HEAD
+=======
+  // One in-flight run owns the composer actions; attachments alone are enough
+  // to send when the gateway is healthy.
+>>>>>>> upstream/main
   val canSend = pendingRunCount == 0 && (input.trim().isNotEmpty() || attachments.isNotEmpty()) && healthOk
   val sendBusy = pendingRunCount > 0
 
@@ -141,7 +163,7 @@ fun ChatComposer(
 
     if (!healthOk) {
       Text(
-        text = "Gateway is offline. Connect first in the Connect tab.",
+        text = "Gateway is offline. Open Settings to reconnect.",
         style = mobileCallout,
         color = ai.openclaw.app.ui.mobileWarning,
       )
@@ -168,7 +190,12 @@ fun ChatComposer(
               style = mobileCaption1.copy(fontWeight = FontWeight.SemiBold),
               color = mobileTextSecondary,
             )
-            Icon(Icons.Default.ArrowDropDown, contentDescription = "Select thinking level", modifier = Modifier.size(18.dp), tint = mobileTextTertiary)
+            Icon(
+              Icons.Default.ArrowDropDown,
+              contentDescription = "Select thinking level",
+              modifier = Modifier.size(18.dp),
+              tint = mobileTextTertiary,
+            )
           }
         }
 
@@ -308,14 +335,13 @@ private fun ThinkingMenuItem(
   )
 }
 
-private fun thinkingLabel(raw: String): String {
-  return when (raw.trim().lowercase()) {
+private fun thinkingLabel(raw: String): String =
+  when (raw.trim().lowercase()) {
     "low" -> "Low"
     "medium" -> "Medium"
     "high" -> "High"
     else -> "Off"
   }
-}
 
 @Composable
 private fun AttachmentsStrip(
@@ -336,7 +362,10 @@ private fun AttachmentsStrip(
 }
 
 @Composable
-private fun AttachmentChip(fileName: String, onRemove: () -> Unit) {
+private fun AttachmentChip(
+  fileName: String,
+  onRemove: () -> Unit,
+) {
   Surface(
     shape = RoundedCornerShape(999.dp),
     color = mobileAccentSoft,

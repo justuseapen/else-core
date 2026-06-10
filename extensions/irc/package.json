@@ -1,14 +1,25 @@
 {
   "name": "@openclaw/irc",
+<<<<<<< HEAD
   "version": "2026.4.5",
+=======
+  "version": "2026.6.2",
+>>>>>>> upstream/main
   "description": "OpenClaw IRC channel plugin",
   "type": "module",
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
   "openclaw": {
     "extensions": [
       "./index.ts"
     ],
     "install": {
+<<<<<<< HEAD
       "minHostVersion": ">=2026.4.5"
+=======
+      "minHostVersion": ">=2026.4.10"
+>>>>>>> upstream/main
     },
     "setupEntry": "./setup-entry.ts",
     "channel": {
@@ -24,9 +35,21 @@
       ],
       "systemImage": "network",
       "configuredState": {
+<<<<<<< HEAD
+=======
+        "env": {
+          "allOf": [
+            "IRC_HOST",
+            "IRC_NICK"
+          ]
+        },
+>>>>>>> upstream/main
         "specifier": "./configured-state",
         "exportName": "hasIrcConfiguredState"
       }
     }
+  },
+  "dependencies": {
+    "zod": "4.4.3"
   }
 }

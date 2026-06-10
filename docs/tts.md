@@ -1,14 +1,12 @@
 ---
-summary: "Text-to-speech (TTS) for outbound replies"
-read_when:
-  - Enabling text-to-speech for replies
-  - Configuring TTS providers or limits
-  - Using /tts commands
-title: "Text-to-Speech (legacy path)"
+summary: "Redirect to /tools/tts"
+title: "Text-to-speech"
+redirect: /tools/tts
 ---
 
-# Text-to-speech (TTS)
+This page has moved to [Text-to-Speech](/tools/tts).
 
+<<<<<<< HEAD
 OpenClaw can convert outbound replies into audio using ElevenLabs, Microsoft, MiniMax, or OpenAI.
 It works anywhere OpenClaw can send audio.
 
@@ -450,3 +448,8 @@ Gateway methods:
 - `tts.convert`
 - `tts.setProvider`
 - `tts.providers`
+=======
+## Related
+
+- [Text-to-speech](/tools/tts)
+>>>>>>> upstream/main

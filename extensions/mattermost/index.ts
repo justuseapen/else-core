@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Mattermost plugin entrypoint registers its OpenClaw integration.
+>>>>>>> upstream/main
 import {
   defineBundledChannelEntry,
   loadBundledEntryExportSync,
@@ -6,7 +10,11 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk/channel-entry-contra
 
 function registerSlashCommandRoute(api: OpenClawPluginApi): void {
   const register = loadBundledEntryExportSync<(api: OpenClawPluginApi) => void>(import.meta.url, {
+<<<<<<< HEAD
     specifier: "./runtime-api.js",
+=======
+    specifier: "./slash-route-api.js",
+>>>>>>> upstream/main
     exportName: "registerSlashCommandRoute",
   });
   register(api);
@@ -18,9 +26,19 @@ export default defineBundledChannelEntry({
   description: "Mattermost channel plugin",
   importMetaUrl: import.meta.url,
   plugin: {
+<<<<<<< HEAD
     specifier: "./src/channel.js",
     exportName: "mattermostPlugin",
   },
+=======
+    specifier: "./channel-plugin-api.js",
+    exportName: "mattermostPlugin",
+  },
+  secrets: {
+    specifier: "./secret-contract-api.js",
+    exportName: "channelSecrets",
+  },
+>>>>>>> upstream/main
   runtime: {
     specifier: "./runtime-api.js",
     exportName: "setMattermostRuntime",

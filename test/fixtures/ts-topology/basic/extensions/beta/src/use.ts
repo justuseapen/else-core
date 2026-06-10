@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// TS topology beta extension fixture imports shared SDK members.
+>>>>>>> upstream/main
 import { sharedThing } from "fixture-sdk";
 import type { SharedType } from "fixture-sdk";
 

@@ -1,11 +1,22 @@
 {
   "name": "@openclaw/openai-provider",
+<<<<<<< HEAD
   "version": "2026.4.5",
+=======
+  "version": "2026.6.2",
+>>>>>>> upstream/main
   "private": true,
   "description": "OpenClaw OpenAI provider plugins",
   "type": "module",
   "dependencies": {
+<<<<<<< HEAD
     "ws": "^8.20.0"
+=======
+    "ws": "8.21.0"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+>>>>>>> upstream/main
   },
   "openclaw": {
     "extensions": [

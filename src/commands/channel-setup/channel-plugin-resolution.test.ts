@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Channel plugin resolution tests cover trusted catalog lookup, install prompts, and setup plugin snapshots.
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChannelPluginCatalogEntry } from "../../channels/plugins/catalog.js";
 import type { ChannelPlugin } from "../../channels/plugins/types.js";
@@ -20,6 +24,10 @@ vi.mock("../../agents/agent-scope.js", () => ({
 
 vi.mock("../../channels/plugins/catalog.js", () => ({
   listChannelPluginCatalogEntries: mocks.listChannelPluginCatalogEntries,
+<<<<<<< HEAD
+=======
+  listRawChannelPluginCatalogEntries: mocks.listChannelPluginCatalogEntries,
+>>>>>>> upstream/main
   getChannelPluginCatalogEntry: mocks.getChannelPluginCatalogEntry,
 }));
 
@@ -66,6 +74,17 @@ function createPlugin(id: string): ChannelPlugin {
   return { id } as ChannelPlugin;
 }
 
+<<<<<<< HEAD
+=======
+function firstMockArg(mock: { mock: { calls: ReadonlyArray<ReadonlyArray<unknown>> } }): unknown {
+  const call = mock.mock.calls[0];
+  if (!call) {
+    throw new Error("expected mock to have at least one call");
+  }
+  return call[0];
+}
+
+>>>>>>> upstream/main
 describe("resolveInstallableChannelPlugin", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -109,6 +128,7 @@ describe("resolveInstallableChannelPlugin", () => {
 
     expect(result.catalogEntry?.pluginId).toBe("telegram");
     expect(result.plugin?.id).toBe("telegram");
+<<<<<<< HEAD
     expect(mocks.loadChannelSetupPluginRegistrySnapshotForChannel).toHaveBeenCalledWith(
       expect.objectContaining({
         channel: "telegram",
@@ -116,6 +136,15 @@ describe("resolveInstallableChannelPlugin", () => {
         workspaceDir: "/tmp/workspace",
       }),
     );
+=======
+    expect(mocks.loadChannelSetupPluginRegistrySnapshotForChannel).toHaveBeenCalledTimes(1);
+    const snapshotRequest = firstMockArg(
+      mocks.loadChannelSetupPluginRegistrySnapshotForChannel,
+    ) as { channel?: string; pluginId?: string; workspaceDir?: string };
+    expect(snapshotRequest?.channel).toBe("telegram");
+    expect(snapshotRequest?.pluginId).toBe("telegram");
+    expect(snapshotRequest?.workspaceDir).toBe("/tmp/workspace");
+>>>>>>> upstream/main
   });
 
   it("keeps trusted workspace channel plugins eligible for setup resolution", async () => {
@@ -148,6 +177,7 @@ describe("resolveInstallableChannelPlugin", () => {
 
     expect(result.catalogEntry?.pluginId).toBe("evil-telegram-shadow");
     expect(result.plugin?.id).toBe("telegram");
+<<<<<<< HEAD
     expect(mocks.loadChannelSetupPluginRegistrySnapshotForChannel).toHaveBeenCalledWith(
       expect.objectContaining({
         channel: "telegram",
@@ -155,5 +185,103 @@ describe("resolveInstallableChannelPlugin", () => {
         workspaceDir: "/tmp/workspace",
       }),
     );
+=======
+    expect(mocks.loadChannelSetupPluginRegistrySnapshotForChannel).toHaveBeenCalledTimes(1);
+    const snapshotRequest = firstMockArg(
+      mocks.loadChannelSetupPluginRegistrySnapshotForChannel,
+    ) as { channel?: string; pluginId?: string; workspaceDir?: string };
+    expect(snapshotRequest?.channel).toBe("telegram");
+    expect(snapshotRequest?.pluginId).toBe("evil-telegram-shadow");
+    expect(snapshotRequest?.workspaceDir).toBe("/tmp/workspace");
+  });
+
+  it("returns an existing plugin that lacks the requested capability without reinstalling", async () => {
+    const catalogEntry = createCatalogEntry({
+      id: "openclaw-weixin",
+      pluginId: "@tencent-weixin/openclaw-weixin",
+      origin: "bundled",
+    });
+    const installedPlugin = createPlugin("openclaw-weixin");
+
+    mocks.listChannelPluginCatalogEntries.mockReturnValue([catalogEntry]);
+    mocks.getChannelPlugin.mockReturnValue(installedPlugin);
+
+    const result = await resolveInstallableChannelPlugin({
+      cfg: { plugins: { enabled: true } },
+      runtime: {} as never,
+      rawChannel: "openclaw-weixin",
+      allowInstall: true,
+      supports: (plugin) => Boolean(plugin.directory),
+    });
+
+    expect(result.plugin).toBe(installedPlugin);
+    expect(result.pluginInstalled).toBe(false);
+    expect(result.supportsRequestedCapability).toBe(false);
+    expect(mocks.ensureChannelSetupPluginInstalled).not.toHaveBeenCalled();
+  });
+
+  it("returns a scoped installed plugin that lacks the requested capability without reinstalling", async () => {
+    const catalogEntry = createCatalogEntry({
+      id: "openclaw-weixin",
+      pluginId: "@tencent-weixin/openclaw-weixin",
+      origin: "bundled",
+    });
+    const scopedPlugin = createPlugin("openclaw-weixin");
+
+    mocks.listChannelPluginCatalogEntries.mockReturnValue([catalogEntry]);
+    mocks.loadChannelSetupPluginRegistrySnapshotForChannel.mockReturnValue({
+      channels: [{ plugin: scopedPlugin }],
+      channelSetups: [],
+    });
+
+    const result = await resolveInstallableChannelPlugin({
+      cfg: { plugins: { enabled: true } },
+      runtime: {} as never,
+      rawChannel: "openclaw-weixin",
+      allowInstall: true,
+      supports: (plugin) => Boolean(plugin.directory),
+    });
+
+    expect(result.plugin).toBe(scopedPlugin);
+    expect(result.pluginInstalled).toBe(false);
+    expect(result.supportsRequestedCapability).toBe(false);
+    expect(mocks.ensureChannelSetupPluginInstalled).not.toHaveBeenCalled();
+  });
+
+  it("still offers install when only a setup fallback lacks the requested capability", async () => {
+    const catalogEntry = createCatalogEntry({
+      id: "demo-directory",
+      pluginId: "@demo/directory",
+      origin: "bundled",
+    });
+    const setupOnlyPlugin = createPlugin("demo-directory");
+
+    mocks.listChannelPluginCatalogEntries.mockReturnValue([catalogEntry]);
+    mocks.loadChannelSetupPluginRegistrySnapshotForChannel.mockReturnValue({
+      channels: [],
+      channelSetups: [{ plugin: setupOnlyPlugin }],
+    });
+    mocks.ensureChannelSetupPluginInstalled.mockResolvedValueOnce({
+      cfg: { plugins: { entries: { "@demo/directory": { enabled: true } } } },
+      installed: true,
+      pluginId: "@demo/directory",
+      status: "installed",
+    });
+
+    const result = await resolveInstallableChannelPlugin({
+      cfg: { plugins: { enabled: true } },
+      runtime: {} as never,
+      rawChannel: "demo-directory",
+      allowInstall: true,
+      supports: (plugin) => Boolean(plugin.directory),
+    });
+
+    expect(mocks.ensureChannelSetupPluginInstalled).toHaveBeenCalledTimes(1);
+    const installRequest = firstMockArg(mocks.ensureChannelSetupPluginInstalled) as {
+      entry?: ChannelPluginCatalogEntry;
+    };
+    expect(installRequest?.entry).toBe(catalogEntry);
+    expect(result.pluginInstalled).toBe(true);
+>>>>>>> upstream/main
   });
 });

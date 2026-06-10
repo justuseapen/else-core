@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Covers config-controlled context visibility decisions.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "./config.js";
 import {

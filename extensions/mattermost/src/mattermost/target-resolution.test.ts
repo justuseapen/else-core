@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Mattermost tests cover target resolution plugin behavior.
+>>>>>>> upstream/main
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const resolveMattermostAccount = vi.fn();

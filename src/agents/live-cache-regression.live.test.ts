@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Live-gated cache regression proof against stored provider baselines.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { runLiveCacheRegression } from "./live-cache-regression-runner.js";
 import { LIVE_CACHE_TEST_ENABLED } from "./live-cache-test-support.js";
@@ -9,7 +13,11 @@ describeCacheLive("live cache regression", () => {
     "matches the stored provider cache baselines",
     async () => {
       const result = await runLiveCacheRegression();
+<<<<<<< HEAD
       expect(result.regressions).toEqual([]);
+=======
+      expect(result.regressions).toStrictEqual([]);
+>>>>>>> upstream/main
     },
     30 * 60_000,
   );

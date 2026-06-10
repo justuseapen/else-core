@@ -1,3 +1,6 @@
+// Fetches and normalizes MiniMax provider usage records.
+import { asDateTimestampMs } from "@openclaw/normalization-core/number-coercion";
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
 import { isRecord } from "../utils.js";
 import {
   buildUsageHttpErrorSnapshot,
@@ -17,6 +20,13 @@ type MinimaxUsageResponse = {
   data?: Record<string, unknown>;
   [key: string]: unknown;
 };
+
+type FetchMinimaxUsageOptions = {
+  baseUrl?: string;
+};
+
+const DEFAULT_MINIMAX_USAGE_ORIGIN = "https://api.minimaxi.com";
+const MINIMAX_USAGE_PATH = "/v1/token_plan/remains";
 
 const RESET_KEYS = [
   "reset_at",
@@ -136,7 +146,11 @@ const REMAINING_KEYS = [
   "prompts_left",
   "promptsLeft",
   "left",
+<<<<<<< HEAD
   // MiniMax `/coding_plan/remains` misnames these: values are remaining quota, not consumed.
+=======
+  // MiniMax usage endpoints misname these: values are remaining quota, not consumed.
+>>>>>>> upstream/main
   // See https://github.com/MiniMax-AI/MiniMax-M2/issues/99
   "current_interval_usage_count",
   "currentIntervalUsageCount",
@@ -184,16 +198,12 @@ function pickString(record: Record<string, unknown>, keys: readonly string[]): s
 
 function parseEpoch(value: unknown): number | undefined {
   if (typeof value === "number" && Number.isFinite(value)) {
-    if (value < 1e12) {
-      return Math.floor(value * 1000);
-    }
-    return Math.floor(value);
+    const timestampMs = value < 1e12 ? Math.floor(value * 1000) : Math.floor(value);
+    return asDateTimestampMs(timestampMs);
   }
   if (typeof value === "string" && value.trim()) {
     const parsed = Date.parse(value);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
+    return asDateTimestampMs(parsed);
   }
   return undefined;
 }
@@ -348,7 +358,15 @@ function pickChatModelRemains(modelRemains: unknown[]): Record<string, unknown> 
   const chatRecord = records.find((r) => {
     const name = typeof r.model_name === "string" ? r.model_name : "";
     const total = parseFiniteNumber(r.current_interval_total_count);
+<<<<<<< HEAD
     return name.toLowerCase().startsWith("minimax-m") && total !== undefined && total > 0;
+=======
+    return (
+      normalizeLowercaseStringOrEmpty(name).startsWith("minimax-m") &&
+      total !== undefined &&
+      total > 0
+    );
+>>>>>>> upstream/main
   });
 
   if (chatRecord) {
@@ -359,15 +377,37 @@ function pickChatModelRemains(modelRemains: unknown[]): Record<string, unknown> 
     const total = parseFiniteNumber(r.current_interval_total_count);
     return total !== undefined && total > 0;
   });
+<<<<<<< HEAD
+=======
+}
+
+function resolveMinimaxUsageUrl(baseUrl?: string): string {
+  const trimmed = baseUrl?.trim();
+  if (!trimmed) {
+    return `${DEFAULT_MINIMAX_USAGE_ORIGIN}${MINIMAX_USAGE_PATH}`;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return `${parsed.origin}${MINIMAX_USAGE_PATH}`;
+    }
+  } catch {
+    // Fall through to the stable CN default for malformed config values.
+  }
+
+  return `${DEFAULT_MINIMAX_USAGE_ORIGIN}${MINIMAX_USAGE_PATH}`;
+>>>>>>> upstream/main
 }
 
 export async function fetchMinimaxUsage(
   apiKey: string,
   timeoutMs: number,
   fetchFn: typeof fetch,
+  options?: FetchMinimaxUsageOptions,
 ): Promise<ProviderUsageSnapshot> {
   const res = await fetchJson(
-    "https://api.minimaxi.com/v1/api/openplatform/coding_plan/remains",
+    resolveMinimaxUsageUrl(options?.baseUrl),
     {
       method: "GET",
       headers: {

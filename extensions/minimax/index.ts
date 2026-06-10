@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   definePluginEntry,
   type ProviderAuthContext,
@@ -15,6 +16,10 @@ import { buildProviderReplayFamilyHooks } from "openclaw/plugin-sdk/provider-mod
 import { buildProviderStreamFamilyHooks } from "openclaw/plugin-sdk/provider-stream-family";
 import { fetchMinimaxUsage } from "openclaw/plugin-sdk/provider-usage";
 import { isMiniMaxModernModelId, MINIMAX_DEFAULT_MODEL_ID } from "./api.js";
+=======
+// Minimax plugin entrypoint registers its OpenClaw integration.
+import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+>>>>>>> upstream/main
 import {
   buildMinimaxImageGenerationProvider,
   buildMinimaxPortalImageGenerationProvider,
@@ -23,6 +28,7 @@ import {
   minimaxMediaUnderstandingProvider,
   minimaxPortalMediaUnderstandingProvider,
 } from "./media-understanding-provider.js";
+<<<<<<< HEAD
 import { buildMinimaxMusicGenerationProvider } from "./music-generation-provider.js";
 import type { MiniMaxRegion } from "./oauth.js";
 import { applyMinimaxApiConfig, applyMinimaxApiConfigCn } from "./onboard.js";
@@ -179,12 +185,26 @@ function createOAuthHandler(region: MiniMaxRegion) {
     }
   };
 }
+=======
+import {
+  buildMinimaxMusicGenerationProvider,
+  buildMinimaxPortalMusicGenerationProvider,
+} from "./music-generation-provider.js";
+import { registerMinimaxProviders } from "./provider-registration.js";
+import { buildMinimaxSpeechProvider } from "./speech-provider.js";
+import { createMiniMaxWebSearchProvider } from "./src/minimax-web-search-provider.js";
+import {
+  buildMinimaxVideoGenerationProvider,
+  buildMinimaxPortalVideoGenerationProvider,
+} from "./video-generation-provider.js";
+>>>>>>> upstream/main
 
 export default definePluginEntry({
-  id: API_PROVIDER_ID,
+  id: "minimax",
   name: "MiniMax",
   description: "Bundled MiniMax API-key and OAuth provider plugin",
   register(api) {
+<<<<<<< HEAD
     api.registerProvider({
       id: API_PROVIDER_ID,
       label: PROVIDER_LABEL,
@@ -317,6 +337,17 @@ export default definePluginEntry({
     api.registerImageGenerationProvider(buildMinimaxPortalImageGenerationProvider());
     api.registerMusicGenerationProvider(buildMinimaxMusicGenerationProvider());
     api.registerVideoGenerationProvider(buildMinimaxVideoGenerationProvider());
+=======
+    registerMinimaxProviders(api);
+    api.registerMediaUnderstandingProvider(minimaxMediaUnderstandingProvider);
+    api.registerMediaUnderstandingProvider(minimaxPortalMediaUnderstandingProvider);
+    api.registerImageGenerationProvider(buildMinimaxImageGenerationProvider());
+    api.registerImageGenerationProvider(buildMinimaxPortalImageGenerationProvider());
+    api.registerMusicGenerationProvider(buildMinimaxMusicGenerationProvider());
+    api.registerMusicGenerationProvider(buildMinimaxPortalMusicGenerationProvider());
+    api.registerVideoGenerationProvider(buildMinimaxVideoGenerationProvider());
+    api.registerVideoGenerationProvider(buildMinimaxPortalVideoGenerationProvider());
+>>>>>>> upstream/main
     api.registerSpeechProvider(buildMinimaxSpeechProvider());
     api.registerWebSearchProvider(createMiniMaxWebSearchProvider());
   },

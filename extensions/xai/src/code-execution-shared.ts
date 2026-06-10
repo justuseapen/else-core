@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { postTrustedWebToolsJson } from "openclaw/plugin-sdk/provider-web-search";
 import {
   buildXaiResponsesToolBody,
@@ -21,24 +22,51 @@ export type XaiCodeExecutionConfig = {
 };
 
 export type XaiCodeExecutionResponse = XaiWebSearchResponse & {
+=======
+// Xai plugin module implements code execution shared behavior.
+import { readProviderJsonObjectResponse } from "openclaw/plugin-sdk/provider-http";
+import { postTrustedWebToolsJson } from "openclaw/plugin-sdk/provider-web-search";
+import {
+  buildXaiResponsesToolBody,
+  requireXaiResponseTextAndCitations,
+  XAI_RESPONSES_ENDPOINT,
+} from "./responses-tool-shared.js";
+import {
+  resolveNormalizedXaiToolModel,
+  resolvePositiveIntegerToolConfig,
+} from "./tool-config-shared.js";
+import type { XaiWebSearchResponse } from "./web-search-shared.js";
+
+const XAI_CODE_EXECUTION_ENDPOINT = XAI_RESPONSES_ENDPOINT;
+const XAI_DEFAULT_CODE_EXECUTION_MODEL = "grok-4-1-fast";
+
+type XaiCodeExecutionResponse = XaiWebSearchResponse & {
+>>>>>>> upstream/main
   output?: Array<{
     type?: string;
   }>;
 };
 
+<<<<<<< HEAD
 export type XaiCodeExecutionResult = {
+=======
+type XaiCodeExecutionResult = {
+>>>>>>> upstream/main
   content: string;
   citations: string[];
   usedCodeExecution: boolean;
   outputTypes: string[];
 };
 
+<<<<<<< HEAD
 export function resolveXaiCodeExecutionConfig(
   config?: Record<string, unknown>,
 ): XaiCodeExecutionConfig {
   return coerceXaiToolConfig<XaiCodeExecutionConfig>(config);
 }
 
+=======
+>>>>>>> upstream/main
 export function resolveXaiCodeExecutionModel(config?: Record<string, unknown>): string {
   return resolveNormalizedXaiToolModel({
     config,
@@ -94,8 +122,19 @@ export async function requestXaiCodeExecution(params: {
       errorLabel: "xAI",
     },
     async (response) => {
+<<<<<<< HEAD
       const data = (await response.json()) as XaiCodeExecutionResponse;
       const { content, citations } = resolveXaiResponseTextAndCitations(data);
+=======
+      const data = (await readProviderJsonObjectResponse(
+        response,
+        "xAI code execution failed",
+      )) as XaiCodeExecutionResponse;
+      const { content, citations } = requireXaiResponseTextAndCitations(
+        data,
+        "xAI code execution failed",
+      );
+>>>>>>> upstream/main
       const outputTypes = Array.isArray(data.output)
         ? [
             ...new Set(
@@ -114,6 +153,7 @@ export async function requestXaiCodeExecution(params: {
     },
   );
 }
+<<<<<<< HEAD
 
 export const __testing = {
   buildXaiCodeExecutionPayload,
@@ -123,3 +163,5 @@ export const __testing = {
   resolveXaiCodeExecutionModel,
   XAI_DEFAULT_CODE_EXECUTION_MODEL,
 } as const;
+=======
+>>>>>>> upstream/main

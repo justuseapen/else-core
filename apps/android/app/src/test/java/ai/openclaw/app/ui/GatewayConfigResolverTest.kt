@@ -1,11 +1,11 @@
 package ai.openclaw.app.ui
 
-import java.util.Base64
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.util.Base64
 
 @RunWith(RobolectricTestRunner::class)
 class GatewayConfigResolverTest {
@@ -114,6 +114,7 @@ class GatewayConfigResolverTest {
   }
 
   @Test
+<<<<<<< HEAD
   fun parseGatewayEndpointAllowsMdnsCleartextWsUrls() {
     val parsed = parseGatewayEndpoint("ws://gateway.local:18789")
 
@@ -126,6 +127,12 @@ class GatewayConfigResolverTest {
       ),
       parsed,
     )
+=======
+  fun parseGatewayEndpointRejectsMdnsCleartextWsUrls() {
+    val parsed = parseGatewayEndpoint("ws://gateway.local:18789")
+
+    assertNull(parsed)
+>>>>>>> upstream/main
   }
 
   @Test
@@ -271,6 +278,19 @@ class GatewayConfigResolverTest {
   }
 
   @Test
+<<<<<<< HEAD
+=======
+  fun resolveScannedSetupCodeAcceptsPrivateLanCleartextGateway() {
+    val setupCode =
+      encodeSetupCode("""{"url":"ws://192.168.31.100:18789","bootstrapToken":"bootstrap-1"}""")
+
+    val resolved = resolveScannedSetupCode(setupCode)
+
+    assertEquals(setupCode, resolved)
+  }
+
+  @Test
+>>>>>>> upstream/main
   fun resolveScannedSetupCodeResultFlagsInsecureRemoteGateway() {
     val setupCode =
       encodeSetupCode("""{"url":"ws://attacker.example:18789","bootstrapToken":"bootstrap-1"}""")
@@ -290,7 +310,19 @@ class GatewayConfigResolverTest {
   }
 
   @Test
+<<<<<<< HEAD
   fun parseGatewayEndpointResultAcceptsLanCleartextGateway() {
+=======
+  fun parseGatewayEndpointResultRejectsUnsupportedSchemes() {
+    val parsed = parseGatewayEndpointResult("ftp://gateway.example:21")
+
+    assertNull(parsed.config)
+    assertEquals(GatewayEndpointValidationError.INVALID_URL, parsed.error)
+  }
+
+  @Test
+  fun parseGatewayEndpointResultAllowsPrivateLanCleartextGateway() {
+>>>>>>> upstream/main
     val parsed = parseGatewayEndpointResult("ws://192.168.1.20:18789")
 
     assertEquals(
@@ -397,6 +429,7 @@ class GatewayConfigResolverTest {
     assertEquals("bootstrap-1", resolved?.bootstrapToken)
     assertEquals("", resolved?.token)
     assertEquals("", resolved?.password)
+<<<<<<< HEAD
   }
 
   @Test
@@ -466,5 +499,110 @@ class GatewayConfigResolverTest {
 
   private fun encodeSetupCode(payloadJson: String): String {
     return Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.toByteArray(Charsets.UTF_8))
+=======
+>>>>>>> upstream/main
   }
+
+  @Test
+  fun resolveGatewayConnectConfigManualDropsBootstrapTokenWhenReplacementPasswordExists() {
+    val resolved =
+      resolveGatewayConnectConfig(
+        useSetupCode = false,
+        setupCode = "",
+        savedManualHost = "127.0.0.1",
+        savedManualPort = "18789",
+        savedManualTls = false,
+        manualHostInput = "127.0.0.1",
+        manualPortInput = "18789",
+        manualTlsInput = false,
+        fallbackBootstrapToken = "bootstrap-1",
+        fallbackToken = "",
+        fallbackPassword = "password-1",
+      )
+
+    assertEquals("", resolved?.bootstrapToken)
+    assertEquals("", resolved?.token)
+    assertEquals("password-1", resolved?.password)
+  }
+
+  @Test
+  fun resolveGatewayConnectConfigManualDropsBootstrapTokenWhenEndpointChanges() {
+    val resolved =
+      resolveGatewayConnectConfig(
+        useSetupCode = false,
+        setupCode = "",
+        savedManualHost = "127.0.0.1",
+        savedManualPort = "18789",
+        savedManualTls = false,
+        manualHostInput = "127.0.0.2",
+        manualPortInput = "18789",
+        manualTlsInput = false,
+        fallbackBootstrapToken = "bootstrap-1",
+        fallbackToken = "",
+        fallbackPassword = "",
+      )
+
+    assertEquals("", resolved?.bootstrapToken)
+    assertEquals("127.0.0.2", resolved?.host)
+  }
+
+  @Test
+  fun resolveGatewayConnectConfigAllowsPrivateLanManualCleartextEndpoint() {
+    val resolved =
+      resolveGatewayConnectConfig(
+        useSetupCode = false,
+        setupCode = "",
+        savedManualHost = "",
+        savedManualPort = "",
+        savedManualTls = false,
+        manualHostInput = "192.168.31.100",
+        manualPortInput = "18789",
+        manualTlsInput = false,
+        fallbackBootstrapToken = "bootstrap-1",
+        fallbackToken = "",
+        fallbackPassword = "",
+      )
+
+    assertEquals("192.168.31.100", resolved?.host)
+    assertEquals(18789, resolved?.port)
+    assertEquals(false, resolved?.tls)
+  }
+
+  @Test
+  fun composeGatewayManualUrlDefaultsPortTo443WhenTlsAndPortBlank() {
+    val url = composeGatewayManualUrl("mydevice.tail1234.ts.net", "", tls = true)
+
+    assertEquals("https://mydevice.tail1234.ts.net:443", url)
+  }
+
+  @Test
+  fun composeGatewayManualUrlRejectsBlankPortWhenTlsIsOff() {
+    val url = composeGatewayManualUrl("127.0.0.1", "", tls = false)
+
+    assertNull(url)
+  }
+
+  @Test
+  fun resolveGatewayConnectConfigManualAcceptsTailscaleHostWithoutPort() {
+    val resolved =
+      resolveGatewayConnectConfig(
+        useSetupCode = false,
+        setupCode = "",
+        savedManualHost = "",
+        savedManualPort = "",
+        savedManualTls = true,
+        manualHostInput = "mydevice.tail1234.ts.net",
+        manualPortInput = "",
+        manualTlsInput = true,
+        fallbackBootstrapToken = "",
+        fallbackToken = "",
+        fallbackPassword = "",
+      )
+
+    assertEquals("mydevice.tail1234.ts.net", resolved?.host)
+    assertEquals(443, resolved?.port)
+    assertEquals(true, resolved?.tls)
+  }
+
+  private fun encodeSetupCode(payloadJson: String): String = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.toByteArray(Charsets.UTF_8))
 }

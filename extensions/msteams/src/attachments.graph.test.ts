@@ -1,6 +1,16 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PluginRuntime } from "../runtime-api.js";
 import { downloadMSTeamsGraphMedia } from "./attachments/graph.js";
+=======
+// Msteams tests cover attachments.graph plugin behavior.
+import { mockPinnedHostnameResolution } from "openclaw/plugin-sdk/test-env";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { PluginRuntime } from "../runtime-api.js";
+import { readRemoteMediaResponse } from "./attachments.test-helpers.js";
+import { downloadMSTeamsGraphMedia } from "./attachments/graph.js";
+import { encodeGraphShareId, resolveRequestUrl } from "./attachments/shared.js";
+>>>>>>> upstream/main
 import { setMSTeamsRuntime } from "./runtime.js";
 
 const GRAPH_HOST = "graph.microsoft.com";
@@ -15,6 +25,7 @@ const CONTENT_TYPE_APPLICATION_PDF = "application/pdf";
 const PNG_BUFFER = Buffer.from("png");
 
 const detectMimeMock = vi.fn(async () => CONTENT_TYPE_IMAGE_PNG);
+<<<<<<< HEAD
 const saveMediaBufferMock = vi.fn(async () => ({
   id: "saved.png",
   path: "/tmp/saved.png",
@@ -39,6 +50,23 @@ const readRemoteMediaResponse = async (
   };
 };
 const fetchRemoteMediaMock = vi.fn(
+=======
+const saveMediaBufferMock = vi.fn(
+  async (
+    _buffer: Buffer,
+    contentType?: string,
+    _subdir?: string,
+    _maxBytes?: number,
+    _originalFilename?: string,
+  ) => ({
+    id: "saved.png",
+    path: "/tmp/saved.png",
+    size: Buffer.byteLength(PNG_BUFFER),
+    contentType: contentType ?? CONTENT_TYPE_IMAGE_PNG,
+  }),
+);
+const readRemoteMediaBufferMock = vi.fn(
+>>>>>>> upstream/main
   async (params: {
     url: string;
     maxBytes?: number;
@@ -50,6 +78,46 @@ const fetchRemoteMediaMock = vi.fn(
     return readRemoteMediaResponse(res, params);
   },
 );
+<<<<<<< HEAD
+=======
+const saveRemoteMediaMock = vi.fn(
+  async (params: {
+    url: string;
+    maxBytes?: number;
+    filePathHint?: string;
+    fetchImpl?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  }) => {
+    const fetched = await readRemoteMediaBufferMock(params);
+    return await saveMediaBufferMock(
+      fetched.buffer,
+      fetched.contentType,
+      "inbound",
+      params.maxBytes,
+      params.filePathHint,
+    );
+  },
+);
+const saveResponseMediaMock = vi.fn(
+  async (
+    res: Response,
+    options: {
+      maxBytes?: number;
+      fallbackContentType?: string;
+      subdir?: string;
+      originalFilename?: string;
+    },
+  ) => {
+    const buffer = Buffer.from(await res.arrayBuffer());
+    return await saveMediaBufferMock(
+      buffer,
+      options.fallbackContentType,
+      options.subdir ?? "inbound",
+      options.maxBytes,
+      options.originalFilename,
+    );
+  },
+);
+>>>>>>> upstream/main
 
 const runtimeStub = {
   media: {
@@ -57,7 +125,13 @@ const runtimeStub = {
   },
   channel: {
     media: {
+<<<<<<< HEAD
       fetchRemoteMedia: fetchRemoteMediaMock,
+=======
+      readRemoteMediaBuffer: readRemoteMediaBufferMock,
+      saveRemoteMedia: saveRemoteMediaMock,
+      saveResponseMedia: saveResponseMediaMock,
+>>>>>>> upstream/main
       saveMediaBuffer: saveMediaBufferMock,
     },
   },
@@ -65,7 +139,11 @@ const runtimeStub = {
 
 type DownloadGraphMediaParams = Parameters<typeof downloadMSTeamsGraphMedia>[0];
 type DownloadGraphMediaOverrides = Partial<
+<<<<<<< HEAD
   Omit<DownloadGraphMediaParams, "messageUrl" | "tokenProvider" | "maxBytes">
+=======
+  Omit<DownloadGraphMediaParams, "messageUrl" | "tokenProvider">
+>>>>>>> upstream/main
 >;
 type FetchFn = typeof fetch;
 type LabeledCase = { label: string };
@@ -97,6 +175,10 @@ const createTokenProvider = (
     typeof tokenOrResolver === "function" ? await tokenOrResolver(scope) : tokenOrResolver,
   ),
 });
+<<<<<<< HEAD
+=======
+const resolvePublicHost = async (): Promise<{ address: string }> => ({ address: "93.184.216.34" });
+>>>>>>> upstream/main
 const createBufferResponse = (payload: Buffer | string, contentType: string, status = 200) => {
   const raw = Buffer.isBuffer(payload) ? payload : Buffer.from(payload);
   return new Response(new Uint8Array(raw), {
@@ -211,6 +293,10 @@ const downloadGraphMediaWithMockOptions = async (
     tokenProvider: createTokenProvider(),
     maxBytes: DEFAULT_MAX_BYTES,
     fetchFn: asFetchFn(fetchMock),
+<<<<<<< HEAD
+=======
+    resolveFn: resolvePublicHost,
+>>>>>>> upstream/main
     ...overrides,
   });
   return { fetchMock, media };
@@ -234,6 +320,21 @@ const GRAPH_MEDIA_SUCCESS_CASES: GraphMediaSuccessCase[] = [
       expectMediaBufferSaved();
     },
   }),
+<<<<<<< HEAD
+=======
+  withLabel("streams hostedContent value responses through shared response saver", {
+    buildOptions: () => ({
+      hostedContents: [{ id: "hosted-1", contentType: CONTENT_TYPE_APPLICATION_PDF }],
+      onUnhandled: (url) =>
+        url.endsWith("/hostedContents/hosted-1/$value") ? createPdfResponse() : undefined,
+    }),
+    expectedLength: 1,
+    assert: () => {
+      expect(saveResponseMediaMock).toHaveBeenCalledTimes(1);
+      expectMediaBufferSaved();
+    },
+  }),
+>>>>>>> upstream/main
   withLabel("merges SharePoint reference attachments with hosted content", {
     buildOptions: () => {
       return {
@@ -248,9 +349,21 @@ const GRAPH_MEDIA_SUCCESS_CASES: GraphMediaSuccessCase[] = [
 ];
 
 describe("msteams graph attachments", () => {
+<<<<<<< HEAD
   beforeEach(() => {
     detectMimeMock.mockClear();
     fetchRemoteMediaMock.mockClear();
+=======
+  let ssrfMock: { mockRestore: () => void } | undefined;
+
+  beforeEach(() => {
+    ssrfMock?.mockRestore();
+    ssrfMock = mockPinnedHostnameResolution();
+    detectMimeMock.mockClear();
+    readRemoteMediaBufferMock.mockClear();
+    saveRemoteMediaMock.mockClear();
+    saveResponseMediaMock.mockClear();
+>>>>>>> upstream/main
     saveMediaBufferMock.mockClear();
     setMSTeamsRuntime(runtimeStub);
   });
@@ -263,7 +376,11 @@ describe("msteams graph attachments", () => {
     const seen: Array<{ url: string; auth: string }> = [];
     const referenceAttachment = createReferenceAttachment();
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+<<<<<<< HEAD
       const url = String(input);
+=======
+      const url = resolveRequestUrl(input);
+>>>>>>> upstream/main
       const auth = new Headers(init?.headers).get("Authorization") ?? "";
       seen.push({ url, auth });
 
@@ -292,12 +409,23 @@ describe("msteams graph attachments", () => {
       allowHosts: [...DEFAULT_SHAREPOINT_ALLOW_HOSTS, "example.com"],
       authAllowHosts: DEFAULT_SHAREPOINT_ALLOW_HOSTS,
       fetchFn: asFetchFn(fetchMock),
+<<<<<<< HEAD
+=======
+      resolveFn: resolvePublicHost,
+>>>>>>> upstream/main
     });
 
     expectAttachmentMediaLength(media.media, 1);
     const redirected = seen.find((entry) => entry.url === escapedUrl);
+<<<<<<< HEAD
     expect(redirected).toBeDefined();
     expect(redirected?.auth).toBe("");
+=======
+    if (!redirected) {
+      throw new Error("expected SharePoint redirect request to be observed");
+    }
+    expect(redirected.auth).toBe("");
+>>>>>>> upstream/main
   });
 
   it("blocks SharePoint redirects to hosts outside allowHosts", async () => {
@@ -320,8 +448,46 @@ describe("msteams graph attachments", () => {
     );
 
     expectAttachmentMediaLength(media.media, 0);
+<<<<<<< HEAD
     const calledUrls = fetchMock.mock.calls.map((call) => String(call[0]));
     expect(calledUrls.some((url) => url.startsWith(GRAPH_SHARES_URL_PREFIX))).toBe(true);
     expect(calledUrls).not.toContain(escapedUrl);
   });
+=======
+    const calledUrls = fetchMock.mock.calls.map((call) => call[0]);
+    const expectedSharesUrl = `${GRAPH_SHARES_URL_PREFIX}${encodeGraphShareId(DEFAULT_SHARE_REFERENCE_URL)}/driveItem/content`;
+    expect(calledUrls).toEqual([
+      DEFAULT_MESSAGE_URL,
+      expectedSharesUrl,
+      `${DEFAULT_MESSAGE_URL}/hostedContents`,
+      expectedSharesUrl,
+    ]);
+    expect(calledUrls).not.toContain(escapedUrl);
+  });
+
+  it("skips inline hosted content when estimated decoded bytes exceed maxBytes", async () => {
+    const oversizedBase64 = "A".repeat(16);
+    const bufferFromSpy = vi.spyOn(Buffer, "from");
+
+    try {
+      const { media } = await downloadGraphMediaWithMockOptions(
+        {
+          hostedContents: [
+            {
+              id: "hosted-oversized",
+              contentType: CONTENT_TYPE_IMAGE_PNG,
+              contentBytes: oversizedBase64,
+            },
+          ],
+        },
+        { maxBytes: 4 },
+      );
+
+      expect(media.media).toStrictEqual([]);
+      expect(bufferFromSpy).not.toHaveBeenCalledWith(oversizedBase64, "base64");
+    } finally {
+      bufferFromSpy.mockRestore();
+    }
+  });
+>>>>>>> upstream/main
 });

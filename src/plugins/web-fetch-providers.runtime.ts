@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../config/config.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { isRecord } from "../utils.js";
@@ -20,11 +21,18 @@ import {
   type PluginManifestRecord,
 } from "./manifest-registry.js";
 import { getActivePluginRegistryWorkspaceDir } from "./runtime.js";
+=======
+/** Runtime resolver for plugin-contributed web fetch providers. */
+import { loadOpenClawPlugins } from "./loader.js";
+import type { PluginLoadOptions } from "./loader.js";
+import type { PluginManifestRecord } from "./manifest-registry.js";
+>>>>>>> upstream/main
 import type { PluginWebFetchProviderEntry } from "./types.js";
 import {
   resolveBundledWebFetchResolutionConfig,
   sortWebFetchProviders,
 } from "./web-fetch-providers.shared.js";
+<<<<<<< HEAD
 
 const log = createSubsystemLogger("plugins");
 type WebFetchProviderSnapshotCacheEntry = {
@@ -80,6 +88,17 @@ function pluginManifestDeclaresWebFetch(record: PluginManifestRecord): boolean {
   const properties = record.configSchema.properties;
   return isRecord(properties) && "webFetch" in properties;
 }
+=======
+import { resolveBundledWebFetchProvidersFromPublicArtifacts } from "./web-provider-public-artifacts.js";
+import {
+  mapRegistryProviders,
+  resolveManifestDeclaredWebProviderCandidatePluginIds,
+} from "./web-provider-resolution-shared.js";
+import {
+  resolvePluginWebProviders,
+  resolveRuntimeWebProviders,
+} from "./web-provider-runtime-shared.js";
+>>>>>>> upstream/main
 
 function resolveWebFetchCandidatePluginIds(params: {
   config?: PluginLoadOptions["config"];
@@ -88,6 +107,7 @@ function resolveWebFetchCandidatePluginIds(params: {
   onlyPluginIds?: readonly string[];
   origin?: PluginManifestRecord["origin"];
 }): string[] | undefined {
+<<<<<<< HEAD
   const contractIds = new Set(
     resolveManifestContractPluginIds({
       contract: "webFetchProviders",
@@ -152,12 +172,24 @@ function resolveWebFetchLoadOptions(params: {
     ...(onlyPluginIds ? { onlyPluginIds } : {}),
     logger: createPluginLoaderLogger(log),
   } satisfies PluginLoadOptions;
+=======
+  return resolveManifestDeclaredWebProviderCandidatePluginIds({
+    contract: "webFetchProviders",
+    configKey: "webFetch",
+    config: params.config,
+    workspaceDir: params.workspaceDir,
+    env: params.env,
+    onlyPluginIds: params.onlyPluginIds,
+    origin: params.origin,
+  });
+>>>>>>> upstream/main
 }
 
 function mapRegistryWebFetchProviders(params: {
   registry: ReturnType<typeof loadOpenClawPlugins>;
   onlyPluginIds?: readonly string[];
 }): PluginWebFetchProviderEntry[] {
+<<<<<<< HEAD
   const onlyPluginIdSet =
     params.onlyPluginIds && params.onlyPluginIds.length > 0 ? new Set(params.onlyPluginIds) : null;
   return sortWebFetchProviders(
@@ -170,17 +202,31 @@ function mapRegistryWebFetchProviders(params: {
   );
 }
 
+=======
+  return mapRegistryProviders({
+    entries: params.registry.webFetchProviders,
+    onlyPluginIds: params.onlyPluginIds,
+    sortProviders: sortWebFetchProviders,
+  });
+}
+
+/** Resolves web fetch providers, activating plugin runtimes when requested. */
+>>>>>>> upstream/main
 export function resolvePluginWebFetchProviders(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
   env?: PluginLoadOptions["env"];
+<<<<<<< HEAD
   bundledAllowlistCompat?: boolean;
+=======
+>>>>>>> upstream/main
   onlyPluginIds?: readonly string[];
   activate?: boolean;
   cache?: boolean;
   mode?: "runtime" | "setup";
   origin?: PluginManifestRecord["origin"];
 }): PluginWebFetchProviderEntry[] {
+<<<<<<< HEAD
   const env = params.env ?? process.env;
   const workspaceDir = params.workspaceDir ?? getActivePluginRegistryWorkspaceDir();
   if (params.mode === "setup") {
@@ -260,10 +306,22 @@ export function resolvePluginWebFetchProviders(params: {
   return resolved;
 }
 
+=======
+  return resolvePluginWebProviders(params, {
+    resolveBundledResolutionConfig: resolveBundledWebFetchResolutionConfig,
+    resolveCandidatePluginIds: resolveWebFetchCandidatePluginIds,
+    mapRegistryProviders: mapRegistryWebFetchProviders,
+    resolveBundledPublicArtifactProviders: resolveBundledWebFetchProvidersFromPublicArtifacts,
+  });
+}
+
+/** Resolves already-eligible runtime web fetch providers without setup-mode activation. */
+>>>>>>> upstream/main
 export function resolveRuntimeWebFetchProviders(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
   env?: PluginLoadOptions["env"];
+<<<<<<< HEAD
   bundledAllowlistCompat?: boolean;
   onlyPluginIds?: readonly string[];
   origin?: PluginManifestRecord["origin"];
@@ -283,4 +341,14 @@ export function resolveRuntimeWebFetchProviders(params: {
     });
   }
   return resolvePluginWebFetchProviders(params);
+=======
+  onlyPluginIds?: readonly string[];
+  origin?: PluginManifestRecord["origin"];
+}): PluginWebFetchProviderEntry[] {
+  return resolveRuntimeWebProviders(params, {
+    resolveBundledResolutionConfig: resolveBundledWebFetchResolutionConfig,
+    resolveCandidatePluginIds: resolveWebFetchCandidatePluginIds,
+    mapRegistryProviders: mapRegistryWebFetchProviders,
+  });
+>>>>>>> upstream/main
 }

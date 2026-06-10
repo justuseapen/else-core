@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Telegram plugin module implements interactive dispatch behavior.
+>>>>>>> upstream/main
 import {
   createInteractiveConversationBindingHelpers,
   dispatchPluginInteractiveHandler,
@@ -7,7 +11,11 @@ import {
   type PluginInteractiveRegistration,
 } from "openclaw/plugin-sdk/plugin-runtime";
 
+<<<<<<< HEAD
 export type TelegramInteractiveButtons = Array<
+=======
+type TelegramInteractiveButtons = Array<
+>>>>>>> upstream/main
   Array<{ text: string; callback_data: string; style?: "danger" | "success" | "primary" }>
 >;
 
@@ -52,7 +60,11 @@ export type TelegramInteractiveHandlerRegistration = PluginInteractiveRegistrati
   "telegram"
 >;
 
+<<<<<<< HEAD
 export type TelegramInteractiveDispatchContext = Omit<
+=======
+type TelegramInteractiveDispatchContext = Omit<
+>>>>>>> upstream/main
   TelegramInteractiveHandlerContext,
   | "callback"
   | "respond"

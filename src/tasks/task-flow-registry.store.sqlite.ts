@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import type { DatabaseSync, StatementSync } from "node:sqlite";
 import { requireNodeSqlite } from "../infra/node-sqlite.js";
@@ -36,11 +37,42 @@ type FlowRegistryStatements = {
   upsertRow: StatementSync;
   deleteRow: StatementSync;
   clearRows: StatementSync;
+=======
+// Persists managed task-flow records through the OpenClaw SQLite state database.
+import type { DatabaseSync } from "node:sqlite";
+import type { Insertable, Selectable } from "kysely";
+import { executeSqliteQuerySync, getNodeSqliteKysely } from "../infra/kysely-sync.js";
+import type { DB as OpenClawStateKyselyDatabase } from "../state/openclaw-state-db.generated.js";
+import {
+  closeOpenClawStateDatabase,
+  openOpenClawStateDatabase,
+  runOpenClawStateWriteTransaction,
+} from "../state/openclaw-state-db.js";
+import type { TaskFlowRegistryStoreSnapshot } from "./task-flow-registry.store.types.js";
+import {
+  parseOptionalTaskFlowSyncMode,
+  parseTaskFlowStatus,
+  type JsonValue,
+  type TaskFlowRecord,
+  type TaskFlowSyncMode,
+} from "./task-flow-registry.types.js";
+import { parseDeliveryContextJson } from "./task-registry.sqlite.shared.js";
+import { parseTaskNotifyPolicy } from "./task-registry.types.js";
+
+type FlowRunsTable = OpenClawStateKyselyDatabase["flow_runs"];
+type FlowRegistryStoreDatabase = Pick<OpenClawStateKyselyDatabase, "flow_runs">;
+
+type FlowRegistryRow = Selectable<FlowRunsTable> & {
+  sync_mode: string | null;
+  status: string;
+  notify_policy: string;
+>>>>>>> upstream/main
 };
 
 type FlowRegistryDatabase = {
   db: DatabaseSync;
   path: string;
+<<<<<<< HEAD
   statements: FlowRegistryStatements;
 };
 
@@ -48,6 +80,12 @@ let cachedDatabase: FlowRegistryDatabase | null = null;
 const FLOW_REGISTRY_DIR_MODE = 0o700;
 const FLOW_REGISTRY_FILE_MODE = 0o600;
 const FLOW_REGISTRY_SIDECAR_SUFFIXES = ["", "-shm", "-wal"] as const;
+=======
+};
+
+// SQLite-backed task-flow store mirrors the in-process registry into openclaw-state.db.
+let cachedDatabase: FlowRegistryDatabase | null = null;
+>>>>>>> upstream/main
 
 function normalizeNumber(value: number | bigint | null): number | undefined {
   if (typeof value === "bigint") {
@@ -60,20 +98,35 @@ function serializeJson(value: unknown): string | null {
   return value === undefined ? null : JSON.stringify(value);
 }
 
+<<<<<<< HEAD
 function parseJsonValue<T>(raw: string | null): T | undefined {
+=======
+function parseJsonValue(raw: string | null): JsonValue | undefined {
+>>>>>>> upstream/main
   if (!raw?.trim()) {
     return undefined;
   }
   try {
+<<<<<<< HEAD
     return JSON.parse(raw) as T;
+=======
+    return JSON.parse(raw) as JsonValue;
+>>>>>>> upstream/main
   } catch {
     return undefined;
   }
 }
 
 function rowToSyncMode(row: FlowRegistryRow): TaskFlowSyncMode {
+<<<<<<< HEAD
   if (row.sync_mode === "task_mirrored" || row.sync_mode === "managed") {
     return row.sync_mode;
+=======
+  // Older single_task rows did not persist sync_mode; preserve their mirrored semantics.
+  const syncMode = parseOptionalTaskFlowSyncMode(row.sync_mode);
+  if (syncMode) {
+    return syncMode;
+>>>>>>> upstream/main
   }
   return row.shape === "single_task" ? "task_mirrored" : "managed";
 }
@@ -81,9 +134,15 @@ function rowToSyncMode(row: FlowRegistryRow): TaskFlowSyncMode {
 function rowToFlowRecord(row: FlowRegistryRow): TaskFlowRecord {
   const endedAt = normalizeNumber(row.ended_at);
   const cancelRequestedAt = normalizeNumber(row.cancel_requested_at);
+<<<<<<< HEAD
   const requesterOrigin = parseJsonValue<DeliveryContext>(row.requester_origin_json);
   const stateJson = parseJsonValue<JsonValue>(row.state_json);
   const waitJson = parseJsonValue<JsonValue>(row.wait_json);
+=======
+  const requesterOrigin = parseDeliveryContextJson(row.requester_origin_json);
+  const stateJson = parseJsonValue(row.state_json);
+  const waitJson = parseJsonValue(row.wait_json);
+>>>>>>> upstream/main
   return {
     flowId: row.flow_id,
     syncMode: rowToSyncMode(row),
@@ -91,8 +150,13 @@ function rowToFlowRecord(row: FlowRegistryRow): TaskFlowRecord {
     ...(requesterOrigin ? { requesterOrigin } : {}),
     ...(row.controller_id ? { controllerId: row.controller_id } : {}),
     revision: normalizeNumber(row.revision) ?? 0,
+<<<<<<< HEAD
     status: row.status,
     notifyPolicy: row.notify_policy,
+=======
+    status: parseTaskFlowStatus(row.status),
+    notifyPolicy: parseTaskNotifyPolicy(row.notify_policy),
+>>>>>>> upstream/main
     goal: row.goal,
     ...(row.current_step ? { currentStep: row.current_step } : {}),
     ...(row.blocked_task_id ? { blockedTaskId: row.blocked_task_id } : {}),
@@ -106,10 +170,18 @@ function rowToFlowRecord(row: FlowRegistryRow): TaskFlowRecord {
   };
 }
 
+<<<<<<< HEAD
 function bindFlowRecord(record: TaskFlowRecord) {
   return {
     flow_id: record.flowId,
     sync_mode: record.syncMode,
+=======
+function bindFlowRecord(record: TaskFlowRecord): Insertable<FlowRunsTable> {
+  return {
+    flow_id: record.flowId,
+    sync_mode: record.syncMode,
+    shape: null,
+>>>>>>> upstream/main
     owner_key: record.ownerKey,
     requester_origin_json: serializeJson(record.requesterOrigin),
     controller_id: record.controllerId ?? null,
@@ -129,6 +201,7 @@ function bindFlowRecord(record: TaskFlowRecord) {
   };
 }
 
+<<<<<<< HEAD
 function createStatements(db: DatabaseSync): FlowRegistryStatements {
   return {
     selectAll: db.prepare(`
@@ -349,10 +422,106 @@ function openFlowRegistryDatabase(): FlowRegistryDatabase {
     db,
     path: pathname,
     statements: createStatements(db),
+=======
+function getFlowRegistryKysely(db: DatabaseSync) {
+  return getNodeSqliteKysely<FlowRegistryStoreDatabase>(db);
+}
+
+function pruneFlowsNotInSnapshot(params: { db: DatabaseSync; ids: readonly string[] }) {
+  const tempTableName = "openclaw_live_flow_ids";
+  params.db.exec(`CREATE TEMP TABLE IF NOT EXISTS ${tempTableName} (id TEXT PRIMARY KEY)`);
+  params.db.exec(`DELETE FROM ${tempTableName}`);
+  const insert = params.db.prepare(`INSERT OR IGNORE INTO ${tempTableName} (id) VALUES (?)`);
+  for (const id of params.ids) {
+    insert.run(id);
+  }
+  params.db.exec(`
+    DELETE FROM flow_runs
+    WHERE NOT EXISTS (
+      SELECT 1 FROM ${tempTableName}
+      WHERE ${tempTableName}.id = flow_runs.flow_id
+    )
+  `);
+  params.db.exec(`DELETE FROM ${tempTableName}`);
+}
+
+function selectFlowRows(db: DatabaseSync): FlowRegistryRow[] {
+  const query = getFlowRegistryKysely(db)
+    .selectFrom("flow_runs")
+    .select([
+      "flow_id",
+      "sync_mode",
+      "shape",
+      "owner_key",
+      "requester_origin_json",
+      "controller_id",
+      "revision",
+      "status",
+      "notify_policy",
+      "goal",
+      "current_step",
+      "blocked_task_id",
+      "blocked_summary",
+      "state_json",
+      "wait_json",
+      "cancel_requested_at",
+      "created_at",
+      "updated_at",
+      "ended_at",
+    ])
+    .orderBy("created_at", "asc")
+    .orderBy("flow_id", "asc");
+  return executeSqliteQuerySync(db, query).rows;
+}
+
+function upsertFlowRow(db: DatabaseSync, row: Insertable<FlowRunsTable>): void {
+  executeSqliteQuerySync(
+    db,
+    getFlowRegistryKysely(db)
+      .insertInto("flow_runs")
+      .values(row)
+      .onConflict((conflict) =>
+        conflict.column("flow_id").doUpdateSet({
+          sync_mode: (eb) => eb.ref("excluded.sync_mode"),
+          owner_key: (eb) => eb.ref("excluded.owner_key"),
+          requester_origin_json: (eb) => eb.ref("excluded.requester_origin_json"),
+          controller_id: (eb) => eb.ref("excluded.controller_id"),
+          revision: (eb) => eb.ref("excluded.revision"),
+          status: (eb) => eb.ref("excluded.status"),
+          notify_policy: (eb) => eb.ref("excluded.notify_policy"),
+          goal: (eb) => eb.ref("excluded.goal"),
+          current_step: (eb) => eb.ref("excluded.current_step"),
+          blocked_task_id: (eb) => eb.ref("excluded.blocked_task_id"),
+          blocked_summary: (eb) => eb.ref("excluded.blocked_summary"),
+          state_json: (eb) => eb.ref("excluded.state_json"),
+          wait_json: (eb) => eb.ref("excluded.wait_json"),
+          cancel_requested_at: (eb) => eb.ref("excluded.cancel_requested_at"),
+          created_at: (eb) => eb.ref("excluded.created_at"),
+          updated_at: (eb) => eb.ref("excluded.updated_at"),
+          ended_at: (eb) => eb.ref("excluded.ended_at"),
+        }),
+      ),
+  );
+}
+
+function openFlowRegistryDatabase(): FlowRegistryDatabase {
+  const database = openOpenClawStateDatabase();
+  const pathname = database.path;
+  if (cachedDatabase && cachedDatabase.path === pathname && cachedDatabase.db.isOpen) {
+    return cachedDatabase;
+  }
+  if (cachedDatabase && !cachedDatabase.db.isOpen) {
+    cachedDatabase = null;
+  }
+  cachedDatabase = {
+    db: database.db,
+    path: pathname,
+>>>>>>> upstream/main
   };
   return cachedDatabase;
 }
 
+<<<<<<< HEAD
 function withWriteTransaction(write: (statements: FlowRegistryStatements) => void) {
   const { db, path, statements } = openFlowRegistryDatabase();
   db.exec("BEGIN IMMEDIATE");
@@ -369,21 +538,47 @@ function withWriteTransaction(write: (statements: FlowRegistryStatements) => voi
 export function loadTaskFlowRegistryStateFromSqlite(): TaskFlowRegistryStoreSnapshot {
   const { statements } = openFlowRegistryDatabase();
   const rows = statements.selectAll.all() as FlowRegistryRow[];
+=======
+function withWriteTransaction(write: (database: FlowRegistryDatabase) => void) {
+  const database = openFlowRegistryDatabase();
+  runOpenClawStateWriteTransaction(() => {
+    write(database);
+  });
+}
+
+export function loadTaskFlowRegistryStateFromSqlite(): TaskFlowRegistryStoreSnapshot {
+  const { db } = openFlowRegistryDatabase();
+  const rows = selectFlowRows(db);
+>>>>>>> upstream/main
   return {
     flows: new Map(rows.map((row) => [row.flow_id, rowToFlowRecord(row)])),
   };
 }
 
 export function saveTaskFlowRegistryStateToSqlite(snapshot: TaskFlowRegistryStoreSnapshot) {
+<<<<<<< HEAD
   withWriteTransaction((statements) => {
     statements.clearRows.run();
     for (const flow of snapshot.flows.values()) {
       statements.upsertRow.run(bindFlowRecord(flow));
+=======
+  withWriteTransaction(({ db }) => {
+    const kysely = getFlowRegistryKysely(db);
+    const flowIds = [...snapshot.flows.keys()];
+    if (flowIds.length === 0) {
+      executeSqliteQuerySync(db, kysely.deleteFrom("flow_runs"));
+      return;
+    }
+    pruneFlowsNotInSnapshot({ db, ids: flowIds });
+    for (const flow of snapshot.flows.values()) {
+      upsertFlowRow(db, bindFlowRecord(flow));
+>>>>>>> upstream/main
     }
   });
 }
 
 export function upsertTaskFlowRegistryRecordToSqlite(flow: TaskFlowRecord) {
+<<<<<<< HEAD
   const store = openFlowRegistryDatabase();
   store.statements.upsertRow.run(bindFlowRecord(flow));
   ensureFlowRegistryPermissions(store.path);
@@ -401,4 +596,23 @@ export function closeTaskFlowRegistrySqliteStore() {
   }
   cachedDatabase.db.close();
   cachedDatabase = null;
+=======
+  withWriteTransaction(({ db }) => {
+    upsertFlowRow(db, bindFlowRecord(flow));
+  });
+}
+
+export function deleteTaskFlowRegistryRecordFromSqlite(flowId: string) {
+  withWriteTransaction(({ db }) => {
+    executeSqliteQuerySync(
+      db,
+      getFlowRegistryKysely(db).deleteFrom("flow_runs").where("flow_id", "=", flowId),
+    );
+  });
+}
+
+export function closeTaskFlowRegistryDatabase() {
+  cachedDatabase = null;
+  closeOpenClawStateDatabase();
+>>>>>>> upstream/main
 }

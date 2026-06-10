@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 type ApproverInput = string | number;
 
 function dedupeDefined(values: Array<string | undefined>): string[] {
@@ -11,6 +12,20 @@ function dedupeDefined(values: Array<string | undefined>): string[] {
   return [...resolved];
 }
 
+=======
+/**
+ * Public SDK helper for deriving normalized approval approver ids.
+ */
+import { uniqueStrings } from "../../packages/normalization-core/src/string-normalization.js";
+
+type ApproverInput = string | number;
+
+function dedupeDefined(values: Array<string | undefined>): string[] {
+  return uniqueStrings(values.filter((value): value is string => Boolean(value)));
+}
+
+/** Resolves explicit approvers first, then allow-from/default fallbacks with dedupe. */
+>>>>>>> upstream/main
 export function resolveApprovalApprovers(params: {
   explicit?: readonly ApproverInput[] | null;
   allowFrom?: readonly ApproverInput[] | null;

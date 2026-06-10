@@ -45,6 +45,23 @@ private func mountScreen(_ screen: ScreenController) throws -> (ScreenWebViewCoo
         #expect(screen.urlString.isEmpty)
     }
 
+    @Test @MainActor func canvasPresentationTracksExplicitPresentAndHide() {
+        let screen = ScreenController()
+
+        #expect(screen.isCanvasPresented == false)
+
+        screen.showDefaultCanvas()
+        #expect(screen.isCanvasPresented == false)
+
+        screen.presentDefaultCanvas()
+        #expect(screen.isCanvasPresented == true)
+        #expect(screen.urlString.isEmpty)
+
+        screen.hideCanvas()
+        #expect(screen.isCanvasPresented == false)
+        #expect(screen.urlString.isEmpty)
+    }
+
     @Test @MainActor func evalExecutesJavaScript() async throws {
         let screen = ScreenController()
         let (coordinator, _) = try mountScreen(screen)
@@ -66,11 +83,17 @@ private func mountScreen(_ screen: ScreenController) throws -> (ScreenWebViewCoo
         }
     }
 
+<<<<<<< HEAD
     @Test @MainActor func trustedRemoteA2UIURLMustMatchExactly() {
+=======
+    @Test("remote A2UI URL is not trusted for native actions")
+    @MainActor func remoteA2UIURLIsNotTrustedForNativeActions() throws {
+>>>>>>> upstream/main
         let screen = ScreenController()
         let trusted = "https://node.ts.net:18789/__openclaw__/a2ui/?platform=ios"
         screen.navigate(to: trusted, trustA2UIActions: true)
 
+<<<<<<< HEAD
         #expect(screen.isTrustedCanvasUIURL(URL(string: trusted)!) == true)
         // Fragment differences must not affect trust (SPA hash routing).
         #expect(screen.isTrustedCanvasUIURL(URL(string: "https://node.ts.net:18789/__openclaw__/a2ui/?platform=ios#step2")!) == true)
@@ -86,6 +109,33 @@ private func mountScreen(_ screen: ScreenController) throws -> (ScreenWebViewCoo
         screen.navigate(to: "https://evil.ts.net:18789/")
 
         #expect(screen.isTrustedCanvasUIURL(URL(string: "https://node.ts.net:18789/__openclaw__/a2ui/?platform=ios")!) == false)
+=======
+        #expect(screen.isShowingLocalA2UI() == false)
+
+        let urls = try [
+            trusted,
+            "https://node.ts.net:18789/__openclaw__/a2ui/?platform=ios#step2",
+            "http://192.168.0.10:18789/__openclaw__/a2ui/?platform=ios",
+            "https://node.ts.net:18789/__openclaw__/a2ui/?platform=android",
+            "https://node.ts.net:18789/__openclaw__/canvas/",
+            "https://evil.ts.net:18789/__openclaw__/a2ui/?platform=ios",
+        ].map { try #require(URL(string: $0)) }
+
+        for url in urls {
+            #expect(screen.isTrustedCanvasUIURL(url) == false)
+        }
+    }
+
+    @Test("local A2UI URL is trusted for native actions")
+    @MainActor func localA2UIURLIsTrustedForNativeActions() throws {
+        let screen = ScreenController()
+        screen.showLocalA2UI()
+
+        let url = try #require(URL(string: screen.urlString))
+        #expect(url.isFileURL)
+        #expect(screen.isShowingLocalA2UI() == true)
+        #expect(screen.isTrustedCanvasUIURL(url) == true)
+>>>>>>> upstream/main
     }
 
     @Test func parseA2UIActionBodyAcceptsJSONString() throws {

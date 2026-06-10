@@ -1,8 +1,26 @@
+<<<<<<< HEAD
 import type { ChannelMeta } from "./types.js";
 
 export function resolveChannelExposure(
   meta: Pick<ChannelMeta, "exposure" | "showConfigured" | "showInSetup">,
 ) {
+=======
+/**
+ * Channel exposure helpers.
+ *
+ * Resolves whether channel metadata should appear in configured, setup, and docs views.
+ */
+import type { ChannelMeta } from "./types.core.js";
+
+/**
+ * Resolves where a channel should appear in configured, setup, and docs views.
+ */
+export function resolveChannelExposure(
+  meta: Pick<ChannelMeta, "exposure" | "showConfigured" | "showInSetup">,
+) {
+  // `showConfigured` and `showInSetup` are legacy metadata fields; keep them
+  // as fallback inputs so older bundled manifests keep their visibility.
+>>>>>>> upstream/main
   return {
     configured: meta.exposure?.configured ?? meta.showConfigured ?? true,
     setup: meta.exposure?.setup ?? meta.showInSetup ?? true,
@@ -10,20 +28,35 @@ export function resolveChannelExposure(
   };
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Returns whether the channel should be listed for already configured agents.
+ */
+>>>>>>> upstream/main
 export function isChannelVisibleInConfiguredLists(
   meta: Pick<ChannelMeta, "exposure" | "showConfigured" | "showInSetup">,
 ): boolean {
   return resolveChannelExposure(meta).configured;
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Returns whether the channel should be offered during setup/onboarding.
+ */
+>>>>>>> upstream/main
 export function isChannelVisibleInSetup(
   meta: Pick<ChannelMeta, "exposure" | "showConfigured" | "showInSetup">,
 ): boolean {
   return resolveChannelExposure(meta).setup;
 }
+<<<<<<< HEAD
 
 export function isChannelVisibleInDocs(
   meta: Pick<ChannelMeta, "exposure" | "showConfigured" | "showInSetup">,
 ): boolean {
   return resolveChannelExposure(meta).docs;
 }
+=======
+>>>>>>> upstream/main

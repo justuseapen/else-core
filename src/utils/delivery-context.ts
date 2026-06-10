@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { getChannelPlugin, normalizeChannelId } from "../channels/plugins/index.js";
 import { normalizeAccountId } from "./account-id.js";
 import { normalizeMessageChannel } from "./message-channel.js";
@@ -89,13 +90,36 @@ export function formatConversationTarget(params: {
     return pluginTarget.to.trim();
   }
   return `channel:${conversationId}`;
+=======
+// Delivery context helpers normalize target and route metadata for delivery.
+import {
+  formatGenericConversationTarget,
+  type ConversationTargetParams,
+} from "./conversation-target.js";
+export {
+  channelRouteFromDeliveryContext,
+  deliveryContextFromChannelRoute,
+  deliveryContextFromSession,
+  deliveryContextKey,
+  mergeDeliveryContext,
+  normalizeDeliveryContext,
+  normalizeSessionDeliveryFields,
+} from "./delivery-context.shared.js";
+export type { DeliveryContext, DeliveryContextSessionSource } from "./delivery-context.types.js";
+
+/** Formats a conversation id into a generic deliverable target. */
+export function formatConversationTarget(params: ConversationTargetParams): string | undefined {
+  return formatGenericConversationTarget(params);
+>>>>>>> upstream/main
 }
 
+/** Resolves a channel conversation into generic target fields for delivery routing. */
 export function resolveConversationDeliveryTarget(params: {
   channel?: string;
   conversationId?: string | number;
   parentConversationId?: string | number;
 }): { to?: string; threadId?: string } {
+<<<<<<< HEAD
   const channel =
     typeof params.channel === "string"
       ? (normalizeMessageChannel(params.channel) ?? params.channel.trim())
@@ -233,3 +257,8 @@ export function deliveryContextKey(context?: DeliveryContext): string | undefine
     normalized.threadId != null && normalized.threadId !== "" ? String(normalized.threadId) : "";
   return `${normalized.channel}|${normalized.to}|${normalized.accountId ?? ""}|${threadId}`;
 }
+=======
+  const to = formatConversationTarget(params);
+  return { to };
+}
+>>>>>>> upstream/main

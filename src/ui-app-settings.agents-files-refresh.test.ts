@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tests UI app settings refresh behavior for agent files.
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const loadAgentsMock = vi.hoisted(() =>
@@ -44,7 +48,11 @@ vi.mock("../ui/src/ui/controllers/channels.ts", () => ({
 }));
 
 vi.mock("../ui/src/ui/controllers/cron.ts", () => ({
+<<<<<<< HEAD
   loadCronJobs: vi.fn(async () => undefined),
+=======
+  loadCronJobsPage: vi.fn(async () => undefined),
+>>>>>>> upstream/main
   loadCronRuns: vi.fn(async () => undefined),
   loadCronStatus: vi.fn(async () => undefined),
 }));
@@ -67,7 +75,10 @@ function createHost(agentsPanel: AgentsPanel): Parameters<typeof refreshActiveTa
       lastActiveSessionKey: "main",
       theme: "claw",
       themeMode: "system",
+<<<<<<< HEAD
       chatFocusMode: false,
+=======
+>>>>>>> upstream/main
       chatShowThinking: true,
       chatShowToolCalls: true,
       splitRatio: 0.6,

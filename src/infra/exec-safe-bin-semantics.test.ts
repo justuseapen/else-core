@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tests safe executable detection for shell command approval.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   listRiskyConfiguredSafeBins,

@@ -1,7 +1,20 @@
+<<<<<<< HEAD
 import type { QaBusState } from "./bus-state.js";
 
 export type QaScenarioStepContext = {
   state: QaBusState;
+=======
+// Qa Lab plugin module implements scenario behavior.
+import { formatErrorMessage } from "openclaw/plugin-sdk/error-runtime";
+import type { QaTransportActionName, QaTransportState } from "./qa-transport.js";
+
+export type QaScenarioStepContext = {
+  state: QaTransportState;
+  performAction?: (
+    action: QaTransportActionName,
+    args: Record<string, unknown>,
+  ) => Promise<unknown>;
+>>>>>>> upstream/main
 };
 
 export type QaScenarioStep = {
@@ -42,7 +55,11 @@ export async function runQaScenario(
         ...(details ? { details } : {}),
       });
     } catch (error) {
+<<<<<<< HEAD
       const details = error instanceof Error ? error.message : String(error);
+=======
+      const details = formatErrorMessage(error);
+>>>>>>> upstream/main
       steps.push({
         name: step.name,
         status: "fail",

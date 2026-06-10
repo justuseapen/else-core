@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Gateway request scope tests cover request-local plugin runtime context propagation.
+>>>>>>> upstream/main
 import { describe, expect, it, vi } from "vitest";
 import type { PluginRuntimeGatewayRequestScope } from "./gateway-request-scope.js";
 

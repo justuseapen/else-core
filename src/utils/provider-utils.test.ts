@@ -1,12 +1,28 @@
+<<<<<<< HEAD
+=======
+// Provider utility tests cover provider normalization and utility behavior.
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { resolveProviderReasoningOutputModeWithPluginMock } = vi.hoisted(() => ({
   resolveProviderReasoningOutputModeWithPluginMock: vi.fn(),
 }));
 
+<<<<<<< HEAD
 vi.mock("../plugins/provider-runtime.js", () => ({
   resolveProviderReasoningOutputModeWithPlugin: resolveProviderReasoningOutputModeWithPluginMock,
 }));
+=======
+vi.mock("../plugins/provider-runtime.js", async () => {
+  const actual = await vi.importActual<typeof import("../plugins/provider-runtime.js")>(
+    "../plugins/provider-runtime.js",
+  );
+  return {
+    ...actual,
+    resolveProviderReasoningOutputModeWithPlugin: resolveProviderReasoningOutputModeWithPluginMock,
+  };
+});
+>>>>>>> upstream/main
 
 import { isReasoningTagProvider, resolveReasoningOutputMode } from "./provider-utils.js";
 
@@ -16,8 +32,13 @@ describe("resolveReasoningOutputMode", () => {
     resolveProviderReasoningOutputModeWithPluginMock.mockReturnValue(undefined);
   });
 
+<<<<<<< HEAD
   it.each([["google-generative-ai", "tagged"]] as const)(
     "falls back to the built-in map for %s",
+=======
+  it.each([["google-generative-ai", "native"]] as const)(
+    "falls back to native for %s when no plugin override is present",
+>>>>>>> upstream/main
     (provider, expected) => {
       expect(resolveReasoningOutputMode({ provider, workspaceDir: process.cwd() })).toBe(expected);
       expect(resolveProviderReasoningOutputModeWithPluginMock).toHaveBeenCalledTimes(1);
@@ -67,7 +88,11 @@ describe("isReasoningTagProvider", () => {
   });
 
   it.each([
+<<<<<<< HEAD
     ["google-generative-ai", true],
+=======
+    ["google-generative-ai", false],
+>>>>>>> upstream/main
     [null, false],
     [undefined, false],
     ["", false],

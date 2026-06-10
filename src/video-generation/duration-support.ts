@@ -1,12 +1,26 @@
+<<<<<<< HEAD
 import type { VideoGenerationProvider } from "./types.js";
 
+=======
+// Video duration support helpers normalize supported generation durations.
+import { uniqueValues } from "@openclaw/normalization-core/string-normalization";
+import { resolveVideoGenerationModeCapabilities } from "./capabilities.js";
+import type { VideoGenerationProvider } from "./types.js";
+
+// Duration support is provider/mode/model scoped. Values are normalized to
+// positive rounded seconds before runtime snaps requests to the nearest option.
+>>>>>>> upstream/main
 function normalizeSupportedDurationValues(
   values: readonly number[] | undefined,
 ): number[] | undefined {
   if (!Array.isArray(values) || values.length === 0) {
     return undefined;
   }
+<<<<<<< HEAD
   const normalized = [...new Set(values)]
+=======
+  const normalized = uniqueValues(values)
+>>>>>>> upstream/main
     .filter((value) => Number.isFinite(value) && value > 0)
     .map((value) => Math.round(value))
     .filter((value) => value > 0)
@@ -17,8 +31,20 @@ function normalizeSupportedDurationValues(
 export function resolveVideoGenerationSupportedDurations(params: {
   provider?: VideoGenerationProvider;
   model?: string;
+<<<<<<< HEAD
 }): number[] | undefined {
   const caps = params.provider?.capabilities;
+=======
+  inputImageCount?: number;
+  inputVideoCount?: number;
+}): number[] | undefined {
+  const { capabilities: caps } = resolveVideoGenerationModeCapabilities({
+    provider: params.provider,
+    model: params.model,
+    inputImageCount: params.inputImageCount,
+    inputVideoCount: params.inputVideoCount,
+  });
+>>>>>>> upstream/main
   const model = params.model?.trim();
   const modelSpecific =
     model && caps?.supportedDurationSecondsByModel
@@ -27,10 +53,20 @@ export function resolveVideoGenerationSupportedDurations(params: {
   return normalizeSupportedDurationValues(modelSpecific ?? caps?.supportedDurationSeconds);
 }
 
+<<<<<<< HEAD
+=======
+// Normalize requested duration for providers with explicit allowed values. Ties
+// choose the longer duration to avoid shortening user intent unexpectedly.
+>>>>>>> upstream/main
 export function normalizeVideoGenerationDuration(params: {
   provider?: VideoGenerationProvider;
   model?: string;
   durationSeconds?: number;
+<<<<<<< HEAD
+=======
+  inputImageCount?: number;
+  inputVideoCount?: number;
+>>>>>>> upstream/main
 }): number | undefined {
   if (typeof params.durationSeconds !== "number" || !Number.isFinite(params.durationSeconds)) {
     return undefined;

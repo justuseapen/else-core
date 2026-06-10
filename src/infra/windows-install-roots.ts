@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
 const DEFAULT_SYSTEM_ROOT = "C:\\Windows";
+=======
+// Resolves Windows system and Program Files install roots.
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
+
+export const DEFAULT_WINDOWS_SYSTEM_ROOT = "C:\\Windows";
+>>>>>>> upstream/main
 const DEFAULT_PROGRAM_FILES = "C:\\Program Files";
 const DEFAULT_PROGRAM_FILES_X86 = "C:\\Program Files (x86)";
 const WINDOWS_NT_CURRENT_VERSION_KEY = "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
@@ -17,7 +27,11 @@ type WindowsInstallRootsTestOverrides = {
   isReadableFile?: IsReadableFile;
 };
 
+<<<<<<< HEAD
 export type WindowsInstallRoots = {
+=======
+type WindowsInstallRoots = {
+>>>>>>> upstream/main
   systemRoot: string;
   programFiles: string;
   programFilesX86: string;
@@ -91,6 +105,7 @@ function getEnvValueCaseInsensitive(
   return actualKey ? env[actualKey] : undefined;
 }
 
+<<<<<<< HEAD
 function getWindowsRegExeCandidates(env: Record<string, string | undefined>): readonly string[] {
   const seen = new Set<string>();
   const candidates: string[] = [];
@@ -114,6 +129,14 @@ function getWindowsRegExeCandidates(env: Record<string, string | undefined>): re
 
 function locateWindowsRegExe(env: Record<string, string | undefined> = process.env): string | null {
   for (const candidate of getWindowsRegExeCandidates(env)) {
+=======
+function getWindowsRegExeCandidates(): readonly string[] {
+  return [path.win32.join(DEFAULT_WINDOWS_SYSTEM_ROOT, "System32", "reg.exe")];
+}
+
+function locateWindowsRegExe(): string | null {
+  for (const candidate of getWindowsRegExeCandidates()) {
+>>>>>>> upstream/main
     if (isReadableFileFn(candidate)) {
       return candidate;
     }
@@ -150,7 +173,11 @@ function runRegQuery(
 }
 
 function defaultQueryRegistryValue(key: string, valueName: string): string | null {
+<<<<<<< HEAD
   const regExe = locateWindowsRegExe(process.env);
+=======
+  const regExe = locateWindowsRegExe();
+>>>>>>> upstream/main
   if (!regExe) {
     return null;
   }
@@ -205,7 +232,11 @@ function buildWindowsInstallRoots(
       registryRoots.systemRoot ??
       normalizeWindowsInstallRoot(getEnvValueCaseInsensitive(env, "SystemRoot")) ??
       normalizeWindowsInstallRoot(getEnvValueCaseInsensitive(env, "WINDIR")) ??
+<<<<<<< HEAD
       DEFAULT_SYSTEM_ROOT,
+=======
+      DEFAULT_WINDOWS_SYSTEM_ROOT,
+>>>>>>> upstream/main
     programFiles:
       registryRoots.programFiles ??
       normalizeWindowsInstallRoot(getEnvValueCaseInsensitive(env, "ProgramFiles")) ??
@@ -239,7 +270,11 @@ export function getWindowsProgramFilesRoots(
     if (!value) {
       continue;
     }
+<<<<<<< HEAD
     const key = value.toLowerCase();
+=======
+    const key = normalizeLowercaseStringOrEmpty(value);
+>>>>>>> upstream/main
     if (seen.has(key)) {
       continue;
     }
@@ -249,7 +284,11 @@ export function getWindowsProgramFilesRoots(
   return result;
 }
 
+<<<<<<< HEAD
 export function _resetWindowsInstallRootsForTests(
+=======
+export function resetWindowsInstallRootsForTests(
+>>>>>>> upstream/main
   overrides: WindowsInstallRootsTestOverrides = {},
 ): void {
   queryRegistryValueFn = overrides.queryRegistryValue ?? defaultQueryRegistryValue;
@@ -257,7 +296,11 @@ export function _resetWindowsInstallRootsForTests(
   cachedProcessInstallRoots = null;
 }
 
+<<<<<<< HEAD
 export const _private = {
+=======
+export const privateTestApi = {
+>>>>>>> upstream/main
   getWindowsRegExeCandidates,
   locateWindowsRegExe,
 };

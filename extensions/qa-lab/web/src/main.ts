@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Qa Lab plugin module implements main behavior.
+>>>>>>> upstream/main
 import "./styles.css";
 import { createQaLabApp } from "./app.js";
 

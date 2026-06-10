@@ -1,7 +1,28 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import type { Command } from "commander";
 import type { OpenClawConfig } from "../api.js";
 import { applyMemoryWikiMutation } from "./apply.js";
+=======
+// Memory Wiki plugin module implements cli behavior.
+import fs from "node:fs/promises";
+import type { Command } from "commander";
+import { callGatewayFromCli } from "openclaw/plugin-sdk/gateway-runtime";
+import { parseStrictPositiveInteger } from "openclaw/plugin-sdk/number-runtime";
+import {
+  isRecord,
+  normalizeStringEntries,
+  uniqueStrings,
+} from "openclaw/plugin-sdk/string-coerce-runtime";
+import type { OpenClawConfig } from "../api.js";
+import { applyMemoryWikiMutation } from "./apply.js";
+import {
+  importChatGptConversations,
+  rollbackChatGptImportRun,
+  type ChatGptImportResult,
+  type ChatGptRollbackResult,
+} from "./chatgpt-import.js";
+>>>>>>> upstream/main
 import { compileMemoryWikiVault } from "./compile.js";
 import {
   resolveMemoryWikiConfig,
@@ -19,16 +40,47 @@ import {
   runObsidianOpen,
   runObsidianSearch,
 } from "./obsidian.js";
+<<<<<<< HEAD
 import { getMemoryWikiPage, searchMemoryWiki } from "./query.js";
 import { syncMemoryWikiImportedSources } from "./source-sync.js";
+=======
+import {
+  getMemoryWikiPage,
+  searchMemoryWiki,
+  WIKI_SEARCH_MODES,
+  type WikiSearchMode,
+} from "./query.js";
+import { syncMemoryWikiImportedSources } from "./source-sync.js";
+import type { MemoryWikiImportedSourceSyncResult } from "./source-sync.js";
+>>>>>>> upstream/main
 import {
   buildMemoryWikiDoctorReport,
   renderMemoryWikiDoctor,
   renderMemoryWikiStatus,
+<<<<<<< HEAD
+=======
+  type MemoryWikiDoctorReport,
+  type MemoryWikiStatus,
+>>>>>>> upstream/main
   resolveMemoryWikiStatus,
 } from "./status.js";
 import { initializeMemoryWikiVault } from "./vault.js";
 
+<<<<<<< HEAD
+=======
+const WIKI_GATEWAY_TIMEOUT_MS = "30000";
+const GATEWAY_TERMINAL_STRING_MAX_CHARS = 2_000;
+const GATEWAY_RESPONSE_MAX_ARRAY_ITEMS = 10_000;
+const GATEWAY_RESPONSE_MAX_STRING_CHARS = 10_000;
+const GATEWAY_RESPONSE_MAX_CODE_CHARS = 256;
+const ANSI_ESCAPE_SEQUENCE_PATTERN = new RegExp(
+  String.raw`(?:\x1B\[[0-?]*[ -/]*[@-~]|\x1B[@-Z\\-_]|\x9B[0-?]*[ -/]*[@-~])`,
+  "g",
+);
+const TERMINAL_CONTROL_CHARACTER_PATTERN = new RegExp(String.raw`[\x00-\x1F\x7F-\x9F]+`, "g");
+const UNICODE_FORMAT_CONTROL_PATTERN = /[\u061C\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
+
+>>>>>>> upstream/main
 type WikiStatusCommandOptions = {
   json?: boolean;
 };
@@ -59,6 +111,10 @@ type WikiSearchCommandOptions = {
   maxResults?: number;
   backend?: ResolvedMemoryWikiConfig["search"]["backend"];
   corpus?: ResolvedMemoryWikiConfig["search"]["corpus"];
+<<<<<<< HEAD
+=======
+  mode?: WikiSearchMode;
+>>>>>>> upstream/main
 };
 
 type WikiGetCommandOptions = {
@@ -98,6 +154,19 @@ type WikiUnsafeLocalImportCommandOptions = {
   json?: boolean;
 };
 
+<<<<<<< HEAD
+=======
+type WikiChatGptImportCommandOptions = {
+  json?: boolean;
+  dryRun?: boolean;
+  export?: string;
+};
+
+type WikiChatGptRollbackCommandOptions = {
+  json?: boolean;
+};
+
+>>>>>>> upstream/main
 type WikiObsidianSearchCommandOptions = {
   json?: boolean;
 };
@@ -127,19 +196,194 @@ function isResolvedMemoryWikiConfig(
   );
 }
 
+<<<<<<< HEAD
+=======
+function sanitizeGatewayStringForTerminal(value: string): string {
+  const truncated =
+    value.length > GATEWAY_TERMINAL_STRING_MAX_CHARS
+      ? value.slice(0, GATEWAY_TERMINAL_STRING_MAX_CHARS)
+      : value;
+  const sanitized = truncated
+    .replace(ANSI_ESCAPE_SEQUENCE_PATTERN, "")
+    .replace(TERMINAL_CONTROL_CHARACTER_PATTERN, " ")
+    .replace(UNICODE_FORMAT_CONTROL_PATTERN, "");
+  return value.length > GATEWAY_TERMINAL_STRING_MAX_CHARS
+    ? `${sanitized}... [truncated]`
+    : sanitized;
+}
+
+function escapeGatewayJsonForTerminal(json: string): string {
+  return json.replace(UNICODE_FORMAT_CONTROL_PATTERN, (char) => {
+    const codePoint = char.codePointAt(0);
+    return typeof codePoint === "number" ? `\\u${codePoint.toString(16).padStart(4, "0")}` : "";
+  });
+}
+
+>>>>>>> upstream/main
 function writeOutput(output: string, writer: Pick<NodeJS.WriteStream, "write"> = process.stdout) {
   writer.write(output.endsWith("\n") ? output : `${output}\n`);
 }
 
+<<<<<<< HEAD
+=======
+function shouldRouteBridgeRuntimeThroughGateway(config: ResolvedMemoryWikiConfig): boolean {
+  return (
+    config.vaultMode === "bridge" && config.bridge.enabled && config.bridge.readMemoryArtifacts
+  );
+}
+
+function isBoundedGatewayString(
+  value: unknown,
+  maxChars = GATEWAY_RESPONSE_MAX_STRING_CHARS,
+): value is string {
+  return typeof value === "string" && value.length <= maxChars;
+}
+
+function isStringArray(
+  value: unknown,
+  maxChars = GATEWAY_RESPONSE_MAX_STRING_CHARS,
+): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= GATEWAY_RESPONSE_MAX_ARRAY_ITEMS &&
+    value.every((item) => isBoundedGatewayString(item, maxChars))
+  );
+}
+
+function hasNumberFields(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  return keys.every((key) => typeof value[key] === "number");
+}
+
+function isWarningList(value: unknown): boolean {
+  return (
+    Array.isArray(value) &&
+    value.length <= GATEWAY_RESPONSE_MAX_ARRAY_ITEMS &&
+    value.every(
+      (item) =>
+        isRecord(item) &&
+        isBoundedGatewayString(item.code, GATEWAY_RESPONSE_MAX_CODE_CHARS) &&
+        isBoundedGatewayString(item.message),
+    )
+  );
+}
+
+function isMemoryWikiStatus(value: unknown): value is MemoryWikiStatus {
+  if (!isRecord(value)) {
+    return false;
+  }
+  const bridge = value.bridge;
+  const obsidianCli = value.obsidianCli;
+  const unsafeLocal = value.unsafeLocal;
+  const pageCounts = value.pageCounts;
+  const sourceCounts = value.sourceCounts;
+  return (
+    isBoundedGatewayString(value.vaultMode, GATEWAY_RESPONSE_MAX_CODE_CHARS) &&
+    isBoundedGatewayString(value.renderMode, GATEWAY_RESPONSE_MAX_CODE_CHARS) &&
+    isBoundedGatewayString(value.vaultPath) &&
+    typeof value.vaultExists === "boolean" &&
+    (typeof value.bridgePublicArtifactCount === "number" ||
+      value.bridgePublicArtifactCount === null) &&
+    isRecord(bridge) &&
+    typeof bridge.enabled === "boolean" &&
+    isRecord(obsidianCli) &&
+    typeof obsidianCli.enabled === "boolean" &&
+    typeof obsidianCli.requested === "boolean" &&
+    typeof obsidianCli.available === "boolean" &&
+    (isBoundedGatewayString(obsidianCli.command) || obsidianCli.command === null) &&
+    isRecord(unsafeLocal) &&
+    typeof unsafeLocal.allowPrivateMemoryCoreAccess === "boolean" &&
+    typeof unsafeLocal.pathCount === "number" &&
+    isRecord(pageCounts) &&
+    hasNumberFields(pageCounts, ["source", "entity", "concept", "synthesis", "report"]) &&
+    isRecord(sourceCounts) &&
+    hasNumberFields(sourceCounts, ["native", "bridge", "bridgeEvents", "unsafeLocal", "other"]) &&
+    isWarningList(value.warnings)
+  );
+}
+
+function isMemoryWikiDoctorReport(value: unknown): value is MemoryWikiDoctorReport {
+  return (
+    isRecord(value) &&
+    typeof value.healthy === "boolean" &&
+    typeof value.warningCount === "number" &&
+    isMemoryWikiStatus(value.status) &&
+    Array.isArray(value.fixes) &&
+    value.fixes.length <= GATEWAY_RESPONSE_MAX_ARRAY_ITEMS &&
+    value.fixes.every(
+      (item) =>
+        isRecord(item) &&
+        isBoundedGatewayString(item.code, GATEWAY_RESPONSE_MAX_CODE_CHARS) &&
+        isBoundedGatewayString(item.message),
+    )
+  );
+}
+
+function isMemoryWikiImportResult(value: unknown): value is MemoryWikiImportedSourceSyncResult {
+  return (
+    isRecord(value) &&
+    hasNumberFields(value, [
+      "importedCount",
+      "updatedCount",
+      "skippedCount",
+      "removedCount",
+      "artifactCount",
+      "workspaces",
+    ]) &&
+    isStringArray(value.pagePaths) &&
+    typeof value.indexesRefreshed === "boolean" &&
+    isStringArray(value.indexUpdatedFiles) &&
+    isBoundedGatewayString(value.indexRefreshReason, GATEWAY_RESPONSE_MAX_CODE_CHARS)
+  );
+}
+
+function validateWikiGatewayResult(
+  method: "wiki.status" | "wiki.doctor" | "wiki.bridge.import",
+  value: unknown,
+): MemoryWikiStatus | MemoryWikiDoctorReport | MemoryWikiImportedSourceSyncResult {
+  if (method === "wiki.status" && isMemoryWikiStatus(value)) {
+    return value;
+  }
+  if (method === "wiki.doctor" && isMemoryWikiDoctorReport(value)) {
+    return value;
+  }
+  if (method === "wiki.bridge.import" && isMemoryWikiImportResult(value)) {
+    return value;
+  }
+  throw new Error(`Invalid Gateway response for ${method}.`);
+}
+
+async function callWikiGateway(method: "wiki.status"): Promise<MemoryWikiStatus>;
+async function callWikiGateway(method: "wiki.doctor"): Promise<MemoryWikiDoctorReport>;
+async function callWikiGateway(
+  method: "wiki.bridge.import",
+): Promise<MemoryWikiImportedSourceSyncResult>;
+async function callWikiGateway(method: "wiki.status" | "wiki.doctor" | "wiki.bridge.import") {
+  const result = await callGatewayFromCli(method, { timeout: WIKI_GATEWAY_TIMEOUT_MS }, undefined, {
+    progress: false,
+  });
+  return validateWikiGatewayResult(method, result);
+}
+
+>>>>>>> upstream/main
 function normalizeCliStringList(values?: string[]): string[] | undefined {
   if (!values) {
     return undefined;
   }
+<<<<<<< HEAD
   const normalized = values
     .map((value) => value.trim())
     .filter(Boolean)
     .filter((value, index, all) => all.indexOf(value) === index);
   return normalized.length > 0 ? normalized : undefined;
+=======
+  const uniqueValues = uniqueStrings(normalizeStringEntries(values));
+  return uniqueValues.length > 0 ? uniqueValues : undefined;
+}
+
+function collectCliValues(value: string, acc: string[] = []) {
+  acc.push(value);
+  return acc;
+>>>>>>> upstream/main
 }
 
 function parseWikiSearchEnumOption<T extends string>(
@@ -163,16 +407,134 @@ async function resolveWikiApplyBody(params: { body?: string; bodyFile?: string }
   throw new Error("wiki apply synthesis requires --body or --body-file.");
 }
 
+<<<<<<< HEAD
+=======
+type MemoryWikiMutationResult = Awaited<ReturnType<typeof applyMemoryWikiMutation>>;
+
+function formatMemoryWikiMutationSummary(result: MemoryWikiMutationResult, json?: boolean): string {
+  if (json) {
+    return JSON.stringify(result, null, 2);
+  }
+  return `${result.changed ? "Updated" : "No changes for"} ${result.pagePath} via ${result.operation}. ${result.compile.updatedFiles.length > 0 ? `Refreshed ${result.compile.updatedFiles.length} index file${result.compile.updatedFiles.length === 1 ? "" : "s"}.` : "Indexes unchanged."}`;
+}
+
+function formatJsonOrText<T>(
+  result: T,
+  json: boolean | undefined,
+  render: (result: T) => string,
+): string {
+  return json ? JSON.stringify(result, null, 2) : render(result);
+}
+
+function formatGatewayJsonOrText<T>(
+  result: T,
+  json: boolean | undefined,
+  render: (result: T) => string,
+): string {
+  return json
+    ? escapeGatewayJsonForTerminal(JSON.stringify(result, null, 2))
+    : sanitizeGatewayStringForTerminal(render(result));
+}
+
+async function runWikiCommandWithSummary<T>(params: {
+  json?: boolean;
+  stdout?: Pick<NodeJS.WriteStream, "write">;
+  run: () => Promise<T>;
+  render: (result: T) => string;
+}): Promise<T> {
+  const result = await params.run();
+  writeOutput(formatJsonOrText(result, params.json, params.render), params.stdout);
+  return result;
+}
+
+async function runSyncedWikiCommandWithSummary<T>(params: {
+  config: ResolvedMemoryWikiConfig;
+  appConfig?: OpenClawConfig;
+  json?: boolean;
+  stdout?: Pick<NodeJS.WriteStream, "write">;
+  run: () => Promise<T>;
+  render: (result: T) => string;
+}): Promise<T> {
+  await syncMemoryWikiImportedSources({ config: params.config, appConfig: params.appConfig });
+  return runWikiCommandWithSummary(params);
+}
+
+function addWikiSearchConfigOptions<T extends Command>(command: T): T {
+  return command
+    .option(
+      "--backend <backend>",
+      `Search backend (${WIKI_SEARCH_BACKENDS.join(", ")})`,
+      (value: string) => parseWikiSearchEnumOption(value, WIKI_SEARCH_BACKENDS, "backend"),
+    )
+    .option(
+      "--corpus <corpus>",
+      `Search corpus (${WIKI_SEARCH_CORPORA.join(", ")})`,
+      (value: string) => parseWikiSearchEnumOption(value, WIKI_SEARCH_CORPORA, "corpus"),
+    );
+}
+
+function invalidCliArgument(message: string): Error & { code: string; exitCode: number } {
+  const error = new Error(message) as Error & { code: string; exitCode: number };
+  error.name = "InvalidArgumentError";
+  // Commander recognizes parser failures by code; keep the import type-only for bundled plugin deps.
+  error.code = "commander.invalidArgument";
+  error.exitCode = 1;
+  return error;
+}
+
+function parseWikiConfidenceOption(value: string): number {
+  const trimmed = value.trim();
+  const confidence = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(trimmed) ? Number(trimmed) : Number.NaN;
+  if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1) {
+    throw invalidCliArgument("--confidence must be a number between 0 and 1.");
+  }
+  return confidence;
+}
+
+function parseWikiPositiveIntegerOption(value: string, flag: string): number {
+  const parsed = parseStrictPositiveInteger(value);
+  if (parsed === undefined) {
+    throw invalidCliArgument(`${flag} must be a positive integer.`);
+  }
+  return parsed;
+}
+
+function addWikiApplyMutationOptions<T extends Command>(command: T): T {
+  return command
+    .option("--source-id <id>", "Source id", collectCliValues)
+    .option("--contradiction <text>", "Contradiction note", collectCliValues)
+    .option("--question <text>", "Open question", collectCliValues)
+    .option("--confidence <n>", "Confidence score between 0 and 1", parseWikiConfidenceOption)
+    .option("--status <status>", "Page status");
+}
+
+>>>>>>> upstream/main
 export async function runWikiStatus(params: {
   config: ResolvedMemoryWikiConfig;
   appConfig?: OpenClawConfig;
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   await syncMemoryWikiImportedSources({ config: params.config, appConfig: params.appConfig });
   const status = await resolveMemoryWikiStatus(params.config);
   writeOutput(
     params.json ? JSON.stringify(status, null, 2) : renderMemoryWikiStatus(status),
+=======
+  const routeThroughGateway = shouldRouteBridgeRuntimeThroughGateway(params.config);
+  const status = routeThroughGateway
+    ? await callWikiGateway("wiki.status")
+    : await (async () => {
+        await syncMemoryWikiImportedSources({ config: params.config, appConfig: params.appConfig });
+        return await resolveMemoryWikiStatus(params.config, {
+          appConfig: params.appConfig,
+        });
+      })();
+  writeOutput(
+    routeThroughGateway
+      ? formatGatewayJsonOrText(status, params.json, renderMemoryWikiStatus)
+      : formatJsonOrText(status, params.json, renderMemoryWikiStatus),
+>>>>>>> upstream/main
     params.stdout,
   );
   return status;
@@ -184,13 +546,33 @@ export async function runWikiDoctor(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   await syncMemoryWikiImportedSources({ config: params.config, appConfig: params.appConfig });
   const report = buildMemoryWikiDoctorReport(await resolveMemoryWikiStatus(params.config));
+=======
+  const routeThroughGateway = shouldRouteBridgeRuntimeThroughGateway(params.config);
+  const report = routeThroughGateway
+    ? await callWikiGateway("wiki.doctor")
+    : await (async () => {
+        await syncMemoryWikiImportedSources({ config: params.config, appConfig: params.appConfig });
+        return buildMemoryWikiDoctorReport(
+          await resolveMemoryWikiStatus(params.config, {
+            appConfig: params.appConfig,
+          }),
+        );
+      })();
+>>>>>>> upstream/main
   if (!report.healthy) {
     process.exitCode = 1;
   }
   writeOutput(
+<<<<<<< HEAD
     params.json ? JSON.stringify(report, null, 2) : renderMemoryWikiDoctor(report),
+=======
+    routeThroughGateway
+      ? formatGatewayJsonOrText(report, params.json, renderMemoryWikiDoctor)
+      : formatJsonOrText(report, params.json, renderMemoryWikiDoctor),
+>>>>>>> upstream/main
     params.stdout,
   );
   return report;
@@ -201,12 +583,22 @@ export async function runWikiInit(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   const result = await initializeMemoryWikiVault(params.config);
   const summary = params.json
     ? JSON.stringify(result, null, 2)
     : `Initialized wiki vault at ${result.rootDir} (${result.createdDirectories.length} dirs, ${result.createdFiles.length} files).`;
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () => initializeMemoryWikiVault(params.config),
+    render: (value) =>
+      `Initialized wiki vault at ${value.rootDir} (${value.createdDirectories.length} dirs, ${value.createdFiles.length} files).`,
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiCompile(params: {
@@ -215,6 +607,7 @@ export async function runWikiCompile(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   await syncMemoryWikiImportedSources({ config: params.config, appConfig: params.appConfig });
   const result = await compileMemoryWikiVault(params.config);
   const summary = params.json
@@ -222,6 +615,17 @@ export async function runWikiCompile(params: {
     : `Compiled wiki vault at ${result.vaultRoot} (${result.pages.length} pages, ${result.updatedFiles.length} indexes updated).`;
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runSyncedWikiCommandWithSummary({
+    config: params.config,
+    appConfig: params.appConfig,
+    json: params.json,
+    stdout: params.stdout,
+    run: () => compileMemoryWikiVault(params.config),
+    render: (value) =>
+      `Compiled wiki vault at ${value.vaultRoot} (${value.pages.length} pages, ${value.updatedFiles.length} indexes updated).`,
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiLint(params: {
@@ -230,6 +634,7 @@ export async function runWikiLint(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   await syncMemoryWikiImportedSources({ config: params.config, appConfig: params.appConfig });
   const result = await lintMemoryWikiVault(params.config);
   const summary = params.json
@@ -237,6 +642,17 @@ export async function runWikiLint(params: {
     : `Linted wiki vault at ${result.vaultRoot} (${result.issueCount} issues, report: ${result.reportPath}).`;
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runSyncedWikiCommandWithSummary({
+    config: params.config,
+    appConfig: params.appConfig,
+    json: params.json,
+    stdout: params.stdout,
+    run: () => lintMemoryWikiVault(params.config),
+    render: (value) =>
+      `Linted wiki vault at ${value.vaultRoot} (${value.issueCount} issues, report: ${value.reportPath}).`,
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiIngest(params: {
@@ -246,6 +662,7 @@ export async function runWikiIngest(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   const result = await ingestMemoryWikiSource({
     config: params.config,
     inputPath: params.inputPath,
@@ -256,6 +673,20 @@ export async function runWikiIngest(params: {
     : `Ingested ${result.sourcePath} into ${result.pagePath}. Refreshed ${result.indexUpdatedFiles.length} index file${result.indexUpdatedFiles.length === 1 ? "" : "s"}.`;
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () =>
+      ingestMemoryWikiSource({
+        config: params.config,
+        inputPath: params.inputPath,
+        title: params.title,
+      }),
+    render: (value) =>
+      `Ingested ${value.sourcePath} into ${value.pagePath}. Refreshed ${value.indexUpdatedFiles.length} index file${value.indexUpdatedFiles.length === 1 ? "" : "s"}.`,
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiSearch(params: {
@@ -265,9 +696,19 @@ export async function runWikiSearch(params: {
   maxResults?: number;
   searchBackend?: ResolvedMemoryWikiConfig["search"]["backend"];
   searchCorpus?: ResolvedMemoryWikiConfig["search"]["corpus"];
+<<<<<<< HEAD
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+=======
+  mode?: WikiSearchMode;
+  json?: boolean;
+  stdout?: Pick<NodeJS.WriteStream, "write">;
+}) {
+  if (params.mode && !(WIKI_SEARCH_MODES as readonly string[]).includes(params.mode)) {
+    throw new Error(`wiki search --mode must be one of: ${WIKI_SEARCH_MODES.join(", ")}.`);
+  }
+>>>>>>> upstream/main
   await syncMemoryWikiImportedSources({ config: params.config, appConfig: params.appConfig });
   const results = await searchMemoryWiki({
     config: params.config,
@@ -276,6 +717,10 @@ export async function runWikiSearch(params: {
     maxResults: params.maxResults,
     searchBackend: params.searchBackend,
     searchCorpus: params.searchCorpus,
+<<<<<<< HEAD
+=======
+    mode: params.mode,
+>>>>>>> upstream/main
   });
   const summary = params.json
     ? JSON.stringify(results, null, 2)
@@ -284,7 +729,11 @@ export async function runWikiSearch(params: {
       : results
           .map(
             (result, index) =>
+<<<<<<< HEAD
               `${index + 1}. ${result.title} (${result.corpus}/${result.kind})\nPath: ${result.path}${typeof result.startLine === "number" && typeof result.endLine === "number" ? `\nLines: ${result.startLine}-${result.endLine}` : ""}${result.provenanceLabel ? `\nProvenance: ${result.provenanceLabel}` : ""}\nSnippet: ${result.snippet}`,
+=======
+              `${index + 1}. ${result.title} (${result.corpus}/${result.kind})\nPath: ${result.path}${typeof result.startLine === "number" && typeof result.endLine === "number" ? `\nLines: ${result.startLine}-${result.endLine}` : ""}${result.provenanceLabel ? `\nProvenance: ${result.provenanceLabel}` : ""}${result.matchedClaimId ? `\nClaim: ${result.matchedClaimId}` : ""}${result.evidenceKinds && result.evidenceKinds.length > 0 ? `\nEvidence: ${result.evidenceKinds.join(", ")}` : ""}\nSnippet: ${result.snippet}`,
+>>>>>>> upstream/main
           )
           .join("\n\n");
   writeOutput(summary, params.stdout);
@@ -356,10 +805,14 @@ export async function runWikiApplySynthesis(params: {
       ...(params.status?.trim() ? { status: params.status.trim() } : {}),
     },
   });
+<<<<<<< HEAD
   const summary = params.json
     ? JSON.stringify(result, null, 2)
     : `${result.changed ? "Updated" : "No changes for"} ${result.pagePath} via ${result.operation}. ${result.compile.updatedFiles.length > 0 ? `Refreshed ${result.compile.updatedFiles.length} index file${result.compile.updatedFiles.length === 1 ? "" : "s"}.` : "Indexes unchanged."}`;
   writeOutput(summary, params.stdout);
+=======
+  writeOutput(formatMemoryWikiMutationSummary(result, params.json), params.stdout);
+>>>>>>> upstream/main
   return result;
 }
 
@@ -399,10 +852,14 @@ export async function runWikiApplyMetadata(params: {
       ...(params.status?.trim() ? { status: params.status.trim() } : {}),
     },
   });
+<<<<<<< HEAD
   const summary = params.json
     ? JSON.stringify(result, null, 2)
     : `${result.changed ? "Updated" : "No changes for"} ${result.pagePath} via ${result.operation}. ${result.compile.updatedFiles.length > 0 ? `Refreshed ${result.compile.updatedFiles.length} index file${result.compile.updatedFiles.length === 1 ? "" : "s"}.` : "Indexes unchanged."}`;
   writeOutput(summary, params.stdout);
+=======
+  writeOutput(formatMemoryWikiMutationSummary(result, params.json), params.stdout);
+>>>>>>> upstream/main
   return result;
 }
 
@@ -412,6 +869,7 @@ export async function runWikiBridgeImport(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   const result = await syncMemoryWikiImportedSources({
     config: params.config,
     appConfig: params.appConfig,
@@ -421,6 +879,25 @@ export async function runWikiBridgeImport(params: {
     : `Bridge import synced ${result.artifactCount} artifacts across ${result.workspaces} workspaces (${result.importedCount} new, ${result.updatedCount} updated, ${result.skippedCount} unchanged, ${result.removedCount} removed). Indexes ${result.indexesRefreshed ? `refreshed (${result.indexUpdatedFiles.length} files)` : `not refreshed (${result.indexRefreshReason})`}.`;
   writeOutput(summary, params.stdout);
   return result;
+=======
+  const render = (value: MemoryWikiImportedSourceSyncResult) =>
+    `Bridge import synced ${value.artifactCount} artifacts across ${value.workspaces} workspaces (${value.importedCount} new, ${value.updatedCount} updated, ${value.skippedCount} unchanged, ${value.removedCount} removed). Indexes ${value.indexesRefreshed ? `refreshed (${value.indexUpdatedFiles.length} files)` : `not refreshed (${value.indexRefreshReason})`}.`;
+  if (shouldRouteBridgeRuntimeThroughGateway(params.config)) {
+    const result = await callWikiGateway("wiki.bridge.import");
+    writeOutput(formatGatewayJsonOrText(result, params.json, render), params.stdout);
+    return result;
+  }
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () =>
+      syncMemoryWikiImportedSources({
+        config: params.config,
+        appConfig: params.appConfig,
+      }),
+    render,
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiUnsafeLocalImport(params: {
@@ -429,6 +906,7 @@ export async function runWikiUnsafeLocalImport(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   const result = await syncMemoryWikiImportedSources({
     config: params.config,
     appConfig: params.appConfig,
@@ -438,6 +916,19 @@ export async function runWikiUnsafeLocalImport(params: {
     : `Unsafe-local import synced ${result.artifactCount} artifacts (${result.importedCount} new, ${result.updatedCount} updated, ${result.skippedCount} unchanged, ${result.removedCount} removed). Indexes ${result.indexesRefreshed ? `refreshed (${result.indexUpdatedFiles.length} files)` : `not refreshed (${result.indexRefreshReason})`}.`;
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () =>
+      syncMemoryWikiImportedSources({
+        config: params.config,
+        appConfig: params.appConfig,
+      }),
+    render: (value) =>
+      `Unsafe-local import synced ${value.artifactCount} artifacts (${value.importedCount} new, ${value.updatedCount} updated, ${value.skippedCount} unchanged, ${value.removedCount} removed). Indexes ${value.indexesRefreshed ? `refreshed (${value.indexUpdatedFiles.length} files)` : `not refreshed (${value.indexRefreshReason})`}.`,
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiObsidianStatus(params: {
@@ -445,6 +936,7 @@ export async function runWikiObsidianStatus(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   const result = await probeObsidianCli();
   const summary = params.json
     ? JSON.stringify(result, null, 2)
@@ -453,6 +945,17 @@ export async function runWikiObsidianStatus(params: {
       : "Obsidian CLI is not available on PATH.";
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () => probeObsidianCli(),
+    render: (value) =>
+      value.available
+        ? `Obsidian CLI available at ${value.command}`
+        : "Obsidian CLI is not available on PATH.",
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiObsidianSearch(params: {
@@ -461,10 +964,19 @@ export async function runWikiObsidianSearch(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   const result = await runObsidianSearch({ config: params.config, query: params.query });
   const summary = params.json ? JSON.stringify(result, null, 2) : result.stdout.trim();
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () => runObsidianSearch({ config: params.config, query: params.query }),
+    render: (value) => value.stdout.trim(),
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiObsidianOpenCli(params: {
@@ -473,12 +985,21 @@ export async function runWikiObsidianOpenCli(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   const result = await runObsidianOpen({ config: params.config, vaultPath: params.vaultPath });
   const summary = params.json
     ? JSON.stringify(result, null, 2)
     : result.stdout.trim() || "Opened in Obsidian.";
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () => runObsidianOpen({ config: params.config, vaultPath: params.vaultPath }),
+    render: (value) => value.stdout.trim() || "Opened in Obsidian.",
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiObsidianCommandCli(params: {
@@ -487,12 +1008,21 @@ export async function runWikiObsidianCommandCli(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   const result = await runObsidianCommand({ config: params.config, id: params.id });
   const summary = params.json
     ? JSON.stringify(result, null, 2)
     : result.stdout.trim() || "Command sent to Obsidian.";
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () => runObsidianCommand({ config: params.config, id: params.id }),
+    render: (value) => value.stdout.trim() || "Command sent to Obsidian.",
+  });
+>>>>>>> upstream/main
 }
 
 export async function runWikiObsidianDailyCli(params: {
@@ -500,12 +1030,74 @@ export async function runWikiObsidianDailyCli(params: {
   json?: boolean;
   stdout?: Pick<NodeJS.WriteStream, "write">;
 }) {
+<<<<<<< HEAD
   const result = await runObsidianDaily({ config: params.config });
   const summary = params.json
     ? JSON.stringify(result, null, 2)
     : result.stdout.trim() || "Opened today's daily note.";
   writeOutput(summary, params.stdout);
   return result;
+=======
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () => runObsidianDaily({ config: params.config }),
+    render: (value) => value.stdout.trim() || "Opened today's daily note.",
+  });
+}
+
+function formatChatGptImportSummary(result: ChatGptImportResult): string {
+  if (result.dryRun) {
+    return `ChatGPT import dry run scanned ${result.conversationCount} conversations (${result.createdCount} new, ${result.updatedCount} updated, ${result.skippedCount} unchanged).`;
+  }
+  const runSuffix = result.runId ? ` Run id: ${result.runId}.` : "";
+  return `ChatGPT import applied ${result.conversationCount} conversations (${result.createdCount} new, ${result.updatedCount} updated, ${result.skippedCount} unchanged). Refreshed ${result.indexUpdatedFiles.length} index file${result.indexUpdatedFiles.length === 1 ? "" : "s"}.${runSuffix}`;
+}
+
+function formatChatGptRollbackSummary(result: ChatGptRollbackResult): string {
+  if (result.alreadyRolledBack) {
+    return `ChatGPT import run ${result.runId} was already rolled back.`;
+  }
+  return `Rolled back ChatGPT import run ${result.runId} (${result.removedCount} removed, ${result.restoredCount} restored). Refreshed ${result.indexUpdatedFiles.length} index file${result.indexUpdatedFiles.length === 1 ? "" : "s"}.`;
+}
+
+export async function runWikiChatGptImport(params: {
+  config: ResolvedMemoryWikiConfig;
+  exportPath: string;
+  dryRun?: boolean;
+  json?: boolean;
+  stdout?: Pick<NodeJS.WriteStream, "write">;
+}) {
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () =>
+      importChatGptConversations({
+        config: params.config,
+        exportPath: params.exportPath,
+        dryRun: params.dryRun,
+      }),
+    render: formatChatGptImportSummary,
+  });
+}
+
+export async function runWikiChatGptRollback(params: {
+  config: ResolvedMemoryWikiConfig;
+  runId: string;
+  json?: boolean;
+  stdout?: Pick<NodeJS.WriteStream, "write">;
+}) {
+  return runWikiCommandWithSummary({
+    json: params.json,
+    stdout: params.stdout,
+    run: () =>
+      rollbackChatGptImportRun({
+        config: params.config,
+        runId: params.runId,
+      }),
+    render: formatChatGptRollbackSummary,
+  });
+>>>>>>> upstream/main
 }
 
 export function registerWikiCli(
@@ -568,6 +1160,7 @@ export function registerWikiCli(
       await runWikiIngest({ config, inputPath, title: opts.title, json: opts.json });
     });
 
+<<<<<<< HEAD
   wiki
     .command("search")
     .description("Search wiki pages and, when configured, the active memory corpus")
@@ -583,6 +1176,18 @@ export function registerWikiCli(
       `Search corpus (${WIKI_SEARCH_CORPORA.join(", ")})`,
       (value: string) => parseWikiSearchEnumOption(value, WIKI_SEARCH_CORPORA, "corpus"),
     )
+=======
+  addWikiSearchConfigOptions(
+    wiki
+      .command("search")
+      .description("Search wiki pages and, when configured, the active memory corpus")
+      .argument("<query>", "Search query")
+      .option("--max-results <n>", "Maximum results", (value: string) =>
+        parseWikiPositiveIntegerOption(value, "--max-results"),
+      )
+      .option("--mode <mode>", `Search mode (${WIKI_SEARCH_MODES.join(", ")})`),
+  )
+>>>>>>> upstream/main
     .option("--json", "Print JSON")
     .action(async (query: string, opts: WikiSearchCommandOptions) => {
       await runWikiSearch({
@@ -592,10 +1197,15 @@ export function registerWikiCli(
         maxResults: opts.maxResults,
         searchBackend: opts.backend,
         searchCorpus: opts.corpus,
+<<<<<<< HEAD
+=======
+        mode: opts.mode,
+>>>>>>> upstream/main
         json: opts.json,
       });
     });
 
+<<<<<<< HEAD
   wiki
     .command("get")
     .description("Read a wiki page by id or relative path, with optional active-memory fallback")
@@ -612,6 +1222,20 @@ export function registerWikiCli(
       `Search corpus (${WIKI_SEARCH_CORPORA.join(", ")})`,
       (value: string) => parseWikiSearchEnumOption(value, WIKI_SEARCH_CORPORA, "corpus"),
     )
+=======
+  addWikiSearchConfigOptions(
+    wiki
+      .command("get")
+      .description("Read a wiki page by id or relative path, with optional active-memory fallback")
+      .argument("<lookup>", "Relative path or page id")
+      .option("--from <n>", "Start line", (value: string) =>
+        parseWikiPositiveIntegerOption(value, "--from"),
+      )
+      .option("--lines <n>", "Number of lines", (value: string) =>
+        parseWikiPositiveIntegerOption(value, "--lines"),
+      ),
+  )
+>>>>>>> upstream/main
     .option("--json", "Print JSON")
     .action(async (lookup: string, opts: WikiGetCommandOptions) => {
       await runWikiGet({
@@ -627,6 +1251,7 @@ export function registerWikiCli(
     });
 
   const apply = wiki.command("apply").description("Apply narrow wiki mutations");
+<<<<<<< HEAD
   apply
     .command("synthesis")
     .description("Create or refresh a synthesis page with managed summary content")
@@ -649,6 +1274,16 @@ export function registerWikiCli(
       Number(value),
     )
     .option("--status <status>", "Page status")
+=======
+  addWikiApplyMutationOptions(
+    apply
+      .command("synthesis")
+      .description("Create or refresh a synthesis page with managed summary content")
+      .argument("<title>", "Synthesis title")
+      .option("--body <text>", "Summary body text")
+      .option("--body-file <path>", "Read summary body text from a file"),
+  )
+>>>>>>> upstream/main
     .option("--json", "Print JSON")
     .action(async (title: string, opts: WikiApplySynthesisCommandOptions) => {
       await runWikiApplySynthesis({
@@ -665,6 +1300,7 @@ export function registerWikiCli(
         json: opts.json,
       });
     });
+<<<<<<< HEAD
   apply
     .command("metadata")
     .description("Update metadata on an existing page")
@@ -686,6 +1322,15 @@ export function registerWikiCli(
     )
     .option("--clear-confidence", "Remove any stored confidence value")
     .option("--status <status>", "Page status")
+=======
+  addWikiApplyMutationOptions(
+    apply
+      .command("metadata")
+      .description("Update metadata on an existing page")
+      .argument("<lookup>", "Relative path or page id"),
+  )
+    .option("--clear-confidence", "Remove any stored confidence value")
+>>>>>>> upstream/main
     .option("--json", "Print JSON")
     .action(async (lookup: string, opts: WikiApplyMetadataCommandOptions) => {
       await runWikiApplyMetadata({
@@ -704,10 +1349,17 @@ export function registerWikiCli(
 
   const bridge = wiki
     .command("bridge")
+<<<<<<< HEAD
     .description("Import public memory-core artifacts into the wiki vault");
   bridge
     .command("import")
     .description("Sync bridge-backed memory-core artifacts into wiki source pages")
+=======
+    .description("Import public memory artifacts into the wiki vault");
+  bridge
+    .command("import")
+    .description("Sync bridge-backed memory artifacts into wiki source pages")
+>>>>>>> upstream/main
     .option("--json", "Print JSON")
     .action(async (opts: WikiBridgeImportCommandOptions) => {
       await runWikiBridgeImport({ config, appConfig, json: opts.json });
@@ -724,6 +1376,39 @@ export function registerWikiCli(
       await runWikiUnsafeLocalImport({ config, appConfig, json: opts.json });
     });
 
+<<<<<<< HEAD
+=======
+  const chatgpt = wiki
+    .command("chatgpt")
+    .description("Import ChatGPT export history into wiki source pages");
+  chatgpt
+    .command("import")
+    .description("Import a ChatGPT export into draft wiki source pages")
+    .requiredOption("--export <path>", "ChatGPT export directory or conversations.json path")
+    .option("--dry-run", "Preview changes without writing", false)
+    .option("--json", "Print JSON")
+    .action(async (opts: WikiChatGptImportCommandOptions) => {
+      await runWikiChatGptImport({
+        config,
+        exportPath: opts.export!,
+        dryRun: opts.dryRun,
+        json: opts.json,
+      });
+    });
+  chatgpt
+    .command("rollback")
+    .description("Roll back a previously applied ChatGPT import run")
+    .argument("<run-id>", "Import run id")
+    .option("--json", "Print JSON")
+    .action(async (runId: string, opts: WikiChatGptRollbackCommandOptions) => {
+      await runWikiChatGptRollback({
+        config,
+        runId,
+        json: opts.json,
+      });
+    });
+
+>>>>>>> upstream/main
   const obsidian = wiki.command("obsidian").description("Run official Obsidian CLI helpers");
   obsidian
     .command("status")

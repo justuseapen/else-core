@@ -1,7 +1,9 @@
+// Focuses an existing subagent run for follow-up routing.
 import {
   resolveAcpSessionCwd,
   resolveAcpThreadSessionDetailLines,
-} from "../../../acp/runtime/session-identifiers.js";
+} from "@openclaw/acp-core/runtime/session-identifiers";
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
 import { readAcpSessionEntry } from "../../../acp/runtime/session-meta.js";
 import { normalizeChatType } from "../../../channels/chat-type.js";
 import {
@@ -16,10 +18,20 @@ import {
   resolveThreadBindingPlacementForCurrentContext,
   resolveThreadBindingSpawnPolicy,
 } from "../../../channels/thread-bindings-policy.js";
+import { normalizeConversationRef } from "../../../infra/outbound/session-binding-normalization.js";
 import { getSessionBindingService } from "../../../infra/outbound/session-binding-service.js";
 import type { CommandHandlerResult } from "../commands-types.js";
 import { resolveConversationBindingContextFromAcpCommand } from "../conversation-binding-input.js";
+<<<<<<< HEAD
 import { type SubagentsCommandContext, resolveFocusTargetSession, stopWithText } from "./shared.js";
+=======
+import {
+  type SubagentsCommandContext,
+  resolveCommandSubagentController,
+  resolveFocusTargetSession,
+  stopWithText,
+} from "./shared.js";
+>>>>>>> upstream/main
 
 type FocusBindingContext = {
   channel: string;
@@ -37,12 +49,27 @@ function resolveFocusBindingContext(
     return null;
   }
   const chatType = normalizeChatType(params.ctx.ChatType);
+<<<<<<< HEAD
   return {
     channel: bindingContext.channel,
     accountId: bindingContext.accountId,
     conversationId: bindingContext.conversationId,
     ...(bindingContext.parentConversationId
       ? { parentConversationId: bindingContext.parentConversationId }
+=======
+  const conversation = normalizeConversationRef({
+    channel: bindingContext.channel,
+    accountId: bindingContext.accountId,
+    conversationId: bindingContext.conversationId,
+    parentConversationId: bindingContext.parentConversationId,
+  });
+  return {
+    channel: conversation.channel,
+    accountId: conversation.accountId,
+    conversationId: conversation.conversationId,
+    ...(conversation.parentConversationId
+      ? { parentConversationId: conversation.parentConversationId }
+>>>>>>> upstream/main
       : {}),
     placement:
       chatType === "direct"
@@ -63,6 +90,7 @@ export async function handleSubagentsFocusAction(
     return stopWithText("Usage: /focus <subagent-label|session-key|session-id|session-label>");
   }
 
+<<<<<<< HEAD
   const bindingContext = resolveFocusBindingContext(params);
   if (!bindingContext) {
     return stopWithText("⚠️ /focus must be run inside a bindable conversation.");
@@ -82,6 +110,36 @@ export async function handleSubagentsFocusAction(
     return stopWithText(`⚠️ Unable to resolve focus target: ${token}`);
   }
 
+=======
+  const controller = resolveCommandSubagentController(params, ctx.requesterKey);
+  if (controller.controlScope !== "children") {
+    return stopWithText("⚠️ Leaf subagents cannot control other sessions.");
+  }
+
+  const bindingContext = resolveFocusBindingContext(params);
+  if (!bindingContext) {
+    return stopWithText("⚠️ /focus must be run inside a bindable conversation.");
+  }
+
+  const bindingService = getSessionBindingService();
+  const capabilities = bindingService.getCapabilities({
+    channel: bindingContext.channel,
+    accountId: bindingContext.accountId,
+  });
+  if (!capabilities.adapterAvailable || !capabilities.bindSupported) {
+    return stopWithText("⚠️ Conversation bindings are unavailable for this account.");
+  }
+
+  const focusTarget = await resolveFocusTargetSession({
+    runs,
+    token,
+    requesterKey: controller.controllerSessionKey,
+  });
+  if (!focusTarget) {
+    return stopWithText(`⚠️ Unable to resolve focus target: ${token}`);
+  }
+
+>>>>>>> upstream/main
   if (bindingContext.placement === "child") {
     const spawnPolicy = resolveThreadBindingSpawnPolicy({
       cfg: params.cfg,
@@ -109,16 +167,14 @@ export async function handleSubagentsFocusAction(
     }
   }
 
-  const senderId = params.command.senderId?.trim() || "";
-  const existingBinding = bindingService.resolveByConversation({
+  const senderId = normalizeOptionalString(params.command.senderId) ?? "";
+  const conversationRef = normalizeConversationRef({
     channel: bindingContext.channel,
     accountId: bindingContext.accountId,
     conversationId: bindingContext.conversationId,
-    ...(bindingContext.parentConversationId &&
-    bindingContext.parentConversationId !== bindingContext.conversationId
-      ? { parentConversationId: bindingContext.parentConversationId }
-      : {}),
+    parentConversationId: bindingContext.parentConversationId,
   });
+  const existingBinding = bindingService.resolveByConversation(conversationRef);
   const boundBy =
     typeof existingBinding?.metadata?.boundBy === "string"
       ? existingBinding.metadata.boundBy.trim()
@@ -145,15 +201,12 @@ export async function handleSubagentsFocusAction(
     binding = await bindingService.bind({
       targetSessionKey: focusTarget.targetSessionKey,
       targetKind: focusTarget.targetKind === "acp" ? "session" : "subagent",
-      conversation: {
+      conversation: normalizeConversationRef({
         channel: bindingContext.channel,
         accountId: bindingContext.accountId,
         conversationId: bindingContext.conversationId,
-        ...(bindingContext.parentConversationId &&
-        bindingContext.parentConversationId !== bindingContext.conversationId
-          ? { parentConversationId: bindingContext.parentConversationId }
-          : {}),
-      },
+        parentConversationId: bindingContext.parentConversationId,
+      }),
       placement: bindingContext.placement,
       metadata: {
         threadName: resolveThreadBindingThreadName({

@@ -1,21 +1,14 @@
 ---
-summary: "Contributor guide for adding a new shared capability to the OpenClaw plugin system"
-read_when:
-  - Adding a new core capability and plugin registration surface
-  - Deciding whether code belongs in core, a vendor plugin, or a feature plugin
-  - Wiring a new runtime helper for channels or tools
-title: "Adding Capabilities (Contributor Guide)"
-sidebarTitle: "Adding Capabilities"
+summary: "Redirect to /plugins/adding-capabilities"
+title: "Adding capabilities (redirect)"
+redirect: /plugins/adding-capabilities
 ---
 
-# Adding Capabilities
+This contributor guide moved to [Adding capabilities](/plugins/adding-capabilities).
 
-<Info>
-  This is a **contributor guide** for OpenClaw core developers. If you are
-  building an external plugin, see [Building Plugins](/plugins/building-plugins)
-  instead.
-</Info>
+## Related
 
+<<<<<<< HEAD
 Use this when OpenClaw needs a new domain such as image generation, video
 generation, or some future vendor-backed feature area.
 
@@ -117,3 +110,7 @@ Before shipping a new capability, verify:
 
 If a PR skips the capability layer and hardcodes vendor behavior into a
 channel/tool, send it back and define the contract first.
+=======
+- [Plugin internals](/plugins/architecture)
+- [Building plugins](/plugins/building-plugins)
+>>>>>>> upstream/main

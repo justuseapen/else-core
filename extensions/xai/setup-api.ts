@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
+=======
+// Xai API module exposes the plugin public contract.
+import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+import { isRecord } from "./src/tool-config-shared.js";
+>>>>>>> upstream/main
 
 export default definePluginEntry({
   id: "xai",

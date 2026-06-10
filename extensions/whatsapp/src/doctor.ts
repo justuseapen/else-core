@@ -1,8 +1,16 @@
+<<<<<<< HEAD
+=======
+// Whatsapp plugin module implements doctor behavior.
+>>>>>>> upstream/main
 import type {
   ChannelDoctorAdapter,
   ChannelDoctorConfigMutation,
 } from "openclaw/plugin-sdk/channel-contract";
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 
 export function normalizeCompatibilityConfig({
   cfg,

@@ -1,16 +1,14 @@
 ---
-summary: "OpenClaw on Oracle Cloud (Always Free ARM)"
-read_when:
-  - Setting up OpenClaw on Oracle Cloud
-  - Looking for low-cost VPS hosting for OpenClaw
-  - Want 24/7 OpenClaw on a small server
-title: "Oracle Cloud (Platform)"
+summary: "Redirect to /install/oracle"
+title: "Oracle Cloud (platform)"
+redirect: /install/oracle
 ---
 
-# OpenClaw on Oracle Cloud (OCI)
+This page has moved to [Oracle Cloud](/install/oracle).
 
-## Goal
+## Related
 
+<<<<<<< HEAD
 Run a persistent OpenClaw Gateway on Oracle Cloud's **Always Free** ARM tier.
 
 Oracle’s free tier can be a great fit for OpenClaw (especially if you already have an OCI account), but it comes with tradeoffs:
@@ -303,3 +301,7 @@ openclaw backup create
 - [Gateway configuration](/gateway/configuration) — all config options
 - [DigitalOcean guide](/platforms/digitalocean) — if you want paid + easier signup
 - [Hetzner guide](/install/hetzner) — Docker-based alternative
+=======
+- [Install overview](/install)
+- [VPS hosting](/vps)
+>>>>>>> upstream/main

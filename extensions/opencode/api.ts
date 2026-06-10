@@ -1,9 +1,18 @@
+<<<<<<< HEAD
 import { OPENCODE_ZEN_DEFAULT_MODEL_REF } from "./onboard.js";
+=======
+// Opencode API module exposes the plugin public contract.
+export {
+  applyOpencodeZenModelDefault,
+  OPENCODE_ZEN_DEFAULT_MODEL,
+} from "openclaw/plugin-sdk/provider-onboard";
+>>>>>>> upstream/main
 export {
   applyOpencodeZenConfig,
   applyOpencodeZenProviderConfig,
   OPENCODE_ZEN_DEFAULT_MODEL_REF,
 } from "./onboard.js";
+<<<<<<< HEAD
 
 const LEGACY_OPENCODE_ZEN_DEFAULT_MODELS = new Set([
   "opencode/claude-opus-4-5",
@@ -60,3 +69,5 @@ export function applyOpencodeZenModelDefault(
     changed: true,
   };
 }
+=======
+>>>>>>> upstream/main

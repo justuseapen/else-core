@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Synthetic API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export { applySyntheticConfig, applySyntheticProviderConfig } from "./onboard.js";
 export {
   buildSyntheticModelDefinition,

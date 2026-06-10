@@ -1,3 +1,4 @@
+// Verifies plugin minimum host version compatibility checks.
 import { describe, expect, it } from "vitest";
 import {
   checkMinHostVersion,
@@ -10,6 +11,13 @@ const MIN_HOST_REQUIREMENT = {
   raw: ">=2026.3.22",
   minimumLabel: "2026.3.22",
 };
+<<<<<<< HEAD
+=======
+const BETA_MIN_HOST_REQUIREMENT = {
+  raw: ">=2026.5.1-beta.1",
+  minimumLabel: "2026.5.1-beta.1",
+};
+>>>>>>> upstream/main
 
 function expectValidHostCheck(currentVersion: string, minHostVersion?: string) {
   expectHostCheckResult({
@@ -57,6 +65,7 @@ describe("min-host-version", () => {
 
   it("parses semver floors", () => {
     expect(parseMinHostVersionRequirement(">=2026.3.22")).toEqual(MIN_HOST_REQUIREMENT);
+<<<<<<< HEAD
   });
 
   it.each(["2026.3.22", 123, ">=2026.3.22 garbage"] as const)(
@@ -75,6 +84,51 @@ describe("min-host-version", () => {
         kind: "unknown_host_version",
         requirement: MIN_HOST_REQUIREMENT,
       },
+=======
+    expect(parseMinHostVersionRequirement(">=2026.5.1-beta.1")).toEqual(BETA_MIN_HOST_REQUIREMENT);
+    expect(parseMinHostVersionRequirement(">=2026.5.1+20260501")).toEqual({
+      raw: ">=2026.5.1+20260501",
+      minimumLabel: "2026.5.1+20260501",
+    });
+  });
+
+  it("can parse legacy bare semver floors for runtime upgrade compatibility", () => {
+    expect(parseMinHostVersionRequirement("2026.3.22", { allowLegacyBareSemver: true })).toEqual({
+      raw: "2026.3.22",
+      minimumLabel: "2026.3.22",
+    });
+    expect(
+      checkMinHostVersion({
+        currentVersion: "2026.3.22",
+        minHostVersion: "2026.3.22",
+        allowLegacyBareSemver: true,
+      }),
+    ).toEqual({
+      ok: true,
+      requirement: {
+        raw: "2026.3.22",
+        minimumLabel: "2026.3.22",
+      },
+    });
+  });
+
+  it.each(["2026.3.22", 123, ">=2026.3.22 garbage"] as const)(
+    "rejects invalid floor syntax and host checks: %p",
+    (minHostVersion) => {
+      expectInvalidMinHostVersion(minHostVersion);
+    },
+  );
+
+  it.each([
+    {
+      name: "reports unknown host versions distinctly",
+      currentVersion: "unknown",
+      expected: {
+        ok: false,
+        kind: "unknown_host_version",
+        requirement: MIN_HOST_REQUIREMENT,
+      },
+>>>>>>> upstream/main
     },
     {
       name: "reports incompatible hosts",

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix tests cover client plugin behavior.
+>>>>>>> upstream/main
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createMockMatrixClient,
@@ -15,6 +19,8 @@ const {
   isBunRuntimeMock,
   resolveMatrixAuthContextMock,
 } = matrixClientResolverMocks;
+
+const TEST_CFG = {};
 
 vi.mock("../active-client.js", () => ({
   getActiveMatrixClient: (...args: unknown[]) => getActiveMatrixClientMock(...args),
@@ -56,7 +62,14 @@ describe("matrix send client helpers", () => {
   it("stops one-off shared clients when no active monitor client is registered", async () => {
     vi.stubEnv("OPENCLAW_GATEWAY_PORT", "18799");
 
+<<<<<<< HEAD
     const result = await withResolvedMatrixSendClient({ accountId: "default" }, async () => "ok");
+=======
+    const result = await withResolvedMatrixSendClient(
+      { cfg: TEST_CFG, accountId: "default" },
+      async () => "ok",
+    );
+>>>>>>> upstream/main
 
     await expectOneOffSharedMatrixClient({
       prepareForOneOffCalls: 0,
@@ -70,6 +83,7 @@ describe("matrix send client helpers", () => {
     const activeClient = createMockMatrixClient();
     getActiveMatrixClientMock.mockReturnValue(activeClient);
 
+<<<<<<< HEAD
     const result = await withResolvedMatrixSendClient({ accountId: "default" }, async (client) => {
       expect(client).toBe(activeClient);
       return "ok";
@@ -80,6 +94,21 @@ describe("matrix send client helpers", () => {
     expect(activeClient.start).toHaveBeenCalledTimes(1);
     expect(activeClient.stop).not.toHaveBeenCalled();
     expect(activeClient.stopAndPersist).not.toHaveBeenCalled();
+=======
+    const result = await withResolvedMatrixSendClient(
+      { cfg: TEST_CFG, accountId: "default" },
+      async (client) => {
+        expect(client).toBe(activeClient);
+        return "ok";
+      },
+    );
+
+    expect(result).toBe("ok");
+    expect(acquireSharedMatrixClientMock).not.toHaveBeenCalled();
+    expect(activeClient["start"]).toHaveBeenCalledTimes(1);
+    expect(activeClient["stop"]).not.toHaveBeenCalled();
+    expect(activeClient["stopAndPersist"]).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 
   it("uses the effective account id when auth resolution is implicit", async () => {
@@ -89,7 +118,11 @@ describe("matrix send client helpers", () => {
       accountId: "ops",
       resolved: {},
     });
+<<<<<<< HEAD
     await withResolvedMatrixSendClient({}, async () => {});
+=======
+    await withResolvedMatrixSendClient({ cfg: TEST_CFG }, async () => {});
+>>>>>>> upstream/main
 
     await expectOneOffSharedMatrixClient({
       accountId: "ops",
@@ -121,7 +154,11 @@ describe("matrix send client helpers", () => {
     acquireSharedMatrixClientMock.mockResolvedValue(sharedClient);
 
     await expect(
+<<<<<<< HEAD
       withResolvedMatrixSendClient({ accountId: "default" }, async () => {
+=======
+      withResolvedMatrixSendClient({ cfg: TEST_CFG, accountId: "default" }, async () => {
+>>>>>>> upstream/main
         throw new Error("boom");
       }),
     ).rejects.toThrow("boom");
@@ -133,15 +170,26 @@ describe("matrix send client helpers", () => {
     const sharedClient = createMockMatrixClient();
     acquireSharedMatrixClientMock.mockResolvedValue(sharedClient);
 
+<<<<<<< HEAD
     await withResolvedMatrixSendClient({ accountId: "default" }, async () => "ok");
 
     expect(sharedClient.start).toHaveBeenCalledTimes(1);
     expect(sharedClient.prepareForOneOff).not.toHaveBeenCalled();
+=======
+    await withResolvedMatrixSendClient({ cfg: TEST_CFG, accountId: "default" }, async () => "ok");
+
+    expect(sharedClient["start"]).toHaveBeenCalledTimes(1);
+    expect(sharedClient["prepareForOneOff"]).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 
   it("keeps one-off control clients lightweight when no active monitor client is registered", async () => {
     const result = await withResolvedMatrixControlClient(
+<<<<<<< HEAD
       { accountId: "default" },
+=======
+      { cfg: TEST_CFG, accountId: "default" },
+>>>>>>> upstream/main
       async () => "ok",
     );
 
@@ -158,7 +206,11 @@ describe("matrix send client helpers", () => {
     getActiveMatrixClientMock.mockReturnValue(activeClient);
 
     const result = await withResolvedMatrixControlClient(
+<<<<<<< HEAD
       { accountId: "default" },
+=======
+      { cfg: TEST_CFG, accountId: "default" },
+>>>>>>> upstream/main
       async (client) => {
         expect(client).toBe(activeClient);
         return "ok";
@@ -167,8 +219,14 @@ describe("matrix send client helpers", () => {
 
     expect(result).toBe("ok");
     expect(acquireSharedMatrixClientMock).not.toHaveBeenCalled();
+<<<<<<< HEAD
     expect(activeClient.start).not.toHaveBeenCalled();
     expect(activeClient.stop).not.toHaveBeenCalled();
     expect(activeClient.stopAndPersist).not.toHaveBeenCalled();
+=======
+    expect(activeClient["start"]).not.toHaveBeenCalled();
+    expect(activeClient["stop"]).not.toHaveBeenCalled();
+    expect(activeClient["stopAndPersist"]).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 });

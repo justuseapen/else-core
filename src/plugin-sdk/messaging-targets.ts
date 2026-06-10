@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+/** @deprecated Use `openclaw/plugin-sdk/channel-targets`. */
+>>>>>>> upstream/main
 export {
   buildMessagingTarget,
   ensureTargetId,

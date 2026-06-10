@@ -1,8 +1,16 @@
+<<<<<<< HEAD
+=======
+// Status summary runtime tests cover model context-token resolution.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { statusSummaryRuntime } from "./status.summary.runtime.js";
 
 describe("statusSummaryRuntime.resolveContextTokensForModel", () => {
+<<<<<<< HEAD
   it("matches provider context window overrides across canonical provider aliases", () => {
+=======
+  it("does not match provider context window overrides across provider id variants", () => {
+>>>>>>> upstream/main
     const contextTokens = statusSummaryRuntime.resolveContextTokensForModel({
       cfg: {
         models: {
@@ -18,7 +26,11 @@ describe("statusSummaryRuntime.resolveContextTokensForModel", () => {
       fallbackContextTokens: 999,
     });
 
+<<<<<<< HEAD
     expect(contextTokens).toBe(123_456);
+=======
+    expect(contextTokens).toBe(999);
+>>>>>>> upstream/main
   });
 
   it("prefers per-model contextTokens over contextWindow", () => {
@@ -26,13 +38,21 @@ describe("statusSummaryRuntime.resolveContextTokensForModel", () => {
       cfg: {
         models: {
           providers: {
+<<<<<<< HEAD
             "openai-codex": {
+=======
+            openai: {
+>>>>>>> upstream/main
               models: [{ id: "gpt-5.4", contextWindow: 1_050_000, contextTokens: 272_000 }],
             },
           },
         },
       } as never,
+<<<<<<< HEAD
       provider: "openai-codex",
+=======
+      provider: "openai",
+>>>>>>> upstream/main
       model: "gpt-5.4",
       fallbackContextTokens: 999,
     });
@@ -41,6 +61,90 @@ describe("statusSummaryRuntime.resolveContextTokensForModel", () => {
   });
 });
 
+<<<<<<< HEAD
+=======
+describe("statusSummaryRuntime.classifySessionKey", () => {
+  it("classifies cron history sessions distinctly", () => {
+    expect(statusSummaryRuntime.classifySessionKey("agent:main:cron:daily-digest")).toBe("cron");
+    expect(
+      statusSummaryRuntime.classifySessionKey("agent:avery:cron:daily-digest:run:abc123"),
+    ).toBe("cron");
+  });
+});
+
+describe("statusSummaryRuntime.resolveSessionRuntimeLabel", () => {
+  it("uses the shared /status runtime label for the implicit OpenAI Codex route", () => {
+    expect(
+      statusSummaryRuntime.resolveSessionRuntimeLabel({
+        cfg: {} as never,
+        entry: {
+          sessionId: "session-1",
+          updatedAt: 0,
+        },
+        provider: "openai",
+        model: "gpt-5.5",
+        sessionKey: "agent:main:main",
+      }),
+    ).toBe("OpenAI Codex");
+  });
+
+  it("preserves configured default model CLI runtimes", () => {
+    expect(
+      statusSummaryRuntime.resolveSessionRuntimeLabel({
+        cfg: {
+          agents: {
+            defaults: {
+              models: {
+                "anthropic/claude-sonnet-4-6": { agentRuntime: { id: "claude-cli" } },
+              },
+            },
+          },
+        } as never,
+        entry: {
+          sessionId: "session-1",
+          updatedAt: 0,
+        },
+        provider: "anthropic",
+        model: "claude-sonnet-4-6",
+        sessionKey: "agent:main:main",
+      }),
+    ).toBe("Claude CLI");
+  });
+
+  it("preserves configured agent model runtimes before harness selection", () => {
+    expect(
+      statusSummaryRuntime.resolveSessionRuntimeLabel({
+        cfg: {
+          agents: {
+            defaults: {
+              models: {
+                "openai/gpt-5.5": { agentRuntime: { id: "openclaw" } },
+              },
+            },
+            list: [
+              {
+                id: "research",
+                models: {
+                  "openai/gpt-5.5": { agentRuntime: { id: "codex" } },
+                },
+              },
+            ],
+          },
+        } as never,
+        entry: {
+          sessionId: "session-1",
+          updatedAt: 0,
+        },
+        provider: "openai",
+        model: "gpt-5.5",
+        agentId: "research",
+        sessionKey: "agent:research:main",
+      }),
+    ).toBe("OpenAI Codex");
+  });
+});
+
+>>>>>>> upstream/main
 describe("statusSummaryRuntime.resolveSessionModelRef", () => {
   const cfg = {
     agents: {
@@ -79,17 +183,59 @@ describe("statusSummaryRuntime.resolveSessionModelRef", () => {
         {
           agents: {
             defaults: {
+<<<<<<< HEAD
               model: { primary: "openai/gpt-5.4" },
+=======
+              model: { primary: "openai/gpt-5.5" },
+>>>>>>> upstream/main
             },
           },
         } as never,
         {
+<<<<<<< HEAD
           model: "gpt-5.4",
+=======
+          model: "gpt-5.5",
+>>>>>>> upstream/main
         },
       ),
+    ).toEqual({
+      provider: "openai",
+<<<<<<< HEAD
+      model: "gpt-5.4",
+    });
+  });
+=======
+      model: "gpt-5.5",
+    });
+  });
+
+  it("prefers explicit overrides ahead of fallback runtime fields", () => {
+    expect(
+      statusSummaryRuntime.resolveSessionModelRef(cfg, {
+        providerOverride: "openai",
+        modelOverride: "gpt-5.4",
+        modelProvider: "amazon-bedrock",
+        model: "minimax.minimax-m2.5",
+      }),
     ).toEqual({
       provider: "openai",
       model: "gpt-5.4",
     });
   });
+
+  it("falls back to configured defaults when persisted session model fields are malformed", () => {
+    expect(
+      statusSummaryRuntime.resolveSessionModelRef(cfg, {
+        modelProvider: { provider: "openai" },
+        model: false,
+        providerOverride: ["anthropic"],
+        modelOverride: 123,
+      } as never),
+    ).toEqual({
+      provider: "anthropic",
+      model: "claude-sonnet-4-6",
+    });
+  });
+>>>>>>> upstream/main
 });

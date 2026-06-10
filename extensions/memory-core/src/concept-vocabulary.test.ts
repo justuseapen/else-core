@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Memory Core tests cover concept vocabulary plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   classifyConceptTagScript,
@@ -13,6 +17,7 @@ describe("concept vocabulary", () => {
         "Configuración de gateway, configuration du routeur, Sicherung und Überwachung Glacier.",
     });
 
+<<<<<<< HEAD
     expect(tags).toEqual(
       expect.arrayContaining([
         "gateway",
@@ -24,6 +29,17 @@ describe("concept vocabulary", () => {
         "glacier",
       ]),
     );
+=======
+    expect(tags).toStrictEqual([
+      "gateway",
+      "glacier",
+      "routeur",
+      "sicherung",
+      "überwachung",
+      "configuración",
+      "configuration",
+    ]);
+>>>>>>> upstream/main
     expect(tags).not.toContain("de");
     expect(tags).not.toContain("du");
     expect(tags).not.toContain("und");
@@ -37,6 +53,7 @@ describe("concept vocabulary", () => {
         "障害対応ルーター設定とバックアップ確認。路由器备份与网关同步。라우터 백업 페일오버 점검.",
     });
 
+<<<<<<< HEAD
     expect(tags).toEqual(
       expect.arrayContaining([
         "障害対応",
@@ -49,6 +66,18 @@ describe("concept vocabulary", () => {
         "백업",
       ]),
     );
+=======
+    expect(tags).toStrictEqual([
+      "バックアップ",
+      "ルーター",
+      "障害対応",
+      "路由器",
+      "备份",
+      "网关",
+      "라우터",
+      "백업",
+    ]);
+>>>>>>> upstream/main
     expect(tags).not.toContain("ルー");
     expect(tags).not.toContain("ター");
   });
@@ -59,6 +88,25 @@ describe("concept vocabulary", () => {
     expect(classifyConceptTagScript("qmd路由器")).toBe("mixed");
   });
 
+<<<<<<< HEAD
+=======
+  it("drops chat scaffolding stop words from derived concept tags", () => {
+    const tags = deriveConceptTags({
+      path: "memory/.dreams/session-corpus/2026-04-16.txt",
+      snippet:
+        "Assistant: the system should remind you about the Ollama provider setup in your workspace.",
+    });
+
+    expect(tags).toContain("ollama");
+    expect(tags).toContain("provider");
+    expect(tags).not.toContain("assistant");
+    expect(tags).not.toContain("system");
+    expect(tags).not.toContain("the");
+    expect(tags).not.toContain("you");
+    expect(tags).not.toContain("your");
+  });
+
+>>>>>>> upstream/main
   it("summarizes entry coverage across latin, cjk, and mixed tags", () => {
     expect(
       summarizeConceptTagScriptCoverage([

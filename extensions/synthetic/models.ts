@@ -1,9 +1,17 @@
+<<<<<<< HEAD
+=======
+// Synthetic plugin module implements models behavior.
+>>>>>>> upstream/main
 import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/provider-model-shared";
 
 export const SYNTHETIC_BASE_URL = "https://api.synthetic.new/anthropic";
 export const SYNTHETIC_DEFAULT_MODEL_ID = "hf:MiniMaxAI/MiniMax-M2.5";
 export const SYNTHETIC_DEFAULT_MODEL_REF = `synthetic/${SYNTHETIC_DEFAULT_MODEL_ID}`;
+<<<<<<< HEAD
 export const SYNTHETIC_DEFAULT_COST = {
+=======
+const SYNTHETIC_DEFAULT_COST = {
+>>>>>>> upstream/main
   input: 0,
   output: 0,
   cacheRead: 0,
@@ -181,7 +189,11 @@ export const SYNTHETIC_MODEL_CATALOG = [
   },
 ] as const;
 
+<<<<<<< HEAD
 export type SyntheticCatalogEntry = (typeof SYNTHETIC_MODEL_CATALOG)[number];
+=======
+type SyntheticCatalogEntry = (typeof SYNTHETIC_MODEL_CATALOG)[number];
+>>>>>>> upstream/main
 
 export function buildSyntheticModelDefinition(entry: SyntheticCatalogEntry): ModelDefinitionConfig {
   return {

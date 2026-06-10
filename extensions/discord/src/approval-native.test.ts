@@ -1,8 +1,17 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { clearSessionStoreCacheForTest } from "../../../src/config/sessions.js";
+=======
+// Discord tests cover approval native plugin behavior.
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { clearSessionStoreCacheForTest } from "openclaw/plugin-sdk/session-store-runtime";
+import { describe, expect, it } from "vitest";
+>>>>>>> upstream/main
 import {
   createDiscordNativeApprovalAdapter,
   getDiscordApprovalCapability,
@@ -15,6 +24,19 @@ const NATIVE_APPROVAL_CFG = {
     ownerAllowFrom: ["discord:555555555"],
   },
 } as const;
+<<<<<<< HEAD
+=======
+const NATIVE_DELIVERY_CFG = {
+  ...NATIVE_APPROVAL_CFG,
+  channels: {
+    discord: {
+      execApprovals: {
+        enabled: true,
+      },
+    },
+  },
+} as const;
+>>>>>>> upstream/main
 
 function writeStore(store: Record<string, unknown>) {
   fs.writeFileSync(STORE_PATH, `${JSON.stringify(store, null, 2)}\n`, "utf8");
@@ -115,7 +137,11 @@ describe("createDiscordNativeApprovalAdapter", () => {
     const adapter = createDiscordNativeApprovalAdapter();
 
     const target = await adapter.native?.resolveOriginTarget?.({
+<<<<<<< HEAD
       cfg: NATIVE_APPROVAL_CFG as never,
+=======
+      cfg: NATIVE_DELIVERY_CFG as never,
+>>>>>>> upstream/main
       accountId: "main",
       approvalKind: "plugin",
       request: {
@@ -139,7 +165,11 @@ describe("createDiscordNativeApprovalAdapter", () => {
     const adapter = createDiscordNativeApprovalAdapter();
 
     const target = await adapter.native?.resolveOriginTarget?.({
+<<<<<<< HEAD
       cfg: NATIVE_APPROVAL_CFG as never,
+=======
+      cfg: NATIVE_DELIVERY_CFG as never,
+>>>>>>> upstream/main
       accountId: "main",
       approvalKind: "plugin",
       request: {
@@ -160,6 +190,59 @@ describe("createDiscordNativeApprovalAdapter", () => {
     expect(target).toBeNull();
   });
 
+<<<<<<< HEAD
+=======
+  it("falls back to approver DMs for canonical Discord direct sessions", async () => {
+    const adapter = createDiscordNativeApprovalAdapter();
+
+    const target = await adapter.native?.resolveOriginTarget?.({
+      cfg: NATIVE_DELIVERY_CFG as never,
+      accountId: "main",
+      approvalKind: "plugin",
+      request: {
+        id: "abc",
+        request: {
+          title: "Plugin approval",
+          description: "Let plugin proceed",
+          sessionKey: "agent:main:discord:direct:123456789",
+          turnSourceChannel: "discord",
+          turnSourceTo: "123456789",
+          turnSourceAccountId: "main",
+        },
+        createdAtMs: 1,
+        expiresAtMs: 2,
+      },
+    });
+
+    expect(target).toBeNull();
+  });
+
+  it("falls back to approver DMs for account-scoped Discord direct sessions", async () => {
+    const adapter = createDiscordNativeApprovalAdapter();
+
+    const target = await adapter.native?.resolveOriginTarget?.({
+      cfg: NATIVE_DELIVERY_CFG as never,
+      accountId: "main",
+      approvalKind: "plugin",
+      request: {
+        id: "abc",
+        request: {
+          title: "Plugin approval",
+          description: "Let plugin proceed",
+          sessionKey: "agent:main:discord:default:direct:123456789",
+          turnSourceChannel: "discord",
+          turnSourceTo: "123456789",
+          turnSourceAccountId: "main",
+        },
+        createdAtMs: 1,
+        expiresAtMs: 2,
+      },
+    });
+
+    expect(target).toBeNull();
+  });
+
+>>>>>>> upstream/main
   it("ignores session-store turn targets for Discord DM sessions", async () => {
     writeStore({
       "agent:main:discord:dm:123456789": {
@@ -175,7 +258,11 @@ describe("createDiscordNativeApprovalAdapter", () => {
     const adapter = createDiscordNativeApprovalAdapter();
     const target = await adapter.native?.resolveOriginTarget?.({
       cfg: {
+<<<<<<< HEAD
         ...NATIVE_APPROVAL_CFG,
+=======
+        ...NATIVE_DELIVERY_CFG,
+>>>>>>> upstream/main
         session: { store: STORE_PATH },
       } as never,
       accountId: "main",
@@ -202,7 +289,11 @@ describe("createDiscordNativeApprovalAdapter", () => {
     const adapter = createDiscordNativeApprovalAdapter();
 
     const target = await adapter.native?.resolveOriginTarget?.({
+<<<<<<< HEAD
       cfg: NATIVE_APPROVAL_CFG as never,
+=======
+      cfg: NATIVE_DELIVERY_CFG as never,
+>>>>>>> upstream/main
       accountId: "main",
       approvalKind: "plugin",
       request: {
@@ -220,14 +311,22 @@ describe("createDiscordNativeApprovalAdapter", () => {
       },
     });
 
+<<<<<<< HEAD
     expect(target).toEqual({ to: "123456789" });
+=======
+    expect(target).toEqual({ to: "123456789", threadId: undefined });
+>>>>>>> upstream/main
   });
 
   it("falls back to extracting the channel id from the session key", async () => {
     const adapter = createDiscordNativeApprovalAdapter();
 
     const target = await adapter.native?.resolveOriginTarget?.({
+<<<<<<< HEAD
       cfg: NATIVE_APPROVAL_CFG as never,
+=======
+      cfg: NATIVE_DELIVERY_CFG as never,
+>>>>>>> upstream/main
       accountId: "main",
       approvalKind: "plugin",
       request: {
@@ -242,7 +341,59 @@ describe("createDiscordNativeApprovalAdapter", () => {
       },
     });
 
+<<<<<<< HEAD
     expect(target).toEqual({ to: "987654321" });
+=======
+    expect(target).toEqual({ to: "987654321", threadId: undefined });
+  });
+
+  it("preserves explicit turn-source thread ids on origin targets", async () => {
+    const adapter = createDiscordNativeApprovalAdapter();
+
+    const target = await adapter.native?.resolveOriginTarget?.({
+      cfg: NATIVE_DELIVERY_CFG as never,
+      accountId: "main",
+      approvalKind: "plugin",
+      request: {
+        id: "abc",
+        request: {
+          title: "Plugin approval",
+          description: "Let plugin proceed",
+          sessionKey: "agent:main:discord:channel:123456789:thread:777888999",
+          turnSourceChannel: "discord",
+          turnSourceTo: "channel:123456789",
+          turnSourceThreadId: "777888999",
+          turnSourceAccountId: "main",
+        },
+        createdAtMs: 1,
+        expiresAtMs: 2,
+      },
+    });
+
+    expect(target).toEqual({ to: "123456789", threadId: "777888999" });
+  });
+
+  it("falls back to extracting thread ids from the session key", async () => {
+    const adapter = createDiscordNativeApprovalAdapter();
+
+    const target = await adapter.native?.resolveOriginTarget?.({
+      cfg: NATIVE_DELIVERY_CFG as never,
+      accountId: "main",
+      approvalKind: "plugin",
+      request: {
+        id: "abc",
+        request: {
+          title: "Plugin approval",
+          description: "Let plugin proceed",
+          sessionKey: "agent:main:discord:channel:987654321:thread:444555666",
+        },
+        createdAtMs: 1,
+        expiresAtMs: 2,
+      },
+    });
+
+    expect(target).toEqual({ to: "987654321", threadId: "444555666" });
+>>>>>>> upstream/main
   });
 
   it("rejects origin delivery for requests bound to another Discord account", async () => {

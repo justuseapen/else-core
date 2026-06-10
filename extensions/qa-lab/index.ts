@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Qa Lab plugin entrypoint registers its OpenClaw integration.
+>>>>>>> upstream/main
 import { definePluginEntry } from "./runtime-api.js";
 import { registerQaLabCli } from "./src/cli.js";
 

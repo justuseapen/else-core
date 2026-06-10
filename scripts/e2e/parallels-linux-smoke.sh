@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+<<<<<<< HEAD
 VM_NAME="Ubuntu 24.04.3 ARM64"
 VM_NAME_EXPLICIT=0
 SNAPSHOT_HINT="fresh"
@@ -908,4 +909,11 @@ fi
 
 if [[ "$FRESH_MAIN_STATUS" == "fail" || "$UPGRADE_STATUS" == "fail" ]]; then
   exit 1
+=======
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+if command -v pnpm >/dev/null 2>&1; then
+  exec pnpm exec tsx scripts/e2e/parallels/linux-smoke.ts "$@"
+>>>>>>> upstream/main
 fi
+exec node --import tsx scripts/e2e/parallels/linux-smoke.ts "$@"

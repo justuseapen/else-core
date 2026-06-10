@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { describe, expect, it, vi } from "vitest";
 import { collectDiscordSecurityAuditFindings } from "../../extensions/discord/contract-api.js";
 import type { ChannelPlugin } from "../channels/plugins/types.js";
@@ -12,10 +13,19 @@ vi.mock("openclaw/plugin-sdk/conversation-runtime", () => ({
   readChannelAllowFromStore: readChannelAllowFromStoreMock,
 }));
 
+=======
+// Verifies Discord channel source-config audit behavior.
+import { describe, expect, it } from "vitest";
+import type { OpenClawConfig } from "../config/config.js";
+import { stubAuditChannelPlugin } from "./audit-channel-test-helpers.js";
+import { collectChannelSecurityFindings } from "./audit-channel.js";
+
+>>>>>>> upstream/main
 function stubDiscordPlugin(params: {
   resolveAccount: (cfg: OpenClawConfig, accountId: string | null | undefined) => unknown;
   inspectAccount?: (cfg: OpenClawConfig, accountId: string | null | undefined) => unknown;
   isConfigured?: (account: unknown, cfg: OpenClawConfig) => boolean;
+<<<<<<< HEAD
 }): ChannelPlugin {
   return {
     id: "discord",
@@ -29,10 +39,17 @@ function stubDiscordPlugin(params: {
     capabilities: {
       chatTypes: ["direct", "group"],
     },
+=======
+}) {
+  return stubAuditChannelPlugin({
+    id: "discord",
+    label: "Discord",
+>>>>>>> upstream/main
     commands: {
       nativeCommandsAutoEnabled: true,
       nativeSkillsAutoEnabled: true,
     },
+<<<<<<< HEAD
     security: {
       collectAuditFindings: collectDiscordSecurityAuditFindings,
     },
@@ -58,6 +75,28 @@ function stubDiscordPlugin(params: {
       isConfigured: (account, cfg) => params.isConfigured?.(account, cfg) ?? true,
     },
   };
+=======
+    collectAuditFindings: ({ account }) => {
+      const config = (account as { config?: { guilds?: unknown } }).config ?? {};
+      const guilds =
+        config.guilds && typeof config.guilds === "object" && !Array.isArray(config.guilds)
+          ? config.guilds
+          : {};
+      if (Object.keys(guilds).length === 0) {
+        return [];
+      }
+      return [
+        {
+          checkId: "channels.discord.commands.native.no_allowlists",
+          severity: "warn" as const,
+          title: "Discord slash commands have no allowlists",
+          detail: "test stub",
+        },
+      ];
+    },
+    ...params,
+  });
+>>>>>>> upstream/main
 }
 
 describe("security audit channel source-config fallback discord", () => {
@@ -96,7 +135,10 @@ describe("security audit channel source-config fallback discord", () => {
       },
     };
 
+<<<<<<< HEAD
     readChannelAllowFromStoreMock.mockResolvedValue([]);
+=======
+>>>>>>> upstream/main
     const findings = await collectChannelSecurityFindings({
       cfg: resolvedConfig,
       sourceConfig,
@@ -137,6 +179,7 @@ describe("security audit channel source-config fallback discord", () => {
       ],
     });
 
+<<<<<<< HEAD
     expect(findings).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -145,5 +188,14 @@ describe("security audit channel source-config fallback discord", () => {
         }),
       ]),
     );
+=======
+    const finding = findings.find(
+      (entry) => entry.checkId === "channels.discord.commands.native.no_allowlists",
+    );
+    if (!finding) {
+      throw new Error("Expected Discord native command no-allowlists finding");
+    }
+    expect(finding.severity).toBe("warn");
+>>>>>>> upstream/main
   });
 });

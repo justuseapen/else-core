@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import net from "node:net";
 
 function normalizeHost(host: string): string {
@@ -53,3 +54,7 @@ export function isPrivateOrLoopbackHost(host: string): boolean {
   }
   return false;
 }
+=======
+// Matrix plugin module implements private network host behavior.
+export { isPrivateOrLoopbackHost } from "openclaw/plugin-sdk/ssrf-runtime";
+>>>>>>> upstream/main

@@ -1,4 +1,7 @@
+// Matrix tests cover channel.account paths plugin behavior.
+import { PAIRING_APPROVED_MESSAGE } from "openclaw/plugin-sdk/channel-status";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createMatrixPairingText, createMatrixProbeAccount } from "./channel-account-paths.js";
 
 const sendMessageMatrixMock = vi.hoisted(() => vi.fn());
 const probeMatrixMock = vi.hoisted(() => vi.fn());
@@ -28,8 +31,6 @@ vi.mock("./matrix/client.js", async () => {
   };
 });
 
-const { matrixPlugin } = await import("./channel.js");
-
 describe("matrix account path propagation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,21 +55,37 @@ describe("matrix account path propagation", () => {
   });
 
   it("forwards accountId when notifying pairing approval", async () => {
-    await matrixPlugin.pairing!.notifyApproval?.({
-      cfg: {},
+    const pairingText = createMatrixPairingText(sendMessageMatrixMock);
+
+    expect(pairingText.normalizeAllowEntry("  matrix:@user:example.org  ")).toBe(
+      "@user:example.org",
+    );
+
+    await pairingText.notify({
+      cfg: {} as never,
       id: "@user:example.org",
+      message: pairingText.message,
       accountId: "poe",
     });
 
     expect(sendMessageMatrixMock).toHaveBeenCalledWith(
       "user:@user:example.org",
-      expect.any(String),
-      { accountId: "poe" },
+      PAIRING_APPROVED_MESSAGE,
+      { cfg: {}, accountId: "poe" },
     );
   });
 
   it("forwards accountId and deviceId to matrix probes", async () => {
+<<<<<<< HEAD
     await matrixPlugin.status!.probeAccount?.({
+=======
+    const probeAccount = createMatrixProbeAccount({
+      resolveMatrixAuth: resolveMatrixAuthMock,
+      probeMatrix: probeMatrixMock,
+    });
+
+    await probeAccount({
+>>>>>>> upstream/main
       cfg: {} as never,
       timeoutMs: 500,
       account: {

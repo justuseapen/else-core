@@ -1,11 +1,19 @@
+<<<<<<< HEAD
+=======
+/** Shared plugin-loader fixture builders for temp manifests, bundle roots, and isolated env state. */
+>>>>>>> upstream/main
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { resetDiagnosticEventsForTest } from "../infra/diagnostic-events.js";
 import { withEnv } from "../test-utils/env.js";
+<<<<<<< HEAD
 import { clearPluginDiscoveryCache } from "./discovery.js";
 import { clearPluginLoaderCache, loadOpenClawPlugins } from "./loader.js";
 import { clearPluginManifestRegistryCache } from "./manifest-registry.js";
+=======
+import { clearPluginLoaderCache, loadOpenClawPlugins } from "./loader.js";
+>>>>>>> upstream/main
 import { resetPluginRuntimeStateForTest } from "./runtime.js";
 
 export type TempPlugin = { dir: string; file: string; id: string };
@@ -33,6 +41,10 @@ export function mkdirSafe(dir: string) {
 const fixtureRoot = mkdtempSafe(path.join(os.tmpdir(), "openclaw-plugin-"));
 let tempDirIndex = 0;
 const prevBundledDir = process.env.OPENCLAW_BUNDLED_PLUGINS_DIR;
+<<<<<<< HEAD
+=======
+const prevDisableBundledPlugins = process.env.OPENCLAW_DISABLE_BUNDLED_PLUGINS;
+>>>>>>> upstream/main
 
 export const EMPTY_PLUGIN_SCHEMA = {
   type: "object",
@@ -40,6 +52,40 @@ export const EMPTY_PLUGIN_SCHEMA = {
   properties: {},
 };
 
+<<<<<<< HEAD
+=======
+export function inlineChannelPluginEntryFactorySource(): string {
+  return `function defineChannelPluginEntry(options) {
+  return {
+    id: options.id,
+    name: options.name,
+    description: options.description,
+    configSchema: { schema: { type: "object" } },
+    channelPlugin: options.plugin,
+    setChannelRuntime: options.setRuntime,
+    register(api) {
+      if (api.registrationMode === "cli-metadata") {
+        options.registerCliMetadata?.(api);
+        return;
+      }
+      api.registerChannel({ plugin: options.plugin });
+      options.setRuntime?.(api.runtime);
+      if (api.registrationMode === "discovery") {
+        options.registerCliMetadata?.(api);
+        return;
+      }
+      if (api.registrationMode !== "full") {
+        return;
+      }
+      options.registerCliMetadata?.(api);
+      options.registerFull?.(api);
+    },
+  };
+}
+`;
+}
+
+>>>>>>> upstream/main
 export function makeTempDir() {
   const dir = path.join(fixtureRoot, `case-${tempDirIndex++}`);
   mkdirSafe(dir);
@@ -51,6 +97,10 @@ export function writePlugin(params: {
   body: string;
   dir?: string;
   filename?: string;
+<<<<<<< HEAD
+=======
+  configSchema?: Record<string, unknown>;
+>>>>>>> upstream/main
 }): TempPlugin {
   const dir = params.dir ?? makeTempDir();
   const filename = params.filename ?? `${params.id}.cjs`;
@@ -62,7 +112,11 @@ export function writePlugin(params: {
     JSON.stringify(
       {
         id: params.id,
+<<<<<<< HEAD
         configSchema: EMPTY_PLUGIN_SCHEMA,
+=======
+        configSchema: params.configSchema ?? EMPTY_PLUGIN_SCHEMA,
+>>>>>>> upstream/main
       },
       null,
       2,
@@ -73,7 +127,12 @@ export function writePlugin(params: {
 }
 
 export function useNoBundledPlugins() {
+<<<<<<< HEAD
   process.env.OPENCLAW_BUNDLED_PLUGINS_DIR = "/nonexistent/bundled/plugins";
+=======
+  process.env.OPENCLAW_DISABLE_BUNDLED_PLUGINS = "1";
+  delete process.env.OPENCLAW_BUNDLED_PLUGINS_DIR;
+>>>>>>> upstream/main
 }
 
 export function loadBundleFixture(params: {
@@ -107,8 +166,11 @@ export function loadBundleFixture(params: {
 
 export function resetPluginLoaderTestStateForTest() {
   clearPluginLoaderCache();
+<<<<<<< HEAD
   clearPluginDiscoveryCache();
   clearPluginManifestRegistryCache();
+=======
+>>>>>>> upstream/main
   resetPluginRuntimeStateForTest();
   resetDiagnosticEventsForTest();
   if (prevBundledDir === undefined) {
@@ -116,6 +178,14 @@ export function resetPluginLoaderTestStateForTest() {
   } else {
     process.env.OPENCLAW_BUNDLED_PLUGINS_DIR = prevBundledDir;
   }
+<<<<<<< HEAD
+=======
+  if (prevDisableBundledPlugins === undefined) {
+    delete process.env.OPENCLAW_DISABLE_BUNDLED_PLUGINS;
+  } else {
+    process.env.OPENCLAW_DISABLE_BUNDLED_PLUGINS = prevDisableBundledPlugins;
+  }
+>>>>>>> upstream/main
 }
 
 export function cleanupPluginLoaderFixturesForTest() {
@@ -124,4 +194,12 @@ export function cleanupPluginLoaderFixturesForTest() {
   } catch {
     // ignore cleanup failures in tests
   }
+<<<<<<< HEAD
+=======
+  if (prevDisableBundledPlugins === undefined) {
+    delete process.env.OPENCLAW_DISABLE_BUNDLED_PLUGINS;
+  } else {
+    process.env.OPENCLAW_DISABLE_BUNDLED_PLUGINS = prevDisableBundledPlugins;
+  }
+>>>>>>> upstream/main
 }

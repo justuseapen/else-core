@@ -1,3 +1,4 @@
+// No-output timer tests cover idle command timeout and output reset behavior.
 import type { ChildProcess } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -95,6 +96,34 @@ describe("runCommandWithTimeout no-output timer", () => {
     expect(fake.kill).not.toHaveBeenCalled();
   });
 
+<<<<<<< HEAD
+=======
+  it("bounds captured stdout and stderr while keeping the newest output", async () => {
+    vi.useFakeTimers();
+    const fake = createFakeSpawnedChild();
+    spawnMock.mockReturnValue(fake.child);
+
+    const runPromise = runCommandWithTimeout(["node", "-e", "ignored"], {
+      timeoutMs: 1_000,
+      maxOutputBytes: 5,
+    });
+
+    fake.stdout.emit("data", Buffer.from("abcdef"));
+    fake.stdout.emit("data", Buffer.from("gh"));
+    fake.stderr.emit("data", Buffer.from("123"));
+    fake.stderr.emit("data", Buffer.from("4567"));
+
+    emitProcessExit(fake, { code: 0 });
+    const result = await runPromise;
+
+    expect(result.stdout).toBe("defgh");
+    expect(result.stderr).toBe("34567");
+    expect(result.stdoutTruncatedBytes).toBe(3);
+    expect(result.stderrTruncatedBytes).toBe(2);
+    expect(result.termination).toBe("exit");
+  });
+
+>>>>>>> upstream/main
   it("marks no-output timeout when the spawned child goes silent", async () => {
     vi.useFakeTimers();
     const fake = createFakeSpawnedChild();

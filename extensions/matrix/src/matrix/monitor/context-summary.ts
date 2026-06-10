@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix plugin module implements context summary behavior.
+>>>>>>> upstream/main
 import {
   formatMatrixMessageText,
   resolveMatrixMessageAttachment,

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Google plugin module implements oauth.http behavior.
+>>>>>>> upstream/main
 import { fetchWithSsrFGuard } from "openclaw/plugin-sdk/ssrf-runtime";
 import { DEFAULT_FETCH_TIMEOUT_MS } from "./oauth.shared.js";
 

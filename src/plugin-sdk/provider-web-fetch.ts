@@ -7,6 +7,10 @@ import type {
 } from "../plugins/types.js";
 export { jsonResult, readNumberParam, readStringParam } from "../agents/tools/common.js";
 export {
+<<<<<<< HEAD
+=======
+  withSelfHostedWebToolsEndpoint,
+>>>>>>> upstream/main
   withStrictWebToolsEndpoint,
   withTrustedWebToolsEndpoint,
 } from "../agents/tools/web-guarded-fetch.js";
@@ -18,6 +22,10 @@ export {
   readCache,
   readResponseText,
   resolveCacheTtlMs,
+<<<<<<< HEAD
+=======
+  resolvePositiveTimeoutSeconds,
+>>>>>>> upstream/main
   resolveTimeoutSeconds,
   writeCache,
 } from "../agents/tools/web-shared.js";

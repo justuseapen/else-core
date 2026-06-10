@@ -1,5 +1,21 @@
+// Builds reply payloads for exec approval prompts and outcomes.
+import {
+  normalizeOptionalLowercaseString,
+  normalizeOptionalString,
+} from "@openclaw/normalization-core/string-coerce";
 import type { ReplyPayload } from "../auto-reply/types.js";
+<<<<<<< HEAD
 import type { InteractiveReply, InteractiveReplyButton } from "../interactive/payload.js";
+=======
+import type {
+  InteractiveReply,
+  InteractiveReplyButton,
+  MessagePresentation,
+  MessagePresentationButton,
+} from "../interactive/payload.js";
+import { formatHumanList } from "../shared/human-list.js";
+import { formatApprovalDisplayPath } from "./approval-display-paths.js";
+>>>>>>> upstream/main
 import {
   describeNativeExecApprovalClientSetup,
   listNativeExecApprovalClientLabels,
@@ -29,7 +45,11 @@ export type ExecApprovalReplyMetadata = {
 export type ExecApprovalActionDescriptor = {
   decision: ExecApprovalReplyDecision;
   label: string;
+<<<<<<< HEAD
   style: NonNullable<InteractiveReplyButton["style"]>;
+=======
+  style: NonNullable<MessagePresentationButton["style"]>;
+>>>>>>> upstream/main
   command: string;
 };
 
@@ -59,6 +79,7 @@ export type ExecApprovalUnavailableReplyParams = {
   sentApproverDms?: boolean;
 };
 
+<<<<<<< HEAD
 function formatHumanList(values: readonly string[]): string {
   if (values.length === 0) {
     return "";
@@ -72,6 +93,8 @@ function formatHumanList(values: readonly string[]): string {
   return `${values.slice(0, -1).join(", ")}, or ${values.at(-1)}`;
 }
 
+=======
+>>>>>>> upstream/main
 function resolveNativeExecApprovalClientList(params?: { excludeChannel?: string }): string {
   return formatHumanList(
     listNativeExecApprovalClientLabels({
@@ -160,6 +183,7 @@ export function buildExecApprovalActionDescriptors(params: {
 }
 
 function buildApprovalInteractiveButtons(
+<<<<<<< HEAD
   allowedDecisions: readonly ExecApprovalReplyDecision[],
   approvalId: string,
 ): InteractiveReplyButton[] {
@@ -168,16 +192,87 @@ function buildApprovalInteractiveButtons(
     allowedDecisions,
   }).map((descriptor) => ({
     label: descriptor.label,
+=======
+  descriptors: readonly ExecApprovalActionDescriptor[],
+): InteractiveReplyButton[] {
+  return descriptors.map((descriptor) => ({
+    label: descriptor.label,
+    action: { type: "command", command: descriptor.command },
+>>>>>>> upstream/main
     value: descriptor.command,
     style: descriptor.style,
   }));
 }
 
+<<<<<<< HEAD
+=======
+function buildApprovalPresentationButtons(
+  descriptors: readonly ExecApprovalActionDescriptor[],
+): MessagePresentationButton[] {
+  return descriptors.map((descriptor) => ({
+    label: descriptor.label,
+    action: { type: "command", command: descriptor.command },
+    value: descriptor.command,
+    style: descriptor.style,
+  }));
+}
+
+/** Build the portable approval button presentation for already-resolved actions. */
+export function buildApprovalPresentationFromActionDescriptors(
+  actions: readonly ExecApprovalActionDescriptor[],
+): MessagePresentation | undefined {
+  const buttons = buildApprovalPresentationButtons(actions);
+  return buttons.length > 0 ? { blocks: [{ type: "buttons", buttons }] } : undefined;
+}
+
+/** Build the portable approval presentation for an approval id and decision allowlist. */
+export function buildApprovalPresentation(params: {
+  approvalId: string;
+  ask?: string | null;
+  allowedDecisions?: readonly ExecApprovalReplyDecision[];
+}): MessagePresentation | undefined {
+  return buildApprovalPresentationFromActionDescriptors(
+    buildExecApprovalActionDescriptors({
+      approvalCommandId: params.approvalId,
+      ask: params.ask,
+      allowedDecisions: params.allowedDecisions,
+    }),
+  );
+}
+
+/** Build the portable exec-approval presentation for command callback buttons. */
+export function buildExecApprovalPresentation(params: {
+  approvalCommandId: string;
+  ask?: string | null;
+  allowedDecisions?: readonly ExecApprovalReplyDecision[];
+}): MessagePresentation | undefined {
+  return buildApprovalPresentation({
+    approvalId: params.approvalCommandId,
+    ask: params.ask,
+    allowedDecisions: params.allowedDecisions,
+  });
+}
+
+/**
+ * @deprecated Use buildApprovalPresentationFromActionDescriptors.
+ */
+export function buildApprovalInteractiveReplyFromActionDescriptors(
+  actions: readonly ExecApprovalActionDescriptor[],
+): InteractiveReply | undefined {
+  const buttons = buildApprovalInteractiveButtons(actions);
+  return buttons.length > 0 ? { blocks: [{ type: "buttons", buttons }] } : undefined;
+}
+
+/**
+ * @deprecated Use buildApprovalPresentation.
+ */
+>>>>>>> upstream/main
 export function buildApprovalInteractiveReply(params: {
   approvalId: string;
   ask?: string | null;
   allowedDecisions?: readonly ExecApprovalReplyDecision[];
 }): InteractiveReply | undefined {
+<<<<<<< HEAD
   const buttons = buildApprovalInteractiveButtons(
     resolveAllowedDecisions(params),
     params.approvalId,
@@ -185,6 +280,20 @@ export function buildApprovalInteractiveReply(params: {
   return buttons.length > 0 ? { blocks: [{ type: "buttons", buttons }] } : undefined;
 }
 
+=======
+  return buildApprovalInteractiveReplyFromActionDescriptors(
+    buildExecApprovalActionDescriptors({
+      approvalCommandId: params.approvalId,
+      ask: params.ask,
+      allowedDecisions: params.allowedDecisions,
+    }),
+  );
+}
+
+/**
+ * @deprecated Use buildExecApprovalPresentation.
+ */
+>>>>>>> upstream/main
 export function buildExecApprovalInteractiveReply(params: {
   approvalCommandId: string;
   ask?: string | null;
@@ -211,7 +320,11 @@ export function parseExecApprovalCommandText(
   if (!match) {
     return null;
   }
+<<<<<<< HEAD
   const rawDecision = match[2].toLowerCase();
+=======
+  const rawDecision = normalizeOptionalLowercaseString(match[2]) ?? "";
+>>>>>>> upstream/main
   return {
     approvalId: match[1],
     decision:
@@ -262,8 +375,8 @@ export function getExecApprovalReplyMetadata(
     return null;
   }
   const record = execApproval as Record<string, unknown>;
-  const approvalId = typeof record.approvalId === "string" ? record.approvalId.trim() : "";
-  const approvalSlug = typeof record.approvalSlug === "string" ? record.approvalSlug.trim() : "";
+  const approvalId = normalizeOptionalString(record.approvalId) ?? "";
+  const approvalSlug = normalizeOptionalString(record.approvalSlug) ?? "";
   if (!approvalId || !approvalSlug) {
     return null;
   }
@@ -274,10 +387,15 @@ export function getExecApprovalReplyMetadata(
           value === "allow-once" || value === "allow-always" || value === "deny",
       )
     : undefined;
+<<<<<<< HEAD
   const agentId =
     typeof record.agentId === "string" ? record.agentId.trim() || undefined : undefined;
   const sessionKey =
     typeof record.sessionKey === "string" ? record.sessionKey.trim() || undefined : undefined;
+=======
+  const agentId = normalizeOptionalString(record.agentId);
+  const sessionKey = normalizeOptionalString(record.sessionKey);
+>>>>>>> upstream/main
   return {
     approvalId,
     approvalSlug,
@@ -327,7 +445,7 @@ export function buildExecApprovalPendingReplyPayload(
     info.push(`Node: ${params.nodeId}`);
   }
   if (params.cwd) {
-    info.push(`CWD: ${params.cwd}`);
+    info.push(`CWD: ${formatApprovalDisplayPath(params.cwd)}`);
   }
   if (typeof params.expiresAtMs === "number" && Number.isFinite(params.expiresAtMs)) {
     info.push(
@@ -339,7 +457,11 @@ export function buildExecApprovalPendingReplyPayload(
 
   return {
     text: lines.join("\n\n"),
+<<<<<<< HEAD
     interactive: buildApprovalInteractiveReply({
+=======
+    presentation: buildApprovalPresentation({
+>>>>>>> upstream/main
       approvalId: params.approvalId,
       allowedDecisions,
     }),
@@ -348,9 +470,15 @@ export function buildExecApprovalPendingReplyPayload(
         approvalId: params.approvalId,
         approvalSlug: params.approvalSlug,
         approvalKind: "exec",
+<<<<<<< HEAD
         agentId: params.agentId?.trim() || undefined,
         allowedDecisions,
         sessionKey: params.sessionKey?.trim() || undefined,
+=======
+        agentId: normalizeOptionalString(params.agentId),
+        allowedDecisions,
+        sessionKey: normalizeOptionalString(params.sessionKey),
+>>>>>>> upstream/main
       },
     },
   };
@@ -376,7 +504,11 @@ export function buildExecApprovalUnavailableReplyPayload(
     lines.push(
       `Exec approval is required, but native chat exec approvals are not configured on ${params.channelLabel ?? "this platform"}.`,
     );
+<<<<<<< HEAD
     const channel = params.channel?.trim().toLowerCase();
+=======
+    const channel = normalizeOptionalLowercaseString(params.channel);
+>>>>>>> upstream/main
     const setupText =
       channel && params.channelLabel && supportsNativeExecApprovalClient(channel)
         ? describeNativeExecApprovalClientSetup({

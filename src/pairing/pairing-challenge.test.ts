@@ -1,12 +1,19 @@
+// Tests pairing challenge creation, validation, and reply formatting.
 import { describe, expect, it, vi } from "vitest";
 import { issuePairingChallenge } from "./pairing-challenge.js";
 
 describe("issuePairingChallenge", () => {
   function createBaseChallengeParams() {
     return {
+<<<<<<< HEAD
       channel: "telegram",
       senderId: "123",
       senderIdLine: "Your Telegram user id: 123",
+=======
+      channel: "forum",
+      senderId: "123",
+      senderIdLine: "Your forum user id: 123",
+>>>>>>> upstream/main
     } as const;
   }
 
@@ -114,9 +121,15 @@ describe("issuePairingChallenge", () => {
         const upsert = vi.fn(async () => ({ code: "1111", created: true }));
         return {
           issueParams: {
+<<<<<<< HEAD
             channel: "discord",
             senderId: "42",
             senderIdLine: "Your Discord user id: 42",
+=======
+            channel: "guildchat",
+            senderId: "42",
+            senderIdLine: "Your guildchat user id: 42",
+>>>>>>> upstream/main
             meta: { name: "alice" },
             upsertPairingRequest: upsert,
             onCreated,
@@ -136,9 +149,15 @@ describe("issuePairingChallenge", () => {
         const onReplyError = vi.fn();
         return {
           issueParams: {
+<<<<<<< HEAD
             channel: "signal",
             senderId: "+1555",
             senderIdLine: "Your Signal sender id: +1555",
+=======
+            channel: "quietchat",
+            senderId: "+1555",
+            senderIdLine: "Your quietchat sender id: +1555",
+>>>>>>> upstream/main
             upsertPairingRequest: async () => ({ code: "9999", created: true }),
             onReplyError,
           },

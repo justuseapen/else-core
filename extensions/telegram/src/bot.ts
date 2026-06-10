@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   isNativeCommandsExplicitlyDisabled,
   resolveNativeCommandsEnabled,
@@ -39,35 +40,22 @@ import { tagTelegramNetworkError } from "./network-errors.js";
 import { createTelegramSendChatActionHandler } from "./sendchataction-401-backoff.js";
 import { getTelegramSequentialKey } from "./sequential-key.js";
 import { createTelegramThreadBindingManager } from "./thread-bindings.js";
+=======
+// Telegram plugin module implements bot behavior.
+import {
+  createTelegramBotCore,
+  getTelegramSequentialKey,
+  setTelegramBotRuntimeForTest,
+} from "./bot-core.js";
+import { defaultTelegramBotDeps } from "./bot-deps.js";
+import type { TelegramBotOptions } from "./bot.types.js";
+>>>>>>> upstream/main
 
-export type TelegramBotOptions = {
-  token: string;
-  accountId?: string;
-  runtime?: RuntimeEnv;
-  requireMention?: boolean;
-  allowFrom?: Array<string | number>;
-  groupAllowFrom?: Array<string | number>;
-  mediaMaxMb?: number;
-  replyToMode?: ReplyToMode;
-  proxyFetch?: typeof fetch;
-  config?: OpenClawConfig;
-  /** Signal to abort in-flight Telegram API fetch requests (e.g. getUpdates) on shutdown. */
-  fetchAbortSignal?: AbortSignal;
-  updateOffset?: {
-    lastUpdateId?: number | null;
-    onUpdateId?: (updateId: number) => void | Promise<void>;
-  };
-  testTimings?: {
-    mediaGroupFlushMs?: number;
-    textFragmentGapMs?: number;
-  };
-  /** Pre-resolved Telegram transport to reuse across bot instances. If not provided, creates a new one. */
-  telegramTransport?: TelegramTransport;
-  telegramDeps?: TelegramBotDeps;
-};
+export type { TelegramBotOptions } from "./bot.types.js";
 
-export { getTelegramSequentialKey };
+export { getTelegramSequentialKey, setTelegramBotRuntimeForTest };
 
+<<<<<<< HEAD
 type TelegramBotRuntime = {
   Bot: typeof Bot;
   sequentialize: typeof sequentialize;
@@ -587,4 +575,13 @@ export function createTelegramBot(opts: TelegramBotOptions): TelegramBotInstance
   }) as typeof bot.stop;
 
   return bot;
+=======
+export function createTelegramBot(
+  opts: TelegramBotOptions,
+): ReturnType<typeof createTelegramBotCore> {
+  return createTelegramBotCore({
+    ...opts,
+    telegramDeps: opts.telegramDeps ?? defaultTelegramBotDeps,
+  });
+>>>>>>> upstream/main
 }

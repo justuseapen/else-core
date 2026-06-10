@@ -1,12 +1,37 @@
+<<<<<<< HEAD
 import { describe, expect, it } from "vitest";
+=======
+// Openai tests cover media understanding provider plugin behavior.
+>>>>>>> upstream/main
 import {
   createAuthCaptureJsonFetch,
   createRequestCaptureJsonFetch,
   installPinnedHostnameTestHooks,
+<<<<<<< HEAD
 } from "../../src/media-understanding/audio.test-helpers.ts";
 import { transcribeOpenAiAudio } from "./media-understanding-provider.js";
+=======
+} from "openclaw/plugin-sdk/test-env";
+import { describe, expect, it } from "vitest";
+import {
+  openaiMediaUnderstandingProvider,
+  transcribeOpenAiAudio,
+} from "./media-understanding-provider.js";
+>>>>>>> upstream/main
 
 installPinnedHostnameTestHooks();
+
+describe("openaiMediaUnderstandingProvider", () => {
+  it("declares audio support with the transcription default", () => {
+    expect(openaiMediaUnderstandingProvider.capabilities).toEqual(["image", "audio"]);
+    expect(openaiMediaUnderstandingProvider.defaultModels).toEqual({
+      image: "gpt-5.5",
+      audio: "gpt-4o-transcribe",
+    });
+    expect(openaiMediaUnderstandingProvider.autoPriority).toEqual({ image: 20, audio: 20 });
+    expect(openaiMediaUnderstandingProvider.transcribeAudio).toBe(transcribeOpenAiAudio);
+  });
+});
 
 describe("transcribeOpenAiAudio", () => {
   it("respects lowercase authorization header overrides", async () => {
@@ -43,7 +68,7 @@ describe("transcribeOpenAiAudio", () => {
     });
     const { url: seenUrl, init: seenInit } = getRequest();
 
-    expect(result.model).toBe("gpt-4o-mini-transcribe");
+    expect(result.model).toBe("gpt-4o-transcribe");
     expect(result.text).toBe("hello");
     expect(seenUrl).toBe("https://api.example.com/v1/audio/transcriptions");
     expect(seenInit?.method).toBe("POST");
@@ -55,16 +80,16 @@ describe("transcribeOpenAiAudio", () => {
 
     const form = seenInit?.body as FormData;
     expect(form).toBeInstanceOf(FormData);
-    expect(form.get("model")).toBe("gpt-4o-mini-transcribe");
+    expect(form.get("model")).toBe("gpt-4o-transcribe");
     expect(form.get("language")).toBe("en");
     expect(form.get("prompt")).toBe("hello");
     const file = form.get("file") as Blob | { type?: string; name?: string } | null;
-    expect(file).not.toBeNull();
-    if (file) {
-      expect(file.type).toBe("audio/wav");
-      if ("name" in file && typeof file.name === "string") {
-        expect(file.name).toBe("voice.wav");
-      }
+    if (!file) {
+      throw new Error("expected OpenAI audio file");
+    }
+    expect(file.type).toBe("audio/wav");
+    if (file && "name" in file && typeof file.name === "string") {
+      expect(file.name).toBe("voice.wav");
     }
   });
 

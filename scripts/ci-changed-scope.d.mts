@@ -6,8 +6,26 @@ export type ChangedScope = {
   runSkillsPython: boolean;
   runChangedSmoke: boolean;
   runControlUiI18n: boolean;
+<<<<<<< HEAD
+=======
+};
+
+export type InstallSmokeScope = {
+  runFastInstallSmoke: boolean;
+  runFullInstallSmoke: boolean;
+>>>>>>> upstream/main
 };
 
 export function detectChangedScope(changedPaths: string[]): ChangedScope;
-export function listChangedPaths(base: string, head?: string): string[];
-export function writeGitHubOutput(scope: ChangedScope, outputPath?: string): void;
+export function detectInstallSmokeScope(changedPaths: string[]): InstallSmokeScope;
+export function listChangedPaths(
+  base: string,
+  head?: string,
+  cwd?: string,
+  preferMergeHeadFirstParent?: boolean,
+): string[];
+export function writeGitHubOutput(
+  scope: ChangedScope,
+  outputPath?: string,
+  installSmokeScope?: InstallSmokeScope,
+): void;

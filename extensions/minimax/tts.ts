@@ -1,6 +1,30 @@
+<<<<<<< HEAD
 export const DEFAULT_MINIMAX_TTS_BASE_URL = "https://api.minimax.io";
 
 export const MINIMAX_TTS_MODELS = ["speech-2.8-hd", "speech-01-240228"] as const;
+=======
+// Minimax plugin module implements tts behavior.
+import { resolveTimerTimeoutMs } from "openclaw/plugin-sdk/number-runtime";
+import { assertOkOrThrowProviderError } from "openclaw/plugin-sdk/provider-http";
+import {
+  fetchWithSsrFGuard,
+  ssrfPolicyFromHttpBaseUrlAllowedHostname,
+} from "openclaw/plugin-sdk/ssrf-runtime";
+
+export const DEFAULT_MINIMAX_TTS_BASE_URL = "https://api.minimax.io";
+
+export const MINIMAX_TTS_MODELS = [
+  "speech-2.8-hd",
+  "speech-2.8-turbo",
+  "speech-2.6-hd",
+  "speech-2.6-turbo",
+  "speech-02-hd",
+  "speech-02-turbo",
+  "speech-01-hd",
+  "speech-01-turbo",
+  "speech-01-240228",
+] as const;
+>>>>>>> upstream/main
 
 export const MINIMAX_TTS_VOICES = [
   "English_expressive_narrator",
@@ -15,7 +39,15 @@ export function normalizeMinimaxTtsBaseUrl(baseUrl?: string): string {
   if (!trimmed) {
     return DEFAULT_MINIMAX_TTS_BASE_URL;
   }
+<<<<<<< HEAD
   return trimmed.replace(/\/+$/, "");
+=======
+  return trimmed.replace(/\/+$/, "").replace(/\/(?:anthropic|v1)$/i, "");
+}
+
+function normalizeMinimaxTtsPitch(pitch: number): number {
+  return Math.trunc(pitch);
+>>>>>>> upstream/main
 }
 
 export async function minimaxTTS(params: {
@@ -37,13 +69,19 @@ export async function minimaxTTS(params: {
     baseUrl,
     model,
     voiceId,
+<<<<<<< HEAD
     speed = 1.0,
     vol = 1.0,
+=======
+    speed = 1,
+    vol = 1,
+>>>>>>> upstream/main
     pitch = 0,
     format = "mp3",
     sampleRate = 32000,
     timeoutMs,
   } = params;
+<<<<<<< HEAD
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -84,6 +122,55 @@ export async function minimaxTTS(params: {
     }
 
     return Buffer.from(hexAudio, "hex");
+=======
+  const safeTimeoutMs = resolveTimerTimeoutMs(timeoutMs, 1);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), safeTimeoutMs);
+
+  try {
+    const { response, release } = await fetchWithSsrFGuard({
+      url: `${baseUrl}/v1/t2a_v2`,
+      init: {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          text,
+          voice_setting: {
+            voice_id: voiceId,
+            speed,
+            vol,
+            pitch: normalizeMinimaxTtsPitch(pitch),
+          },
+          audio_setting: {
+            format,
+            sample_rate: sampleRate,
+          },
+        }),
+        signal: controller.signal,
+      },
+      timeoutMs: safeTimeoutMs,
+      policy: ssrfPolicyFromHttpBaseUrlAllowedHostname(baseUrl),
+      auditContext: "minimax.tts",
+    });
+    try {
+      await assertOkOrThrowProviderError(response, "MiniMax TTS API error");
+
+      const body = (await response.json()) as { data?: { audio?: string } };
+      const hexAudio = body?.data?.audio;
+      if (!hexAudio) {
+        throw new Error("MiniMax TTS API returned no audio data");
+      }
+
+      return Buffer.from(hexAudio, "hex");
+    } finally {
+      await release();
+    }
+>>>>>>> upstream/main
   } finally {
     clearTimeout(timeout);
   }

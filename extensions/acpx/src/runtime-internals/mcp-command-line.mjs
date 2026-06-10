@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+=======
+/**
+ * Command-line parser for ACPX MCP proxy targets. It handles simple quoting and
+ * Windows executable paths before spawning the configured MCP target.
+ */
+>>>>>>> upstream/main
 const WINDOWS_DIRECT_EXECUTABLE_PATH_RE =
   /^(?<command>(?:[A-Za-z]:[\\/]|\\\\[^\\/]+[\\/][^\\/]+[\\/]).*?\.(?:exe|com))(?=\s|$)(?:\s+(?<rest>.*))?$/i;
 
@@ -106,6 +113,10 @@ function assertSupportedWindowsCommand(command, platform = process.platform) {
   );
 }
 
+<<<<<<< HEAD
+=======
+/** Split a configured command string into `{ command, args }` for child_process.spawn. */
+>>>>>>> upstream/main
 export function splitCommandLine(value, platform = process.platform) {
   const windowsCommand = splitWindowsExecutableCommand(value, platform);
   const parts = windowsCommand ?? splitCommandParts(value, platform);

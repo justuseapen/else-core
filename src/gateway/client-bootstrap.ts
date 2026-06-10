@@ -1,8 +1,21 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../config/config.js";
 import { buildGatewayConnectionDetails } from "./call.js";
 import type { ExplicitGatewayAuth } from "./call.js";
 import { resolveGatewayConnectionAuth } from "./connection-auth.js";
 
+=======
+// Gateway client bootstrap resolver.
+// Collects URL, auth, and handshake settings before constructing a GatewayClient.
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { resolveGatewayConnectionAuth } from "./connection-auth.js";
+import { buildGatewayConnectionDetailsWithResolvers } from "./connection-details.js";
+import type { ExplicitGatewayAuth } from "./credentials.js";
+
+/**
+ * Maps connection-detail source labels to the override kinds that affect auth fallback.
+ */
+>>>>>>> upstream/main
 export function resolveGatewayUrlOverrideSource(urlSource: string): "cli" | "env" | undefined {
   if (urlSource === "cli --url") {
     return "cli";
@@ -13,6 +26,12 @@ export function resolveGatewayUrlOverrideSource(urlSource: string): "cli" | "env
   return undefined;
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Resolves the URL, auth material, and handshake tuning needed to start a GatewayClient.
+ */
+>>>>>>> upstream/main
 export async function resolveGatewayClientBootstrap(params: {
   config: OpenClawConfig;
   gatewayUrl?: string;
@@ -21,16 +40,29 @@ export async function resolveGatewayClientBootstrap(params: {
 }): Promise<{
   url: string;
   urlSource: string;
+<<<<<<< HEAD
+=======
+  preauthHandshakeTimeoutMs?: number;
+>>>>>>> upstream/main
   auth: {
     token?: string;
     password?: string;
   };
 }> {
+<<<<<<< HEAD
   const connection = buildGatewayConnectionDetails({
+=======
+  const connection = buildGatewayConnectionDetailsWithResolvers({
+>>>>>>> upstream/main
     config: params.config,
     url: params.gatewayUrl,
   });
   const urlOverrideSource = resolveGatewayUrlOverrideSource(connection.urlSource);
+<<<<<<< HEAD
+=======
+  // Only direct CLI/env URL overrides should constrain token/password fallback. Config-derived
+  // remote URLs are canonical config, not a caller override.
+>>>>>>> upstream/main
   const auth = await resolveGatewayConnectionAuth({
     config: params.config,
     explicitAuth: params.explicitAuth,
@@ -41,6 +73,10 @@ export async function resolveGatewayClientBootstrap(params: {
   return {
     url: connection.url,
     urlSource: connection.urlSource,
+<<<<<<< HEAD
+=======
+    preauthHandshakeTimeoutMs: params.config.gateway?.handshakeTimeoutMs,
+>>>>>>> upstream/main
     auth,
   };
 }

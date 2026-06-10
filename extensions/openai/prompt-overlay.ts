@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const OPENAI_PROVIDER_IDS = new Set(["openai", "openai-codex"]);
 const OPENAI_GPT5_MODEL_PREFIX = "gpt-5";
 
@@ -50,17 +51,42 @@ Multi-part requests stay incomplete until every requested item is handled or cle
 Before the final answer, quickly verify correctness, coverage, formatting, and obvious side effects.`;
 
 export type OpenAIPromptOverlayMode = "friendly" | "off";
+=======
+// Openai plugin module implements prompt overlay behavior.
+import {
+  GPT5_BEHAVIOR_CONTRACT,
+  GPT5_FRIENDLY_CHAT_PROMPT_OVERLAY,
+  GPT5_HEARTBEAT_PROMPT_OVERLAY,
+  isGpt5ModelId,
+  resolveGpt5PromptOverlayMode,
+  resolveGpt5SystemPromptContribution,
+  type Gpt5PromptOverlayMode,
+} from "openclaw/plugin-sdk/provider-model-shared";
+
+const OPENAI_PROVIDER_IDS = new Set(["openai"]);
+
+export const OPENAI_FRIENDLY_PROMPT_OVERLAY = GPT5_FRIENDLY_CHAT_PROMPT_OVERLAY;
+export const OPENAI_HEARTBEAT_PROMPT_OVERLAY = GPT5_HEARTBEAT_PROMPT_OVERLAY;
+export const OPENAI_GPT5_BEHAVIOR_CONTRACT = GPT5_BEHAVIOR_CONTRACT;
+
+type OpenAIPromptOverlayMode = Gpt5PromptOverlayMode;
+>>>>>>> upstream/main
 
 export function resolveOpenAIPromptOverlayMode(
   pluginConfig?: Record<string, unknown>,
 ): OpenAIPromptOverlayMode {
+<<<<<<< HEAD
   return pluginConfig?.personality === "off" ? "off" : "friendly";
+=======
+  return resolveGpt5PromptOverlayMode(undefined, pluginConfig);
+>>>>>>> upstream/main
 }
 
 export function shouldApplyOpenAIPromptOverlay(params: {
   modelProviderId?: string;
   modelId?: string;
 }): boolean {
+<<<<<<< HEAD
   if (!OPENAI_PROVIDER_IDS.has(params.modelProviderId ?? "")) {
     return false;
   }
@@ -88,4 +114,28 @@ export function resolveOpenAISystemPromptContribution(params: {
       ...(params.mode === "friendly" ? { interaction_style: OPENAI_FRIENDLY_PROMPT_OVERLAY } : {}),
     },
   };
+=======
+  return OPENAI_PROVIDER_IDS.has(params.modelProviderId ?? "") && isGpt5ModelId(params.modelId);
+}
+
+export function resolveOpenAISystemPromptContribution(params: {
+  config?: Parameters<typeof resolveGpt5SystemPromptContribution>[0]["config"];
+  legacyPluginConfig?: Record<string, unknown>;
+  mode?: OpenAIPromptOverlayMode;
+  modelProviderId?: string;
+  modelId?: string;
+  trigger?: Parameters<typeof resolveGpt5SystemPromptContribution>[0]["trigger"];
+}) {
+  return resolveGpt5SystemPromptContribution({
+    config: params.config,
+    legacyPluginConfig:
+      params.mode === undefined ? params.legacyPluginConfig : { personality: params.mode },
+    modelId: params.modelId,
+    trigger: params.trigger,
+    enabled: shouldApplyOpenAIPromptOverlay({
+      modelProviderId: params.modelProviderId,
+      modelId: params.modelId,
+    }),
+  });
+>>>>>>> upstream/main
 }

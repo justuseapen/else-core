@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Memory Core plugin module implements cli.host behavior.
+>>>>>>> upstream/main
 export {
   colorize,
   defaultRuntime,
@@ -13,7 +17,11 @@ export {
   withProgressTotals,
 } from "openclaw/plugin-sdk/memory-core-host-runtime-cli";
 export {
+<<<<<<< HEAD
   loadConfig,
+=======
+  getRuntimeConfig,
+>>>>>>> upstream/main
   resolveDefaultAgentId,
   resolveSessionTranscriptsDirForAgent,
   resolveStateDir,

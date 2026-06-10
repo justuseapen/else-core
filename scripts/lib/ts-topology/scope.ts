@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import path from "node:path";
 import { BUNDLED_PLUGIN_PATH_PREFIX } from "../bundled-plugin-paths.mjs";
 import { pluginSdkEntrypoints } from "../plugin-sdk-entries.mjs";
+=======
+// Scope script supports OpenClaw repository automation.
+import fs from "node:fs";
+import path from "node:path";
+import { BUNDLED_PLUGIN_PATH_PREFIX } from "../bundled-plugin-paths.mjs";
+import { publicPluginSdkEntrypoints } from "../plugin-sdk-entries.mjs";
+>>>>>>> upstream/main
 import type { ConsumerScope, PublicEntrypoint, TopologyScope, UsageBucket } from "./types.js";
 
 function isTestFile(relPath: string): boolean {
@@ -72,6 +80,10 @@ function extractOwner(relPath: string): string | null {
     case "test":
       return null;
   }
+<<<<<<< HEAD
+=======
+  throw new Error("Unsupported topology scope");
+>>>>>>> upstream/main
 }
 
 function extractExtensionId(relPath: string): string | null {
@@ -120,7 +132,11 @@ function buildScopeFromEntrypoints(
 }
 
 export function createPluginSdkScope(_repoRoot: string): TopologyScope {
+<<<<<<< HEAD
   const entrypoints = pluginSdkEntrypoints.map((entrypoint) => ({
+=======
+  const entrypoints = publicPluginSdkEntrypoints.map((entrypoint) => ({
+>>>>>>> upstream/main
     entrypoint,
     sourcePath: `src/plugin-sdk/${entrypoint}.ts`,
     importSpecifier:

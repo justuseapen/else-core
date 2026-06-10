@@ -1,35 +1,14 @@
-import "./reply.directive.directive-behavior.e2e-mocks.js";
-import fs from "node:fs/promises";
-import path from "node:path";
+/** Tests fuzzy /model directive matching and ambiguous alias handling. */
 import { describe, expect, it } from "vitest";
-import type { OpenClawConfig } from "../config/config.js";
-import { loadSessionStore } from "../config/sessions.js";
-import type { ModelDefinitionConfig } from "../config/types.models.js";
-import { drainSystemEvents } from "../infra/system-events.js";
-import {
-  assertModelSelection,
-  installDirectiveBehaviorE2EHooks,
-  MAIN_SESSION_KEY,
-  makeWhatsAppDirectiveConfig,
-  replyText,
-  sessionStorePath,
-  withTempHome,
-} from "./reply.directive.directive-behavior.e2e-harness.js";
-import { runEmbeddedPiAgentMock } from "./reply.directive.directive-behavior.e2e-mocks.js";
-import { getReplyFromConfig } from "./reply.js";
+import type { ModelAliasIndex } from "../agents/model-selection-shared.js";
+import { resolveModelDirectiveSelection } from "./reply/model-selection-directive.js";
 
-function makeModelDefinition(id: string, name: string): ModelDefinitionConfig {
-  return {
-    id,
-    name,
-    reasoning: false,
-    input: ["text"],
-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-    contextWindow: 128_000,
-    maxTokens: 8_192,
-  };
-}
+const emptyAliasIndex: ModelAliasIndex = {
+  byAlias: new Map(),
+  byKey: new Map(),
+};
 
+<<<<<<< HEAD
 function makeModelSwitchConfig(home: string) {
   return makeWhatsAppDirectiveConfig(home, {
     model: { primary: "openai/gpt-4.1-mini" },
@@ -242,35 +221,84 @@ describe("directive behavior", () => {
       const text = replyText(res);
       expect(text).toContain("Model set to Kimi (moonshot/kimi-k2-0905-preview).");
       assertModelSelection(storePath, {
+=======
+function resolveModel(
+  raw: string,
+  params?: {
+    allowedModelKeys?: string[];
+    aliasIndex?: ModelAliasIndex;
+    defaultProvider?: string;
+    defaultModel?: string;
+  },
+) {
+  return resolveModelDirectiveSelection({
+    raw,
+    defaultProvider: params?.defaultProvider ?? "anthropic",
+    defaultModel: params?.defaultModel ?? "claude-opus-4-6",
+    aliasIndex: params?.aliasIndex ?? emptyAliasIndex,
+    allowedModelKeys: new Set(params?.allowedModelKeys ?? []),
+  });
+}
+
+describe("directive behavior model fuzzy selection", () => {
+  it("supports unambiguous fuzzy model matches across /model forms", () => {
+    const allowedModelKeys = ["anthropic/claude-opus-4-6", "moonshot/kimi-k2-0905-preview"];
+
+    for (const raw of ["kimi", "kimi-k2-0905-preview", "moonshot/kimi"]) {
+      expect(resolveModel(raw, { allowedModelKeys }).selection).toEqual({
+>>>>>>> upstream/main
         provider: "moonshot",
         model: "kimi-k2-0905-preview",
+        isDefault: false,
       });
-      expect(runEmbeddedPiAgentMock).not.toHaveBeenCalled();
+    }
+  });
+
+  it("picks the best fuzzy match for global and provider-scoped minimax queries", () => {
+    expect(
+      resolveModel("minimax", {
+        defaultProvider: "minimax",
+        defaultModel: "MiniMax-M2.7",
+        allowedModelKeys: [
+          "minimax/MiniMax-M2.7",
+          "minimax/MiniMax-M2.7-highspeed",
+          "lmstudio/minimax-m2.5-gs32",
+        ],
+      }).selection,
+    ).toEqual({
+      provider: "minimax",
+      model: "MiniMax-M2.7",
+      isDefault: true,
+    });
+
+    expect(
+      resolveModel("minimax/highspeed", {
+        defaultProvider: "minimax",
+        defaultModel: "MiniMax-M2.7",
+        allowedModelKeys: ["minimax/MiniMax-M2.7", "minimax/MiniMax-M2.7-highspeed"],
+      }).selection,
+    ).toEqual({
+      provider: "minimax",
+      model: "MiniMax-M2.7-highspeed",
+      isDefault: false,
     });
   });
-  it("stores auth profile overrides on /model directive", async () => {
-    await withTempHome(async (home) => {
-      const storePath = sessionStorePath(home);
-      const authDir = path.join(home, ".openclaw", "agents", "main", "agent");
-      await fs.mkdir(authDir, { recursive: true, mode: 0o700 });
-      await fs.writeFile(
-        path.join(authDir, "auth-profiles.json"),
-        JSON.stringify(
-          {
-            version: 1,
-            profiles: {
-              "anthropic:work": {
-                type: "api_key",
-                provider: "anthropic",
-                key: "sk-test-1234567890",
-              },
-            },
-          },
-          null,
-          2,
-        ),
-      );
 
+  it("prefers alias matches when fuzzy selection is ambiguous", () => {
+    const aliasIndex: ModelAliasIndex = {
+      byAlias: new Map([
+        [
+          "kimi",
+          {
+            alias: "Kimi",
+            ref: { provider: "moonshot", model: "kimi-k2-0905-preview" },
+          },
+        ],
+      ]),
+      byKey: new Map([["moonshot/kimi-k2-0905-preview", ["Kimi"]]]),
+    };
+
+<<<<<<< HEAD
       const res = await getReplyFromConfig(
         { Body: "/model Opus@anthropic:work", From: "+1222", To: "+1222", CommandAuthorized: true },
         {},
@@ -335,6 +363,22 @@ describe("directive behavior", () => {
       events = drainSystemEvents(MAIN_SESSION_KEY);
       expect(events.some((e) => e.includes("Reasoning STREAM"))).toBe(true);
       expect(runEmbeddedPiAgentMock).not.toHaveBeenCalled();
+=======
+    expect(
+      resolveModel("ki", {
+        aliasIndex,
+        allowedModelKeys: [
+          "anthropic/claude-opus-4-6",
+          "moonshot/kimi-k2-0905-preview",
+          "lmstudio/kimi-k2-0905-preview",
+        ],
+      }).selection,
+    ).toEqual({
+      provider: "moonshot",
+      model: "kimi-k2-0905-preview",
+      isDefault: false,
+      alias: "Kimi",
+>>>>>>> upstream/main
     });
   });
 });

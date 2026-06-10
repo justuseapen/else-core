@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix plugin module implements room info behavior.
+>>>>>>> upstream/main
 import { isMatrixNotFoundError } from "../errors.js";
 import type { MatrixClient } from "../sdk.js";
 

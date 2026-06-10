@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { hasConfiguredSecretInput } from "openclaw/plugin-sdk/setup";
 
@@ -68,3 +69,7 @@ export function collectFeishuSecurityAuditFindings(params: { cfg: OpenClawConfig
     },
   ];
 }
+=======
+// Feishu plugin module implements security audit behavior.
+export { collectFeishuSecurityAuditFindings } from "./security-audit-shared.js";
+>>>>>>> upstream/main

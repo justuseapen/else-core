@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Qa Lab helper module supports vite behavior.
+>>>>>>> upstream/main
 import path from "node:path";
 import { defineConfig } from "vite";
 

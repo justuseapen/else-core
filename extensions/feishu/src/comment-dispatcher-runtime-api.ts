@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Feishu API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   createReplyPrefixContext,
   type ClawdbotConfig,

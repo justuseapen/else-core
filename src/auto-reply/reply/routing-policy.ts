@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 import { INTERNAL_MESSAGE_CHANNEL, normalizeMessageChannel } from "../../utils/message-channel.js";
 
+=======
+/** Resolves whether replies should route to the originating channel or current surface. */
+import { INTERNAL_MESSAGE_CHANNEL, normalizeMessageChannel } from "../../utils/message-channel.js";
+
+/** Computes source-routing and typing suppression for a reply turn. */
+>>>>>>> upstream/main
 export function resolveReplyRoutingDecision(params: {
   provider?: string;
   surface?: string;

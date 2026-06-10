@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Litellm setup module handles plugin onboarding behavior.
+>>>>>>> upstream/main
 import {
   createDefaultModelPresetAppliers,
   type ModelDefinitionConfig,

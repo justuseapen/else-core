@@ -1,8 +1,13 @@
+// Feishu plugin module implements session route behavior.
 import {
   buildChannelOutboundSessionRoute,
   stripChannelTargetPrefix,
   type ChannelOutboundSessionRouteParams,
 } from "openclaw/plugin-sdk/channel-core";
+<<<<<<< HEAD
+=======
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 
 export function resolveFeishuOutboundSessionRoute(params: ChannelOutboundSessionRouteParams) {
   let trimmed = stripChannelTargetPrefix(params.target, "feishu", "lark");
@@ -10,7 +15,7 @@ export function resolveFeishuOutboundSessionRoute(params: ChannelOutboundSession
     return null;
   }
 
-  const lower = trimmed.toLowerCase();
+  const lower = normalizeLowercaseStringOrEmpty(trimmed);
   let isGroup = false;
   let typeExplicit = false;
 
@@ -25,7 +30,7 @@ export function resolveFeishuOutboundSessionRoute(params: ChannelOutboundSession
   }
 
   if (!typeExplicit) {
-    const idLower = trimmed.toLowerCase();
+    const idLower = normalizeLowercaseStringOrEmpty(trimmed);
     if (idLower.startsWith("ou_") || idLower.startsWith("on_")) {
       isGroup = false;
     }

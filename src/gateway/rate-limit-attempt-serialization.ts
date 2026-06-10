@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// Gateway auth rate-limit serialization.
+// Serializes limiter attempts per IP/scope so concurrent failures count correctly.
+>>>>>>> upstream/main
 import { AUTH_RATE_LIMIT_SCOPE_DEFAULT, normalizeRateLimitClientIp } from "./auth-rate-limit.js";
 
 const pendingAttempts = new Map<string, Promise<void>>();
@@ -10,6 +15,10 @@ function buildSerializationKey(ip: string | undefined, scope: string | undefined
   return `${normalizeScope(scope)}:${normalizeRateLimitClientIp(ip)}`;
 }
 
+<<<<<<< HEAD
+=======
+/** Runs one rate-limit attempt after prior attempts for the same IP/scope finish. */
+>>>>>>> upstream/main
 export async function withSerializedRateLimitAttempt<T>(params: {
   ip: string | undefined;
   scope: string | undefined;

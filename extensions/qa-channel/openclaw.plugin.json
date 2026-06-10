@@ -1,5 +1,11 @@
 {
   "id": "qa-channel",
+<<<<<<< HEAD
+=======
+  "activation": {
+    "onStartup": false
+  },
+>>>>>>> upstream/main
   "channels": ["qa-channel"],
   "configSchema": {
     "type": "object",

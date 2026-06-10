@@ -1,21 +1,34 @@
+<<<<<<< HEAD
 import type { MsgContext } from "openclaw/plugin-sdk/reply-runtime";
 import { formatError } from "../../session.js";
 import { resolveStorePath, updateLastRoute } from "../config.runtime.js";
 
 type LoadConfigFn = typeof import("../config.runtime.js").loadConfig;
+=======
+// Whatsapp plugin module implements last route behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import type { MsgContext } from "openclaw/plugin-sdk/reply-runtime";
+import { formatError } from "../../session.js";
+import { resolveStorePath, updateLastRoute } from "../config.runtime.js";
+>>>>>>> upstream/main
 
 export function trackBackgroundTask(
   backgroundTasks: Set<Promise<unknown>>,
   task: Promise<unknown>,
 ) {
   backgroundTasks.add(task);
-  void task.finally(() => {
+  const cleanup = () => {
     backgroundTasks.delete(task);
-  });
+  };
+  task.then(cleanup, cleanup);
 }
 
 export function updateLastRouteInBackground(params: {
+<<<<<<< HEAD
   cfg: ReturnType<LoadConfigFn>;
+=======
+  cfg: OpenClawConfig;
+>>>>>>> upstream/main
   backgroundTasks: Set<Promise<unknown>>;
   storeAgentId: string;
   sessionKey: string;
@@ -37,7 +50,7 @@ export function updateLastRouteInBackground(params: {
       accountId: params.accountId,
     },
     ctx: params.ctx,
-  }).catch((err) => {
+  }).catch((err: unknown) => {
     params.warn(
       {
         error: formatError(err),

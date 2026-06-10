@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 type StartWebLoginWithQr = typeof import("./src/login-qr.js").startWebLoginWithQr;
 type WaitForWebLogin = typeof import("./src/login-qr.js").waitForWebLogin;
 
@@ -21,3 +22,7 @@ export async function waitForWebLogin(
   const { waitForWebLogin } = await loadLoginQrModule();
   return await waitForWebLogin(...args);
 }
+=======
+// Whatsapp API module exposes the plugin public contract.
+export { startWebLoginWithQr, waitForWebLogin } from "./login-qr-runtime.js";
+>>>>>>> upstream/main

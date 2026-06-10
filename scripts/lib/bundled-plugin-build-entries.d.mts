@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export type BundledPluginBuildEntry = {
   id: string;
   hasPackageJson: boolean;
@@ -20,3 +21,6 @@ export function listBundledPluginPackArtifacts(params?: BundledPluginBuildEntryP
 export function listBundledPluginRuntimeDependencies(
   params?: BundledPluginBuildEntryParams,
 ): string[];
+=======
+export * from "./bundled-plugin-build-entries-types.js";
+>>>>>>> upstream/main

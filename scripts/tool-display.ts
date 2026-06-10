@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +9,16 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
+=======
+// Tool Display script supports OpenClaw repository automation.
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { TOOL_DISPLAY_CONFIG, type ToolDisplayConfig } from "../src/agents/tool-display-config.js";
+
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(scriptDir, "..");
+>>>>>>> upstream/main
 const outputPath = path.join(
   repoRoot,
   "apps/shared/OpenClawKit/Sources/OpenClawKit/Resources/tool-display.json",
@@ -91,3 +102,10 @@ function collectToolNamesFromFile(sourcePath: string, names: Set<string>) {
     }
   }
 }
+<<<<<<< HEAD
+=======
+
+function serializeToolDisplayConfig(config: ToolDisplayConfig = TOOL_DISPLAY_CONFIG): string {
+  return `${JSON.stringify(config, null, 2)}\n`;
+}
+>>>>>>> upstream/main

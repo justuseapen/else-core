@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -112,18 +113,28 @@ function runTlonCommand(binary: string, args: string[]): Promise<string> {
   });
 }
 
+=======
+// Tlon plugin entrypoint registers its OpenClaw integration.
+import { defineBundledChannelEntry } from "openclaw/plugin-sdk/channel-entry-contract";
+
+>>>>>>> upstream/main
 export default defineBundledChannelEntry({
   id: "tlon",
   name: "Tlon",
   description: "Tlon/Urbit channel plugin",
   importMetaUrl: import.meta.url,
   plugin: {
+<<<<<<< HEAD
     specifier: "./api.js",
+=======
+    specifier: "./channel-plugin-api.js",
+>>>>>>> upstream/main
     exportName: "tlonPlugin",
   },
   runtime: {
     specifier: "./api.js",
     exportName: "setTlonRuntime",
+<<<<<<< HEAD
   },
   registerFull(api) {
     api.logger.debug?.("[tlon] Registering tlon tool");
@@ -179,5 +190,7 @@ export default defineBundledChannelEntry({
         }
       },
     });
+=======
+>>>>>>> upstream/main
   },
 });

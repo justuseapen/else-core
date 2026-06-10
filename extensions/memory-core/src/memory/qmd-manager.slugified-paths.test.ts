@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Memory Core tests cover qmd manager.slugified paths plugin behavior.
+>>>>>>> upstream/main
 import { EventEmitter } from "node:events";
 import fs from "node:fs/promises";
 import os from "node:os";
@@ -11,17 +15,29 @@ const { logWarnMock, logDebugMock, logInfoMock } = vi.hoisted(() => ({
   logInfoMock: vi.fn(),
 }));
 
+<<<<<<< HEAD
 type MockChild = EventEmitter & {
+=======
+interface MockChild extends EventEmitter {
+>>>>>>> upstream/main
   stdout: EventEmitter;
   stderr: EventEmitter;
   kill: (signal?: NodeJS.Signals) => void;
   closeWith: (code?: number | null) => void;
+<<<<<<< HEAD
 };
+=======
+}
+>>>>>>> upstream/main
 
 function createMockChild(params?: { autoClose?: boolean }): MockChild {
   const stdout = new EventEmitter();
   const stderr = new EventEmitter();
+<<<<<<< HEAD
   const child = new EventEmitter() as MockChild;
+=======
+  const child = new EventEmitter() as unknown as MockChild;
+>>>>>>> upstream/main
   child.stdout = stdout;
   child.stderr = stderr;
   child.closeWith = (code = 0) => {
@@ -36,12 +52,16 @@ function createMockChild(params?: { autoClose?: boolean }): MockChild {
   return child;
 }
 
+<<<<<<< HEAD
 function emitAndClose(
   child: MockChild,
   stream: "stdout" | "stderr",
   data: string,
   code: number = 0,
 ) {
+=======
+function emitAndClose(child: MockChild, stream: "stdout" | "stderr", data: string, code = 0) {
+>>>>>>> upstream/main
   queueMicrotask(() => {
     child[stream].emit("data", data);
     child.closeWith(code);
@@ -123,14 +143,41 @@ describe("QmdMemoryManager slugified path resolution", () => {
   }) {
     const inner = params.manager as unknown as {
       db: {
+<<<<<<< HEAD
         prepare: (query: string) => { all: (...args: unknown[]) => unknown };
+=======
+        prepare: (query: string) => {
+          get: (...args: unknown[]) => unknown;
+          all: (...args: unknown[]) => unknown;
+        };
+>>>>>>> upstream/main
         close: () => void;
       };
     };
     inner.db = {
       prepare: (query: string) => ({
+<<<<<<< HEAD
         all: (...args: unknown[]) => {
           if (query.includes("collection = ? AND path = ?")) {
+=======
+        get: (...args: unknown[]) => {
+          if (query.includes("collection = ? AND active = 1 AND path = ?")) {
+            expect(args[0]).toBe(params.collection);
+            const requestedPath = args[1];
+            expect(typeof requestedPath).toBe("string");
+            const exactCandidates = new Set([
+              ...(params.exactPaths ?? []),
+              ...(params.actualPath ? [params.actualPath] : []),
+            ]);
+            return typeof requestedPath === "string" && exactCandidates.has(requestedPath)
+              ? { path: requestedPath }
+              : undefined;
+          }
+          throw new Error(`unexpected sqlite query: ${query}`);
+        },
+        all: (...args: unknown[]) => {
+          if (query.includes("collection = ? AND path = ? AND active = 1")) {
+>>>>>>> upstream/main
             expect(args).toEqual([params.collection, params.normalizedPath]);
             return (params.exactPaths ?? []).map((pathValue) => ({ path: pathValue }));
           }
@@ -233,9 +280,17 @@ describe("QmdMemoryManager slugified path resolution", () => {
       },
     ]);
 
+<<<<<<< HEAD
     await expect(manager.readFile({ relPath: results[0]!.path })).resolves.toEqual({
       path: actualRelative,
       text: "line-1\nline-2\nline-3",
+=======
+    await expect(manager.readFile({ relPath: results[0].path })).resolves.toEqual({
+      path: actualRelative,
+      text: "line-1\nline-2\nline-3",
+      from: 1,
+      lines: 3,
+>>>>>>> upstream/main
     });
   });
 
@@ -303,9 +358,17 @@ describe("QmdMemoryManager slugified path resolution", () => {
       },
     ]);
 
+<<<<<<< HEAD
     await expect(manager.readFile({ relPath: results[0]!.path })).resolves.toEqual({
       path: `qmd/${collectionName}/${actualRelative}`,
       text: "vault memory",
+=======
+    await expect(manager.readFile({ relPath: results[0].path })).resolves.toEqual({
+      path: `qmd/${collectionName}/${actualRelative}`,
+      text: "vault memory",
+      from: 1,
+      lines: 1,
+>>>>>>> upstream/main
     });
   });
 
@@ -360,9 +423,17 @@ describe("QmdMemoryManager slugified path resolution", () => {
       },
     ]);
 
+<<<<<<< HEAD
     await expect(manager.readFile({ relPath: results[0]!.path })).resolves.toEqual({
       path: exactRelative,
       text: "exact slugified path",
+=======
+    await expect(manager.readFile({ relPath: results[0].path })).resolves.toEqual({
+      path: exactRelative,
+      text: "exact slugified path",
+      from: 1,
+      lines: 1,
+>>>>>>> upstream/main
     });
   });
 });

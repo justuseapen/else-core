@@ -1,10 +1,16 @@
+<<<<<<< HEAD
+=======
+// Shared web_fetch test helpers keep headers and base config lightweight so
+// unit tests avoid loading bundled provider/runtime artifacts.
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
+>>>>>>> upstream/main
 import type { LookupFn } from "../../infra/net/ssrf.js";
 
 export function makeFetchHeaders(map: Record<string, string>): {
   get: (key: string) => string | null;
 } {
   return {
-    get: (key) => map[key.toLowerCase()] ?? null,
+    get: (key) => map[normalizeLowercaseStringOrEmpty(key)] ?? null,
   };
 }
 

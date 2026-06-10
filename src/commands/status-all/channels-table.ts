@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+// Builds the user-facing `openclaw status --all` channel summary table rows.
+// Gateway issues are folded in here so every text/report surface shows the same warning state.
+
+>>>>>>> upstream/main
 import { groupChannelIssuesByChannel } from "./channel-issues.js";
 
 type ChannelTableRowInput = {
@@ -20,6 +26,10 @@ export const statusChannelsTableColumns = [
   { key: "Detail", header: "Detail", flex: true, minWidth: 24 },
 ] as const;
 
+<<<<<<< HEAD
+=======
+/** Formats channel rows and overlays live gateway issues onto their display state. */
+>>>>>>> upstream/main
 export function buildStatusChannelsTableRows(params: {
   rows: readonly ChannelTableRowInput[];
   channelIssues: readonly ChannelIssueLike[];
@@ -33,6 +43,10 @@ export function buildStatusChannelsTableRows(params: {
   const formatIssueMessage = params.formatIssueMessage ?? ((message: string) => message);
   return params.rows.map((row) => {
     const issues = channelIssuesByChannel.get(row.id) ?? [];
+<<<<<<< HEAD
+=======
+    // A disabled channel stays disabled even if the gateway still reports stale issues for it.
+>>>>>>> upstream/main
     const effectiveState = row.state === "off" ? "off" : issues.length > 0 ? "warn" : row.state;
     const issueSuffix =
       issues.length > 0

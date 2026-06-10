@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+// Google plugin module implements oauth token shared behavior.
+import { readStringValue } from "openclaw/plugin-sdk/string-coerce-runtime";
+
+>>>>>>> upstream/main
 type GoogleOauthApiKeyCredential = {
   type?: string;
   access?: string;
@@ -11,8 +17,13 @@ export function parseGoogleOauthApiKey(apiKey: string): {
   try {
     const parsed = JSON.parse(apiKey) as { token?: unknown; projectId?: unknown };
     return {
+<<<<<<< HEAD
       token: typeof parsed.token === "string" ? parsed.token : undefined,
       projectId: typeof parsed.projectId === "string" ? parsed.projectId : undefined,
+=======
+      token: readStringValue(parsed.token),
+      projectId: readStringValue(parsed.projectId),
+>>>>>>> upstream/main
     };
   } catch {
     return null;

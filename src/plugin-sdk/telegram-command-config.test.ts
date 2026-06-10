@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+/**
+ * Tests Telegram command config helpers and command UI behavior.
+ */
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import * as telegramCommandConfig from "./telegram-command-config.js";
 

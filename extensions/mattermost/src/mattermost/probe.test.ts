@@ -1,3 +1,5 @@
+// Mattermost tests cover probe plugin behavior.
+import { MAX_TIMER_TIMEOUT_MS } from "openclaw/plugin-sdk/number-runtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { probeMattermost } from "./probe.js";
 
@@ -13,6 +15,22 @@ vi.mock("openclaw/plugin-sdk/ssrf-runtime", async () => {
   >;
   return { ...original, fetchWithSsrFGuard: mockFetchGuard };
 });
+<<<<<<< HEAD
+=======
+
+function requireFirstFetchCall() {
+  const [call] = mockFetchGuard.mock.calls;
+  if (!call) {
+    throw new Error("expected Mattermost probe fetch call");
+  }
+  return call[0] as {
+    url?: string;
+    init?: { headers?: unknown; signal?: unknown };
+    auditContext?: string;
+    policy?: unknown;
+  };
+}
+>>>>>>> upstream/main
 
 describe("probeMattermost", () => {
   beforeEach(() => {
@@ -43,6 +61,7 @@ describe("probeMattermost", () => {
 
     const result = await probeMattermost("https://mm.example.com/api/v4/", "bot-token");
 
+<<<<<<< HEAD
     expect(mockFetchGuard).toHaveBeenCalledWith({
       url: "https://mm.example.com/api/v4/users/me",
       init: expect.objectContaining({
@@ -54,15 +73,49 @@ describe("probeMattermost", () => {
     expect(result).toEqual(
       expect.objectContaining({
         ok: true,
+=======
+    const fetchCall = requireFirstFetchCall();
+    expect(fetchCall?.url).toBe("https://mm.example.com/api/v4/users/me");
+    expect(fetchCall?.init?.headers).toStrictEqual({ Authorization: "Bearer bot-token" });
+    expect(fetchCall?.init?.signal).toBeInstanceOf(AbortSignal);
+    expect(fetchCall?.auditContext).toBe("mattermost-probe");
+    expect(fetchCall?.policy).toBeUndefined();
+    const { elapsedMs, ...stableResult } = result;
+    expect(stableResult).toStrictEqual({
+      ok: true,
+      status: 200,
+      bot: { id: "bot-1", username: "clawbot" },
+    });
+    expect(elapsedMs).toBeGreaterThanOrEqual(0);
+    expect(mockRelease).toHaveBeenCalledTimes(1);
+  });
+
+  it("forwards allowPrivateNetwork to the SSRF guard policy", async () => {
+    mockFetchGuard.mockResolvedValueOnce({
+      response: new Response(JSON.stringify({ id: "bot-1" }), {
+>>>>>>> upstream/main
         status: 200,
-        bot: { id: "bot-1", username: "clawbot" },
+        headers: { "content-type": "application/json" },
       }),
+<<<<<<< HEAD
     );
     expect(result.elapsedMs).toBeGreaterThanOrEqual(0);
     expect(mockRelease).toHaveBeenCalledTimes(1);
   });
 
   it("forwards allowPrivateNetwork to the SSRF guard policy", async () => {
+=======
+      release: mockRelease,
+    });
+
+    await probeMattermost("https://mm.example.com", "bot-token", 2500, true);
+
+    const fetchCall = requireFirstFetchCall();
+    expect(fetchCall?.policy).toStrictEqual({ allowPrivateNetwork: true });
+  });
+
+  it("clamps oversized probe timeouts before scheduling", async () => {
+>>>>>>> upstream/main
     mockFetchGuard.mockResolvedValueOnce({
       response: new Response(JSON.stringify({ id: "bot-1" }), {
         status: 200,
@@ -70,6 +123,7 @@ describe("probeMattermost", () => {
       }),
       release: mockRelease,
     });
+<<<<<<< HEAD
 
     await probeMattermost("https://mm.example.com", "bot-token", 2500, true);
 
@@ -78,6 +132,16 @@ describe("probeMattermost", () => {
         policy: { allowPrivateNetwork: true },
       }),
     );
+=======
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+    try {
+      await probeMattermost("https://mm.example.com", "bot-token", Number.MAX_SAFE_INTEGER);
+
+      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), MAX_TIMER_TIMEOUT_MS);
+    } finally {
+      setTimeoutSpy.mockRestore();
+    }
+>>>>>>> upstream/main
   });
 
   it("returns API error details from JSON response", async () => {
@@ -90,6 +154,7 @@ describe("probeMattermost", () => {
       release: mockRelease,
     });
 
+<<<<<<< HEAD
     await expect(probeMattermost("https://mm.example.com", "bad-token")).resolves.toEqual(
       expect.objectContaining({
         ok: false,
@@ -97,6 +162,16 @@ describe("probeMattermost", () => {
         error: "invalid auth token",
       }),
     );
+=======
+    const result = await probeMattermost("https://mm.example.com", "bad-token");
+    const { elapsedMs, ...stableResult } = result;
+    expect(stableResult).toStrictEqual({
+      ok: false,
+      status: 401,
+      error: "invalid auth token",
+    });
+    expect(elapsedMs).toBeGreaterThanOrEqual(0);
+>>>>>>> upstream/main
     expect(mockRelease).toHaveBeenCalledTimes(1);
   });
 
@@ -110,6 +185,7 @@ describe("probeMattermost", () => {
       release: mockRelease,
     });
 
+<<<<<<< HEAD
     await expect(probeMattermost("https://mm.example.com", "token")).resolves.toEqual(
       expect.objectContaining({
         ok: false,
@@ -117,18 +193,29 @@ describe("probeMattermost", () => {
         error: "Forbidden",
       }),
     );
+=======
+    const result = await probeMattermost("https://mm.example.com", "token");
+    const { elapsedMs, ...stableResult } = result;
+    expect(stableResult).toStrictEqual({
+      ok: false,
+      status: 403,
+      error: "Forbidden",
+    });
+    expect(elapsedMs).toBeGreaterThanOrEqual(0);
+>>>>>>> upstream/main
     expect(mockRelease).toHaveBeenCalledTimes(1);
   });
 
   it("returns fetch error when request throws", async () => {
     mockFetchGuard.mockRejectedValueOnce(new Error("network down"));
 
-    await expect(probeMattermost("https://mm.example.com", "token")).resolves.toEqual(
-      expect.objectContaining({
-        ok: false,
-        status: null,
-        error: "network down",
-      }),
-    );
+    const result = await probeMattermost("https://mm.example.com", "token");
+    const { elapsedMs, ...stableResult } = result;
+    expect(stableResult).toStrictEqual({
+      ok: false,
+      status: null,
+      error: "network down",
+    });
+    expect(elapsedMs).toBeGreaterThanOrEqual(0);
   });
 });

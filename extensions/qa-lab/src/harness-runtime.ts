@@ -1,4 +1,16 @@
+<<<<<<< HEAD
 import type { PluginRuntime } from "openclaw/plugin-sdk/core";
+=======
+// Qa Lab plugin module implements harness runtime behavior.
+import {
+  buildMentionRegexes,
+  implicitMentionKindWhen,
+  matchesMentionPatterns,
+  matchesMentionWithExplicit,
+  resolveInboundMentionDecision,
+} from "openclaw/plugin-sdk/channel-inbound";
+import type { PluginRuntime } from "openclaw/plugin-sdk/runtime-store";
+>>>>>>> upstream/main
 
 type SessionRecord = {
   sessionKey: string;
@@ -44,10 +56,24 @@ export function createQaRunnerRuntime(): PluginRuntime {
         }) {
           sessions.set(sessionKey, {
             sessionKey,
+<<<<<<< HEAD
             body: String(ctx.BodyForAgent ?? ctx.Body ?? ""),
           });
         },
       },
+=======
+            body: ctx.BodyForAgent ?? ctx.Body ?? "",
+          });
+        },
+      },
+      mentions: {
+        buildMentionRegexes,
+        matchesMentionPatterns,
+        matchesMentionWithExplicit,
+        implicitMentionKindWhen,
+        resolveInboundMentionDecision,
+      },
+>>>>>>> upstream/main
       reply: {
         resolveEnvelopeFormatOptions() {
           return {};
@@ -66,10 +92,53 @@ export function createQaRunnerRuntime(): PluginRuntime {
           dispatcherOptions: { deliver: (payload: { text: string }) => Promise<void> };
         }) {
           await dispatcherOptions.deliver({
+<<<<<<< HEAD
             text: `qa-echo: ${String(ctx.BodyForAgent ?? ctx.Body ?? "")}`,
           });
         },
       },
+=======
+            text: `qa-echo: ${ctx.BodyForAgent ?? ctx.Body ?? ""}`,
+          });
+        },
+      },
+      inbound: {
+        async dispatchReply(
+          params: Parameters<PluginRuntime["channel"]["inbound"]["dispatchReply"]>[0],
+        ) {
+          const sessionKey =
+            typeof params.ctxPayload.SessionKey === "string"
+              ? params.ctxPayload.SessionKey
+              : params.routeSessionKey;
+          await params.recordInboundSession({
+            storePath: params.storePath,
+            sessionKey,
+            ctx: params.ctxPayload,
+            onRecordError: params.record?.onRecordError ?? (() => undefined),
+          });
+          const dispatchResult = await params.dispatchReplyWithBufferedBlockDispatcher({
+            ctx: params.ctxPayload,
+            cfg: params.cfg,
+            dispatcherOptions: {
+              ...params.dispatcherOptions,
+              deliver: async (payload, info) => {
+                await params.delivery.deliver(payload, info);
+              },
+              onError: params.delivery.onError,
+            },
+            replyOptions: params.replyOptions,
+            replyResolver: params.replyResolver,
+          });
+          return {
+            admission: params.admission ?? { kind: "dispatch" },
+            dispatched: true,
+            ctxPayload: params.ctxPayload,
+            routeSessionKey: params.routeSessionKey,
+            dispatchResult,
+          };
+        },
+      },
+>>>>>>> upstream/main
     },
   } as unknown as PluginRuntime;
 }

@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+=======
+// Telegram tests cover bot.command menu plugin behavior.
+import {
+  listNativeCommandSpecs,
+  listNativeCommandSpecsForConfig,
+} from "openclaw/plugin-sdk/native-command-registry";
+>>>>>>> upstream/main
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../runtime-api.js";
 
@@ -9,6 +17,7 @@ const {
   telegramBotRuntimeForTest,
 } = await import("./bot.create-telegram-bot.test-harness.js");
 
+<<<<<<< HEAD
 let listNativeCommandSpecs: typeof import("../../../src/auto-reply/commands-registry.js").listNativeCommandSpecs;
 let listNativeCommandSpecsForConfig: typeof import("../../../src/auto-reply/commands-registry.js").listNativeCommandSpecsForConfig;
 let normalizeTelegramCommandName: typeof import("./command-config.js").normalizeTelegramCommandName;
@@ -17,14 +26,32 @@ let setTelegramBotRuntimeForTest: typeof import("./bot.js").setTelegramBotRuntim
 let createTelegramBot: (
   opts: Parameters<typeof import("./bot.js").createTelegramBot>[0],
 ) => ReturnType<typeof import("./bot.js").createTelegramBot>;
+=======
+let normalizeTelegramCommandName: typeof import("./command-config.js").normalizeTelegramCommandName;
+let createTelegramBotBase: typeof import("./bot-core.js").createTelegramBotCore;
+let setTelegramBotRuntimeForTest: typeof import("./bot-core.js").setTelegramBotRuntimeForTest;
+let createTelegramBot: (
+  opts: import("./bot.types.js").TelegramBotOptions,
+) => ReturnType<typeof import("./bot-core.js").createTelegramBotCore>;
+>>>>>>> upstream/main
 
 const loadConfig = getLoadConfigMock();
 
 function createSignal() {
+<<<<<<< HEAD
   let resolve!: () => void;
   const promise = new Promise<void>((res) => {
     resolve = res;
   });
+=======
+  let resolve: (() => void) | undefined;
+  const promise = new Promise<void>((res) => {
+    resolve = res;
+  });
+  if (!resolve) {
+    throw new Error("Expected command sync signal resolver to be initialized");
+  }
+>>>>>>> upstream/main
   return { promise, resolve };
 }
 
@@ -44,6 +71,7 @@ function resolveSkillCommands(config: Parameters<typeof listNativeCommandSpecsFo
   >["skillCommands"];
 }
 
+<<<<<<< HEAD
 describe("createTelegramBot command menu", () => {
   beforeAll(async () => {
     ({ listNativeCommandSpecs, listNativeCommandSpecsForConfig } =
@@ -51,6 +79,32 @@ describe("createTelegramBot command menu", () => {
     ({ normalizeTelegramCommandName } = await import("./command-config.js"));
     ({ createTelegramBot: createTelegramBotBase, setTelegramBotRuntimeForTest } =
       await import("./bot.js"));
+=======
+function countMatching<T>(items: readonly T[], predicate: (item: T) => boolean): number {
+  let count = 0;
+  for (const item of items) {
+    if (predicate(item)) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+function registeredCommands(callIndex = -1): Array<{ command: string; description: string }> {
+  const resolvedIndex = callIndex < 0 ? setMyCommandsSpy.mock.calls.length + callIndex : callIndex;
+  const call = setMyCommandsSpy.mock.calls[resolvedIndex];
+  if (!call) {
+    throw new Error(`expected setMyCommands call ${callIndex}`);
+  }
+  return call[0] as Array<{ command: string; description: string }>;
+}
+
+describe("createTelegramBot command menu", () => {
+  beforeAll(async () => {
+    ({ normalizeTelegramCommandName } = await import("./command-config.js"));
+    ({ createTelegramBotCore: createTelegramBotBase, setTelegramBotRuntimeForTest } =
+      await import("./bot-core.js"));
+>>>>>>> upstream/main
   });
 
   beforeEach(() => {
@@ -107,16 +161,28 @@ describe("createTelegramBot command menu", () => {
 
     await commandsSynced;
 
+<<<<<<< HEAD
     const registered = setMyCommandsSpy.mock.calls.at(-1)?.[0] as Array<{
       command: string;
       description: string;
     }>;
+=======
+    const registered = registeredCommands();
+>>>>>>> upstream/main
     const skillCommands = resolveSkillCommands(config);
     const native = listNativeCommandSpecsForConfig(config, { skillCommands }).map((command) => ({
       command: normalizeTelegramCommandName(command.name),
       description: command.description,
     }));
+<<<<<<< HEAD
     expect(registered.slice(0, native.length)).toEqual(native);
+=======
+    expect(registered).toStrictEqual([
+      ...native,
+      { command: "custom_backup", description: "Git backup" },
+      { command: "custom_generate", description: "Create an image" },
+    ]);
+>>>>>>> upstream/main
   });
 
   it("ignores custom commands that collide with native commands", async () => {
@@ -157,20 +223,36 @@ describe("createTelegramBot command menu", () => {
 
     await commandsSynced;
 
+<<<<<<< HEAD
     const registered = setMyCommandsSpy.mock.calls[0]?.[0] as Array<{
       command: string;
       description: string;
     }>;
+=======
+    const registered = registeredCommands();
+>>>>>>> upstream/main
     const skillCommands = resolveSkillCommands(config);
     const native = listNativeCommandSpecsForConfig(config, { skillCommands }).map((command) => ({
       command: normalizeTelegramCommandName(command.name),
       description: command.description,
     }));
     const nativeStatus = native.find((command) => command.command === "status");
+<<<<<<< HEAD
     expect(nativeStatus).toBeDefined();
     expect(registered).toContainEqual({ command: "custom_backup", description: "Git backup" });
     expect(registered).not.toContainEqual({ command: "status", description: "Custom status" });
     expect(registered.filter((command) => command.command === "status")).toEqual([nativeStatus]);
+=======
+    if (!nativeStatus) {
+      throw new Error("expected native Telegram status command");
+    }
+    expect(registered).toStrictEqual([
+      ...native,
+      { command: "custom_backup", description: "Git backup" },
+    ]);
+    expect(registered.find((command) => command.command === "status")).toEqual(nativeStatus);
+    expect(countMatching(registered, (command) => command.command === "status")).toBe(1);
+>>>>>>> upstream/main
     expect(errorSpy).toHaveBeenCalled();
   });
 
@@ -200,15 +282,23 @@ describe("createTelegramBot command menu", () => {
 
     await commandsSynced;
 
+<<<<<<< HEAD
     const registered = setMyCommandsSpy.mock.calls[0]?.[0] as Array<{
       command: string;
       description: string;
     }>;
+=======
+    const registered = registeredCommands(0);
+>>>>>>> upstream/main
     expect(registered).toEqual([
       { command: "custom_backup", description: "Git backup" },
       { command: "custom_generate", description: "Create an image" },
     ]);
     const reserved = new Set(listNativeCommandSpecs().map((command) => command.name));
+<<<<<<< HEAD
     expect(registered.some((command) => reserved.has(command.command))).toBe(false);
+=======
+    expect(registered.filter((command) => reserved.has(command.command))).toEqual([]);
+>>>>>>> upstream/main
   });
 });

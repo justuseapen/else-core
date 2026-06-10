@@ -1,15 +1,28 @@
+<<<<<<< HEAD
+=======
+// Voice Call plugin module implements lifecycle behavior.
+>>>>>>> upstream/main
 import type { CallRecord, EndReason } from "../types.js";
 import type { CallManagerContext } from "./context.js";
 import { transitionState } from "./state.js";
 import { persistCallRecord } from "./store.js";
 import { clearMaxDurationTimer, rejectTranscriptWaiter } from "./timers.js";
 
+<<<<<<< HEAD
+=======
+// Shared call finalization path for manager and webhook lifecycle exits.
+
+>>>>>>> upstream/main
 type CallLifecycleContext = Pick<
   CallManagerContext,
   "activeCalls" | "providerCallIdMap" | "storePath"
 > &
   Partial<Pick<CallManagerContext, "transcriptWaiters" | "maxDurationTimers">>;
 
+<<<<<<< HEAD
+=======
+/** Remove a provider-call mapping only when it still points at this call. */
+>>>>>>> upstream/main
 function removeProviderCallMapping(
   providerCallIdMap: Map<string, string>,
   call: Pick<CallRecord, "callId" | "providerCallId">,
@@ -23,6 +36,10 @@ function removeProviderCallMapping(
   }
 }
 
+<<<<<<< HEAD
+=======
+/** Persist terminal state, clean timers/waiters, and remove active call indexes. */
+>>>>>>> upstream/main
 export function finalizeCall(params: {
   ctx: CallLifecycleContext;
   call: CallRecord;

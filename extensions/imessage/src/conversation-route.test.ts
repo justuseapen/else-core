@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import {
   __testing as sessionBindingTesting,
+=======
+// Imessage tests cover conversation route plugin behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import {
+  testing as sessionBindingTesting,
+>>>>>>> upstream/main
   registerSessionBindingAdapter,
 } from "openclaw/plugin-sdk/conversation-runtime";
 import { beforeEach, describe, expect, it, vi } from "vitest";

@@ -1,5 +1,14 @@
+<<<<<<< HEAD
 import { buildChannelConfigSchema } from "openclaw/plugin-sdk/channel-config-schema";
 import { z } from "openclaw/plugin-sdk/zod";
+=======
+// Qa Channel helper module supports config schema behavior.
+import {
+  ToolPolicySchema,
+  buildChannelConfigSchema,
+} from "openclaw/plugin-sdk/channel-config-schema";
+import { z } from "zod";
+>>>>>>> upstream/main
 
 const QaChannelActionConfigSchema = z
   .object({
@@ -10,7 +19,19 @@ const QaChannelActionConfigSchema = z
   })
   .strict();
 
+<<<<<<< HEAD
 export const QaChannelAccountConfigSchema = z
+=======
+const QaChannelGroupConfigSchema = z
+  .object({
+    requireMention: z.boolean().optional(),
+    tools: ToolPolicySchema.optional(),
+    toolsBySender: z.record(z.string(), ToolPolicySchema).optional(),
+  })
+  .strict();
+
+const QaChannelAccountConfigSchema = z
+>>>>>>> upstream/main
   .object({
     name: z.string().optional(),
     enabled: z.boolean().optional(),
@@ -19,12 +40,22 @@ export const QaChannelAccountConfigSchema = z
     botDisplayName: z.string().optional(),
     pollTimeoutMs: z.number().int().min(100).max(30_000).optional(),
     allowFrom: z.array(z.union([z.string(), z.number()])).optional(),
+<<<<<<< HEAD
+=======
+    groupPolicy: z.enum(["open", "allowlist", "disabled"]).optional(),
+    groupAllowFrom: z.array(z.union([z.string(), z.number()])).optional(),
+    groups: z.record(z.string(), QaChannelGroupConfigSchema).optional(),
+>>>>>>> upstream/main
     defaultTo: z.string().optional(),
     actions: QaChannelActionConfigSchema.optional(),
   })
   .strict();
 
+<<<<<<< HEAD
 export const QaChannelConfigSchema = QaChannelAccountConfigSchema.extend({
+=======
+const QaChannelConfigSchema = QaChannelAccountConfigSchema.extend({
+>>>>>>> upstream/main
   accounts: z.record(z.string(), QaChannelAccountConfigSchema.partial()).optional(),
   defaultAccount: z.string().optional(),
 }).strict();

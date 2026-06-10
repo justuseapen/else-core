@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+=======
+// Feishu tests cover monitor.bot menu plugin behavior.
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import type { ClawdbotConfig, RuntimeEnv } from "../runtime-api.js";
-import { monitorSingleAccount } from "./monitor.account.js";
-import { setFeishuRuntime } from "./runtime.js";
-import type { ResolvedFeishuAccount } from "./types.js";
+import { expectFirstSentCardUsesFillWidthOnly } from "./card-test-helpers.js";
+import { createFeishuBotMenuHandler } from "./monitor.bot-menu-handler.js";
 
+<<<<<<< HEAD
 const createEventDispatcherMock = vi.hoisted(() => vi.fn());
 const monitorWebSocketMock = vi.hoisted(() => vi.fn(async () => {}));
 const monitorWebhookMock = vi.hoisted(() => vi.fn(async () => {}));
@@ -12,10 +17,18 @@ const parseFeishuMessageEventMock = vi.hoisted(() => vi.fn());
 const sendCardFeishuMock = vi.hoisted(() => vi.fn(async () => ({ messageId: "m1", chatId: "c1" })));
 const getMessageFeishuMock = vi.hoisted(() => vi.fn());
 const createFeishuThreadBindingManagerMock = vi.hoisted(() => vi.fn(() => ({ stop: vi.fn() })));
+=======
+const handleFeishuMessageMock = vi.hoisted(() => vi.fn(async (_params?: unknown) => {}));
+const parseFeishuMessageEventMock = vi.hoisted(() => vi.fn());
+const sendCardFeishuMock = vi.hoisted(() =>
+  vi.fn(async (_params?: unknown) => ({ messageId: "m1", chatId: "c1" })),
+);
+const getMessageFeishuMock = vi.hoisted(() => vi.fn());
+>>>>>>> upstream/main
 
-let handlers: Record<string, (data: unknown) => Promise<void>> = {};
 const originalStateDir = process.env.OPENCLAW_STATE_DIR;
 
+<<<<<<< HEAD
 const hasControlCommand = () => false;
 const resolveInboundDebounceMs = () => 0;
 const createInboundDebouncer = () => ({
@@ -43,6 +56,8 @@ vi.mock("./monitor.transport.js", () => ({
   monitorWebhook: monitorWebhookMock,
 }));
 
+=======
+>>>>>>> upstream/main
 vi.mock("./bot.js", () => {
   return {
     handleFeishuMessage: handleFeishuMessageMock,
@@ -56,25 +71,6 @@ vi.mock("./send.js", () => {
     getMessageFeishu: getMessageFeishuMock,
   };
 });
-
-vi.mock("./thread-bindings.js", () => ({
-  createFeishuThreadBindingManager: createFeishuThreadBindingManagerMock,
-}));
-
-function buildAccount(): ResolvedFeishuAccount {
-  return {
-    accountId: "default",
-    enabled: true,
-    configured: true,
-    appId: "cli_test",
-    appSecret: "secret_test", // pragma: allowlist secret
-    domain: "feishu",
-    config: {
-      enabled: true,
-      connectionMode: "websocket",
-    },
-  } as ResolvedFeishuAccount;
-}
 
 function createBotMenuEvent(params: { eventKey: string; timestamp: string }) {
   return {
@@ -90,6 +86,7 @@ function createBotMenuEvent(params: { eventKey: string; timestamp: string }) {
   };
 }
 
+<<<<<<< HEAD
 async function registerHandlers() {
   setFeishuRuntime(createMonitorRuntime());
   const register = vi.fn((registered: Record<string, (data: unknown) => Promise<void>>) => {
@@ -101,27 +98,43 @@ async function registerHandlers() {
     cfg: {} as ClawdbotConfig,
     account: buildAccount(),
     runtime: {
+=======
+async function registerHandlers(params: { runtime?: RuntimeEnv } = {}) {
+  const runtime =
+    params.runtime ??
+    ({
+>>>>>>> upstream/main
       log: vi.fn(),
       error: vi.fn(),
       exit: vi.fn(),
-    } as RuntimeEnv,
-    botOpenIdSource: {
-      kind: "prefetched",
-      botOpenId: "ou_bot",
-      botName: "Bot",
-    },
+    } as RuntimeEnv);
+  return createFeishuBotMenuHandler({
+    cfg: {} as ClawdbotConfig,
+    accountId: "default",
+    runtime,
+    chatHistories: new Map(),
+    fireAndForget: true,
+    getBotOpenId: () => "ou_bot",
+    getBotName: () => "Bot",
   });
+}
 
-  const onBotMenu = handlers["application.bot.menu_v6"];
-  if (!onBotMenu) {
-    throw new Error("missing application.bot.menu_v6 handler");
+function firstMockArg(mock: { mock: { calls: Array<readonly unknown[]> } }, label: string) {
+  const call = mock.mock.calls[0];
+  if (!call) {
+    throw new Error(`expected ${label} call`);
   }
-  return onBotMenu;
+  return call[0];
 }
 
 describe("Feishu bot menu handler", () => {
+  afterAll(() => {
+    vi.doUnmock("./bot.js");
+    vi.doUnmock("./send.js");
+    vi.resetModules();
+  });
+
   beforeEach(() => {
-    handlers = {};
     vi.clearAllMocks();
     process.env.OPENCLAW_STATE_DIR = `/tmp/openclaw-feishu-bot-menu-test-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   });
@@ -139,6 +152,7 @@ describe("Feishu bot menu handler", () => {
 
     await onBotMenu(createBotMenuEvent({ eventKey: "quick-actions", timestamp: "1700000000000" }));
 
+<<<<<<< HEAD
     expect(sendCardFeishuMock).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "user:ou_user1",
@@ -152,6 +166,23 @@ describe("Feishu bot menu handler", () => {
         }),
       }),
     );
+=======
+    expect(sendCardFeishuMock).toHaveBeenCalledTimes(1);
+    const sendArgs = firstMockArg(sendCardFeishuMock, "Feishu card send") as
+      | {
+          accountId?: string;
+          card?: {
+            config?: { width_mode?: string };
+            header?: { title?: { content?: string } };
+          };
+          to?: string;
+        }
+      | undefined;
+    expect(sendArgs?.to).toBe("user:ou_user1");
+    expect(sendArgs?.accountId).toBe("default");
+    expect(sendArgs?.card?.config?.width_mode).toBe("fill");
+    expect(sendArgs?.card?.header?.title?.content).toBe("Quick actions");
+>>>>>>> upstream/main
     expect(handleFeishuMessageMock).not.toHaveBeenCalled();
   });
 
@@ -169,7 +200,7 @@ describe("Feishu bot menu handler", () => {
       createBotMenuEvent({ eventKey: "quick-actions", timestamp: "1700000000001" }),
     );
     let settled = false;
-    pending.finally(() => {
+    void pending.finally(() => {
       settled = true;
     });
 
@@ -186,15 +217,11 @@ describe("Feishu bot menu handler", () => {
 
     await onBotMenu(createBotMenuEvent({ eventKey: "custom-key", timestamp: "1700000000002" }));
 
-    expect(handleFeishuMessageMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: expect.objectContaining({
-          message: expect.objectContaining({
-            content: '{"text":"/menu custom-key"}',
-          }),
-        }),
-      }),
-    );
+    expect(handleFeishuMessageMock).toHaveBeenCalledTimes(1);
+    const handleArgs = firstMockArg(handleFeishuMessageMock, "Feishu synthetic message") as
+      | { event?: { message?: { content?: string } } }
+      | undefined;
+    expect(handleArgs?.event?.message?.content).toBe('{"text":"/menu custom-key"}');
     expect(sendCardFeishuMock).not.toHaveBeenCalled();
   });
 
@@ -205,16 +232,40 @@ describe("Feishu bot menu handler", () => {
     await onBotMenu(createBotMenuEvent({ eventKey: "quick-actions", timestamp: "1700000000003" }));
 
     await vi.waitFor(() => {
-      expect(handleFeishuMessageMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          event: expect.objectContaining({
-            message: expect.objectContaining({
-              content: '{"text":"/menu quick-actions"}',
-            }),
-          }),
+      expect(handleFeishuMessageMock).toHaveBeenCalledTimes(1);
+    });
+    const handleArgs = firstMockArg(handleFeishuMessageMock, "Feishu fallback message") as
+      | { event?: { message?: { content?: string } } }
+      | undefined;
+    expect(handleArgs?.event?.message?.content).toBe('{"text":"/menu quick-actions"}');
+    expectFirstSentCardUsesFillWidthOnly(sendCardFeishuMock);
+  });
+
+  it("reopens replay for explicit retryable fallback failures", async () => {
+    const runtime = { log: vi.fn(), error: vi.fn(), exit: vi.fn() } as RuntimeEnv;
+    const onBotMenu = await registerHandlers({ runtime });
+    sendCardFeishuMock
+      .mockImplementationOnce(async () => {
+        throw new Error("boom");
+      })
+      .mockImplementationOnce(async () => {
+        throw new Error("boom");
+      });
+    handleFeishuMessageMock
+      .mockRejectedValueOnce(
+        Object.assign(new Error("retry me"), {
+          name: "FeishuRetryableSyntheticEventError",
         }),
+      )
+      .mockResolvedValueOnce(undefined);
+
+    await onBotMenu(createBotMenuEvent({ eventKey: "quick-actions", timestamp: "1700000000004" }));
+    await vi.waitFor(() => {
+      expect(runtime.error).toHaveBeenCalledWith(
+        "feishu[default]: error handling bot menu event: FeishuRetryableSyntheticEventError: retry me",
       );
     });
+<<<<<<< HEAD
     const firstSendArg = (sendCardFeishuMock.mock.calls as unknown[][]).at(0)?.[0] as
       | {
           card?: {
@@ -230,5 +281,13 @@ describe("Feishu bot menu handler", () => {
     expect(sentCard).toBeDefined();
     expect(sentCard?.config?.wide_screen_mode).toBeUndefined();
     expect(sentCard?.config?.enable_forward).toBeUndefined();
+=======
+    await onBotMenu(createBotMenuEvent({ eventKey: "quick-actions", timestamp: "1700000000004" }));
+
+    expect(sendCardFeishuMock).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => {
+      expect(handleFeishuMessageMock).toHaveBeenCalledTimes(2);
+    });
+>>>>>>> upstream/main
   });
 });

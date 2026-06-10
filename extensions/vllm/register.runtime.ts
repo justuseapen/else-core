@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Vllm plugin module implements register behavior.
+>>>>>>> upstream/main
 export {
   buildVllmProvider,
   VLLM_DEFAULT_API_KEY_ENV_VAR,

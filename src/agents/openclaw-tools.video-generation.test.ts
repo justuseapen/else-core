@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import * as videoGenerationRuntime from "../video-generation/runtime.js";
@@ -88,4 +89,13 @@ describe("openclaw tools video generation registration", () => {
 
     expect(tools.map((tool) => tool.name)).not.toContain("video_generate");
   });
+=======
+// Verifies video-generation tool registration through the shared generation harness.
+import { describeOpenClawGenerationToolRegistration } from "./openclaw-tools.generation.test-support.js";
+
+describeOpenClawGenerationToolRegistration({
+  suiteName: "openclaw tools video generation registration",
+  toolName: "video_generate",
+  toolLabel: "a video-generation tool",
+>>>>>>> upstream/main
 });

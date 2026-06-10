@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestPluginApi } from "../../../test/helpers/plugins/plugin-api.js";
+=======
+// Diffs tests cover tool render output plugin behavior.
+import fs from "node:fs/promises";
+import path from "node:path";
+import { createTestPluginApi } from "openclaw/plugin-sdk/plugin-test-api";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import type { OpenClawPluginApi } from "../api.js";
 import type { DiffScreenshotter } from "./browser.js";
 import { DEFAULT_DIFFS_TOOL_DEFAULTS } from "./config.js";
@@ -15,6 +23,14 @@ vi.mock("./render.js", () => ({
   renderDiffDocument: renderDiffDocumentMock,
 }));
 
+<<<<<<< HEAD
+=======
+afterAll(() => {
+  vi.doUnmock("./render.js");
+  vi.resetModules();
+});
+
+>>>>>>> upstream/main
 describe("diffs tool rendered output guards", () => {
   let createDiffsTool: typeof import("./tool.js").createDiffsTool;
   let cleanupRootDir: () => Promise<void>;
@@ -62,8 +78,13 @@ describe("diffs tool rendered output guards", () => {
       mode: "file",
     });
 
+<<<<<<< HEAD
     expect(screenshotter.screenshotHtml).toHaveBeenCalledTimes(1);
     expect((result?.details as Record<string, unknown>).filePath).toEqual(expect.any(String));
+=======
+    expect(screenshotter["screenshotHtml"]).toHaveBeenCalledTimes(1);
+    expect((result.details as Record<string, unknown>).filePath).toMatch(/preview\.png$/);
+>>>>>>> upstream/main
   });
 });
 
@@ -80,7 +101,11 @@ function createApi(): OpenClawPluginApi {
       },
     },
     runtime: {} as OpenClawPluginApi["runtime"],
+<<<<<<< HEAD
   }) as OpenClawPluginApi;
+=======
+  });
+>>>>>>> upstream/main
 }
 
 function createPngScreenshotter(

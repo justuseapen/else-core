@@ -1,9 +1,42 @@
+// Temporary Gateway config test helper.
+// Installs isolated config files and restores process-global config state.
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+<<<<<<< HEAD
 import { clearConfigCache, resetConfigRuntimeState } from "../config/config.js";
+=======
+import {
+  clearConfigCache,
+  resetConfigRuntimeState,
+  setRuntimeConfigSnapshot,
+} from "../config/config.js";
+import type { OpenClawConfig } from "../config/config.js";
+>>>>>>> upstream/main
 import { clearSecretsRuntimeSnapshot } from "../secrets/runtime.js";
 
+function withStableOwnerDisplaySecretForTest(cfg: unknown): unknown {
+  if (!cfg || typeof cfg !== "object" || Array.isArray(cfg)) {
+    return cfg;
+  }
+  const record = cfg as Record<string, unknown>;
+  const commands =
+    record.commands && typeof record.commands === "object" && !Array.isArray(record.commands)
+      ? (record.commands as Record<string, unknown>)
+      : {};
+  if (typeof commands.ownerDisplaySecret === "string" && commands.ownerDisplaySecret.length > 0) {
+    return cfg;
+  }
+  return {
+    ...record,
+    commands: {
+      ...commands,
+      ownerDisplaySecret: "openclaw-test-owner-display-secret",
+    },
+  };
+}
+
+/** Writes a temp OpenClaw config, installs it as runtime state, then restores globals. */
 export async function withTempConfig(params: {
   cfg: unknown;
   run: () => Promise<void>;
@@ -11,16 +44,27 @@ export async function withTempConfig(params: {
 }): Promise<void> {
   const prevConfigPath = process.env.OPENCLAW_CONFIG_PATH;
 
+  const testConfig = withStableOwnerDisplaySecretForTest(params.cfg) as OpenClawConfig;
   const dir = await mkdtemp(path.join(os.tmpdir(), params.prefix ?? "openclaw-test-config-"));
   const configPath = path.join(dir, "openclaw.json");
 
   process.env.OPENCLAW_CONFIG_PATH = configPath;
 
   try {
+<<<<<<< HEAD
     await writeFile(configPath, JSON.stringify(params.cfg, null, 2), "utf-8");
     clearConfigCache();
     resetConfigRuntimeState();
     clearSecretsRuntimeSnapshot();
+=======
+    await writeFile(configPath, JSON.stringify(testConfig, null, 2), "utf-8");
+    // Mirror both on-disk and runtime snapshots so code paths using either
+    // config IO layer see the same isolated fixture.
+    clearConfigCache();
+    resetConfigRuntimeState();
+    clearSecretsRuntimeSnapshot();
+    setRuntimeConfigSnapshot(testConfig, testConfig);
+>>>>>>> upstream/main
     await params.run();
   } finally {
     if (prevConfigPath === undefined) {

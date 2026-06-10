@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Signal tests cover normalize plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { looksLikeSignalTargetId, normalizeSignalMessagingTarget } from "./normalize.js";
 

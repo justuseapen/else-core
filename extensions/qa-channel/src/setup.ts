@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
+=======
+// Qa Channel setup module handles plugin onboarding behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import { DEFAULT_ACCOUNT_ID } from "./accounts.js";
 import type { CoreConfig } from "./types.js";
 
@@ -9,11 +14,17 @@ export function applyQaSetup(params: {
 }): OpenClawConfig {
   const nextCfg = structuredClone(params.cfg) as CoreConfig;
   const section = nextCfg.channels?.["qa-channel"] ?? {};
+<<<<<<< HEAD
   const accounts = { ...(section.accounts ?? {}) };
   const target =
     params.accountId === DEFAULT_ACCOUNT_ID
       ? { ...section }
       : { ...(accounts[params.accountId] ?? {}) };
+=======
+  const accounts = { ...section.accounts };
+  const target =
+    params.accountId === DEFAULT_ACCOUNT_ID ? { ...section } : { ...accounts[params.accountId] };
+>>>>>>> upstream/main
   if (typeof params.input.baseUrl === "string") {
     target.baseUrl = params.input.baseUrl;
   }

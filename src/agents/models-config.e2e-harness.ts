@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeEach, vi } from "vitest";
@@ -11,6 +12,20 @@ import type { MockFn } from "../test-utils/vitest-mock-fn.js";
 import { resetModelsJsonReadyCacheForTest } from "./models-config.js";
 import { resolveImplicitProviders } from "./models-config.providers.implicit.js";
 
+=======
+/**
+ * Models-config test harness utilities. The helpers isolate HOME, config
+ * caches, plugin loader state, fetch mocks, and ambient provider env vars.
+ */
+import { afterEach, beforeEach } from "vitest";
+import { clearConfigCache, clearRuntimeConfigSnapshot } from "../config/config.js";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { withTempHome as withTempHomeBase } from "../plugin-sdk/test-helpers/temp-home.js";
+import { resetPluginLoaderTestStateForTest } from "../plugins/loader.test-fixtures.js";
+import { resetModelsJsonReadyCacheForTest } from "./models-config-state.js";
+
+/** Runs a models-config test with an isolated temp HOME and no session cleanup. */
+>>>>>>> upstream/main
 export function withModelsTempHome<T>(fn: (home: string) => Promise<T>): Promise<T> {
   // Models-config tests do not exercise session persistence; skip draining
   // unrelated session lock state during temp-home teardown.
@@ -20,6 +35,7 @@ export function withModelsTempHome<T>(fn: (home: string) => Promise<T>): Promise
   });
 }
 
+<<<<<<< HEAD
 export function installModelsConfigTestHooks(opts?: {
   restoreFetch?: boolean;
   resetPluginLoaderState?: boolean;
@@ -31,20 +47,40 @@ export function installModelsConfigTestHooks(opts?: {
   const originalFetch = globalThis.fetch;
   const shouldResetPluginLoaderState = opts?.resetPluginLoaderState !== false;
   const shouldResetProviderRuntimeHookCache = opts?.resetProviderRuntimeHookCache !== false;
+=======
+/** Installs before/after hooks that reset config, plugin, env, and fetch state. */
+export function installModelsConfigTestHooks(opts?: {
+  restoreFetch?: boolean;
+  resetPluginLoaderState?: boolean;
+}) {
+  let previousHome: string | undefined;
+  let previousOpenClawAgentDir: string | undefined;
+  const originalFetch = globalThis.fetch;
+  const shouldResetPluginLoaderState = opts?.resetPluginLoaderState !== false;
+>>>>>>> upstream/main
 
   beforeEach(() => {
     previousHome = process.env.HOME;
     previousOpenClawAgentDir = process.env.OPENCLAW_AGENT_DIR;
+<<<<<<< HEAD
     previousPiCodingAgentDir = process.env.PI_CODING_AGENT_DIR;
     delete process.env.OPENCLAW_AGENT_DIR;
     delete process.env.PI_CODING_AGENT_DIR;
+=======
+    delete process.env.OPENCLAW_AGENT_DIR;
+    clearRuntimeConfigSnapshot();
+    clearConfigCache();
+>>>>>>> upstream/main
     if (shouldResetPluginLoaderState) {
       resetPluginLoaderTestStateForTest();
     }
     resetModelsJsonReadyCacheForTest();
+<<<<<<< HEAD
     if (shouldResetProviderRuntimeHookCache) {
       resetProviderRuntimeHookCacheForTest();
     }
+=======
+>>>>>>> upstream/main
   });
 
   afterEach(() => {
@@ -54,24 +90,33 @@ export function installModelsConfigTestHooks(opts?: {
     } else {
       process.env.OPENCLAW_AGENT_DIR = previousOpenClawAgentDir;
     }
+<<<<<<< HEAD
     if (previousPiCodingAgentDir === undefined) {
       delete process.env.PI_CODING_AGENT_DIR;
     } else {
       process.env.PI_CODING_AGENT_DIR = previousPiCodingAgentDir;
     }
+=======
+    clearRuntimeConfigSnapshot();
+    clearConfigCache();
+>>>>>>> upstream/main
     if (shouldResetPluginLoaderState) {
       resetPluginLoaderTestStateForTest();
     }
     resetModelsJsonReadyCacheForTest();
+<<<<<<< HEAD
     if (shouldResetProviderRuntimeHookCache) {
       resetProviderRuntimeHookCacheForTest();
     }
+=======
+>>>>>>> upstream/main
     if (opts?.restoreFetch && originalFetch) {
       globalThis.fetch = originalFetch;
     }
   });
 }
 
+/** Temporarily clears or overrides a set of environment variables for one async test body. */
 export async function withTempEnv<T>(vars: string[], fn: () => Promise<T>): Promise<T> {
   const previous: Record<string, string | undefined> = {};
   for (const envVar of vars) {
@@ -92,45 +137,14 @@ export async function withTempEnv<T>(vars: string[], fn: () => Promise<T>): Prom
   }
 }
 
+/** Deletes environment variables used by models-config provider discovery. */
 export function unsetEnv(vars: string[]) {
   for (const envVar of vars) {
     delete process.env[envVar];
   }
 }
 
-export const COPILOT_TOKEN_ENV_VARS = ["COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN"];
-
-export async function withUnsetCopilotTokenEnv<T>(fn: () => Promise<T>): Promise<T> {
-  return withTempEnv(COPILOT_TOKEN_ENV_VARS, async () => {
-    unsetEnv(COPILOT_TOKEN_ENV_VARS);
-    return fn();
-  });
-}
-
-export function mockCopilotTokenExchangeSuccess(): MockFn {
-  const fetchMock = vi.fn().mockResolvedValue({
-    ok: true,
-    status: 200,
-    json: async () => ({
-      token: "copilot-token;proxy-ep=proxy.copilot.example",
-      expires_at: Math.floor(Date.now() / 1000) + 3600,
-    }),
-  });
-  globalThis.fetch = fetchMock as unknown as typeof fetch;
-  return fetchMock;
-}
-
-export async function withCopilotGithubToken<T>(
-  token: string,
-  fn: (fetchMock: MockFn) => Promise<T>,
-): Promise<T> {
-  return withTempEnv(["COPILOT_GITHUB_TOKEN"], async () => {
-    process.env.COPILOT_GITHUB_TOKEN = token;
-    const fetchMock = mockCopilotTokenExchangeSuccess();
-    return fn(fetchMock);
-  });
-}
-
+/** Ambient env vars cleared by implicit provider discovery tests. */
 export const MODELS_CONFIG_IMPLICIT_ENV_VARS = [
   "OPENCLAW_TEST_ONLY_PROVIDER_PLUGIN_IDS",
   "VITEST",
@@ -151,7 +165,7 @@ export const MODELS_CONFIG_IMPLICIT_ENV_VARS = [
   "OPENCLAW_AGENT_DIR",
   "OPENAI_API_KEY",
   "OPENROUTER_API_KEY",
-  "PI_CODING_AGENT_DIR",
+  "OPENCLAW_AGENT_DIR",
   "QIANFAN_API_KEY",
   "QWEN_API_KEY",
   "MODELSTUDIO_API_KEY",
@@ -189,6 +203,7 @@ export const MODELS_CONFIG_IMPLICIT_ENV_VARS = [
   "AWS_SHARED_CREDENTIALS_FILE",
 ];
 
+<<<<<<< HEAD
 const TEST_PROVIDER_ENV_TO_PROVIDER_IDS: Record<string, string[]> = {
   AI_GATEWAY_API_KEY: ["vercel-ai-gateway"],
   ANTHROPIC_VERTEX_PROJECT_ID: ["anthropic-vertex"],
@@ -380,6 +395,9 @@ export async function resolveImplicitProvidersForTest(
   });
 }
 
+=======
+/** Canonical custom proxy provider config used by models-config tests. */
+>>>>>>> upstream/main
 export const CUSTOM_PROXY_MODELS_CONFIG: OpenClawConfig = {
   models: {
     providers: {

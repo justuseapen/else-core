@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+/** Verifies bundle manifest loading and bundled plugin runtime resolution. */
+>>>>>>> upstream/main
 import fs from "node:fs";
 import path from "node:path";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
@@ -153,7 +157,11 @@ describe("bundle plugins", () => {
 
     expect(plugin?.status).toBe("loaded");
     expect(plugin?.bundleFormat).toBe(expectedFormat);
+<<<<<<< HEAD
     expect(plugin?.bundleCapabilities).toEqual(expect.arrayContaining(expectedCapabilities));
+=======
+    expect(plugin?.bundleCapabilities).toEqual(expectedCapabilities);
+>>>>>>> upstream/main
     expectNoUnwiredBundleDiagnostic(registry, pluginId);
   });
 
@@ -189,7 +197,11 @@ describe("bundle plugins", () => {
 
     const plugin = registry.plugins.find((entry) => entry.id === "claude-mcp-url");
     expect(plugin?.status).toBe("loaded");
+<<<<<<< HEAD
     expect(plugin?.bundleCapabilities).toEqual(expect.arrayContaining(["mcpServers"]));
+=======
+    expect(plugin?.bundleCapabilities).toEqual(["mcpServers"]);
+>>>>>>> upstream/main
     expect(
       registry.diagnostics.some(
         (diag) =>

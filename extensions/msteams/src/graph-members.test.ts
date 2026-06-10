@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Msteams tests cover graph members plugin behavior.
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../runtime-api.js";
 import { getMemberInfoMSTeams } from "./graph-members.js";

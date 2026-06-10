@@ -6,8 +6,6 @@ read_when:
 title: "FAQ"
 ---
 
-# FAQ
-
 Quick answers plus deeper troubleshooting for real-world setups (local dev, VPS, multi-agent, OAuth/API keys, model failover). For runtime diagnostics, see [Troubleshooting](/gateway/troubleshooting). For the full config reference, see [Configuration](/gateway/configuration).
 
 ## First 60 seconds if something is broken
@@ -78,6 +76,7 @@ Quick answers plus deeper troubleshooting for real-world setups (local dev, VPS,
 
 ## Quick start and first-run setup
 
+<<<<<<< HEAD
 <AccordionGroup>
   <Accordion title="I am stuck, fastest way to get unstuck">
     Use a local AI agent that can **see your machine**. That is far more effective than asking
@@ -882,6 +881,10 @@ for usage/billing and raise limits as needed.
 
   </Accordion>
 </AccordionGroup>
+=======
+First-run Q&A — install, onboard, auth routes, subscriptions, initial failures —
+lives on the [First-run FAQ](/help/faq-first-run).
+>>>>>>> upstream/main
 
 ## What is OpenClaw?
 
@@ -979,14 +982,39 @@ for usage/billing and raise limits as needed.
     Yes. Add extra directories via `skills.load.extraDirs` in `~/.openclaw/openclaw.json` (lowest precedence). Default precedence is `<workspace>/skills` → `<workspace>/.agents/skills` → `~/.agents/skills` → `~/.openclaw/skills` → bundled → `skills.load.extraDirs`. `clawhub` installs into `./skills` by default, which OpenClaw treats as `<workspace>/skills` on the next session. If the skill should only be visible to certain agents, pair that with `agents.defaults.skills` or `agents.list[].skills`.
   </Accordion>
 
-  <Accordion title="How can I use different models for different tasks?">
+  <Accordion title="How can I use different models or settings for different tasks?">
     Today the supported patterns are:
 
     - **Cron jobs**: isolated jobs can set a `model` override per job.
-    - **Sub-agents**: route tasks to separate agents with different default models.
+    - **Agents**: route tasks to separate agents with different default models, thinking levels, and stream params.
     - **On-demand switch**: use `/model` to switch the current session model at any time.
 
-    See [Cron jobs](/automation/cron-jobs), [Multi-Agent Routing](/concepts/multi-agent), and [Slash commands](/tools/slash-commands).
+    For example, use the same model with different per-agent settings:
+
+    ```json5
+    {
+      agents: {
+        list: [
+          {
+            id: "coder",
+            model: "xiaomi/mimo-v2.5-pro",
+            thinkingDefault: "high",
+            params: { temperature: 0.1 },
+          },
+          {
+            id: "chat",
+            model: "xiaomi/mimo-v2.5-pro",
+            thinkingDefault: "off",
+            params: { temperature: 0.8 },
+          },
+        ],
+      },
+    }
+    ```
+
+    Put shared per-model defaults in `agents.defaults.models["provider/model"].params`, then put agent-specific overrides in flat `agents.list[].params`. Do not define separate nested `agents.list[].models["provider/model"].params` entries for the same model; `agents.list[].models` is for per-agent model catalog and runtime overrides.
+
+    See [Cron jobs](/automation/cron-jobs), [Multi-Agent Routing](/concepts/multi-agent), [Configuration](/gateway/config-agents), and [Slash commands](/tools/slash-commands).
 
   </Accordion>
 
@@ -1019,7 +1047,7 @@ for usage/billing and raise limits as needed.
 
     - Global defaults: `session.threadBindings.enabled`, `session.threadBindings.idleHours`, `session.threadBindings.maxAgeHours`.
     - Discord overrides: `channels.discord.threadBindings.enabled`, `channels.discord.threadBindings.idleHours`, `channels.discord.threadBindings.maxAgeHours`.
-    - Auto-bind on spawn: set `channels.discord.threadBindings.spawnSubagentSessions: true`.
+    - Auto-bind on spawn: `channels.discord.threadBindings.spawnSessions` defaults to `true`; set it to `false` to disable thread-bound session spawns.
 
     Docs: [Sub-agents](/tools/subagents), [Discord](/channels/discord), [Configuration Reference](/gateway/configuration-reference), [Slash commands](/tools/slash-commands).
 
@@ -1033,7 +1061,11 @@ for usage/billing and raise limits as needed.
     - If neither a bound route nor a usable stored route exists, direct delivery can fail and the result falls back to queued session delivery instead of posting immediately to chat.
     - Invalid or stale targets can still force queue fallback or final delivery failure.
     - If the child's last visible assistant reply is the exact silent token `NO_REPLY` / `no_reply`, or exactly `ANNOUNCE_SKIP`, OpenClaw intentionally suppresses the announce instead of posting stale earlier progress.
+<<<<<<< HEAD
     - If the child timed out after only tool calls, the announce can collapse that into a short partial-progress summary instead of replaying raw tool output.
+=======
+    - Tool/toolResult output is not promoted into child result text; the result is the child's latest visible assistant reply.
+>>>>>>> upstream/main
 
     Debug:
 
@@ -1062,22 +1094,36 @@ for usage/billing and raise limits as needed.
     openclaw cron runs --id <jobId> --limit 50
     ```
 
+<<<<<<< HEAD
     Docs: [Cron jobs](/automation/cron-jobs), [Automation & Tasks](/automation).
+=======
+    Docs: [Cron jobs](/automation/cron-jobs), [Automation](/automation).
+>>>>>>> upstream/main
 
   </Accordion>
 
   <Accordion title="Cron fired, but nothing was sent to the channel. Why?">
     Check the delivery mode first:
 
+<<<<<<< HEAD
     - `--no-deliver` / `delivery.mode: "none"` means no external message is expected.
+=======
+    - `--no-deliver` / `delivery.mode: "none"` means no runner fallback send is expected.
+>>>>>>> upstream/main
     - Missing or invalid announce target (`channel` / `to`) means the runner skipped outbound delivery.
     - Channel auth failures (`unauthorized`, `Forbidden`) mean the runner tried to deliver but credentials blocked it.
     - A silent isolated result (`NO_REPLY` / `no_reply` only) is treated as intentionally non-deliverable, so the runner also suppresses queued fallback delivery.
 
+<<<<<<< HEAD
     For isolated cron jobs, the runner owns final delivery. The agent is expected
     to return a plain-text summary for the runner to send. `--no-deliver` keeps
     that result internal; it does not let the agent send directly with the
     message tool instead.
+=======
+    For isolated cron jobs, the agent can still send directly with the `message`
+    tool when a chat route is available. `--announce` only controls the runner
+    fallback path for final text that the agent did not already send.
+>>>>>>> upstream/main
 
     Debug:
 
@@ -1129,16 +1175,30 @@ for usage/billing and raise limits as needed.
     openclaw skills install <skill-slug>
     openclaw skills install <skill-slug> --version <version>
     openclaw skills install <skill-slug> --force
+<<<<<<< HEAD
     openclaw skills update --all
+=======
+    openclaw skills install <skill-slug> --global
+    openclaw skills update --all
+    openclaw skills update --all --global
+>>>>>>> upstream/main
     openclaw skills list --eligible
     openclaw skills check
     ```
 
     Native `openclaw skills install` writes into the active workspace `skills/`
+<<<<<<< HEAD
     directory. Install the separate `clawhub` CLI only if you want to publish or
     sync your own skills. For shared installs across agents, put the skill under
     `~/.openclaw/skills` and use `agents.defaults.skills` or
     `agents.list[].skills` if you want to narrow which agents can see it.
+=======
+    directory by default. Add `--global` to install into the shared managed
+    skills directory for all local agents. Install the separate `clawhub` CLI
+    only if you want to publish or sync your own skills. Use
+    `agents.defaults.skills` or `agents.list[].skills` if you want to narrow
+    which agents can see shared skills.
+>>>>>>> upstream/main
 
   </Accordion>
 
@@ -1149,7 +1209,11 @@ for usage/billing and raise limits as needed.
     - **Heartbeat** for "main session" periodic checks.
     - **Isolated jobs** for autonomous agents that post summaries or deliver to chats.
 
+<<<<<<< HEAD
     Docs: [Cron jobs](/automation/cron-jobs), [Automation & Tasks](/automation),
+=======
+    Docs: [Cron jobs](/automation/cron-jobs), [Automation](/automation),
+>>>>>>> upstream/main
     [Heartbeat](/gateway/heartbeat).
 
   </Accordion>
@@ -1214,7 +1278,11 @@ for usage/billing and raise limits as needed.
     openclaw skills update --all
     ```
 
+<<<<<<< HEAD
     Native installs land in the active workspace `skills/` directory. For shared skills across agents, place them in `~/.openclaw/skills/<name>/SKILL.md`. If only some agents should see a shared install, configure `agents.defaults.skills` or `agents.list[].skills`. Some skills expect binaries installed via Homebrew; on Linux that means Linuxbrew (see the Homebrew Linux FAQ entry above). See [Skills](/tools/skills), [Skills config](/tools/skills-config), and [ClawHub](/tools/clawhub).
+=======
+    Native installs land in the active workspace `skills/` directory. For shared skills across all local agents, use `openclaw skills install <slug> --global` (or place them manually in `~/.openclaw/skills/<name>/SKILL.md`). If only some agents should see a shared install, configure `agents.defaults.skills` or `agents.list[].skills`. Some skills expect binaries installed via Homebrew; on Linux that means Linuxbrew (see the Homebrew Linux FAQ entry above). See [Skills](/tools/skills), [Skills config](/tools/skills-config), and [ClawHub](/tools/clawhub).
+>>>>>>> upstream/main
 
   </Accordion>
 
@@ -1233,7 +1301,13 @@ for usage/billing and raise limits as needed.
     openclaw browser --browser-profile chrome-live tabs
     ```
 
-    This path is host-local. If the Gateway runs elsewhere, either run a node host on the browser machine or use remote CDP instead.
+    This path can use the local host browser or a connected browser node. If the Gateway runs elsewhere, either run a node host on the browser machine or use remote CDP instead.
+
+    Current limits on `existing-session` / `user`:
+
+    - actions are ref-driven, not CSS-selector driven
+    - uploads require `ref` / `inputRef` and currently support one file at a time
+    - `responsebody`, PDF export, download interception, and batch actions still need a managed browser or raw CDP profile
 
     Current limits on `existing-session` / `user`:
 
@@ -1256,7 +1330,7 @@ for usage/billing and raise limits as needed.
     include system packages, Homebrew, or bundled browsers. For a fuller setup:
 
     - Persist `/home/node` with `OPENCLAW_HOME_VOLUME` so caches survive.
-    - Bake system deps into the image with `OPENCLAW_DOCKER_APT_PACKAGES`.
+    - Bake system deps into the image with `OPENCLAW_IMAGE_APT_PACKAGES`.
     - Install Playwright browsers via the bundled CLI:
       `node /app/node_modules/playwright-core/cli.js install chromium`
     - Set `PLAYWRIGHT_BROWSERS_PATH` and ensure the path is persisted.
@@ -1268,11 +1342,11 @@ for usage/billing and raise limits as needed.
   <Accordion title="Can I keep DMs personal but make groups public/sandboxed with one agent?">
     Yes - if your private traffic is **DMs** and your public traffic is **groups**.
 
-    Use `agents.defaults.sandbox.mode: "non-main"` so group/channel sessions (non-main keys) run in Docker, while the main DM session stays on-host. Then restrict what tools are available in sandboxed sessions via `tools.sandbox.tools`.
+    Use `agents.defaults.sandbox.mode: "non-main"` so group/channel sessions (non-main keys) run in the configured sandbox backend, while the main DM session stays on-host. Docker is the default backend if you do not choose one. Then restrict what tools are available in sandboxed sessions via `tools.sandbox.tools`.
 
     Setup walkthrough + example config: [Groups: personal DMs + public groups](/channels/groups#pattern-personal-dms-public-groups-single-agent)
 
-    Key config reference: [Gateway configuration](/gateway/configuration-reference#agentsdefaultssandbox)
+    Key config reference: [Gateway configuration](/gateway/config-agents#agentsdefaultssandbox)
 
   </Accordion>
 
@@ -1325,20 +1399,17 @@ for usage/billing and raise limits as needed.
     Codex CLI login)** does not help for semantic memory search. OpenAI embeddings
     still need a real API key (`OPENAI_API_KEY` or `models.providers.openai.apiKey`).
 
-    If you don't set a provider explicitly, OpenClaw auto-selects a provider when it
-    can resolve an API key (auth profiles, `models.providers.*.apiKey`, or env vars).
-    It prefers OpenAI if an OpenAI key resolves, otherwise Gemini if a Gemini key
-    resolves, then Voyage, then Mistral. If no remote key is available, memory
-    search stays disabled until you configure it. If you have a local model path
-    configured and present, OpenClaw
-    prefers `local`. Ollama is supported when you explicitly set
-    `memorySearch.provider = "ollama"`.
+    If you don't set a provider explicitly, OpenClaw uses OpenAI embeddings. Legacy
+    configs that still say `memorySearch.provider = "auto"` resolve to OpenAI too.
+    If no OpenAI API key is available, semantic memory search stays unavailable
+    until you configure a key or choose another provider explicitly.
 
     If you'd rather stay local, set `memorySearch.provider = "local"` (and optionally
     `memorySearch.fallback = "none"`). If you want Gemini embeddings, set
     `memorySearch.provider = "gemini"` and provide `GEMINI_API_KEY` (or
-    `memorySearch.remote.apiKey`). We support **OpenAI, Gemini, Voyage, Mistral, Ollama, or local** embedding
-    models - see [Memory](/concepts/memory) for the setup details.
+    `memorySearch.remote.apiKey`). We support **OpenAI, OpenAI-compatible, Gemini,
+    Voyage, Mistral, Bedrock, Ollama, LM Studio, GitHub Copilot, DeepInfra, or local**
+    embedding models - see [Memory](/concepts/memory) for the setup details.
 
   </Accordion>
 </AccordionGroup>
@@ -1386,8 +1457,14 @@ for usage/billing and raise limits as needed.
     These files live in the **agent workspace**, not `~/.openclaw`.
 
     - **Workspace (per agent)**: `AGENTS.md`, `SOUL.md`, `IDENTITY.md`, `USER.md`,
+<<<<<<< HEAD
       `MEMORY.md` (or legacy fallback `memory.md` when `MEMORY.md` is absent),
       `memory/YYYY-MM-DD.md`, optional `HEARTBEAT.md`.
+=======
+      `MEMORY.md`, `memory/YYYY-MM-DD.md`, optional `HEARTBEAT.md`.
+      Lowercase root `memory.md` is legacy repair input only; `openclaw doctor --fix`
+      can merge it into `MEMORY.md` when both files exist.
+>>>>>>> upstream/main
     - **State dir (`~/.openclaw`)**: config, channel/provider state, auth profiles, sessions, logs,
       and shared skills (`~/.openclaw/skills`).
 
@@ -1407,6 +1484,48 @@ for usage/billing and raise limits as needed.
     AGENTS.md or MEMORY.md** rather than relying on chat history.
 
     See [Agent workspace](/concepts/agent-workspace) and [Memory](/concepts/memory).
+
+  </Accordion>
+
+  <Accordion title="Can I make SOUL.md bigger?">
+    Yes. `SOUL.md` is one of the workspace bootstrap files injected into the
+    agent context. The default per-file injection limit is `20000` characters,
+    and the total bootstrap budget across files is `60000` characters.
+
+    Change the shared defaults in your OpenClaw config:
+
+    ```json5
+    {
+      agents: {
+        defaults: {
+          bootstrapMaxChars: 50000,
+          bootstrapTotalMaxChars: 300000,
+        },
+      },
+    }
+    ```
+
+    Or override one agent:
+
+    ```json5
+    {
+      agents: {
+        list: [
+          {
+            id: "main",
+            bootstrapMaxChars: 50000,
+            bootstrapTotalMaxChars: 300000,
+          },
+        ],
+      },
+    }
+    ```
+
+    Use `/context` to check raw vs injected sizes and whether truncation happened.
+    Keep `SOUL.md` focused on voice, stance, and personality; put operating rules
+    in `AGENTS.md` and durable facts in memory.
+
+    See [Context](/concepts/context) and [Agent config](/gateway/config-agents).
 
   </Accordion>
 
@@ -1473,7 +1592,11 @@ for usage/billing and raise limits as needed.
     Non-loopback binds **require a valid gateway auth path**. In practice that means:
 
     - shared-secret auth: token or password
+<<<<<<< HEAD
     - `gateway.auth.mode: "trusted-proxy"` behind a correctly configured non-loopback identity-aware reverse proxy
+=======
+    - `gateway.auth.mode: "trusted-proxy"` behind a correctly configured identity-aware reverse proxy
+>>>>>>> upstream/main
 
     ```json5
     {
@@ -1494,14 +1617,24 @@ for usage/billing and raise limits as needed.
     - For password auth, set `gateway.auth.mode: "password"` plus `gateway.auth.password` (or `OPENCLAW_GATEWAY_PASSWORD`) instead.
     - If `gateway.auth.token` / `gateway.auth.password` is explicitly configured via SecretRef and unresolved, resolution fails closed (no remote fallback masking).
     - Shared-secret Control UI setups authenticate via `connect.params.auth.token` or `connect.params.auth.password` (stored in app/UI settings). Identity-bearing modes such as Tailscale Serve or `trusted-proxy` use request headers instead. Avoid putting shared secrets in URLs.
+<<<<<<< HEAD
     - With `gateway.auth.mode: "trusted-proxy"`, same-host loopback reverse proxies still do **not** satisfy trusted-proxy auth. The trusted proxy must be a configured non-loopback source.
+=======
+    - With `gateway.auth.mode: "trusted-proxy"`, same-host loopback reverse proxies require explicit `gateway.auth.trustedProxy.allowLoopback = true` and a loopback entry in `gateway.trustedProxies`.
+>>>>>>> upstream/main
 
   </Accordion>
 
   <Accordion title="Why do I need a token on localhost now?">
+<<<<<<< HEAD
     OpenClaw enforces gateway auth by default, including loopback. In the normal default path that means token auth: if no explicit auth path is configured, gateway startup resolves to token mode and auto-generates one, saving it to `gateway.auth.token`, so **local WS clients must authenticate**. This blocks other local processes from calling the Gateway.
 
     If you prefer a different auth path, you can explicitly choose password mode (or, for non-loopback identity-aware reverse proxies, `trusted-proxy`). If you **really** want open loopback, set `gateway.auth.mode: "none"` explicitly in your config. Doctor can generate a token for you any time: `openclaw doctor --generate-gateway-token`.
+=======
+    OpenClaw enforces gateway auth by default, including loopback. In the normal default path that means token auth: if no explicit auth path is configured, gateway startup resolves to token mode and generates a runtime-only token for that startup, so **local WS clients must authenticate**. Configure `gateway.auth.token`, `gateway.auth.password`, `OPENCLAW_GATEWAY_TOKEN`, or `OPENCLAW_GATEWAY_PASSWORD` explicitly when clients need a stable secret across restarts. This blocks other local processes from calling the Gateway.
+
+    If you prefer a different auth path, you can explicitly choose password mode (or, for identity-aware reverse proxies, `trusted-proxy`). If you **really** want open loopback, set `gateway.auth.mode: "none"` explicitly in your config. Doctor can generate a token for you any time: `openclaw doctor --generate-gateway-token`.
+>>>>>>> upstream/main
 
   </Accordion>
 
@@ -1537,7 +1670,12 @@ for usage/billing and raise limits as needed.
     `web_fetch` works without an API key. `web_search` depends on your selected
     provider:
 
+<<<<<<< HEAD
     - API-backed providers such as Brave, Exa, Firecrawl, Gemini, Grok, Kimi, MiniMax Search, Perplexity, and Tavily require their normal API key setup.
+=======
+    - API-backed providers such as Brave, Exa, Firecrawl, Gemini, Kimi, MiniMax Search, Perplexity, and Tavily require their normal API key setup.
+    - Grok can reuse xAI OAuth from model auth, or fall back to `XAI_API_KEY` / plugin web-search config.
+>>>>>>> upstream/main
     - Ollama Web Search is key-free, but it uses your configured Ollama host and requires `ollama signin`.
     - DuckDuckGo is key-free, but it is an unofficial HTML-based integration.
     - SearXNG is key-free/self-hosted; configure `SEARXNG_BASE_URL` or `plugins.entries.searxng.config.webSearch.baseUrl`.
@@ -1549,7 +1687,7 @@ for usage/billing and raise limits as needed.
     - Exa: `EXA_API_KEY`
     - Firecrawl: `FIRECRAWL_API_KEY`
     - Gemini: `GEMINI_API_KEY`
-    - Grok: `XAI_API_KEY`
+    - Grok: xAI OAuth, `XAI_API_KEY`
     - Kimi: `KIMI_API_KEY` or `MOONSHOT_API_KEY`
     - MiniMax Search: `MINIMAX_CODE_PLAN_KEY`, `MINIMAX_CODING_API_KEY`, or `MINIMAX_API_KEY`
     - Perplexity: `PERPLEXITY_API_KEY` or `OPENROUTER_API_KEY`
@@ -1604,10 +1742,20 @@ for usage/billing and raise limits as needed.
     `config.apply` replaces the **entire config**. If you send a partial object, everything
     else is removed.
 
+    Current OpenClaw protects many accidental clobbers:
+
+    - OpenClaw-owned config writes validate the full post-change config before writing.
+    - Invalid or destructive OpenClaw-owned writes are rejected and saved as `openclaw.json.rejected.*`.
+    - If a direct edit breaks startup or hot reload, Gateway fails closed or skips the reload; it does not rewrite `openclaw.json`.
+    - `openclaw doctor --fix` owns repair and can restore last-known-good while saving the rejected file as `openclaw.json.clobbered.*`.
+
     Recover:
 
-    - Restore from backup (git or a copied `~/.openclaw/openclaw.json`).
-    - If you have no backup, re-run `openclaw doctor` and reconfigure channels/models.
+    - Check `openclaw logs --follow` for `Invalid config at`, `Config write rejected:`, or `config reload skipped (invalid config)`.
+    - Inspect the newest `openclaw.json.clobbered.*` or `openclaw.json.rejected.*` beside the active config.
+    - Run `openclaw config validate` and `openclaw doctor --fix`.
+    - Copy only the intended keys back with `openclaw config set` or `config.patch`.
+    - If you have no last-known-good or rejected payload, restore from backup, or re-run `openclaw doctor` and reconfigure channels/models.
     - If this was unexpected, file a bug and include your last known config or any backup.
     - A local coding agent can often reconstruct a working config from logs or history.
 
@@ -1617,9 +1765,13 @@ for usage/billing and raise limits as needed.
     - Use `openclaw configure` for interactive edits.
     - Use `config.schema.lookup` first when you are not sure about an exact path or field shape; it returns a shallow schema node plus immediate child summaries for drill-down.
     - Use `config.patch` for partial RPC edits; keep `config.apply` for full-config replacement only.
+<<<<<<< HEAD
     - If you are using the owner-only `gateway` tool from an agent run, it will still reject writes to `tools.exec.ask` / `tools.exec.security` (including legacy `tools.bash.*` aliases that normalize to the same protected exec paths).
+=======
+    - If you are using the agent-facing `gateway` tool from an agent run, it will still reject writes to `tools.exec.ask` / `tools.exec.security` (including legacy `tools.bash.*` aliases that normalize to the same protected exec paths).
+>>>>>>> upstream/main
 
-    Docs: [Config](/cli/config), [Configure](/cli/configure), [Doctor](/gateway/doctor).
+    Docs: [Config](/cli/config), [Configure](/cli/configure), [Gateway troubleshooting](/gateway/troubleshooting#gateway-rejected-invalid-config), [Doctor](/gateway/doctor).
 
   </Accordion>
 
@@ -1782,7 +1934,7 @@ for usage/billing and raise limits as needed.
     to the gateway (iOS/Android nodes, or macOS "node mode" in the menubar app). For headless node
     hosts and CLI control, see [Node host CLI](/cli/node).
 
-    A full restart is required for `gateway`, `discovery`, and `canvasHost` changes.
+    A full restart is required for `gateway`, `discovery`, and hosted plugin surface changes.
 
   </Accordion>
 
@@ -1791,9 +1943,15 @@ for usage/billing and raise limits as needed.
 
     - `config.schema.lookup`: inspect one config subtree with its shallow schema node, matched UI hint, and immediate child summaries before writing
     - `config.get`: fetch the current snapshot + hash
+<<<<<<< HEAD
     - `config.patch`: safe partial update (preferred for most RPC edits)
     - `config.apply`: validate + replace the full config, then restart
     - The owner-only `gateway` runtime tool still refuses to rewrite `tools.exec.ask` / `tools.exec.security`; legacy `tools.bash.*` aliases normalize to the same protected exec paths
+=======
+    - `config.patch`: safe partial update (preferred for most RPC edits); hot-reloads when possible and restarts when required
+    - `config.apply`: validate + replace the full config; hot-reloads when possible and restarts when required
+    - The agent-facing `gateway` runtime tool still refuses to rewrite `tools.exec.ask` / `tools.exec.security`; legacy `tools.bash.*` aliases normalize to the same protected exec paths
+>>>>>>> upstream/main
 
   </Accordion>
 
@@ -1878,6 +2036,9 @@ for usage/billing and raise limits as needed.
     - a global fallback `.env` from `~/.openclaw/.env` (aka `$OPENCLAW_STATE_DIR/.env`)
 
     Neither `.env` file overrides existing env vars.
+    Provider credential variables are an exception for workspace `.env`: keys such as
+    `GEMINI_API_KEY`, `XAI_API_KEY`, or `MISTRAL_API_KEY` are ignored from workspace
+    `.env` and should live in the process environment, `~/.openclaw/.env`, or config `env`.
 
     You can also define inline env vars in config (applied only if missing from the process env):
 
@@ -2073,8 +2234,9 @@ for usage/billing and raise limits as needed.
     }
     ```
 
-    If `HEARTBEAT.md` exists but is effectively empty (only blank lines and markdown
-    headers like `# Heading`), OpenClaw skips the heartbeat run to save API calls.
+    If `HEARTBEAT.md` exists but is effectively empty (only blank lines,
+    Markdown/HTML comments, Markdown headings like `# Heading`, fence markers,
+    or empty checklist stubs), OpenClaw skips the heartbeat run to save API calls.
     If the file is missing, the heartbeat still runs and the model decides what to do.
 
     Per-agent overrides use `agents.list[].heartbeat`. Docs: [Heartbeat](/gateway/heartbeat).
@@ -2170,8 +2332,9 @@ for usage/billing and raise limits as needed.
   </Accordion>
 </AccordionGroup>
 
-## Models: defaults, selection, aliases, switching
+## Models, failover, and auth profiles
 
+<<<<<<< HEAD
 <AccordionGroup>
   <Accordion title='What is the "default model"?'>
     OpenClaw's default model is whatever you set as:
@@ -2688,6 +2851,10 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
 
   </Accordion>
 </AccordionGroup>
+=======
+Model Q&A — defaults, selection, aliases, switching, failover, auth profiles —
+lives on the [Models FAQ](/help/faq-models).
+>>>>>>> upstream/main
 
 ## Gateway: ports, "already running", and remote mode
 
@@ -2703,8 +2870,8 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
 
   </Accordion>
 
-  <Accordion title='Why does openclaw gateway status say "Runtime: running" but "RPC probe: failed"?'>
-    Because "running" is the **supervisor's** view (launchd/systemd/schtasks). The RPC probe is the CLI actually connecting to the gateway WebSocket and calling `status`.
+  <Accordion title='Why does openclaw gateway status say "Runtime: running" but "Connectivity probe: failed"?'>
+    Because "running" is the **supervisor's** view (launchd/systemd/schtasks). The connectivity probe is the CLI actually connecting to the gateway WebSocket.
 
     Use `openclaw gateway status` and trust these lines:
 
@@ -2767,7 +2934,11 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
     - On `AUTH_TOKEN_MISMATCH`, trusted clients can attempt one bounded retry with a cached device token when the gateway returns retry hints (`canRetryWithDeviceToken=true`, `recommendedNextStep=retry_with_device_token`).
     - That cached-token retry now reuses the cached approved scopes stored with the device token. Explicit `deviceToken` / explicit `scopes` callers still keep their requested scope set instead of inheriting cached scopes.
     - Outside that retry path, connect auth precedence is explicit shared token/password first, then explicit `deviceToken`, then stored device token, then bootstrap token.
+<<<<<<< HEAD
     - Bootstrap token scope checks are role-prefixed. The built-in bootstrap operator allowlist only satisfies operator requests; node or other non-operator roles still need scopes under their own role prefix.
+=======
+    - Built-in setup-code bootstrap is node-only. After approval, it returns a node device token with `scopes: []` and does not return a handed-off operator token.
+>>>>>>> upstream/main
 
     Fix:
 
@@ -2776,7 +2947,11 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
     - If remote, tunnel first: `ssh -N -L 18789:127.0.0.1:18789 user@host` then open `http://127.0.0.1:18789/`.
     - Shared-secret mode: set `gateway.auth.token` / `OPENCLAW_GATEWAY_TOKEN` or `gateway.auth.password` / `OPENCLAW_GATEWAY_PASSWORD`, then paste the matching secret in Control UI settings.
     - Tailscale Serve mode: make sure `gateway.auth.allowTailscale` is enabled and you are opening the Serve URL, not a raw loopback/tailnet URL that bypasses Tailscale identity headers.
+<<<<<<< HEAD
     - Trusted-proxy mode: make sure you are coming through the configured non-loopback identity-aware proxy, not a same-host loopback proxy or raw gateway URL.
+=======
+    - Trusted-proxy mode: make sure you are coming through the configured identity-aware proxy, not a raw gateway URL. Same-host loopback proxies also need `gateway.auth.trustedProxy.allowLoopback = true`.
+>>>>>>> upstream/main
     - If mismatch persists after the one retry, rotate/re-approve the paired device token:
       - `openclaw devices list`
       - `openclaw devices rotate --device <id> --role operator`
@@ -2868,7 +3043,7 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
 
     Service/supervisor logs (when the gateway runs via launchd/systemd):
 
-    - macOS: `$OPENCLAW_STATE_DIR/logs/gateway.log` and `gateway.err.log` (default: `~/.openclaw/logs/...`; profiles use `~/.openclaw-<profile>/logs/...`)
+    - macOS launchd stdout: `~/Library/Logs/openclaw/gateway.log` (profiles use `gateway-<profile>.log`; stderr is suppressed)
     - Linux: `journalctl --user -u openclaw-gateway[-<profile>].service -n 200 --no-pager`
     - Windows: `schtasks /Query /TN "OpenClaw Gateway (<profile>)" /V /FO LIST`
 
@@ -2889,9 +3064,14 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
   </Accordion>
 
   <Accordion title="I closed my terminal on Windows - how do I restart OpenClaw?">
-    There are **two Windows install modes**:
+    There are **three Windows install modes**:
 
-    **1) WSL2 (recommended):** the Gateway runs inside Linux.
+    **1) Windows Hub local setup:** the native app manages a local app-owned WSL Gateway.
+
+    Open **OpenClaw Companion** from the Start menu or tray, then use
+    **Gateway Setup** or the Connections tab.
+
+    **2) Manual WSL2 Gateway:** the Gateway runs inside Linux.
 
     Open PowerShell, enter WSL, then restart:
 
@@ -2907,7 +3087,7 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
     openclaw gateway run
     ```
 
-    **2) Native Windows (not recommended):** the Gateway runs directly in Windows.
+    **3) Native Windows CLI/Gateway:** the Gateway runs directly in Windows.
 
     Open PowerShell and run:
 
@@ -2922,7 +3102,7 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
     openclaw gateway run
     ```
 
-    Docs: [Windows (WSL2)](/platforms/windows), [Gateway service runbook](/gateway).
+    Docs: [Windows](/platforms/windows), [Gateway service runbook](/gateway).
 
   </Accordion>
 
@@ -3041,7 +3221,7 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
 
 <AccordionGroup>
   <Accordion title="My skill generated an image/PDF, but nothing was sent">
-    Outbound attachments from the agent must include a `MEDIA:<path-or-url>` line (on its own line). See [OpenClaw assistant setup](/start/openclaw) and [Agent send](/tools/agent-send).
+    Outbound attachments from the agent must use structured media fields such as `media`, `mediaUrl`, `path`, or `filePath`. See [OpenClaw assistant setup](/start/openclaw) and [Agent send](/tools/agent-send).
 
     CLI sending:
 
@@ -3054,7 +3234,11 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
     - The target channel supports outbound media and isn't blocked by allowlists.
     - The file is within the provider's size limits (images are resized to max 2048px).
     - `tools.fs.workspaceOnly=true` keeps local-path sends limited to workspace, temp/media-store, and sandbox-validated files.
+<<<<<<< HEAD
     - `tools.fs.workspaceOnly=false` lets `MEDIA:` send host-local files the agent can already read, but only for media plus safe document types (images, audio, video, PDF, and Office docs). Plain text and secret-like files are still blocked.
+=======
+    - `tools.fs.workspaceOnly=false` lets structured local media sends use host-local files the agent can already read, but only for media plus safe document types (images, audio, video, PDF, Office docs, and validated text documents such as Markdown/MD, TXT, JSON, YAML, and YML). This is not a secret scanner: an agent-readable `secret.txt` or `config.json` can be attached when the extension and content validation match. Keep sensitive files outside agent-readable paths, or keep `tools.fs.workspaceOnly=true` for stricter local-path sends.
+>>>>>>> upstream/main
 
     See [Images](/nodes/images).
 
@@ -3094,6 +3278,72 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
     - sandboxing and strict tool allowlists
 
     Details: [Security](/gateway/security).
+
+  </Accordion>
+
+  <Accordion title="Is OpenClaw less safe because it uses TypeScript/Node instead of Rust/WASM?">
+    Language and runtime matter, but they are not the main risk for a personal
+    agent. The practical OpenClaw risks are gateway exposure, who can message the
+    bot, prompt injection, tool scope, credential handling, browser access, exec
+    access, and third-party skill or plugin trust.
+
+    Rust and WASM can provide stronger isolation for some classes of code, but
+    they do not solve prompt injection, bad allowlists, public gateway exposure,
+    overbroad tools, or a browser profile that is already logged in to sensitive
+    accounts. Treat those as the primary controls:
+
+    - keep the Gateway private or authenticated
+    - use pairing and allowlists for DMs and groups
+    - deny or sandbox risky tools for untrusted inputs
+    - install only trusted plugins and skills
+    - run `openclaw security audit --deep` after config changes
+
+    Details: [Security](/gateway/security), [Sandboxing](/gateway/sandboxing).
+
+  </Accordion>
+
+  <Accordion title="I saw reports about exposed OpenClaw instances. What should I check?">
+    First check your actual deployment:
+
+    ```bash
+    openclaw security audit --deep
+    openclaw gateway status
+    ```
+
+    A safer baseline is:
+
+    - Gateway bound to `loopback`, or exposed only through authenticated private
+      access such as a tailnet, SSH tunnel, token/password auth, or a correctly
+      configured trusted proxy
+    - DMs in `pairing` or `allowlist` mode
+    - groups allowlisted and mention-gated unless every member is trusted
+    - high-risk tools (`exec`, `browser`, `gateway`, `cron`) denied or tightly
+      scoped for agents that read untrusted content
+    - sandboxing enabled where tool execution needs a smaller blast radius
+
+    Public binds without auth, open DMs/groups with tools, and exposed browser
+    control are the findings to fix first. Details:
+    [Security audit checklist](/gateway/security#security-audit-checklist).
+
+  </Accordion>
+
+  <Accordion title="Are ClawHub skills and third-party plugins safe to install?">
+    Treat third-party skills and plugins as code you are choosing to trust.
+    ClawHub skill pages expose scan state before install, but scans are not a
+    complete security boundary. OpenClaw does not run built-in local
+    dangerous-code blocking during plugin or skill install/update flows; use
+    operator-owned `security.installPolicy` for local allow/block decisions.
+
+    Safer pattern:
+
+    - prefer trusted authors and pinned versions
+    - read the skill or plugin before enabling it
+    - keep plugin and skill allowlists narrow
+    - run untrusted-input workflows in a sandbox with minimal tools
+    - avoid giving third-party code broad filesystem, exec, browser, or secret access
+
+    Details: [Skills](/tools/skills), [Plugins](/tools/plugin),
+    [Security](/gateway/security).
 
   </Accordion>
 
@@ -3167,13 +3417,14 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
 
 <AccordionGroup>
   <Accordion title="How do I stop internal system messages from showing in chat?">
-    Most internal or tool messages only appear when **verbose** or **reasoning** is enabled
+    Most internal or tool messages only appear when **verbose**, **trace**, or **reasoning** is enabled
     for that session.
 
     Fix in the chat where you see it:
 
     ```
     /verbose off
+    /trace off
     /reasoning off
     ```
 
@@ -3181,7 +3432,7 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
     to **inherit**. Also confirm you are not using a bot profile with `verboseDefault` set
     to `on` in config.
 
-    Docs: [Thinking and verbose](/tools/thinking), [Security](/gateway/security#reasoning-verbose-output-in-groups).
+    Docs: [Thinking and verbose](/tools/thinking), [Security](/gateway/security/index#reasoning-and-verbose-output-in-groups).
 
   </Accordion>
 
@@ -3248,15 +3499,14 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
   </Accordion>
 
   <Accordion title='Why does it feel like the bot "ignores" rapid-fire messages?'>
-    Queue mode controls how new messages interact with an in-flight run. Use `/queue` to change modes:
+    Mid-run prompts are steered into the active run by default. Use `/queue` to choose active-run behavior:
 
-    - `steer` - new messages redirect the current task
-    - `followup` - run messages one at a time
-    - `collect` - batch messages and reply once (default)
-    - `steer-backlog` - steer now, then process backlog
+    - `steer` - guide the active run at the next model boundary
+    - `followup` - queue messages and run them one at a time after the current run ends
+    - `collect` - queue compatible messages and reply once after the current run ends
     - `interrupt` - abort current run and start fresh
 
-    You can add options like `debounce:2s cap:25 drop:summarize` for followup modes.
+    Default mode is `steer`. You can add options like `debounce:0.5s cap:25 drop:summarize` for queued modes. See [Command queue](/concepts/queue) and [Steering queue](/concepts/queue-steering).
 
   </Accordion>
 </AccordionGroup>
@@ -3272,3 +3522,9 @@ Related: [/concepts/oauth](/concepts/oauth) (OAuth flows, token storage, multi-a
 ---
 
 Still stuck? Ask in [Discord](https://discord.com/invite/clawd) or open a [GitHub discussion](https://github.com/openclaw/openclaw/discussions).
+
+## Related
+
+- [First-run FAQ](/help/faq-first-run) — install, onboard, auth, subscriptions, early failures
+- [Models FAQ](/help/faq-models) — model selection, failover, auth profiles
+- [Troubleshooting](/help/troubleshooting) — symptom-first triage

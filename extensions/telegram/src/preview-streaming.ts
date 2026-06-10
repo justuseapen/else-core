@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { getChannelStreamingConfigObject } from "openclaw/plugin-sdk/channel-streaming";
 
 export type TelegramPreviewStreamMode = "off" | "partial" | "block";
@@ -30,6 +31,15 @@ function parseTelegramPreviewStreamMode(value: unknown): TelegramPreviewStreamMo
   }
   return parsed === "progress" ? "partial" : parsed;
 }
+=======
+// Telegram plugin module implements preview streaming behavior.
+import {
+  resolveChannelPreviewStreamMode,
+  type StreamingMode,
+} from "openclaw/plugin-sdk/channel-outbound";
+
+type TelegramPreviewStreamMode = StreamingMode;
+>>>>>>> upstream/main
 
 export function resolveTelegramPreviewStreamMode(
   params: {
@@ -37,6 +47,7 @@ export function resolveTelegramPreviewStreamMode(
     streaming?: unknown;
   } = {},
 ): TelegramPreviewStreamMode {
+<<<<<<< HEAD
   const parsedStreaming = parseStreamingMode(
     getChannelStreamingConfigObject(params)?.mode ?? params.streaming,
   );
@@ -55,4 +66,7 @@ export function resolveTelegramPreviewStreamMode(
     return params.streaming ? "partial" : "off";
   }
   return "partial";
+=======
+  return resolveChannelPreviewStreamMode(params, "partial");
+>>>>>>> upstream/main
 }

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix tests cover approval auth plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { matrixApprovalAuth } from "./approval-auth.js";
 

@@ -1,8 +1,20 @@
 {
   "id": "talk-voice",
+<<<<<<< HEAD
+=======
+  "activation": {
+    "onStartup": true
+  },
+>>>>>>> upstream/main
   "enabledByDefault": true,
   "name": "Talk Voice",
   "description": "Manage Talk voice selection (list/set).",
+  "commandAliases": [
+    {
+      "name": "voice",
+      "kind": "runtime-slash"
+    }
+  ],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

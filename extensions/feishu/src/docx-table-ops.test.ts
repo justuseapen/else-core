@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Feishu tests cover docx table ops plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { cleanBlocksForDescendant } from "./docx-table-ops.js";
 

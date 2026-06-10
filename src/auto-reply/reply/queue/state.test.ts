@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tests queue state storage, dedupe, and cleanup primitives.
+>>>>>>> upstream/main
 import { afterEach, describe, expect, it } from "vitest";
 import { clearFollowupQueue, getFollowupQueue, refreshQueuedFollowupSession } from "./state.js";
 import type { FollowupRun } from "./types.js";
@@ -28,7 +32,11 @@ function makeRun(): FollowupRun["run"] {
 
 describe("refreshQueuedFollowupSession", () => {
   it("retargets queued runs to the persisted selection", () => {
+<<<<<<< HEAD
     const queue = getFollowupQueue(QUEUE_KEY, { mode: "queue" });
+=======
+    const queue = getFollowupQueue(QUEUE_KEY, { mode: "followup" });
+>>>>>>> upstream/main
     const lastRun = makeRun();
     const queuedRun: FollowupRun = {
       prompt: "queued message",
@@ -46,17 +54,55 @@ describe("refreshQueuedFollowupSession", () => {
       nextAuthProfileIdSource: undefined,
     });
 
+<<<<<<< HEAD
     expect(queue.lastRun).toMatchObject({
+=======
+    expect(queue.lastRun).toEqual({
+      ...makeRun(),
+>>>>>>> upstream/main
       provider: "openai",
       model: "gpt-4o",
       authProfileId: undefined,
       authProfileIdSource: undefined,
     });
+<<<<<<< HEAD
     expect(queue.items[0]?.run).toMatchObject({
+=======
+    expect(queue.items[0]?.run).toEqual({
+      ...makeRun(),
+>>>>>>> upstream/main
       provider: "openai",
       model: "gpt-4o",
       authProfileId: undefined,
       authProfileIdSource: undefined,
     });
   });
+<<<<<<< HEAD
+=======
+
+  it("retargets queued runs with user model override source", () => {
+    const queue = getFollowupQueue(QUEUE_KEY, { mode: "followup" });
+    const queuedRun: FollowupRun = {
+      prompt: "queued message",
+      enqueuedAt: Date.now(),
+      run: { ...makeRun(), hasAutoFallbackProvenance: true },
+    };
+    queue.items.push(queuedRun);
+
+    refreshQueuedFollowupSession({
+      key: QUEUE_KEY,
+      nextProvider: "ollama",
+      nextModel: "qwen3.5:27b",
+      nextModelOverrideSource: "user",
+    });
+
+    expect(queue.items[0]?.run).toEqual({
+      ...makeRun(),
+      provider: "ollama",
+      model: "qwen3.5:27b",
+      hasSessionModelOverride: true,
+      modelOverrideSource: "user",
+    });
+  });
+>>>>>>> upstream/main
 });

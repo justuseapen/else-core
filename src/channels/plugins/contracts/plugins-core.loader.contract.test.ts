@@ -1,16 +1,30 @@
+<<<<<<< HEAD
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { clearPluginDiscoveryCache } from "../../../plugins/discovery.js";
 import { clearPluginManifestRegistryCache } from "../../../plugins/manifest-registry.js";
+=======
+// Plugins core loader contract tests cover channel plugin loader setup and teardown behavior.
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+>>>>>>> upstream/main
 import { setActivePluginRegistry } from "../../../plugins/runtime.js";
 import {
   createChannelTestPluginBase,
   createOutboundTestPlugin,
   createTestRegistry,
 } from "../../../test-utils/channel-plugins.js";
+<<<<<<< HEAD
 import { loadChannelPlugin } from "../load.js";
 import { loadChannelOutboundAdapter } from "../outbound/load.js";
 import type { ChannelOutboundAdapter, ChannelPlugin } from "../types.js";
 
+=======
+import { loadChannelOutboundAdapter } from "../outbound/load.js";
+import { createChannelRegistryLoader } from "../registry-loader.js";
+import type { ChannelOutboundAdapter, ChannelPlugin } from "../types.js";
+
+const loadChannelPlugin = createChannelRegistryLoader<ChannelPlugin>((entry) => entry.plugin);
+
+>>>>>>> upstream/main
 const emptyRegistry = createTestRegistry([]);
 
 const demoOutbound: ChannelOutboundAdapter = {
@@ -100,8 +114,11 @@ describe("channel plugin loader", () => {
 
   afterEach(() => {
     setActivePluginRegistry(emptyRegistry);
+<<<<<<< HEAD
     clearPluginDiscoveryCache();
     clearPluginManifestRegistryCache();
+=======
+>>>>>>> upstream/main
   });
 
   it.each([
@@ -118,7 +135,11 @@ describe("channel plugin loader", () => {
       expectedOutbound: demoOutbound,
     },
     {
+<<<<<<< HEAD
       name: "refreshes cached plugin values when registry changes",
+=======
+      name: "reads updated plugin values when registry changes",
+>>>>>>> upstream/main
       kind: "reload-plugin" as const,
       firstRegistry: registryWithDemoLoader,
       secondRegistry: registryWithDemoLoaderV2,
@@ -126,7 +147,11 @@ describe("channel plugin loader", () => {
       secondExpected: demoLoaderPluginV2,
     },
     {
+<<<<<<< HEAD
       name: "refreshes cached outbound values when registry changes",
+=======
+      name: "reads updated outbound values when registry changes",
+>>>>>>> upstream/main
       kind: "reload-outbound" as const,
       firstRegistry: registryWithDemoLoader,
       secondRegistry: registryWithDemoLoaderV2,
@@ -172,7 +197,10 @@ describe("channel plugin loader", () => {
         return;
       case "missing-outbound":
         await expectOutboundAdapterMissingCase(testCase.registry);
+<<<<<<< HEAD
         return;
+=======
+>>>>>>> upstream/main
     }
   });
 });

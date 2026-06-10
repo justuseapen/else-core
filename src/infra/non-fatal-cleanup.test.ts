@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Covers best-effort cleanup error swallowing.
+>>>>>>> upstream/main
 import { describe, expect, it, vi } from "vitest";
 import { runBestEffortCleanup } from "./non-fatal-cleanup.js";
 

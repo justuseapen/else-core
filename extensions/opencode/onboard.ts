@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Opencode setup module handles plugin onboarding behavior.
+>>>>>>> upstream/main
 import {
   applyAgentDefaultModelPrimary,
   withAgentModelAliases,

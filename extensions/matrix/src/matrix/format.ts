@@ -1,5 +1,11 @@
+// Matrix helper module supports format behavior.
 import MarkdownIt from "markdown-it";
+<<<<<<< HEAD
 import { isAutoLinkedFileRef } from "openclaw/plugin-sdk/text-runtime";
+=======
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { isAutoLinkedFileRef } from "openclaw/plugin-sdk/text-autolink-runtime";
+>>>>>>> upstream/main
 import type { MatrixClient } from "./sdk.js";
 import { isMatrixQualifiedUserId } from "./target-ids.js";
 
@@ -30,9 +36,18 @@ type MatrixMentionCandidate = {
 };
 
 const ESCAPED_MENTION_SENTINEL = "\uE000";
+<<<<<<< HEAD
 const MENTION_PATTERN = /@[A-Za-z0-9._=+\-/:\[\]]+/g;
 const MATRIX_MENTION_USER_ID_PATTERN =
   /^@[A-Za-z0-9._=+\-/]+:(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(?::\d+)?$/;
+=======
+const MENTION_PATTERN = /@[A-Za-z0-9._=+\-/:[\]]+/g;
+const MATRIX_MENTION_SERVER_NAME_PATTERN =
+  /(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?))*(?::\d+)?/;
+const MATRIX_MENTION_USER_ID_PATTERN = new RegExp(
+  `^@[A-Za-z0-9._=+\\-/]+:(?:${MATRIX_MENTION_SERVER_NAME_PATTERN.source}|\\[[0-9A-Fa-f:.]+\\](?::\\d+)?)$`,
+);
+>>>>>>> upstream/main
 const TRIMMABLE_MENTION_SUFFIX = /[),.!?:;\]]/;
 
 function shouldSuppressAutoLink(
@@ -124,7 +139,16 @@ function isMentionStartBoundary(charBefore: string | undefined): boolean {
   return !charBefore || !/[A-Za-z0-9_]/.test(charBefore);
 }
 
+<<<<<<< HEAD
 function trimMentionSuffix(raw: string, end: number): { raw: string; end: number } | null {
+=======
+function trimMentionSuffix(
+  rawInput: string,
+  endInput: number,
+): { raw: string; end: number } | null {
+  let raw = rawInput;
+  let end = endInput;
+>>>>>>> upstream/main
   while (raw.length > 1 && TRIMMABLE_MENTION_SUFFIX.test(raw.at(-1) ?? "")) {
     if (raw.at(-1) === "]" && /\[[0-9A-Fa-f:.]+\](?::\d+)?$/i.test(raw)) {
       break;
@@ -147,7 +171,11 @@ function buildMentionCandidate(raw: string, start: number): MatrixMentionCandida
   if (!normalized) {
     return null;
   }
+<<<<<<< HEAD
   const kind = normalized.raw.toLowerCase() === "@room" ? "room" : "user";
+=======
+  const kind = normalizeLowercaseStringOrEmpty(normalized.raw) === "@room" ? "room" : "user";
+>>>>>>> upstream/main
   const base: MatrixMentionCandidate = {
     raw: normalized.raw,
     start,
@@ -309,9 +337,122 @@ function mutateInlineTokensWithMentions(params: {
   return { children: nextChildren, roomMentioned };
 }
 
+<<<<<<< HEAD
+=======
+// Compact loose lists by hiding a list item's single wrapper paragraph,
+// mirroring what markdown-it already does for tight lists. Without this
+// Element renders <p> margins inside <li>, splitting numbers from content.
+//
+// Keep multi-paragraph items visible so separate paragraphs do not collapse
+// together inside the same list item.
+function compactLooseListTokens(tokens: MarkdownToken[]): void {
+  const listItemStack: Array<{
+    level: number;
+    immediateParagraphOpenIndexes: number[];
+    immediateParagraphCloseIndexes: number[];
+  }> = [];
+
+  for (const [index, token] of tokens.entries()) {
+    if (token.type === "list_item_open") {
+      listItemStack.push({
+        level: token.level,
+        immediateParagraphOpenIndexes: [],
+        immediateParagraphCloseIndexes: [],
+      });
+      continue;
+    }
+
+    if (token.type === "list_item_close") {
+      const item = listItemStack.pop();
+      if (
+        item &&
+        item.immediateParagraphOpenIndexes.length === 1 &&
+        item.immediateParagraphCloseIndexes.length === 1
+      ) {
+        tokens[item.immediateParagraphOpenIndexes[0]].hidden = true;
+        tokens[item.immediateParagraphCloseIndexes[0]].hidden = true;
+      }
+      continue;
+    }
+
+    const currentItem = listItemStack.at(-1);
+    if (!currentItem || token.level !== currentItem.level + 1) {
+      continue;
+    }
+
+    if (token.type === "paragraph_open") {
+      currentItem.immediateParagraphOpenIndexes.push(index);
+    } else if (token.type === "paragraph_close") {
+      currentItem.immediateParagraphCloseIndexes.push(index);
+    }
+  }
+}
+
+>>>>>>> upstream/main
 export function markdownToMatrixHtml(markdown: string): string {
-  const rendered = md.render(markdown ?? "");
-  return rendered.trimEnd();
+  const tokens = md.parse(markdown ?? "", {});
+  compactLooseListTokens(tokens);
+  return md.renderer.render(tokens, md.options, {}).trimEnd();
+}
+
+async function resolveMarkdownMentionState(params: {
+  markdown: string;
+  client: MatrixClient;
+}): Promise<{ tokens: MarkdownToken[]; mentions: MatrixMentions }> {
+  const markdown = maskEscapedMentions(params.markdown ?? "");
+  const tokens = md.parse(markdown, {});
+  restoreEscapedMentionsInBlockTokens(tokens);
+  const selfUserId = await resolveMatrixSelfUserId(params.client);
+  const userIds: string[] = [];
+  const seenUserIds = new Set<string>();
+  let roomMentioned = false;
+
+  for (const token of tokens) {
+    if (!token.children?.length) {
+      continue;
+    }
+    const mutated = mutateInlineTokensWithMentions({
+      children: token.children,
+      userIds,
+      seenUserIds,
+      selfUserId,
+    });
+    token.children = mutated.children;
+    roomMentioned ||= mutated.roomMentioned;
+  }
+
+  const mentions: MatrixMentions = {};
+  if (userIds.length > 0) {
+    mentions.user_ids = userIds;
+  }
+  if (roomMentioned) {
+    mentions.room = true;
+  }
+  return {
+    tokens,
+    mentions,
+  };
+}
+
+export async function resolveMatrixMentionsInMarkdown(params: {
+  markdown: string;
+  client: MatrixClient;
+}): Promise<MatrixMentions> {
+  const state = await resolveMarkdownMentionState(params);
+  return state.mentions;
+}
+
+export async function renderMarkdownToMatrixHtmlWithMentions(params: {
+  markdown: string;
+  client: MatrixClient;
+}): Promise<{ html?: string; mentions: MatrixMentions }> {
+  const state = await resolveMarkdownMentionState(params);
+  compactLooseListTokens(state.tokens);
+  const html = md.renderer.render(state.tokens, md.options, {}).trimEnd();
+  return {
+    html: html || undefined,
+    mentions: state.mentions,
+  };
 }
 
 async function resolveMarkdownMentionState(params: {

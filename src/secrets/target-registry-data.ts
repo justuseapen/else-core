@@ -1,13 +1,117 @@
+<<<<<<< HEAD
 import { iterateBootstrapChannelPlugins } from "../channels/plugins/bootstrap-registry.js";
+=======
+/** Builds the static and plugin-derived registry of secret migration targets. */
+import type { PluginManifestRecord } from "../plugins/manifest-registry.js";
+import { resolvePluginMetadataSnapshot } from "../plugins/plugin-metadata-snapshot.js";
+import { loadChannelSecretContractApiForRecord } from "./channel-contract-api.js";
+>>>>>>> upstream/main
 import type { SecretTargetRegistryEntry } from "./target-registry-types.js";
 
 const SECRET_INPUT_SHAPE = "secret_input"; // pragma: allowlist secret
 const SIBLING_REF_SHAPE = "sibling_ref"; // pragma: allowlist secret
 
+<<<<<<< HEAD
 function listChannelSecretTargetRegistryEntries(): SecretTargetRegistryEntry[] {
   const entries: SecretTargetRegistryEntry[] = [];
   for (const plugin of iterateBootstrapChannelPlugins()) {
     entries.push(...(plugin.secrets?.secretTargetRegistryEntries ?? []));
+=======
+const WEB_PROVIDER_SECRET_CONFIGS = [
+  { contract: "webSearchProviders", configPath: "webSearch.apiKey" },
+  { contract: "webFetchProviders", configPath: "webFetch.apiKey" },
+] as const;
+
+type WebProviderSecretConfig = (typeof WEB_PROVIDER_SECRET_CONFIGS)[number];
+
+function createPluginOpenClawConfigSecretTargetEntry(
+  pluginId: string,
+  configPath: string,
+): SecretTargetRegistryEntry {
+  const pathPattern = ["plugins", "entries", pluginId, "config", ...configPath.split(".")].join(
+    ".",
+  );
+  return {
+    id: pathPattern,
+    targetType: pathPattern,
+    configFile: "openclaw.json",
+    pathPattern,
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+  };
+}
+
+function hasSensitiveConfigHint(
+  plugin: PluginManifestRecord,
+  configPath: WebProviderSecretConfig["configPath"],
+): boolean {
+  return plugin.configUiHints?.[configPath]?.sensitive === true;
+}
+
+function hasWebProviderContract(
+  plugin: PluginManifestRecord,
+  contract: WebProviderSecretConfig["contract"],
+): boolean {
+  return (plugin.contracts?.[contract]?.length ?? 0) > 0;
+}
+
+function listBundledWebProviderSecretTargetRegistryEntries(
+  bundledPlugins: readonly PluginManifestRecord[],
+): SecretTargetRegistryEntry[] {
+  const entries: SecretTargetRegistryEntry[] = [];
+  for (const record of bundledPlugins) {
+    for (const config of WEB_PROVIDER_SECRET_CONFIGS) {
+      if (
+        hasWebProviderContract(record, config.contract) &&
+        hasSensitiveConfigHint(record, config.configPath)
+      ) {
+        entries.push(createPluginOpenClawConfigSecretTargetEntry(record.id, config.configPath));
+      }
+    }
+  }
+  return entries.toSorted((left, right) => left.id.localeCompare(right.id));
+}
+
+function listBundledPluginConfigSecretTargetRegistryEntries(
+  bundledPlugins: readonly PluginManifestRecord[],
+): SecretTargetRegistryEntry[] {
+  const entries: SecretTargetRegistryEntry[] = [];
+  const seen = new Set<string>();
+  for (const record of bundledPlugins) {
+    const secretInputs = record.configContracts?.secretInputs?.paths ?? [];
+    for (const secretInput of secretInputs) {
+      const entry = createPluginOpenClawConfigSecretTargetEntry(record.id, secretInput.path);
+      const key = `${entry.configFile}:${entry.pathPattern}`;
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      entries.push(entry);
+    }
+  }
+  return entries.toSorted((left, right) => left.id.localeCompare(right.id));
+}
+
+function listChannelSecretTargetRegistryEntries(
+  channelPlugins: readonly PluginManifestRecord[],
+): SecretTargetRegistryEntry[] {
+  const entries: SecretTargetRegistryEntry[] = [];
+
+  for (const record of channelPlugins) {
+    const channelIds = record.channels;
+    if (channelIds.length === 0) {
+      continue;
+    }
+    try {
+      const contractApi = loadChannelSecretContractApiForRecord(record);
+      entries.push(...(contractApi?.secretTargetRegistryEntries ?? []));
+    } catch {
+      // Ignore channels that do not expose a usable secret contract artifact.
+    }
+>>>>>>> upstream/main
   }
   return entries;
 }
@@ -129,6 +233,18 @@ const CORE_SECRET_TARGET_REGISTRY: SecretTargetRegistryEntry[] = [
     providerIdPathSegmentIndex: 3,
   },
   {
+    id: "agents.list[].tts.providers.*.apiKey",
+    targetType: "agents.list[].tts.providers.*.apiKey",
+    configFile: "openclaw.json",
+    pathPattern: "agents.list[].tts.providers.*.apiKey",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: false,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 4,
+  },
+  {
     id: "models.providers.*.apiKey",
     targetType: "models.providers.apiKey",
     targetTypeAliases: ["models.providers.*.apiKey"],
@@ -159,6 +275,8 @@ const CORE_SECRET_TARGET_REGISTRY: SecretTargetRegistryEntry[] = [
     id: "models.providers.*.request.headers.*",
     targetType: "models.providers.request.headers",
     targetTypeAliases: ["models.providers.*.request.headers.*"],
+<<<<<<< HEAD
+=======
     configFile: "openclaw.json",
     pathPattern: "models.providers.*.request.headers.*",
     secretShape: SECRET_INPUT_SHAPE,
@@ -302,25 +420,177 @@ const CORE_SECRET_TARGET_REGISTRY: SecretTargetRegistryEntry[] = [
     id: "skills.entries.*.apiKey",
     targetType: "skills.entries.apiKey",
     targetTypeAliases: ["skills.entries.*.apiKey"],
+>>>>>>> upstream/main
     configFile: "openclaw.json",
-    pathPattern: "skills.entries.*.apiKey",
-    secretShape: SECRET_INPUT_SHAPE,
-    expectedResolvedValue: "string",
-    includeInPlan: true,
-    includeInConfigure: true,
-    includeInAudit: true,
-  },
-  {
-    id: "talk.providers.*.apiKey",
-    targetType: "talk.providers.*.apiKey",
-    configFile: "openclaw.json",
-    pathPattern: "talk.providers.*.apiKey",
+    pathPattern: "models.providers.*.request.headers.*",
     secretShape: SECRET_INPUT_SHAPE,
     expectedResolvedValue: "string",
     includeInPlan: true,
     includeInConfigure: true,
     includeInAudit: true,
     providerIdPathSegmentIndex: 2,
+  },
+  {
+<<<<<<< HEAD
+    id: "models.providers.*.request.auth.token",
+    targetType: "models.providers.request.auth.token",
+    targetTypeAliases: ["models.providers.*.request.auth.token"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.auth.token",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "models.providers.*.request.auth.value",
+    targetType: "models.providers.request.auth.value",
+    targetTypeAliases: ["models.providers.*.request.auth.value"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.auth.value",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "models.providers.*.request.proxy.tls.ca",
+    targetType: "models.providers.request.proxy.tls.ca",
+    targetTypeAliases: ["models.providers.*.request.proxy.tls.ca"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.proxy.tls.ca",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "models.providers.*.request.proxy.tls.cert",
+    targetType: "models.providers.request.proxy.tls.cert",
+    targetTypeAliases: ["models.providers.*.request.proxy.tls.cert"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.proxy.tls.cert",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "models.providers.*.request.proxy.tls.key",
+    targetType: "models.providers.request.proxy.tls.key",
+    targetTypeAliases: ["models.providers.*.request.proxy.tls.key"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.proxy.tls.key",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "models.providers.*.request.proxy.tls.passphrase",
+    targetType: "models.providers.request.proxy.tls.passphrase",
+    targetTypeAliases: ["models.providers.*.request.proxy.tls.passphrase"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.proxy.tls.passphrase",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "models.providers.*.request.tls.ca",
+    targetType: "models.providers.request.tls.ca",
+    targetTypeAliases: ["models.providers.*.request.tls.ca"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.tls.ca",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "models.providers.*.request.tls.cert",
+    targetType: "models.providers.request.tls.cert",
+    targetTypeAliases: ["models.providers.*.request.tls.cert"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.tls.cert",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "models.providers.*.request.tls.key",
+    targetType: "models.providers.request.tls.key",
+    targetTypeAliases: ["models.providers.*.request.tls.key"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.tls.key",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "models.providers.*.request.tls.passphrase",
+    targetType: "models.providers.request.tls.passphrase",
+    targetTypeAliases: ["models.providers.*.request.tls.passphrase"],
+    configFile: "openclaw.json",
+    pathPattern: "models.providers.*.request.tls.passphrase",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "skills.entries.*.apiKey",
+    targetType: "skills.entries.apiKey",
+    targetTypeAliases: ["skills.entries.*.apiKey"],
+    configFile: "openclaw.json",
+    pathPattern: "skills.entries.*.apiKey",
+=======
+    id: "talk.providers.*.apiKey",
+    targetType: "talk.providers.*.apiKey",
+    configFile: "openclaw.json",
+    pathPattern: "talk.providers.*.apiKey",
+>>>>>>> upstream/main
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "talk.realtime.providers.*.apiKey",
+    targetType: "talk.realtime.providers.*.apiKey",
+    configFile: "openclaw.json",
+    pathPattern: "talk.realtime.providers.*.apiKey",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 3,
   },
   {
     id: "tools.web.search.apiKey",
@@ -330,6 +600,19 @@ const CORE_SECRET_TARGET_REGISTRY: SecretTargetRegistryEntry[] = [
     secretShape: SECRET_INPUT_SHAPE,
     expectedResolvedValue: "string",
     includeInPlan: true,
+    includeInConfigure: true,
+    includeInAudit: true,
+    providerIdPathSegmentIndex: 2,
+  },
+  {
+    id: "tools.web.search.*.apiKey",
+    targetType: "tools.web.search.*.apiKey",
+    configFile: "openclaw.json",
+    pathPattern: "tools.web.search.*.apiKey",
+    secretShape: SECRET_INPUT_SHAPE,
+    expectedResolvedValue: "string",
+    includeInPlan: true,
+<<<<<<< HEAD
     includeInConfigure: true,
     includeInAudit: true,
   },
@@ -419,7 +702,11 @@ const CORE_SECRET_TARGET_REGISTRY: SecretTargetRegistryEntry[] = [
     expectedResolvedValue: "string",
     includeInPlan: true,
     includeInConfigure: true,
+=======
+    includeInConfigure: false,
+>>>>>>> upstream/main
     includeInAudit: true,
+    providerIdPathSegmentIndex: 3,
   },
   {
     id: "plugins.entries.minimax.config.webSearch.apiKey",
@@ -439,4 +726,52 @@ const SECRET_TARGET_REGISTRY: SecretTargetRegistryEntry[] = [
   ...listChannelSecretTargetRegistryEntries(),
 ];
 
-export { SECRET_TARGET_REGISTRY };
+let cachedSecretTargetRegistry: SecretTargetRegistryEntry[] | null = null;
+
+function loadSecretTargetRegistryFromPluginMetadata(params: {
+  env: NodeJS.ProcessEnv;
+  preferPersisted?: boolean;
+}): SecretTargetRegistryEntry[] {
+  const plugins = resolvePluginMetadataSnapshot({
+    config: {},
+    env: params.env,
+    ...(params.preferPersisted !== undefined ? { preferPersisted: params.preferPersisted } : {}),
+  }).plugins;
+  const bundledPlugins = plugins.filter((record) => record.origin === "bundled");
+  const channelPlugins = plugins.filter((record) => record.channels.length > 0);
+  return [
+    ...CORE_SECRET_TARGET_REGISTRY,
+    ...listBundledWebProviderSecretTargetRegistryEntries(bundledPlugins),
+    ...listBundledPluginConfigSecretTargetRegistryEntries(bundledPlugins),
+    ...listChannelSecretTargetRegistryEntries(channelPlugins),
+  ];
+}
+
+/** Returns only core-owned secret target registry entries. */
+/** Returns static core secret target registry entries without plugin-derived targets. */
+export function getCoreSecretTargetRegistry(): SecretTargetRegistryEntry[] {
+  return CORE_SECRET_TARGET_REGISTRY;
+}
+
+/** Returns the process-cached registry including bundled plugin/channel metadata. */
+/** Returns core plus plugin/channel secret target registry entries for the current metadata view. */
+export function getSecretTargetRegistry(): SecretTargetRegistryEntry[] {
+  if (cachedSecretTargetRegistry) {
+    return cachedSecretTargetRegistry;
+  }
+  cachedSecretTargetRegistry = loadSecretTargetRegistryFromPluginMetadata({
+    env: process.env,
+  });
+  return cachedSecretTargetRegistry;
+}
+
+/** Returns an uncached source-tree registry for docs/snapshot generation. */
+export function getSourceSecretTargetRegistry(): SecretTargetRegistryEntry[] {
+  return loadSecretTargetRegistryFromPluginMetadata({
+    env: {
+      ...process.env,
+      OPENCLAW_BUNDLED_PLUGINS_DIR: process.env.OPENCLAW_BUNDLED_PLUGINS_DIR ?? "extensions",
+    },
+    preferPersisted: false,
+  });
+}

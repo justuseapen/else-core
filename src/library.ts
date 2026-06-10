@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Public library facade for consumers embedding OpenClaw reply runtime APIs.
+>>>>>>> upstream/main
 import type { getReplyFromConfig as getReplyFromConfigRuntime } from "./auto-reply/reply.runtime.js";
 import { applyTemplate } from "./auto-reply/templating.js";
 import { createDefaultDeps } from "./cli/deps.js";

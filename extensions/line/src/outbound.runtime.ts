@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Line plugin module implements outbound behavior.
+>>>>>>> upstream/main
 export { processLineMessage } from "./markdown-to-line.js";
 export {
   createQuickReplyItems,

@@ -1,5 +1,6 @@
 {
   "name": "@openclaw/discord",
+<<<<<<< HEAD
   "version": "2026.4.5",
   "description": "OpenClaw Discord channel plugin",
   "type": "module",
@@ -9,12 +10,33 @@
     "discord-api-types": "^0.38.44",
     "https-proxy-agent": "^9.0.0",
     "opusscript": "^0.1.1"
+=======
+  "version": "2026.6.2",
+  "description": "OpenClaw Discord channel plugin for channels, DMs, commands, and app events.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openclaw/openclaw"
+  },
+  "type": "module",
+  "dependencies": {
+    "@discordjs/voice": "0.19.2",
+    "discord-api-types": "0.38.48",
+    "libopus-wasm": "0.2.0",
+    "typebox": "1.1.39",
+    "undici": "8.3.0",
+    "ws": "8.21.0"
+>>>>>>> upstream/main
   },
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "@openclaw/plugin-sdk": "workspace:*",
+    "openclaw": "2026.5.28"
   },
   "peerDependencies": {
+<<<<<<< HEAD
     "openclaw": ">=2026.4.5"
+=======
+    "openclaw": ">=2026.6.2"
+>>>>>>> upstream/main
   },
   "peerDependenciesMeta": {
     "openclaw": {
@@ -26,6 +48,9 @@
       "./index.ts"
     ],
     "setupEntry": "./setup-entry.ts",
+    "setupFeatures": {
+      "legacyStateMigrations": true
+    },
     "channel": {
       "id": "discord",
       "label": "Discord",
@@ -36,7 +61,21 @@
       "blurb": "very well supported right now.",
       "systemImage": "bubble.left.and.bubble.right",
       "markdownCapable": true,
+<<<<<<< HEAD
       "configuredState": {
+=======
+      "preferSessionLookupForAnnounceTarget": true,
+      "commands": {
+        "nativeCommandsAutoEnabled": true,
+        "nativeSkillsAutoEnabled": true
+      },
+      "configuredState": {
+        "env": {
+          "allOf": [
+            "DISCORD_BOT_TOKEN"
+          ]
+        },
+>>>>>>> upstream/main
         "specifier": "./configured-state",
         "exportName": "hasDiscordConfiguredState"
       }
@@ -44,6 +83,7 @@
     "install": {
       "npmSpec": "@openclaw/discord",
       "defaultChoice": "npm",
+<<<<<<< HEAD
       "minHostVersion": ">=2026.4.5"
     },
     "compat": {
@@ -51,9 +91,16 @@
     },
     "build": {
       "openclawVersion": "2026.4.5"
+=======
+      "minHostVersion": ">=2026.5.26",
+      "allowInvalidConfigRecovery": true
+>>>>>>> upstream/main
     },
-    "bundle": {
-      "stageRuntimeDependencies": true
+    "compat": {
+      "pluginApi": ">=2026.6.2"
+    },
+    "build": {
+      "openclawVersion": "2026.6.2"
     },
     "release": {
       "publishToClawHub": true,

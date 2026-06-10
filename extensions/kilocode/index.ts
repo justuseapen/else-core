@@ -1,8 +1,15 @@
+// Kilocode plugin entrypoint registers its OpenClaw integration.
+import { readConfiguredProviderCatalogEntries } from "openclaw/plugin-sdk/provider-catalog-shared";
 import { defineSingleProviderPluginEntry } from "openclaw/plugin-sdk/provider-entry";
+<<<<<<< HEAD
 import { buildProviderReplayFamilyHooks } from "openclaw/plugin-sdk/provider-model-shared";
 import { buildProviderStreamFamilyHooks } from "openclaw/plugin-sdk/provider-stream-family";
+=======
+import { PASSTHROUGH_GEMINI_REPLAY_HOOKS } from "openclaw/plugin-sdk/provider-model-shared";
+>>>>>>> upstream/main
 import { applyKilocodeConfig, KILOCODE_DEFAULT_MODEL_REF } from "./onboard.js";
-import { buildKilocodeProviderWithDiscovery } from "./provider-catalog.js";
+import { buildKilocodeProvider, buildKilocodeProviderWithDiscovery } from "./provider-catalog.js";
+import { wrapKilocodeProviderStream } from "./stream.js";
 
 const PROVIDER_ID = "kilocode";
 const PASSTHROUGH_GEMINI_REPLAY_HOOKS = buildProviderReplayFamilyHooks({
@@ -32,9 +39,20 @@ export default defineSingleProviderPluginEntry({
     ],
     catalog: {
       buildProvider: buildKilocodeProviderWithDiscovery,
+      buildStaticProvider: buildKilocodeProvider,
     },
+<<<<<<< HEAD
     ...PASSTHROUGH_GEMINI_REPLAY_HOOKS,
     ...KILOCODE_THINKING_STREAM_HOOKS,
+=======
+    augmentModelCatalog: ({ config }) =>
+      readConfiguredProviderCatalogEntries({
+        config,
+        providerId: PROVIDER_ID,
+      }),
+    ...PASSTHROUGH_GEMINI_REPLAY_HOOKS,
+    wrapStreamFn: wrapKilocodeProviderStream,
+>>>>>>> upstream/main
     isCacheTtlEligible: (ctx) => ctx.modelId.startsWith("anthropic/"),
   },
 });

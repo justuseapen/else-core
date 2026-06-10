@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tests reply routing policy decisions for direct, group, and private routes.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { resolveReplyRoutingDecision } from "./routing-policy.js";
 
@@ -18,9 +22,16 @@ describe("resolveReplyRoutingDecision", () => {
         originatingTo: "telegram:123",
         isRoutableChannel,
       }),
+<<<<<<< HEAD
     ).toMatchObject({
       originatingChannel: "telegram",
       currentSurface: "slack",
+=======
+    ).toEqual({
+      originatingChannel: "telegram",
+      currentSurface: "slack",
+      isInternalWebchatTurn: false,
+>>>>>>> upstream/main
       shouldRouteToOriginating: true,
       shouldSuppressTyping: true,
     });
@@ -36,10 +47,19 @@ describe("resolveReplyRoutingDecision", () => {
         originatingTo: "telegram:123",
         isRoutableChannel,
       }),
+<<<<<<< HEAD
     ).toMatchObject({
       currentSurface: "webchat",
       isInternalWebchatTurn: true,
       shouldRouteToOriginating: false,
+=======
+    ).toEqual({
+      originatingChannel: "telegram",
+      currentSurface: "webchat",
+      isInternalWebchatTurn: true,
+      shouldRouteToOriginating: false,
+      shouldSuppressTyping: false,
+>>>>>>> upstream/main
     });
   });
 
@@ -53,8 +73,15 @@ describe("resolveReplyRoutingDecision", () => {
         suppressDirectUserDelivery: true,
         isRoutableChannel,
       }),
+<<<<<<< HEAD
     ).toMatchObject({
       currentSurface: "discord",
+=======
+    ).toEqual({
+      originatingChannel: "telegram",
+      currentSurface: "discord",
+      isInternalWebchatTurn: false,
+>>>>>>> upstream/main
       shouldRouteToOriginating: false,
       shouldSuppressTyping: true,
     });

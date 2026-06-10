@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Voice Call tests cover response model plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { VoiceCallConfigSchema } from "./config.js";
 import type { CoreAgentDeps } from "./core-bridge.js";

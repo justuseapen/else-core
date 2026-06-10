@@ -1,5 +1,14 @@
+<<<<<<< HEAD
 import { describe, expect, it } from "vitest";
 import { resolveTelegramSessionConversation } from "./session-conversation.js";
+=======
+// Telegram tests cover session conversation plugin behavior.
+import { describe, expect, it } from "vitest";
+import {
+  resolveTelegramSessionConversation,
+  resolveTelegramSessionTarget,
+} from "./session-conversation.js";
+>>>>>>> upstream/main
 
 describe("resolveTelegramSessionConversation", () => {
   it("owns topic session parsing and parent fallback candidates", () => {
@@ -33,3 +42,18 @@ describe("resolveTelegramSessionConversation", () => {
     ).toBeNull();
   });
 });
+<<<<<<< HEAD
+=======
+
+describe("resolveTelegramSessionTarget", () => {
+  it("normalizes group session ids to numeric chat ids", () => {
+    expect(resolveTelegramSessionTarget({ kind: "group", id: "-1001" })).toBe("-1001");
+  });
+
+  it("normalizes channel session ids to lookup targets", () => {
+    expect(resolveTelegramSessionTarget({ kind: "channel", id: "@OpenClawTeam" })).toBe(
+      "@OpenClawTeam",
+    );
+  });
+});
+>>>>>>> upstream/main

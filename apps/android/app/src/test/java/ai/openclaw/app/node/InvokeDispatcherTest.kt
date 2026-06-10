@@ -4,9 +4,18 @@ import ai.openclaw.app.gateway.DeviceIdentityStore
 import ai.openclaw.app.gateway.GatewaySession
 import ai.openclaw.app.protocol.OpenClawCallLogCommand
 import ai.openclaw.app.protocol.OpenClawCameraCommand
+<<<<<<< HEAD
 import ai.openclaw.app.protocol.OpenClawLocationCommand
 import ai.openclaw.app.protocol.OpenClawMotionCommand
 import ai.openclaw.app.protocol.OpenClawSmsCommand
+=======
+import ai.openclaw.app.protocol.OpenClawDeviceCommand
+import ai.openclaw.app.protocol.OpenClawLocationCommand
+import ai.openclaw.app.protocol.OpenClawMotionCommand
+import ai.openclaw.app.protocol.OpenClawPhotosCommand
+import ai.openclaw.app.protocol.OpenClawSmsCommand
+import ai.openclaw.app.protocol.OpenClawTalkCommand
+>>>>>>> upstream/main
 import android.content.Context
 import android.content.pm.PackageManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -169,6 +178,23 @@ class InvokeDispatcherTest {
     }
 
   @Test
+<<<<<<< HEAD
+=======
+  fun handleInvoke_blocksDeviceAppsWhenSharingDisabled() =
+    runTest {
+      val result =
+        newDispatcher(installedAppsSharingEnabled = false)
+          .handleInvoke(OpenClawDeviceCommand.Apps.rawValue, """{"limit":1}""")
+
+      assertEquals("INSTALLED_APPS_SHARING_DISABLED", result.error?.code)
+      assertEquals(
+        "INSTALLED_APPS_SHARING_DISABLED: enable Installed Apps in Settings",
+        result.error?.message,
+      )
+    }
+
+  @Test
+>>>>>>> upstream/main
   fun handleInvoke_blocksMotionActivityWhenUnavailable() =
     runTest {
       val result =
@@ -201,6 +227,18 @@ class InvokeDispatcherTest {
     }
 
   @Test
+<<<<<<< HEAD
+=======
+  fun handleInvoke_blocksPhotosWhenUnavailable() =
+    runTest {
+      val result = newDispatcher(photosAvailable = false).handleInvoke(OpenClawPhotosCommand.Latest.rawValue, null)
+
+      assertEquals("PHOTOS_UNAVAILABLE", result.error?.code)
+      assertEquals("PHOTOS_UNAVAILABLE: photos not available on this build", result.error?.message)
+    }
+
+  @Test
+>>>>>>> upstream/main
   fun handleInvoke_treatsDebugCommandsAsUnknownOutsideDebugBuilds() =
     runTest {
       val result = newDispatcher(debugBuild = false).handleInvoke("debug.logs", null)
@@ -209,6 +247,30 @@ class InvokeDispatcherTest {
       assertEquals("INVALID_REQUEST: unknown command", result.error?.message)
     }
 
+<<<<<<< HEAD
+=======
+  @Test
+  fun handleInvoke_routesTalkPttCommands() =
+    runTest {
+      val talk = InvokeDispatcherFakeTalkHandler()
+      val dispatcher = newDispatcher(talkHandler = talk)
+
+      val start = dispatcher.handleInvoke(OpenClawTalkCommand.PttStart.rawValue, null)
+      val stop = dispatcher.handleInvoke(OpenClawTalkCommand.PttStop.rawValue, null)
+      val cancel = dispatcher.handleInvoke(OpenClawTalkCommand.PttCancel.rawValue, null)
+      val once = dispatcher.handleInvoke(OpenClawTalkCommand.PttOnce.rawValue, null)
+
+      assertEquals("""{"captureId":"start"}""", start.payloadJson)
+      assertEquals("""{"status":"stop"}""", stop.payloadJson)
+      assertEquals("""{"status":"cancel"}""", cancel.payloadJson)
+      assertEquals("""{"status":"once"}""", once.payloadJson)
+      assertEquals(
+        listOf("start", "stop", "cancel", "once"),
+        talk.calls,
+      )
+    }
+
+>>>>>>> upstream/main
   private fun newDispatcher(
     cameraEnabled: Boolean = false,
     locationEnabled: Boolean = false,
@@ -217,9 +279,18 @@ class InvokeDispatcherTest {
     smsFeatureEnabled: Boolean = true,
     smsTelephonyAvailable: Boolean = true,
     callLogAvailable: Boolean = false,
+<<<<<<< HEAD
     debugBuild: Boolean = false,
     motionActivityAvailable: Boolean = false,
     motionPedometerAvailable: Boolean = false,
+=======
+    photosAvailable: Boolean = true,
+    installedAppsSharingEnabled: Boolean = true,
+    debugBuild: Boolean = false,
+    motionActivityAvailable: Boolean = false,
+    motionPedometerAvailable: Boolean = false,
+    talkHandler: TalkHandler = InvokeDispatcherFakeTalkHandler(),
+>>>>>>> upstream/main
   ): InvokeDispatcher {
     val appContext = RuntimeEnvironment.getApplication()
     shadowOf(appContext.packageManager).setSystemFeature(PackageManager.FEATURE_TELEPHONY, smsTelephonyAvailable)
@@ -239,6 +310,10 @@ class InvokeDispatcherTest {
           stateProvider = InvokeDispatcherFakeNotificationsStateProvider(),
         ),
       systemHandler = SystemHandler.forTesting(InvokeDispatcherFakeSystemNotificationPoster()),
+<<<<<<< HEAD
+=======
+      talkHandler = talkHandler,
+>>>>>>> upstream/main
       photosHandler = PhotosHandler.forTesting(appContext, InvokeDispatcherFakePhotosDataSource()),
       contactsHandler = ContactsHandler.forTesting(appContext, InvokeDispatcherFakeContactsDataSource()),
       calendarHandler = CalendarHandler.forTesting(appContext, InvokeDispatcherFakeCalendarDataSource()),
@@ -248,8 +323,11 @@ class InvokeDispatcherTest {
         A2UIHandler(
           canvas = canvas,
           json = Json { ignoreUnknownKeys = true },
+<<<<<<< HEAD
           getNodeCanvasHostUrl = { null },
           getOperatorCanvasHostUrl = { null },
+=======
+>>>>>>> upstream/main
         ),
       debugHandler = DebugHandler(appContext, DeviceIdentityStore(appContext)),
       callLogHandler = CallLogHandler.forTesting(appContext, InvokeDispatcherFakeCallLogDataSource()),
@@ -261,8 +339,14 @@ class InvokeDispatcherTest {
       smsFeatureEnabled = { smsFeatureEnabled },
       smsTelephonyAvailable = { smsTelephonyAvailable },
       callLogAvailable = { callLogAvailable },
+<<<<<<< HEAD
       debugBuild = { debugBuild },
       refreshNodeCanvasCapability = { false },
+=======
+      photosAvailable = { photosAvailable },
+      installedAppsSharingEnabled = { installedAppsSharingEnabled },
+      debugBuild = { debugBuild },
+>>>>>>> upstream/main
       onCanvasA2uiPush = {},
       onCanvasA2uiReset = {},
       motionActivityAvailable = { motionActivityAvailable },
@@ -270,8 +354,13 @@ class InvokeDispatcherTest {
     )
   }
 
+<<<<<<< HEAD
   private fun newCameraHandler(appContext: Context): CameraHandler {
     return CameraHandler(
+=======
+  private fun newCameraHandler(appContext: Context): CameraHandler =
+    CameraHandler(
+>>>>>>> upstream/main
       appContext = appContext,
       camera = CameraCaptureManager(appContext),
       externalAudioCaptureActive = MutableStateFlow(false),
@@ -279,7 +368,10 @@ class InvokeDispatcherTest {
       triggerCameraFlash = {},
       invokeErrorFromThrowable = { err -> "UNAVAILABLE" to (err.message ?: "camera failed") },
     )
+<<<<<<< HEAD
   }
+=======
+>>>>>>> upstream/main
 }
 
 private class InvokeDispatcherFakeLocationDataSource : LocationDataSource {
@@ -298,6 +390,7 @@ private class InvokeDispatcherFakeLocationDataSource : LocationDataSource {
 }
 
 private class InvokeDispatcherFakeNotificationsStateProvider : NotificationsStateProvider {
+<<<<<<< HEAD
   override fun readSnapshot(context: Context): DeviceNotificationSnapshot {
     return DeviceNotificationSnapshot(enabled = false, connected = false, notifications = emptyList())
   }
@@ -307,6 +400,16 @@ private class InvokeDispatcherFakeNotificationsStateProvider : NotificationsStat
   override fun executeAction(context: Context, request: NotificationActionRequest): NotificationActionResult {
     return NotificationActionResult(ok = true, code = null, message = null)
   }
+=======
+  override fun readSnapshot(context: Context): DeviceNotificationSnapshot = DeviceNotificationSnapshot(enabled = false, connected = false, notifications = emptyList())
+
+  override fun requestServiceRebind(context: Context) = Unit
+
+  override fun executeAction(
+    context: Context,
+    request: NotificationActionRequest,
+  ): NotificationActionResult = NotificationActionResult(ok = true, code = null, message = null)
+>>>>>>> upstream/main
 }
 
 private class InvokeDispatcherFakeSystemNotificationPoster : SystemNotificationPoster {
@@ -315,10 +418,44 @@ private class InvokeDispatcherFakeSystemNotificationPoster : SystemNotificationP
   override fun post(request: SystemNotifyRequest) = Unit
 }
 
+<<<<<<< HEAD
 private class InvokeDispatcherFakePhotosDataSource : PhotosDataSource {
   override fun hasPermission(context: Context): Boolean = true
 
   override fun latest(context: Context, request: PhotosLatestRequest): List<EncodedPhotoPayload> = emptyList()
+=======
+private class InvokeDispatcherFakeTalkHandler : TalkHandler {
+  val calls = mutableListOf<String>()
+
+  override suspend fun handlePttStart(paramsJson: String?): GatewaySession.InvokeResult {
+    calls.add("start")
+    return GatewaySession.InvokeResult.ok("""{"captureId":"start"}""")
+  }
+
+  override suspend fun handlePttStop(paramsJson: String?): GatewaySession.InvokeResult {
+    calls.add("stop")
+    return GatewaySession.InvokeResult.ok("""{"status":"stop"}""")
+  }
+
+  override suspend fun handlePttCancel(paramsJson: String?): GatewaySession.InvokeResult {
+    calls.add("cancel")
+    return GatewaySession.InvokeResult.ok("""{"status":"cancel"}""")
+  }
+
+  override suspend fun handlePttOnce(paramsJson: String?): GatewaySession.InvokeResult {
+    calls.add("once")
+    return GatewaySession.InvokeResult.ok("""{"status":"once"}""")
+  }
+}
+
+private class InvokeDispatcherFakePhotosDataSource : PhotosDataSource {
+  override fun hasPermission(context: Context): Boolean = true
+
+  override fun latest(
+    context: Context,
+    request: PhotosLatestRequest,
+  ): List<EncodedPhotoPayload> = emptyList()
+>>>>>>> upstream/main
 }
 
 private class InvokeDispatcherFakeContactsDataSource : ContactsDataSource {
@@ -326,9 +463,21 @@ private class InvokeDispatcherFakeContactsDataSource : ContactsDataSource {
 
   override fun hasWritePermission(context: Context): Boolean = true
 
+<<<<<<< HEAD
   override fun search(context: Context, request: ContactsSearchRequest): List<ContactRecord> = emptyList()
 
   override fun add(context: Context, request: ContactsAddRequest): ContactRecord {
+=======
+  override fun search(
+    context: Context,
+    request: ContactsSearchRequest,
+  ): List<ContactRecord> = emptyList()
+
+  override fun add(
+    context: Context,
+    request: ContactsAddRequest,
+  ): ContactRecord {
+>>>>>>> upstream/main
     error("unused in InvokeDispatcherTest")
   }
 }
@@ -338,9 +487,21 @@ private class InvokeDispatcherFakeCalendarDataSource : CalendarDataSource {
 
   override fun hasWritePermission(context: Context): Boolean = true
 
+<<<<<<< HEAD
   override fun events(context: Context, request: CalendarEventsRequest): List<CalendarEventRecord> = emptyList()
 
   override fun add(context: Context, request: CalendarAddRequest): CalendarEventRecord {
+=======
+  override fun events(
+    context: Context,
+    request: CalendarEventsRequest,
+  ): List<CalendarEventRecord> = emptyList()
+
+  override fun add(
+    context: Context,
+    request: CalendarAddRequest,
+  ): CalendarEventRecord {
+>>>>>>> upstream/main
     error("unused in InvokeDispatcherTest")
   }
 }
@@ -352,11 +513,25 @@ private class InvokeDispatcherFakeMotionDataSource : MotionDataSource {
 
   override fun hasPermission(context: Context): Boolean = true
 
+<<<<<<< HEAD
   override suspend fun activity(context: Context, request: MotionActivityRequest): MotionActivityRecord {
     error("unused in InvokeDispatcherTest")
   }
 
   override suspend fun pedometer(context: Context, request: MotionPedometerRequest): PedometerRecord {
+=======
+  override suspend fun activity(
+    context: Context,
+    request: MotionActivityRequest,
+  ): MotionActivityRecord {
+    error("unused in InvokeDispatcherTest")
+  }
+
+  override suspend fun pedometer(
+    context: Context,
+    request: MotionPedometerRequest,
+  ): PedometerRecord {
+>>>>>>> upstream/main
     error("unused in InvokeDispatcherTest")
   }
 }
@@ -364,5 +539,12 @@ private class InvokeDispatcherFakeMotionDataSource : MotionDataSource {
 private class InvokeDispatcherFakeCallLogDataSource : CallLogDataSource {
   override fun hasReadPermission(context: Context): Boolean = true
 
+<<<<<<< HEAD
   override fun search(context: Context, request: CallLogSearchRequest): List<CallLogRecord> = emptyList()
+=======
+  override fun search(
+    context: Context,
+    request: CallLogSearchRequest,
+  ): List<CallLogRecord> = emptyList()
+>>>>>>> upstream/main
 }

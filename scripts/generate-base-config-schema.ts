@@ -1,30 +1,15 @@
 #!/usr/bin/env node
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+// Generate Base Config Schema script supports OpenClaw repository automation.
+import { pathToFileURL } from "node:url";
 import { computeBaseConfigSchemaResponse } from "../src/config/schema-base.js";
-import { formatGeneratedModule } from "./lib/format-generated-module.mjs";
 
-const GENERATED_BY = "scripts/generate-base-config-schema.ts";
-const DEFAULT_OUTPUT_PATH = "src/config/schema.base.generated.ts";
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-
-function readIfExists(filePath: string): string | null {
-  try {
-    return fs.readFileSync(filePath, "utf8");
-  } catch {
-    return null;
-  }
-}
-
-function formatTypeScriptModule(source: string, outputPath: string): string {
-  return formatGeneratedModule(source, {
-    repoRoot: REPO_ROOT,
-    outputPath,
-    errorLabel: "base config schema",
+export function checkBaseConfigSchema(): void {
+  computeBaseConfigSchemaResponse({
+    generatedAt: "2026-05-05T00:00:00.000Z",
   });
 }
 
+<<<<<<< HEAD
 export function renderBaseConfigSchemaModule(params?: { generatedAt?: string }): string {
   const payload = computeBaseConfigSchemaResponse({
     generatedAt: params?.generatedAt ?? new Date().toISOString(),
@@ -65,21 +50,18 @@ export function writeBaseConfigSchemaModule(params?: {
   return { changed, wrote: changed, outputPath };
 }
 
+=======
+>>>>>>> upstream/main
 const args = new Set(process.argv.slice(2));
 if (args.has("--check") && args.has("--write")) {
   throw new Error("Use either --check or --write, not both.");
 }
 
-if (import.meta.url === new URL(process.argv[1] ?? "", "file://").href) {
-  const result = writeBaseConfigSchemaModule({ check: args.has("--check") });
-  if (result.changed) {
-    if (args.has("--check")) {
-      console.error(
-        `[base-config-schema] stale generated output at ${path.relative(process.cwd(), result.outputPath)}`,
-      );
-      process.exitCode = 1;
-    } else {
-      console.log(`[base-config-schema] wrote ${path.relative(process.cwd(), result.outputPath)}`);
-    }
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  checkBaseConfigSchema();
+  if (args.has("--write")) {
+    console.log("[base-config-schema] runtime-computed; no generated file to write");
+  } else {
+    console.log("[base-config-schema] ok");
   }
 }

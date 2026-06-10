@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Config write resolution contract tests cover channel plugin config write normalization.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { resolveChannelConfigWrites } from "../config-writes.js";
 

@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// Qa Lab plugin module implements bus waiters behavior.
+import { resolveTimerTimeoutMs } from "openclaw/plugin-sdk/number-runtime";
+>>>>>>> upstream/main
 import type {
   QaBusEvent,
   QaBusMessage,
@@ -17,6 +22,17 @@ type Waiter = {
   matcher: (snapshot: QaBusStateSnapshot) => QaBusWaitMatch | null;
 };
 
+<<<<<<< HEAD
+=======
+type CursorWaiter = {
+  resolve: () => void;
+  reject: (error: Error) => void;
+  timer: NodeJS.Timeout;
+  afterCursor: number;
+  shouldResolve?: (snapshot: QaBusStateSnapshot) => boolean;
+};
+
+>>>>>>> upstream/main
 function createQaBusMatcher(
   input: QaBusWaitForInput,
 ): (snapshot: QaBusStateSnapshot) => QaBusWaitMatch | null {
@@ -39,6 +55,10 @@ function createQaBusMatcher(
 
 export function createQaBusWaiterStore(getSnapshot: () => QaBusStateSnapshot) {
   const waiters = new Set<Waiter>();
+<<<<<<< HEAD
+=======
+  const cursorWaiters = new Set<CursorWaiter>();
+>>>>>>> upstream/main
 
   return {
     reset(reason = "qa-bus reset") {
@@ -47,9 +67,20 @@ export function createQaBusWaiterStore(getSnapshot: () => QaBusStateSnapshot) {
         waiter.reject(new Error(reason));
       }
       waiters.clear();
+<<<<<<< HEAD
     },
     settle() {
       if (waiters.size === 0) {
+=======
+      for (const waiter of cursorWaiters) {
+        clearTimeout(waiter.timer);
+        waiter.reject(new Error(reason));
+      }
+      cursorWaiters.clear();
+    },
+    settle() {
+      if (waiters.size === 0 && cursorWaiters.size === 0) {
+>>>>>>> upstream/main
         return;
       }
       const snapshot = getSnapshot();
@@ -62,6 +93,20 @@ export function createQaBusWaiterStore(getSnapshot: () => QaBusStateSnapshot) {
         waiters.delete(waiter);
         waiter.resolve(match);
       }
+<<<<<<< HEAD
+=======
+      for (const waiter of Array.from(cursorWaiters)) {
+        if (snapshot.cursor <= waiter.afterCursor) {
+          continue;
+        }
+        if (waiter.shouldResolve && !waiter.shouldResolve(snapshot)) {
+          continue;
+        }
+        clearTimeout(waiter.timer);
+        cursorWaiters.delete(waiter);
+        waiter.resolve();
+      }
+>>>>>>> upstream/main
     },
     async waitFor(input: QaBusWaitForInput) {
       const matcher = createQaBusMatcher(input);
@@ -70,7 +115,11 @@ export function createQaBusWaiterStore(getSnapshot: () => QaBusStateSnapshot) {
         return immediate;
       }
       return await new Promise<QaBusWaitMatch>((resolve, reject) => {
+<<<<<<< HEAD
         const timeoutMs = input.timeoutMs ?? DEFAULT_WAIT_TIMEOUT_MS;
+=======
+        const timeoutMs = resolveTimerTimeoutMs(input.timeoutMs, DEFAULT_WAIT_TIMEOUT_MS, 0);
+>>>>>>> upstream/main
         const waiter: Waiter = {
           resolve,
           reject,
@@ -83,5 +132,32 @@ export function createQaBusWaiterStore(getSnapshot: () => QaBusStateSnapshot) {
         waiters.add(waiter);
       });
     },
+<<<<<<< HEAD
+=======
+    async waitForCursorAdvance(
+      afterCursor: number,
+      timeoutMs: number,
+      shouldResolve?: (snapshot: QaBusStateSnapshot) => boolean,
+    ) {
+      const snapshot = getSnapshot();
+      if (snapshot.cursor > afterCursor && (!shouldResolve || shouldResolve(snapshot))) {
+        return;
+      }
+      return await new Promise<void>((resolve, reject) => {
+        const resolvedTimeoutMs = resolveTimerTimeoutMs(timeoutMs, DEFAULT_WAIT_TIMEOUT_MS, 0);
+        const waiter: CursorWaiter = {
+          resolve,
+          reject,
+          afterCursor,
+          shouldResolve,
+          timer: setTimeout(() => {
+            cursorWaiters.delete(waiter);
+            reject(new Error(`qa-bus wait timeout after ${resolvedTimeoutMs}ms`));
+          }, resolvedTimeoutMs),
+        };
+        cursorWaiters.add(waiter);
+      });
+    },
+>>>>>>> upstream/main
   };
 }

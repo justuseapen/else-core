@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+=======
+/**
+ * System prompt cache-boundary helpers.
+ *
+ * Keeps stable prompt prefixes separate from dynamic runtime additions for provider prompt caching.
+ */
+>>>>>>> upstream/main
 import { normalizeStructuredPromptSection } from "./prompt-cache-stability.js";
 
 export const SYSTEM_PROMPT_CACHE_BOUNDARY = "\n<!-- OPENCLAW_CACHE_BOUNDARY -->\n";
@@ -6,6 +14,20 @@ export function stripSystemPromptCacheBoundary(text: string): string {
   return text.replaceAll(SYSTEM_PROMPT_CACHE_BOUNDARY, "\n");
 }
 
+<<<<<<< HEAD
+=======
+// Append the cache boundary when a prompt has none (e.g. a hook systemPrompt override),
+// so dynamic additions route into an uncached suffix instead of the cached prefix (#85203).
+export function ensureSystemPromptCacheBoundary(systemPrompt: string): string {
+  if (systemPrompt.trim().length === 0) {
+    return systemPrompt;
+  }
+  return systemPrompt.includes(SYSTEM_PROMPT_CACHE_BOUNDARY)
+    ? systemPrompt
+    : `${systemPrompt}${SYSTEM_PROMPT_CACHE_BOUNDARY}`;
+}
+
+>>>>>>> upstream/main
 export function splitSystemPromptCacheBoundary(
   text: string,
 ): { stablePrefix: string; dynamicSuffix: string } | undefined {
@@ -30,6 +52,12 @@ export function prependSystemPromptAdditionAfterCacheBoundary(params: {
   if (!systemPromptAddition) {
     return params.systemPrompt;
   }
+<<<<<<< HEAD
+=======
+  if (params.systemPrompt.trim().length === 0) {
+    return systemPromptAddition;
+  }
+>>>>>>> upstream/main
 
   const split = splitSystemPromptCacheBoundary(params.systemPrompt);
   if (!split) {

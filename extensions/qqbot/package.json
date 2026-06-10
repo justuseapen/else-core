@@ -1,5 +1,6 @@
 {
   "name": "@openclaw/qqbot",
+<<<<<<< HEAD
   "version": "2026.4.5",
   "private": false,
   "description": "OpenClaw QQ Bot channel plugin",
@@ -15,6 +16,30 @@
   },
   "peerDependencies": {
     "openclaw": ">=2026.4.5"
+=======
+  "version": "2026.6.2",
+  "private": false,
+  "description": "OpenClaw QQ Bot channel plugin for group and direct-message workflows.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openclaw/openclaw"
+  },
+  "type": "module",
+  "dependencies": {
+    "@tencent-connect/qqbot-connector": "1.1.0",
+    "mpg123-decoder": "1.0.3",
+    "silk-wasm": "3.7.1",
+    "ws": "8.21.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*",
+    "@types/ws": "8.18.1",
+    "openclaw": "2026.5.28"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.2"
+>>>>>>> upstream/main
   },
   "peerDependenciesMeta": {
     "openclaw": {
@@ -40,6 +65,7 @@
       "npmSpec": "@openclaw/qqbot",
       "localPath": "extensions/qqbot",
       "defaultChoice": "npm",
+<<<<<<< HEAD
       "minHostVersion": ">=2026.4.5"
     },
     "compat": {
@@ -50,6 +76,15 @@
     },
     "bundle": {
       "stageRuntimeDependencies": true
+=======
+      "minHostVersion": ">=2026.4.10"
+    },
+    "compat": {
+      "pluginApi": ">=2026.6.2"
+    },
+    "build": {
+      "openclawVersion": "2026.6.2"
+>>>>>>> upstream/main
     },
     "release": {
       "publishToClawHub": true,

@@ -4,11 +4,17 @@ read_when:
   - You want your agent to sound less generic
   - You are editing SOUL.md
   - You want a stronger personality without breaking safety or brevity
+<<<<<<< HEAD
 title: "SOUL.md Personality Guide"
 ---
 
 # SOUL.md Personality Guide
 
+=======
+title: "SOUL.md personality guide"
+---
+
+>>>>>>> upstream/main
 `SOUL.md` is where your agent's voice lives.
 
 OpenClaw injects it on normal sessions, so it has real weight. If your agent
@@ -103,8 +109,24 @@ surfaces, make sure the tone still fits the room.
 
 Sharp is good. Annoying is not.
 
+<<<<<<< HEAD
 ## Related docs
 
 - [Agent workspace](/concepts/agent-workspace)
 - [System prompt](/concepts/system-prompt)
 - [SOUL.md template](/reference/templates/SOUL)
+=======
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Agent workspace" href="/concepts/agent-workspace" icon="folder-open">
+    Workspace files OpenClaw injects into model context.
+  </Card>
+  <Card title="System prompt" href="/concepts/system-prompt" icon="message-lines">
+    How `SOUL.md` is composed into OpenClaw and Codex runtime context.
+  </Card>
+  <Card title="SOUL.md template" href="/reference/templates/SOUL" icon="file-lines">
+    Starter template for a personality file.
+  </Card>
+</CardGroup>
+>>>>>>> upstream/main

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Live probes provider response headers used for request-id diagnostics.
+>>>>>>> upstream/main
 import { beforeAll, describe, expect, it } from "vitest";
 import {
   LIVE_CACHE_TEST_ENABLED,
@@ -17,11 +21,19 @@ describeLive("provider response headers (live)", () => {
         provider: "openai",
         api: "openai-responses",
         envVar: "OPENCLAW_LIVE_OPENAI_CACHE_MODEL",
+<<<<<<< HEAD
         preferredModelIds: ["gpt-5.4-mini", "gpt-5.4", "gpt-5.4"],
+=======
+        preferredModelIds: ["gpt-5.5", "gpt-5.4-mini", "gpt-5.4"],
+>>>>>>> upstream/main
       });
     }, 120_000);
 
     it("returns request-id style headers from Responses", async () => {
+<<<<<<< HEAD
+=======
+      // Raw fetch keeps provider response headers visible outside SDK wrappers.
+>>>>>>> upstream/main
       const response = await withLiveCacheHeartbeat(
         fetch("https://api.openai.com/v1/responses", {
           method: "POST",
@@ -49,7 +61,12 @@ describeLive("provider response headers (live)", () => {
       logLiveCache(
         `openai headers x-request-id=${requestId ?? "(missing)"} openai-processing-ms=${processingMs ?? "(missing)"} ${rateLimitHeaders.join(" ")}`.trim(),
       );
+<<<<<<< HEAD
       expect(requestId).toBeTruthy();
+=======
+      expect(typeof requestId).toBe("string");
+      expect(requestId?.trim()).not.toBe("");
+>>>>>>> upstream/main
     }, 120_000);
   });
 
@@ -87,7 +104,12 @@ describeLive("provider response headers (live)", () => {
 
       const requestId = response.headers.get("request-id");
       logLiveCache(`anthropic headers request-id=${requestId ?? "(missing)"}`);
+<<<<<<< HEAD
       expect(requestId).toBeTruthy();
+=======
+      expect(typeof requestId).toBe("string");
+      expect(requestId?.trim()).not.toBe("");
+>>>>>>> upstream/main
     }, 120_000);
   });
 });

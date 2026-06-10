@@ -1,10 +1,14 @@
+<<<<<<< HEAD
+=======
+// Mattermost plugin module implements monitor gating behavior.
+>>>>>>> upstream/main
 import type { ChatType, OpenClawConfig } from "./runtime-api.js";
 
 export function mapMattermostChannelTypeToChatType(channelType?: string | null): ChatType {
-  if (!channelType) {
-    return "channel";
+  const normalized = channelType?.trim().toUpperCase();
+  if (!normalized) {
+    return "direct";
   }
-  const normalized = channelType.trim().toUpperCase();
   if (normalized === "D") {
     return "direct";
   }
@@ -12,6 +16,17 @@ export function mapMattermostChannelTypeToChatType(channelType?: string | null):
     return "group";
   }
   return "channel";
+}
+
+export function resolveMattermostTrustedChatKind(params: {
+  channelType?: string | null;
+  fallback?: ChatType;
+}): ChatType {
+  const channelType = params.channelType?.trim();
+  if (channelType) {
+    return mapMattermostChannelTypeToChatType(channelType);
+  }
+  return params.fallback ?? "direct";
 }
 
 export type MattermostRequireMentionResolverInput = {

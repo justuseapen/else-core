@@ -1,44 +1,81 @@
+// SSRF policy helpers enforce network target safety for plugin HTTP requests.
+import { asNullableRecord } from "../../packages/normalization-core/src/record-coerce.js";
+import { normalizeLowercaseStringOrEmpty } from "../../packages/normalization-core/src/string-coerce.js";
+import { normalizeUniqueStringEntries } from "../../packages/normalization-core/src/string-normalization.js";
 import {
   isBlockedHostnameOrIp,
   isPrivateIpAddress,
+  mergeSsrFPolicies,
   resolvePinnedHostnameWithPolicy,
   type LookupFn,
   type SsrFPolicy,
 } from "../infra/net/ssrf.js";
+import type {
+  ChannelDoctorConfigMutation,
+  ChannelDoctorLegacyConfigRule,
+} from "./channel-contract.js";
+import type { OpenClawConfig } from "./config-runtime.js";
 
+<<<<<<< HEAD
 export { isPrivateIpAddress };
 export type { SsrFPolicy };
 
+=======
+export { isPrivateIpAddress, mergeSsrFPolicies };
+export type { SsrFPolicy };
+
+/** Accepted channel config shapes that opt into private-network HTTP targets. */
+>>>>>>> upstream/main
 export type PrivateNetworkOptInInput =
   | boolean
   | null
   | undefined
   | Pick<SsrFPolicy, "allowPrivateNetwork" | "dangerouslyAllowPrivateNetwork">
   | {
+<<<<<<< HEAD
       dangerouslyAllowPrivateNetwork?: boolean | null;
       /** Compatibility alias for legacy callers; prefer dangerouslyAllowPrivateNetwork. */
       allowPrivateNetwork?: boolean | null;
+=======
+      /** Canonical explicit opt-in for private/internal network targets. */
+      dangerouslyAllowPrivateNetwork?: boolean | null;
+      /** @deprecated Compatibility alias; prefer dangerouslyAllowPrivateNetwork. */
+      allowPrivateNetwork?: boolean | null;
+      /** Nested channel config shape used by current plugin network settings. */
+>>>>>>> upstream/main
       network?:
         | Pick<SsrFPolicy, "allowPrivateNetwork" | "dangerouslyAllowPrivateNetwork">
         | null
         | undefined;
     };
 
+<<<<<<< HEAD
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
 }
 
+=======
+/** Reads current and legacy private-network opt-in shapes from channel config. */
+>>>>>>> upstream/main
 export function isPrivateNetworkOptInEnabled(input: PrivateNetworkOptInInput): boolean {
   if (input === true) {
     return true;
   }
+<<<<<<< HEAD
   const record = asRecord(input);
   if (!record) {
     return false;
   }
   const network = asRecord(record.network);
+=======
+  const record = asNullableRecord(input);
+  if (!record) {
+    return false;
+  }
+  const network = asNullableRecord(record.network);
+>>>>>>> upstream/main
   return (
     record.allowPrivateNetwork === true ||
     record.dangerouslyAllowPrivateNetwork === true ||
@@ -47,23 +84,41 @@ export function isPrivateNetworkOptInEnabled(input: PrivateNetworkOptInInput): b
   );
 }
 
+<<<<<<< HEAD
+=======
+/** Converts channel private-network opt-in config into the shared SSRF policy shape. */
+>>>>>>> upstream/main
 export function ssrfPolicyFromPrivateNetworkOptIn(
   input: PrivateNetworkOptInInput,
 ): SsrFPolicy | undefined {
   return isPrivateNetworkOptInEnabled(input) ? { allowPrivateNetwork: true } : undefined;
 }
 
+<<<<<<< HEAD
+=======
+/** Compatibility wrapper for callers that already use the canonical dangerous flag name. */
+>>>>>>> upstream/main
 export function ssrfPolicyFromDangerouslyAllowPrivateNetwork(
   dangerouslyAllowPrivateNetwork: boolean | null | undefined,
 ): SsrFPolicy | undefined {
   return ssrfPolicyFromPrivateNetworkOptIn(dangerouslyAllowPrivateNetwork);
 }
 
+<<<<<<< HEAD
 export function hasLegacyFlatAllowPrivateNetworkAlias(value: unknown): boolean {
   const entry = asRecord(value);
   return Boolean(entry && Object.prototype.hasOwnProperty.call(entry, "allowPrivateNetwork"));
 }
 
+=======
+/** Detects the retired flat `allowPrivateNetwork` key before doctor migration. */
+export function hasLegacyFlatAllowPrivateNetworkAlias(value: unknown): boolean {
+  const entry = asNullableRecord(value);
+  return Boolean(entry && Object.hasOwn(entry, "allowPrivateNetwork"));
+}
+
+/** Moves flat private-network config into `network.dangerouslyAllowPrivateNetwork`. */
+>>>>>>> upstream/main
 export function migrateLegacyFlatAllowPrivateNetworkAlias(params: {
   entry: Record<string, unknown>;
   pathPrefix: string;
@@ -74,7 +129,11 @@ export function migrateLegacyFlatAllowPrivateNetworkAlias(params: {
   }
 
   const legacyAllowPrivateNetwork = params.entry.allowPrivateNetwork;
+<<<<<<< HEAD
   const currentNetworkRecord = asRecord(params.entry.network);
+=======
+  const currentNetworkRecord = asNullableRecord(params.entry.network);
+>>>>>>> upstream/main
   const currentNetwork = currentNetworkRecord ? { ...currentNetworkRecord } : {};
   const currentDangerousAllowPrivateNetwork = currentNetwork.dangerouslyAllowPrivateNetwork;
 
@@ -107,12 +166,109 @@ export function migrateLegacyFlatAllowPrivateNetworkAlias(params: {
   return { entry: nextEntry, changed: true };
 }
 
+<<<<<<< HEAD
+=======
+function hasLegacyAllowPrivateNetworkInAccounts(value: unknown): boolean {
+  const accounts = asNullableRecord(value);
+  return Boolean(
+    accounts &&
+    Object.values(accounts).some((account) =>
+      hasLegacyFlatAllowPrivateNetworkAlias(asNullableRecord(account) ?? {}),
+    ),
+  );
+}
+
+/** Build doctor rules that migrate legacy private-network aliases for one channel config. */
+export function createLegacyPrivateNetworkDoctorContract(params: { channelKey: string }): {
+  legacyConfigRules: ChannelDoctorLegacyConfigRule[];
+  normalizeCompatibilityConfig: (params: { cfg: OpenClawConfig }) => ChannelDoctorConfigMutation;
+} {
+  const pathPrefix = `channels.${params.channelKey}`;
+  return {
+    legacyConfigRules: [
+      {
+        path: ["channels", params.channelKey],
+        message: `${pathPrefix}.allowPrivateNetwork is legacy; use ${pathPrefix}.network.dangerouslyAllowPrivateNetwork instead. Run "openclaw doctor --fix".`,
+        match: (value) => hasLegacyFlatAllowPrivateNetworkAlias(asNullableRecord(value) ?? {}),
+      },
+      {
+        path: ["channels", params.channelKey, "accounts"],
+        message: `${pathPrefix}.accounts.<id>.allowPrivateNetwork is legacy; use ${pathPrefix}.accounts.<id>.network.dangerouslyAllowPrivateNetwork instead. Run "openclaw doctor --fix".`,
+        match: hasLegacyAllowPrivateNetworkInAccounts,
+      },
+    ],
+    normalizeCompatibilityConfig: ({ cfg }) => {
+      const channels = asNullableRecord(cfg.channels);
+      const channelEntry = asNullableRecord(channels?.[params.channelKey]);
+      if (!channelEntry) {
+        return { config: cfg, changes: [] };
+      }
+
+      const changes: string[] = [];
+      let updatedChannel = channelEntry;
+      let changed = false;
+
+      const topLevel = migrateLegacyFlatAllowPrivateNetworkAlias({
+        entry: updatedChannel,
+        pathPrefix,
+        changes,
+      });
+      updatedChannel = topLevel.entry;
+      changed = changed || topLevel.changed;
+
+      const accounts = asNullableRecord(updatedChannel.accounts);
+      if (accounts) {
+        let accountsChanged = false;
+        const nextAccounts: Record<string, unknown> = { ...accounts };
+        for (const [accountId, accountValue] of Object.entries(accounts)) {
+          const account = asNullableRecord(accountValue);
+          if (!account) {
+            continue;
+          }
+          const migrated = migrateLegacyFlatAllowPrivateNetworkAlias({
+            entry: account,
+            pathPrefix: `${pathPrefix}.accounts.${accountId}`,
+            changes,
+          });
+          if (!migrated.changed) {
+            continue;
+          }
+          nextAccounts[accountId] = migrated.entry;
+          accountsChanged = true;
+        }
+        if (accountsChanged) {
+          updatedChannel = { ...updatedChannel, accounts: nextAccounts };
+          changed = true;
+        }
+      }
+
+      if (!changed) {
+        return { config: cfg, changes: [] };
+      }
+
+      return {
+        config: {
+          ...cfg,
+          channels: {
+            ...cfg.channels,
+            [params.channelKey]: updatedChannel,
+          } as OpenClawConfig["channels"],
+        },
+        changes,
+      };
+    },
+  };
+}
+
+/** @deprecated Use `ssrfPolicyFromDangerouslyAllowPrivateNetwork`. */
+>>>>>>> upstream/main
 export function ssrfPolicyFromAllowPrivateNetwork(
   allowPrivateNetwork: boolean | null | undefined,
 ): SsrFPolicy | undefined {
   return ssrfPolicyFromDangerouslyAllowPrivateNetwork(allowPrivateNetwork);
 }
 
+/** Allows cleartext HTTP only when the target is loopback/private or DNS-pins to private IPs. */
 export async function assertHttpUrlTargetsPrivateNetwork(
   url: string,
   params: {
@@ -160,7 +316,7 @@ export async function assertHttpUrlTargetsPrivateNetwork(
 }
 
 function normalizeHostnameSuffix(value: string): string {
-  const trimmed = value.trim().toLowerCase();
+  const trimmed = normalizeLowercaseStringOrEmpty(value);
   if (!trimmed) {
     return "";
   }
@@ -179,7 +335,7 @@ function isHostnameAllowedBySuffixAllowlist(
   if (allowlist.includes("*")) {
     return true;
   }
-  const normalized = hostname.toLowerCase();
+  const normalized = normalizeLowercaseStringOrEmpty(hostname);
   return allowlist.some((entry) => normalized === entry || normalized.endsWith(`.${entry}`));
 }
 
@@ -192,11 +348,12 @@ export function normalizeHostnameSuffixAllowlist(
   if (!source || source.length === 0) {
     return [];
   }
-  const normalized = source.map(normalizeHostnameSuffix).filter(Boolean);
+  const normalized = normalizeUniqueStringEntries(source.map(normalizeHostnameSuffix));
   if (normalized.includes("*")) {
+    // `*` is an explicit opt-out from hostname suffix restrictions.
     return ["*"];
   }
-  return Array.from(new Set(normalized));
+  return normalized;
 }
 
 /** Check whether a URL is HTTPS and its hostname matches the normalized suffix allowlist. */

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Telegram tests cover approval callback data plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   fitsTelegramCallbackData,

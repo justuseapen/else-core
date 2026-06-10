@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Firecrawl API module exposes the plugin public contract.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { readStringValue } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import { runFirecrawlScrape } from "./src/firecrawl-client.js";
 
 export type FetchFirecrawlContentParams = {
@@ -58,9 +64,16 @@ export async function fetchFirecrawlContent(
 
   return {
     text: typeof result.text === "string" ? result.text : "",
+<<<<<<< HEAD
     title: typeof result.title === "string" ? result.title : undefined,
     finalUrl: typeof result.finalUrl === "string" ? result.finalUrl : undefined,
     status: typeof result.status === "number" ? result.status : undefined,
     warning: typeof result.warning === "string" ? result.warning : undefined,
+=======
+    title: readStringValue(result.title),
+    finalUrl: readStringValue(result.finalUrl),
+    status: typeof result.status === "number" ? result.status : undefined,
+    warning: readStringValue(result.warning),
+>>>>>>> upstream/main
   };
 }

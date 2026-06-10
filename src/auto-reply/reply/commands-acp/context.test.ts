@@ -1,7 +1,11 @@
+<<<<<<< HEAD
+=======
+// Tests ACP context command output and session metadata handling.
+>>>>>>> upstream/main
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../../../config/config.js";
 import {
-  __testing as sessionBindingTesting,
+  testing as sessionBindingTesting,
   getSessionBindingService,
   registerSessionBindingAdapter,
   type SessionBindingRecord,
@@ -75,6 +79,7 @@ function parseFeishuDirectConversationIdForTest(raw?: string | null): string | u
   return trimmed.replace(/^(user|dm):/i, "").trim() || undefined;
 }
 
+<<<<<<< HEAD
 function parseBlueBubblesConversationIdFromTargetForTest(raw?: string | null): string | undefined {
   const trimmed = raw?.trim().replace(/^bluebubbles:/i, "");
   if (!trimmed) {
@@ -84,6 +89,8 @@ function parseBlueBubblesConversationIdFromTargetForTest(raw?: string | null): s
   return (prefixed?.[2] ?? trimmed).trim() || undefined;
 }
 
+=======
+>>>>>>> upstream/main
 function parseIMessageConversationIdFromTargetForTest(raw?: string | null): string | undefined {
   const trimmed = raw?.trim().replace(/^imessage:/i, "");
   if (!trimmed) {
@@ -190,6 +197,11 @@ function setMinimalAcpContextRegistryForTests(): void {
               threadId,
               threadParentId,
               parentSessionKey,
+<<<<<<< HEAD
+=======
+              from,
+              chatType,
+>>>>>>> upstream/main
               originatingTo,
               commandTo,
               fallbackTo,
@@ -197,6 +209,11 @@ function setMinimalAcpContextRegistryForTests(): void {
               threadId?: string;
               threadParentId?: string;
               parentSessionKey?: string;
+<<<<<<< HEAD
+=======
+              from?: string;
+              chatType?: string;
+>>>>>>> upstream/main
               originatingTo?: string;
               commandTo?: string;
               fallbackTo?: string;
@@ -215,6 +232,18 @@ function setMinimalAcpContextRegistryForTests(): void {
                     : {}),
                 };
               }
+<<<<<<< HEAD
+=======
+              if (chatType === "direct") {
+                const directSenderId = from
+                  ?.trim()
+                  .replace(/^discord:/i, "")
+                  .replace(/^user:/i, "");
+                if (directSenderId) {
+                  return { conversationId: `user:${directSenderId}` };
+                }
+              }
+>>>>>>> upstream/main
               const conversationId = parseDiscordConversationIdForTest([
                 originatingTo,
                 commandTo,
@@ -282,6 +311,7 @@ function setMinimalAcpContextRegistryForTests(): void {
         },
       },
       {
+<<<<<<< HEAD
         pluginId: "bluebubbles",
         source: "test",
         plugin: {
@@ -306,6 +336,8 @@ function setMinimalAcpContextRegistryForTests(): void {
         },
       },
       {
+=======
+>>>>>>> upstream/main
         pluginId: "imessage",
         source: "test",
         plugin: {
@@ -445,6 +477,28 @@ describe("commands-acp context", () => {
       threadId: "thread-42",
       conversationId: "thread-42",
       parentConversationId: "channel:parent-1",
+<<<<<<< HEAD
+=======
+    });
+  });
+
+  it("resolves discord DM current conversation ids from direct sender context", () => {
+    const params = buildCommandTestParams("/acp sessions", baseCfg, {
+      Provider: "discord",
+      Surface: "discord",
+      OriginatingChannel: "discord",
+      From: "discord:U1",
+      To: "channel:dm-1",
+      OriginatingTo: "channel:dm-1",
+      ChatType: "direct",
+      AccountId: "work",
+    });
+
+    expect(resolveAcpCommandBindingContext(params)).toEqual({
+      channel: "discord",
+      accountId: "work",
+      conversationId: "user:U1",
+>>>>>>> upstream/main
     });
   });
 
@@ -666,6 +720,7 @@ describe("commands-acp context", () => {
     expect(resolveAcpCommandParentConversationId(params)).toBe("!room:example.org");
   });
 
+<<<<<<< HEAD
   it("resolves BlueBubbles DM conversation ids from current targets", () => {
     const params = buildCommandTestParams("/acp status", baseCfg, {
       Provider: "bluebubbles",
@@ -703,6 +758,8 @@ describe("commands-acp context", () => {
     expect(resolveAcpCommandConversationId(params)).toBe("iMessage;+;chat123");
   });
 
+=======
+>>>>>>> upstream/main
   it("resolves iMessage DM conversation ids from current targets", () => {
     const params = buildCommandTestParams("/acp status", baseCfg, {
       Provider: "imessage",
@@ -721,6 +778,28 @@ describe("commands-acp context", () => {
     expect(resolveAcpCommandConversationId(params)).toBe("+15555550123");
   });
 
+<<<<<<< HEAD
+=======
+  it("resolves iMessage group conversation ids from explicit chat targets", () => {
+    const params = buildCommandTestParams("/acp status", baseCfg, {
+      Provider: "imessage",
+      Surface: "imessage",
+      OriginatingChannel: "imessage",
+      OriginatingTo: "imessage:chat_guid:iMessage;+;chat123",
+      AccountId: "work",
+    });
+
+    expect(resolveAcpCommandBindingContext(params)).toEqual({
+      channel: "imessage",
+      accountId: "work",
+      threadId: undefined,
+      conversationId: "iMessage;+;chat123",
+      parentConversationId: undefined,
+    });
+    expect(resolveAcpCommandConversationId(params)).toBe("iMessage;+;chat123");
+  });
+
+>>>>>>> upstream/main
   it("resolves iMessage group conversation ids from chat_id targets", () => {
     const params = buildCommandTestParams("/acp status", baseCfg, {
       Provider: "imessage",

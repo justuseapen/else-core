@@ -1,11 +1,37 @@
 {
   "id": "deepgram",
+<<<<<<< HEAD
   "enabledByDefault": true,
   "providerAuthEnvVars": {
     "deepgram": ["DEEPGRAM_API_KEY"]
+=======
+  "activation": {
+    "onStartup": false
+  },
+  "enabledByDefault": true,
+  "setup": {
+    "providers": [
+      {
+        "id": "deepgram",
+        "envVars": ["DEEPGRAM_API_KEY"]
+      }
+    ]
+>>>>>>> upstream/main
   },
   "contracts": {
-    "mediaUnderstandingProviders": ["deepgram"]
+    "mediaUnderstandingProviders": ["deepgram"],
+    "realtimeTranscriptionProviders": ["deepgram"]
+  },
+  "mediaUnderstandingProviderMetadata": {
+    "deepgram": {
+      "capabilities": ["audio"],
+      "defaultModels": {
+        "audio": "nova-3"
+      },
+      "autoPriority": {
+        "audio": 30
+      }
+    }
   },
   "configSchema": {
     "type": "object",

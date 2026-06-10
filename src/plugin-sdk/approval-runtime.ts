@@ -19,6 +19,10 @@ export {
   type ExecApprovalReplyMetadata,
 } from "../infra/exec-approval-reply.js";
 export { resolveExecApprovalCommandDisplay } from "../infra/exec-approval-command-display.js";
+<<<<<<< HEAD
+=======
+export { formatApprovalDisplayPath } from "../infra/approval-display-paths.js";
+>>>>>>> upstream/main
 export {
   createChannelApproverDmTargetResolver,
   createChannelNativeOriginTargetResolver,

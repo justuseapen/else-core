@@ -1,5 +1,14 @@
+<<<<<<< HEAD
 export {
   DEFAULT_AI_SNAPSHOT_MAX_CHARS,
+=======
+/**
+ * Public SDK subpath for browser plugin configuration, CDP URL, and auth helpers.
+ */
+export {
+  DEFAULT_AI_SNAPSHOT_MAX_CHARS,
+  DEFAULT_BROWSER_ACTION_TIMEOUT_MS,
+>>>>>>> upstream/main
   DEFAULT_BROWSER_DEFAULT_PROFILE_NAME,
   DEFAULT_BROWSER_EVALUATE_ENABLED,
   DEFAULT_OPENCLAW_BROWSER_COLOR,
@@ -10,7 +19,15 @@ export {
   resolveProfile,
   type ResolvedBrowserConfig,
   type ResolvedBrowserProfile,
+<<<<<<< HEAD
 } from "./browser-profiles.js";
 export { parseBrowserHttpUrl, redactCdpUrl } from "./browser-cdp.js";
 export { ensureBrowserControlAuth, resolveBrowserControlAuth } from "./browser-control-auth.js";
+=======
+  type ResolvedBrowserTabCleanupConfig,
+} from "./browser-profiles.js";
+export { parseBrowserHttpUrl, redactCdpUrl } from "./browser-cdp.js";
+export { ensureBrowserControlAuth, resolveBrowserControlAuth } from "./browser-control-auth.js";
+export { movePathToTrash, type MovePathToTrashOptions } from "./browser-trash.js";
+>>>>>>> upstream/main
 export type { BrowserControlAuth } from "./browser-control-auth.js";

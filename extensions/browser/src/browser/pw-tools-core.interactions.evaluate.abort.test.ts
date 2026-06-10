@@ -1,6 +1,7 @@
+// Browser tests cover pw tools core.interactions.evaluate.abort plugin behavior.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-let page: { evaluate: ReturnType<typeof vi.fn> } | null = null;
+let page: { evaluate: ReturnType<typeof vi.fn>; url: ReturnType<typeof vi.fn> } | null = null;
 let locator: { evaluate: ReturnType<typeof vi.fn> } | null = null;
 
 const forceDisconnectPlaywrightForTarget = vi.fn(async () => {});
@@ -11,7 +12,12 @@ const getPageForTargetId = vi.fn(async () => {
   return page;
 });
 const ensurePageState = vi.fn(() => {});
+const assertPageNavigationCompletedSafely = vi.fn(async () => {});
 const restoreRoleRefsForTarget = vi.fn(() => {});
+const isBrowserObservedDialogBlockedError = vi.fn(
+  (err: unknown) => err instanceof Error && err.name === "BrowserObservedDialogBlockedError",
+);
+const markObservedDialogsHandledRemotelyForPage = vi.fn(() => ({}));
 const refLocator = vi.fn(() => {
   if (!locator) {
     throw new Error("test: locator not set");
@@ -21,9 +27,12 @@ const refLocator = vi.fn(() => {
 
 vi.mock("./pw-session.js", () => {
   return {
+    assertPageNavigationCompletedSafely,
     ensurePageState,
     forceDisconnectPlaywrightForTarget,
     getPageForTargetId,
+    isBrowserObservedDialogBlockedError,
+    markObservedDialogsHandledRemotelyForPage,
     refLocator,
     restoreRoleRefsForTarget,
   };
@@ -32,10 +41,13 @@ vi.mock("./pw-session.js", () => {
 const { evaluateViaPlaywright } = await import("./pw-tools-core.interactions.js");
 
 function createPendingEval() {
-  let evalCalled!: () => void;
+  let evalCalled: (() => void) | undefined;
   const evalCalledPromise = new Promise<void>((resolve) => {
     evalCalled = resolve;
   });
+  if (!evalCalled) {
+    throw new Error("Expected evaluate callback to be initialized");
+  }
   return {
     evalCalledPromise,
     resolveEvalCalled: evalCalled,
@@ -64,6 +76,7 @@ describe("evaluateViaPlaywright (abort)", () => {
         }
         return pendingPromise;
       }),
+      url: vi.fn(() => "https://example.com/current"),
     };
     locator = {
       evaluate: vi.fn(() => {
@@ -86,5 +99,38 @@ describe("evaluateViaPlaywright (abort)", () => {
 
     await expect(p).rejects.toThrow("aborted by test");
     expect(forceDisconnectPlaywrightForTarget).toHaveBeenCalled();
+  });
+
+  it("does not disconnect when evaluate is blocked by an observed dialog", async () => {
+    const ctrl = new AbortController();
+    const pending = createPendingEval();
+    let resolveEval: (value: unknown) => void = () => {};
+    const pendingPromise = new Promise((resolve) => {
+      resolveEval = resolve;
+    });
+    page = {
+      evaluate: vi.fn(() => {
+        pending.resolveEvalCalled();
+        return pendingPromise;
+      }),
+      url: vi.fn(() => "https://example.com/current"),
+    };
+
+    const p = evaluateViaPlaywright({
+      cdpUrl: "http://127.0.0.1:9222",
+      fn: "() => alert('x')",
+      signal: ctrl.signal,
+    });
+
+    await pending.evalCalledPromise;
+    const err = new Error("blocked by dialog");
+    err.name = "BrowserObservedDialogBlockedError";
+    ctrl.abort(err);
+
+    await expect(p).rejects.toThrow("blocked by dialog");
+    expect(forceDisconnectPlaywrightForTarget).not.toHaveBeenCalled();
+    resolveEval(true);
+    await Promise.resolve();
+    expect(markObservedDialogsHandledRemotelyForPage).toHaveBeenCalled();
   });
 });

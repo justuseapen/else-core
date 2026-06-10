@@ -1,22 +1,46 @@
+<<<<<<< HEAD
 import { describe, expect, it, vi } from "vitest";
 import { buildComfyMusicGenerationProvider } from "./music-generation-provider.js";
 import { _setComfyFetchGuardForTesting } from "./workflow-runtime.js";
+=======
+// Comfy tests cover music generation provider plugin behavior.
+import { expectExplicitMusicGenerationCapabilities } from "openclaw/plugin-sdk/provider-test-contracts";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildComfyMusicGenerationProvider } from "./music-generation-provider.js";
+import { setComfyFetchGuardForTesting } from "./workflow-runtime.js";
+>>>>>>> upstream/main
 
 const { fetchWithSsrFGuardMock } = vi.hoisted(() => ({
   fetchWithSsrFGuardMock: vi.fn(),
 }));
 
 describe("comfy music-generation provider", () => {
+<<<<<<< HEAD
+=======
+  afterEach(() => {
+    setComfyFetchGuardForTesting(null);
+    vi.clearAllMocks();
+  });
+
+>>>>>>> upstream/main
   it("registers the workflow model", () => {
     const provider = buildComfyMusicGenerationProvider();
 
     expect(provider.defaultModel).toBe("workflow");
     expect(provider.models).toEqual(["workflow"]);
+<<<<<<< HEAD
     expect(provider.capabilities.maxInputImages).toBe(1);
   });
 
   it("runs a music workflow and returns audio outputs", async () => {
     _setComfyFetchGuardForTesting(fetchWithSsrFGuardMock);
+=======
+    expectExplicitMusicGenerationCapabilities(provider);
+  });
+
+  it("runs a music workflow and returns audio outputs", async () => {
+    setComfyFetchGuardForTesting(fetchWithSsrFGuardMock);
+>>>>>>> upstream/main
     fetchWithSsrFGuardMock
       .mockResolvedValueOnce({
         response: new Response(JSON.stringify({ prompt_id: "music-job-1" }), {
@@ -57,6 +81,7 @@ describe("comfy music-generation provider", () => {
       model: "workflow",
       prompt: "gentle ambient synth loop",
       cfg: {
+<<<<<<< HEAD
         models: {
           providers: {
             comfy: {
@@ -67,6 +92,20 @@ describe("comfy music-generation provider", () => {
                 },
                 promptNodeId: "6",
                 outputNodeId: "9",
+=======
+        plugins: {
+          entries: {
+            comfy: {
+              config: {
+                music: {
+                  workflow: {
+                    "6": { inputs: { text: "" } },
+                    "9": { inputs: {} },
+                  },
+                  promptNodeId: "6",
+                  outputNodeId: "9",
+                },
+>>>>>>> upstream/main
               },
             },
           },
@@ -74,10 +113,18 @@ describe("comfy music-generation provider", () => {
       } as never,
     });
 
+<<<<<<< HEAD
     expect(result).toMatchObject({
       model: "workflow",
       tracks: [
         {
+=======
+    expect(result).toEqual({
+      model: "workflow",
+      tracks: [
+        {
+          buffer: Buffer.from("music-bytes"),
+>>>>>>> upstream/main
           mimeType: "audio/mpeg",
           fileName: "song.mp3",
         },
@@ -88,6 +135,74 @@ describe("comfy music-generation provider", () => {
         inputImageCount: 0,
       },
     });
+<<<<<<< HEAD
     expect(result.tracks[0]?.buffer).toEqual(Buffer.from("music-bytes"));
+=======
+  });
+
+  it("rejects generated music downloads that exceed the configured media cap", async () => {
+    setComfyFetchGuardForTesting(fetchWithSsrFGuardMock);
+    fetchWithSsrFGuardMock
+      .mockResolvedValueOnce({
+        response: new Response(JSON.stringify({ prompt_id: "music-job-1" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+        release: vi.fn(async () => {}),
+      })
+      .mockResolvedValueOnce({
+        response: new Response(
+          JSON.stringify({
+            "music-job-1": {
+              outputs: {
+                "9": {
+                  audio: [{ filename: "song.mp3", subfolder: "", type: "output" }],
+                },
+              },
+            },
+          }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        ),
+        release: vi.fn(async () => {}),
+      })
+      .mockResolvedValueOnce({
+        response: new Response(Buffer.from("too-large"), {
+          status: 200,
+          headers: { "content-type": "audio/mpeg" },
+        }),
+        release: vi.fn(async () => {}),
+      });
+
+    const provider = buildComfyMusicGenerationProvider();
+    await expect(
+      provider.generateMusic({
+        provider: "comfy",
+        model: "workflow",
+        prompt: "gentle ambient synth loop",
+        cfg: {
+          plugins: {
+            entries: {
+              comfy: {
+                config: {
+                  music: {
+                    workflow: {
+                      "6": { inputs: { text: "" } },
+                      "9": { inputs: {} },
+                    },
+                    promptNodeId: "6",
+                    outputNodeId: "9",
+                  },
+                },
+              },
+            },
+          },
+          agents: { defaults: { mediaMaxMb: 0.000001 } },
+        } as never,
+      }),
+    ).rejects.toThrow("Comfy music output download exceeds 1 bytes");
+>>>>>>> upstream/main
   });
 });

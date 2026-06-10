@@ -1,3 +1,4 @@
+// Filesystem fixture helpers create plugin filesystem layouts for registry and loader tests.
 import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import os from "node:os";
@@ -10,25 +11,37 @@ function chmodSafeDir(dir: string) {
   fs.chmodSync(dir, 0o755);
 }
 
+/** Creates a directory with test-safe permissions. */
 export function mkdirSafeDir(dir: string) {
   fs.mkdirSync(dir, { recursive: true });
   chmodSafeDir(dir);
 }
 
+/** Creates and tracks a temporary directory for synchronous test cleanup. */
 export function makeTrackedTempDir(prefix: string, trackedDirs: string[]) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), String(prefix) + "-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix + "-"));
   chmodSafeDir(dir);
   trackedDirs.push(dir);
   return dir;
 }
 
+<<<<<<< HEAD
 export async function makeTrackedTempDirAsync(prefix: string, trackedDirs: string[]) {
   const dir = await fsPromises.mkdtemp(path.join(os.tmpdir(), String(prefix) + "-"));
+=======
+/** Creates and tracks a temporary directory for async test cleanup. */
+export async function makeTrackedTempDirAsync(prefix: string, trackedDirs: string[]) {
+  const dir = await fsPromises.mkdtemp(path.join(os.tmpdir(), prefix + "-"));
+>>>>>>> upstream/main
   chmodSafeDir(dir);
   trackedDirs.push(dir);
   return dir;
 }
 
+<<<<<<< HEAD
+=======
+/** Removes and clears tracked temporary directories synchronously. */
+>>>>>>> upstream/main
 export function cleanupTrackedTempDirs(trackedDirs: string[]) {
   for (const dir of trackedDirs.splice(0)) {
     try {
@@ -39,6 +52,10 @@ export function cleanupTrackedTempDirs(trackedDirs: string[]) {
   }
 }
 
+<<<<<<< HEAD
+=======
+/** Removes and clears tracked temporary directories asynchronously. */
+>>>>>>> upstream/main
 export async function cleanupTrackedTempDirsAsync(trackedDirs: string[]) {
   await Promise.all(
     trackedDirs.splice(0).map(async (dir) => {
@@ -51,6 +68,10 @@ export async function cleanupTrackedTempDirsAsync(trackedDirs: string[]) {
   );
 }
 
+<<<<<<< HEAD
+=======
+/** Creates a per-suite temp-root tracker with deterministic case directory names. */
+>>>>>>> upstream/main
 export function createSuiteTempRootTracker(
   prefix: string,
   baseDir = path.join(process.cwd(), ".tmp"),
@@ -63,12 +84,20 @@ export function createSuiteTempRootTracker(
       return suiteTempRoot;
     }
     fs.mkdirSync(baseDir, { recursive: true });
+<<<<<<< HEAD
     suiteTempRoot = fs.mkdtempSync(path.join(baseDir, String(prefix) + "-"));
+=======
+    suiteTempRoot = fs.mkdtempSync(path.join(baseDir, `${prefix}-`));
+>>>>>>> upstream/main
     return suiteTempRoot;
   }
 
   function makeTempDir() {
+<<<<<<< HEAD
     const dir = path.join(ensureSuiteTempRoot(), `case-${String(tempDirCounter)}`);
+=======
+    const dir = path.join(ensureSuiteTempRoot(), `case-${tempDirCounter}`);
+>>>>>>> upstream/main
     tempDirCounter += 1;
     fs.mkdirSync(dir);
     return dir;

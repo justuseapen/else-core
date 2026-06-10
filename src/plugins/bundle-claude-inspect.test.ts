@@ -1,3 +1,4 @@
+// Covers Claude bundle inspection for plugin packaging metadata.
 import fs from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -101,6 +102,7 @@ describe("Claude bundle plugin inspect integration", () => {
 
   function expectClaudeManifestField(params: {
     field: "skills" | "hooks" | "settingsFiles" | "capabilities";
+<<<<<<< HEAD
     includes: readonly string[];
   }) {
     const manifest = expectLoadedClaudeManifest();
@@ -110,6 +112,17 @@ describe("Claude bundle plugin inspect integration", () => {
 
   function expectNoDiagnostics(diagnostics: unknown[]) {
     expect(diagnostics).toEqual([]);
+=======
+    expected: readonly string[];
+  }) {
+    const manifest = expectLoadedClaudeManifest();
+    const values = manifest[params.field];
+    expect(values).toEqual([...params.expected]);
+  }
+
+  function expectNoDiagnostics(diagnostics: unknown[]) {
+    expect(diagnostics).toStrictEqual([]);
+>>>>>>> upstream/main
   }
 
   function expectBundleRuntimeSupport(params: {
@@ -123,9 +136,13 @@ describe("Claude bundle plugin inspect integration", () => {
     hasSupportedKey: "hasSupportedStdioServer" | "hasStdioServer";
   }) {
     expect(params.actual[params.hasSupportedKey]).toBe(true);
+<<<<<<< HEAD
     expect(params.actual.supportedServerNames).toEqual(
       expect.arrayContaining([...params.supportedServerNames]),
     );
+=======
+    expect(params.actual.supportedServerNames).toEqual([...params.supportedServerNames]);
+>>>>>>> upstream/main
     expect(params.actual.unsupportedServerNames).toEqual([...params.unsupportedServerNames]);
     expectNoDiagnostics(params.actual.diagnostics);
   }
@@ -162,11 +179,32 @@ describe("Claude bundle plugin inspect integration", () => {
 
   it("loads the full Claude bundle manifest with all capabilities", () => {
     const m = expectLoadedClaudeManifest();
+<<<<<<< HEAD
     expect(m).toMatchObject({
       name: "Test Claude Plugin",
       description: "Integration test fixture for Claude bundle inspection",
       version: "1.0.0",
+=======
+    expect(m).toEqual({
+      id: "test-claude-plugin",
+      name: "Test Claude Plugin",
+      description: "Integration test fixture for Claude bundle inspection",
+      version: "1.0.0",
+      skills: ["skill-packs", "extra-commands", "agents", "output-styles"],
+      settingsFiles: ["settings.json"],
+      hooks: ["hooks/hooks.json", "custom-hooks"],
+>>>>>>> upstream/main
       bundleFormat: "claude",
+      capabilities: [
+        "skills",
+        "commands",
+        "agents",
+        "hooks",
+        "mcpServers",
+        "lspServers",
+        "outputStyles",
+        "settings",
+      ],
     });
   });
 
@@ -174,22 +212,38 @@ describe("Claude bundle plugin inspect integration", () => {
     {
       name: "resolves skills from skills, commands, and agents paths",
       field: "skills" as const,
+<<<<<<< HEAD
       includes: ["skill-packs", "extra-commands", "agents", "output-styles"],
+=======
+      expected: ["skill-packs", "extra-commands", "agents", "output-styles"],
+>>>>>>> upstream/main
     },
     {
       name: "resolves hooks from default and declared paths",
       field: "hooks" as const,
+<<<<<<< HEAD
       includes: ["hooks/hooks.json", "custom-hooks"],
+=======
+      expected: ["hooks/hooks.json", "custom-hooks"],
+>>>>>>> upstream/main
     },
     {
       name: "detects settings files",
       field: "settingsFiles" as const,
+<<<<<<< HEAD
       includes: ["settings.json"],
+=======
+      expected: ["settings.json"],
+>>>>>>> upstream/main
     },
     {
       name: "detects all bundle capabilities",
       field: "capabilities" as const,
+<<<<<<< HEAD
       includes: [
+=======
+      expected: [
+>>>>>>> upstream/main
         "skills",
         "commands",
         "agents",
@@ -200,8 +254,13 @@ describe("Claude bundle plugin inspect integration", () => {
         "settings",
       ],
     },
+<<<<<<< HEAD
   ] as const)("$name", ({ field, includes }) => {
     expectClaudeManifestField({ field, includes });
+=======
+  ] as const)("$name", ({ field, expected }) => {
+    expectClaudeManifestField({ field, expected });
+>>>>>>> upstream/main
   });
 
   it.each([

@@ -1,5 +1,19 @@
-import { describe, expect, it } from "vitest";
+// Covers channel/target inference, legacy target rewrite, target validation,
+// and plugin alias-aware message-action normalization.
+import { describe, expect, it, vi } from "vitest";
 import { normalizeMessageActionInput } from "./message-action-normalization.js";
+
+vi.mock("../../channels/plugins/bootstrap-registry.js", async () => ({
+  getBootstrapChannelPlugin: (
+    await import("./message-action-test-fixtures.js")
+  ).createPinboardMessageActionBootstrapRegistryMock(),
+}));
+
+vi.mock("../../utils/message-channel.js", () => ({
+  isDeliverableMessageChannel: (value: string) => ["workspace", "forum"].includes(value),
+  normalizeMessageChannel: (value?: string | null) =>
+    typeof value === "string" ? value.trim().toLowerCase() : undefined,
+}));
 
 describe("normalizeMessageActionInput", () => {
   type NormalizeMessageActionInputCase = {
@@ -60,10 +74,17 @@ describe("normalizeMessageActionInput", () => {
         },
         toolContext: {
           currentChannelId: "C1",
+<<<<<<< HEAD
           currentChannelProvider: "slack",
         },
       },
       expectedFields: { channel: "slack" },
+=======
+          currentChannelProvider: "workspace",
+        },
+      },
+      expectedFields: { channel: "workspace" },
+>>>>>>> upstream/main
     },
     {
       input: {
@@ -104,7 +125,11 @@ describe("normalizeMessageActionInput", () => {
       input: {
         action: "pin",
         args: {
+<<<<<<< HEAD
           channel: "feishu",
+=======
+          channel: "pinboard",
+>>>>>>> upstream/main
           messageId: "om_123",
         },
       },
@@ -115,7 +140,11 @@ describe("normalizeMessageActionInput", () => {
       input: {
         action: "list-pins",
         args: {
+<<<<<<< HEAD
           channel: "feishu",
+=======
+          channel: "pinboard",
+>>>>>>> upstream/main
           chatId: "oc_123",
         },
       },
@@ -126,12 +155,20 @@ describe("normalizeMessageActionInput", () => {
       input: {
         action: "read",
         args: {
+<<<<<<< HEAD
           channel: "slack",
+=======
+          channel: "workspace",
+>>>>>>> upstream/main
           messageId: "123.456",
         },
         toolContext: {
           currentChannelId: "C12345678",
+<<<<<<< HEAD
           currentChannelProvider: "slack",
+=======
+          currentChannelProvider: "workspace",
+>>>>>>> upstream/main
         },
       },
       expectedFields: { target: "C12345678", messageId: "123.456" },

@@ -1,7 +1,17 @@
+<<<<<<< HEAD
 import { isSingleUseReplyToMode } from "openclaw/plugin-sdk/reply-reference";
 import { vi, type Mock } from "vitest";
 import { parsePluginBindingApprovalCustomId } from "../../../../src/plugins/conversation-binding.js";
 import { resolvePinnedMainDmOwnerFromAllowlist } from "../../../../src/security/dm-policy-shared.js";
+=======
+// Discord plugin module implements component runtime behavior.
+import {
+  parsePluginBindingApprovalCustomId,
+  resolvePinnedMainDmOwnerFromAllowlist,
+} from "openclaw/plugin-sdk/conversation-runtime";
+import { isSingleUseReplyToMode } from "openclaw/plugin-sdk/reply-reference";
+import { vi, type Mock } from "vitest";
+>>>>>>> upstream/main
 
 type UnknownMock = Mock<(...args: unknown[]) => unknown>;
 type AsyncUnknownMock = Mock<(...args: unknown[]) => Promise<unknown>>;
@@ -46,18 +56,35 @@ export const upsertPairingRequestMock: AsyncUnknownMock = runtimeMocks.upsertPai
 export const recordInboundSessionMock: AsyncUnknownMock = runtimeMocks.recordInboundSessionMock;
 export const readSessionUpdatedAtMock: UnknownMock = runtimeMocks.readSessionUpdatedAtMock;
 export const resolveStorePathMock: UnknownMock = runtimeMocks.resolveStorePathMock;
+<<<<<<< HEAD
 export const resolvePluginConversationBindingApprovalMock: AsyncUnknownMock =
   runtimeMocks.resolvePluginConversationBindingApprovalMock;
 export const buildPluginBindingResolvedTextMock: UnknownMock =
   runtimeMocks.buildPluginBindingResolvedTextMock;
 
 async function readStoreAllowFromForDmPolicy(params: {
+=======
+const resolvePluginConversationBindingApprovalMock: AsyncUnknownMock =
+  runtimeMocks.resolvePluginConversationBindingApprovalMock;
+const buildPluginBindingResolvedTextMock: UnknownMock =
+  runtimeMocks.buildPluginBindingResolvedTextMock;
+
+async function readChannelIngressStoreAllowFromForDmPolicy(params: {
+>>>>>>> upstream/main
   provider: string;
   accountId: string;
   dmPolicy?: string | null;
   shouldRead?: boolean | null;
 }) {
+<<<<<<< HEAD
   if (params.shouldRead === false || params.dmPolicy === "allowlist") {
+=======
+  if (
+    params.shouldRead === false ||
+    params.dmPolicy === "allowlist" ||
+    params.dmPolicy === "open"
+  ) {
+>>>>>>> upstream/main
     return [];
   }
   return await readAllowFromStoreMock(params.provider, params.accountId);
@@ -65,7 +92,11 @@ async function readStoreAllowFromForDmPolicy(params: {
 
 vi.mock("../monitor/agent-components-helpers.runtime.js", () => {
   return {
+<<<<<<< HEAD
     readStoreAllowFromForDmPolicy,
+=======
+    readChannelIngressStoreAllowFromForDmPolicy,
+>>>>>>> upstream/main
     resolvePinnedMainDmOwnerFromAllowlist,
     upsertChannelPairingRequest: (...args: unknown[]) => upsertPairingRequestMock(...args),
   };

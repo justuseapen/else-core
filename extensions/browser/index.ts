@@ -1,4 +1,10 @@
+/**
+ * Browser plugin entry. It wires the browser tool, gateway request handler,
+ * node-host command, services, reload policy, and security audit collectors.
+ */
+import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import {
+<<<<<<< HEAD
   definePluginEntry,
   type OpenClawPluginToolContext,
   type OpenClawPluginToolFactory,
@@ -11,11 +17,20 @@ import {
   registerBrowserCli,
   runBrowserProxyCommand,
 } from "./register.runtime.js";
+=======
+  browserPluginNodeHostCommands,
+  browserPluginReload,
+  browserSecurityAuditCollectors,
+  registerBrowserPlugin,
+} from "./plugin-registration.js";
+>>>>>>> upstream/main
 
+/** Main Browser plugin entry for runtime registration. */
 export default definePluginEntry({
   id: "browser",
   name: "Browser",
   description: "Default browser tool plugin",
+<<<<<<< HEAD
   reload: { restartPrefixes: ["browser"] },
   nodeHostCommands: [
     {
@@ -38,4 +53,10 @@ export default definePluginEntry({
     });
     api.registerService(createBrowserPluginService());
   },
+=======
+  reload: browserPluginReload,
+  nodeHostCommands: browserPluginNodeHostCommands,
+  securityAuditCollectors: [...browserSecurityAuditCollectors],
+  register: registerBrowserPlugin,
+>>>>>>> upstream/main
 });

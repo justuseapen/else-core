@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Legacy web-fetch migration tests cover doctor repair of old web fetch config.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../../../config/config.js";
 import {

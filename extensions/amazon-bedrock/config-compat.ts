@@ -1,13 +1,25 @@
+<<<<<<< HEAD
+=======
+/**
+ * Legacy config migration for Amazon Bedrock discovery settings. It moves
+ * old `models.bedrockDiscovery` config into plugin-local config shape.
+ */
+import { isRecord } from "openclaw/plugin-sdk/string-coerce-runtime";
+
+>>>>>>> upstream/main
 type JsonRecord = Record<string, unknown>;
 
 const LEGACY_PATH = "models.bedrockDiscovery";
 const TARGET_PATH = "plugins.entries.amazon-bedrock.config.discovery";
 const BLOCKED_OBJECT_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
+<<<<<<< HEAD
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+=======
+>>>>>>> upstream/main
 function isBlockedObjectKey(key: string): boolean {
   return BLOCKED_OBJECT_KEYS.has(key);
 }
@@ -61,6 +73,10 @@ function pruneEmptyModelsRoot(root: JsonRecord): void {
   }
 }
 
+<<<<<<< HEAD
+=======
+/** Migrate legacy Bedrock discovery config into `plugins.entries.amazon-bedrock.config`. */
+>>>>>>> upstream/main
 export function migrateAmazonBedrockLegacyConfig<T>(raw: T): { config: T; changes: string[] } {
   if (!isRecord(raw)) {
     return { config: raw, changes: [] };

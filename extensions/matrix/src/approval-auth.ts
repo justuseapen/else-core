@@ -1,8 +1,16 @@
+<<<<<<< HEAD
+=======
+// Matrix plugin module implements approval auth behavior.
+>>>>>>> upstream/main
 import {
   createResolvedApproverActionAuthAdapter,
   resolveApprovalApprovers,
 } from "openclaw/plugin-sdk/approval-auth-runtime";
+<<<<<<< HEAD
 import { normalizeMatrixApproverId } from "./exec-approvals.js";
+=======
+import { normalizeMatrixApproverId } from "./approval-ids.js";
+>>>>>>> upstream/main
 import { resolveMatrixAccount } from "./matrix/accounts.js";
 import type { CoreConfig } from "./types.js";
 

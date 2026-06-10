@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+<<<<<<< HEAD
+=======
+// Analyze Plugin Sdk Usage script supports OpenClaw repository automation.
+>>>>>>> upstream/main
 import { main } from "./ts-topology.ts";
 
 const forwardedArgs = process.argv.slice(2);

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Memory Wiki tests cover obsidian plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { resolveMemoryWikiConfig } from "./config.js";
 import { runObsidianDaily, runObsidianSearch } from "./obsidian.js";

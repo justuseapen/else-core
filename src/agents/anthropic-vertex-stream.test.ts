@@ -1,7 +1,11 @@
-import type { Model } from "@mariozechner/pi-ai";
+/**
+ * Tests Anthropic Vertex stream facade loading.
+ * Ensures core routes through the bundled provider public surface.
+ */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SYSTEM_PROMPT_CACHE_BOUNDARY } from "./system-prompt-cache-boundary.js";
 
+<<<<<<< HEAD
 const hoisted = vi.hoisted(() => {
   const streamAnthropicMock = vi.fn<(model: unknown, context: unknown, options: unknown) => symbol>(
     () => Symbol("anthropic-vertex-stream"),
@@ -64,26 +68,36 @@ function makeModel(params: { id: string; maxTokens?: number }): Model<"anthropic
 }
 
 describe("createAnthropicVertexStreamFn", () => {
+=======
+const facadeRuntimeMocks = vi.hoisted(() => ({
+  loadBundledPluginPublicSurfaceModuleSync: vi.fn(),
+}));
+
+vi.mock("../plugin-sdk/facade-runtime.js", () => ({
+  loadBundledPluginPublicSurfaceModuleSync:
+    facadeRuntimeMocks.loadBundledPluginPublicSurfaceModuleSync,
+}));
+
+describe("anthropic-vertex stream facade", () => {
+>>>>>>> upstream/main
   beforeEach(() => {
-    hoisted.streamAnthropicMock.mockClear();
-    hoisted.anthropicVertexCtorMock.mockClear();
+    vi.resetModules();
+    facadeRuntimeMocks.loadBundledPluginPublicSurfaceModuleSync.mockReset();
   });
 
-  beforeEach(async () => {
-    ({ createAnthropicVertexStreamFn, createAnthropicVertexStreamFnForModel } =
-      await loadFreshAnthropicVertexStreamModuleForTest());
-  });
-
-  it("omits projectId when ADC credentials are used without an explicit project", () => {
-    const streamFn = createAnthropicVertexStreamFn(undefined, "global");
-
-    void streamFn(makeModel({ id: "claude-sonnet-4-6", maxTokens: 128000 }), { messages: [] }, {});
-
-    expect(hoisted.anthropicVertexCtorMock).toHaveBeenCalledWith({
-      region: "global",
+  it("loads the stream facade through the plugin public surface", async () => {
+    const createStream = vi.fn(
+      (model: { baseUrl?: string }, env: NodeJS.ProcessEnv) => async () => ({
+        marker: "external-vertex",
+        baseUrl: model.baseUrl,
+        envMarker: env.OPENCLAW_TEST_MARKER,
+      }),
+    );
+    facadeRuntimeMocks.loadBundledPluginPublicSurfaceModuleSync.mockReturnValue({
+      createAnthropicVertexStreamFnForModel: createStream,
     });
-  });
 
+<<<<<<< HEAD
   it("passes an explicit baseURL through to the Vertex client", () => {
     const streamFn = createAnthropicVertexStreamFn(
       "vertex-project",
@@ -329,47 +343,26 @@ describe("createAnthropicVertexStreamFnForModel", () => {
   });
 
   it("derives project and region from the model and env", () => {
+=======
+    const { createAnthropicVertexStreamFnForModel } = await import("./anthropic-vertex-stream.js");
+>>>>>>> upstream/main
     const streamFn = createAnthropicVertexStreamFnForModel(
-      { baseUrl: "https://europe-west4-aiplatform.googleapis.com" },
-      { GOOGLE_CLOUD_PROJECT_ID: "vertex-project" } as NodeJS.ProcessEnv,
+      { baseUrl: "https://us-central1-aiplatform.googleapis.com" },
+      { OPENCLAW_TEST_MARKER: "registry" },
     );
 
-    void streamFn(makeModel({ id: "claude-sonnet-4-6", maxTokens: 64000 }), { messages: [] }, {});
-
-    expect(hoisted.anthropicVertexCtorMock).toHaveBeenCalledWith({
-      projectId: "vertex-project",
-      region: "europe-west4",
-      baseURL: "https://europe-west4-aiplatform.googleapis.com/v1",
+    expect(facadeRuntimeMocks.loadBundledPluginPublicSurfaceModuleSync).toHaveBeenCalledWith({
+      dirName: "anthropic-vertex",
+      artifactBasename: "api.js",
     });
-  });
-
-  it("preserves explicit custom provider base URLs", () => {
-    const streamFn = createAnthropicVertexStreamFnForModel(
-      { baseUrl: "https://proxy.example.test/custom-root/v1" },
-      { GOOGLE_CLOUD_PROJECT_ID: "vertex-project" } as NodeJS.ProcessEnv,
+    expect(createStream).toHaveBeenCalledWith(
+      { baseUrl: "https://us-central1-aiplatform.googleapis.com" },
+      { OPENCLAW_TEST_MARKER: "registry" },
     );
-
-    void streamFn(makeModel({ id: "claude-sonnet-4-6", maxTokens: 64000 }), { messages: [] }, {});
-
-    expect(hoisted.anthropicVertexCtorMock).toHaveBeenCalledWith({
-      projectId: "vertex-project",
-      region: "global",
-      baseURL: "https://proxy.example.test/custom-root/v1",
-    });
-  });
-
-  it("adds /v1 for path-prefixed custom provider base URLs", () => {
-    const streamFn = createAnthropicVertexStreamFnForModel(
-      { baseUrl: "https://proxy.example.test/custom-root" },
-      { GOOGLE_CLOUD_PROJECT_ID: "vertex-project" } as NodeJS.ProcessEnv,
-    );
-
-    void streamFn(makeModel({ id: "claude-sonnet-4-6", maxTokens: 64000 }), { messages: [] }, {});
-
-    expect(hoisted.anthropicVertexCtorMock).toHaveBeenCalledWith({
-      projectId: "vertex-project",
-      region: "global",
-      baseURL: "https://proxy.example.test/custom-root/v1",
+    await expect(streamFn({} as never, {} as never, {} as never)).resolves.toEqual({
+      marker: "external-vertex",
+      baseUrl: "https://us-central1-aiplatform.googleapis.com",
+      envMarker: "registry",
     });
   });
 });

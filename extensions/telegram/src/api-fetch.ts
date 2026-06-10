@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import type { TelegramNetworkConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Telegram plugin module implements api fetch behavior.
+import type { TelegramNetworkConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import { resolveTelegramApiBase, resolveTelegramFetch } from "./fetch.js";
 import { makeProxyFetch } from "./proxy.js";
 

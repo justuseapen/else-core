@@ -36,6 +36,21 @@ fail() {
   exit 1
 }
 
+<<<<<<< HEAD
+=======
+run_podman_detached() {
+  if command -v timeout >/dev/null 2>&1; then
+    if timeout --kill-after=1s 1s true >/dev/null 2>&1; then
+      timeout --kill-after=30s "$PODMAN_RUN_TIMEOUT" podman run "$@"
+    else
+      timeout "$PODMAN_RUN_TIMEOUT" podman run "$@"
+    fi
+    return
+  fi
+  podman run "$@"
+}
+
+>>>>>>> upstream/main
 validate_single_line_value() {
   local label="$1"
   local value="$2"
@@ -167,7 +182,11 @@ load_podman_env_file() {
     key="${key%"${key##*[![:space:]]}"}"
     [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
     case "$key" in
+<<<<<<< HEAD
       OPENCLAW_GATEWAY_TOKEN|OPENCLAW_PODMAN_CONTAINER|OPENCLAW_PODMAN_IMAGE|OPENCLAW_IMAGE|OPENCLAW_PODMAN_PULL|OPENCLAW_PODMAN_GATEWAY_HOST_PORT|OPENCLAW_GATEWAY_PORT|OPENCLAW_PODMAN_BRIDGE_HOST_PORT|OPENCLAW_BRIDGE_PORT|OPENCLAW_GATEWAY_BIND|OPENCLAW_PODMAN_USERNS|OPENCLAW_BIND_MOUNT_OPTIONS|OPENCLAW_PODMAN_PUBLISH_HOST)
+=======
+      OPENCLAW_GATEWAY_TOKEN|OPENCLAW_PODMAN_CONTAINER|OPENCLAW_PODMAN_IMAGE|OPENCLAW_IMAGE|OPENCLAW_PODMAN_PULL|OPENCLAW_PODMAN_RUN_TIMEOUT|OPENCLAW_PODMAN_GATEWAY_HOST_PORT|OPENCLAW_GATEWAY_PORT|OPENCLAW_PODMAN_BRIDGE_HOST_PORT|OPENCLAW_BRIDGE_PORT|OPENCLAW_GATEWAY_BIND|OPENCLAW_PODMAN_USERNS|OPENCLAW_BIND_MOUNT_OPTIONS|OPENCLAW_PODMAN_PUBLISH_HOST)
+>>>>>>> upstream/main
         ;;
       *)
         continue
@@ -208,10 +227,6 @@ if [[ "${1:-}" == "setup-host" ]]; then
   if [[ -f "$SETUP_PODMAN" ]]; then
     exec "$SETUP_PODMAN" "$@"
   fi
-  SETUP_PODMAN="$REPO_ROOT/setup-podman.sh"
-  if [[ -f "$SETUP_PODMAN" ]]; then
-    exec "$SETUP_PODMAN" "$@"
-  fi
   echo "Podman setup script not found. Run from repo root: ./scripts/podman/setup.sh" >&2
   exit 1
 fi
@@ -240,6 +255,7 @@ WORKSPACE_DIR="${OPENCLAW_WORKSPACE_DIR:-$CONFIG_DIR/workspace}"
 CONTAINER_NAME="${OPENCLAW_PODMAN_CONTAINER:-openclaw}"
 OPENCLAW_IMAGE="${OPENCLAW_PODMAN_IMAGE:-${OPENCLAW_IMAGE:-openclaw:local}}"
 PODMAN_PULL="${OPENCLAW_PODMAN_PULL:-never}"
+PODMAN_RUN_TIMEOUT="${OPENCLAW_PODMAN_RUN_TIMEOUT:-600s}"
 HOST_GATEWAY_PORT="${OPENCLAW_PODMAN_GATEWAY_HOST_PORT:-${OPENCLAW_GATEWAY_PORT:-18789}}"
 HOST_BRIDGE_PORT="${OPENCLAW_PODMAN_BRIDGE_HOST_PORT:-${OPENCLAW_BRIDGE_PORT:-18790}}"
 PUBLISH_HOST="${OPENCLAW_PODMAN_PUBLISH_HOST:-127.0.0.1}"
@@ -550,7 +566,11 @@ if [[ "$RUN_SETUP" == true ]]; then
 fi
 
 TOKEN_ENV_FILE="$(create_token_env_file "$ENV_FILE" "$OPENCLAW_GATEWAY_TOKEN")"
+<<<<<<< HEAD
 podman run --pull="$PODMAN_PULL" -d --replace \
+=======
+run_podman_detached --pull="$PODMAN_PULL" -d --replace \
+>>>>>>> upstream/main
   --name "$CONTAINER_NAME" \
   --init \
   "${USERNS_ARGS[@]}" "${RUN_USER_ARGS[@]}" \

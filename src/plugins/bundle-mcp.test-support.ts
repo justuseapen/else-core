@@ -1,9 +1,13 @@
+// Provides test support for bundled MCP plugin packaging checks.
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { captureEnv } from "../test-utils/env.js";
+<<<<<<< HEAD
 import { clearPluginDiscoveryCache } from "./discovery.js";
 import { clearPluginManifestRegistryCache } from "./manifest-registry.js";
+=======
+>>>>>>> upstream/main
 
 export function createBundleMcpTempHarness() {
   const tempDirs: string[] = [];
@@ -15,12 +19,8 @@ export function createBundleMcpTempHarness() {
       return dir;
     },
     async cleanup() {
-      clearPluginDiscoveryCache();
-      clearPluginManifestRegistryCache();
       await Promise.all(
-        tempDirs
-          .splice(0, tempDirs.length)
-          .map((dir) => fs.rm(dir, { recursive: true, force: true })),
+        tempDirs.splice(0).map((dir) => fs.rm(dir, { recursive: true, force: true })),
       );
     },
   };
@@ -30,6 +30,22 @@ export function resolveBundlePluginRoot(homeDir: string, pluginId: string) {
   return path.join(homeDir, ".openclaw", "extensions", pluginId);
 }
 
+<<<<<<< HEAD
+=======
+export async function writeBundleTextFiles(
+  pluginRoot: string,
+  files: Record<string, string>,
+): Promise<void> {
+  await Promise.all(
+    Object.entries(files).map(async ([relativePath, content]) => {
+      const filePath = path.join(pluginRoot, relativePath);
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(filePath, content, "utf-8");
+    }),
+  );
+}
+
+>>>>>>> upstream/main
 export async function writeClaudeBundleManifest(params: {
   homeDir: string;
   pluginId: string;
@@ -45,6 +61,7 @@ export async function writeClaudeBundleManifest(params: {
   return pluginRoot;
 }
 
+<<<<<<< HEAD
 export async function writeBundleTextFiles(
   rootDir: string,
   files: Readonly<Record<string, string>>,
@@ -58,6 +75,8 @@ export async function writeBundleTextFiles(
   );
 }
 
+=======
+>>>>>>> upstream/main
 export function createEnabledPluginEntries(pluginIds: readonly string[]) {
   return Object.fromEntries(pluginIds.map((pluginId) => [pluginId, { enabled: true }]));
 }

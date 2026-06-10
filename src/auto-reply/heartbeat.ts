@@ -1,7 +1,17 @@
+<<<<<<< HEAD
 import { parseDurationMs } from "../cli/parse-duration.js";
 import { escapeRegExp } from "../utils.js";
 import { HEARTBEAT_TOKEN } from "./tokens.js";
 
+=======
+/** Heartbeat prompt defaults, token stripping, task parsing, and due-time helpers. */
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { parseDurationMs } from "../cli/parse-duration.js";
+import { escapeRegExp } from "../shared/regexp.js";
+import { HEARTBEAT_TOKEN } from "./tokens.js";
+
+/** YAML-like task entry parsed from HEARTBEAT.md. */
+>>>>>>> upstream/main
 export type HeartbeatTask = {
   name: string;
   interval: string;
@@ -10,19 +20,56 @@ export type HeartbeatTask = {
 
 // Default heartbeat prompt (used when config.agents.defaults.heartbeat.prompt is unset).
 // Keep it tight and avoid encouraging the model to invent/rehash "open loops" from prior chat context.
-export const HEARTBEAT_PROMPT =
-  "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.";
+const HEARTBEAT_CONTEXT_PROMPT =
+  "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats.";
+/** Default prompt for heartbeat turns when config does not override it. */
+export const HEARTBEAT_PROMPT = `${HEARTBEAT_CONTEXT_PROMPT} If nothing needs attention, reply HEARTBEAT_OK.`;
+export const HEARTBEAT_RESPONSE_TOOL_INSTRUCTIONS =
+  "Use heartbeat_respond to report the wake outcome. Set notify=false when nothing needs the user's attention. Set notify=true with notificationText only when the user should be interrupted.";
+export const HEARTBEAT_RESPONSE_TOOL_PROMPT = `${HEARTBEAT_CONTEXT_PROMPT} ${HEARTBEAT_RESPONSE_TOOL_INSTRUCTIONS}`;
+export const HEARTBEAT_TRANSCRIPT_PROMPT = "[OpenClaw heartbeat poll]";
 export const DEFAULT_HEARTBEAT_EVERY = "30m";
 export const DEFAULT_HEARTBEAT_ACK_MAX_CHARS = 300;
+
+function stripLeadingHtmlCommentScaffolding(
+  line: string,
+  state: { inHtmlComment: boolean },
+): string {
+  let remaining = line;
+  while (state.inHtmlComment || remaining.trimStart().startsWith("<!--")) {
+    const searchText = state.inHtmlComment ? remaining : remaining.trimStart();
+    const commentEnd = searchText.indexOf("-->");
+    if (commentEnd === -1) {
+      state.inHtmlComment = true;
+      return "";
+    }
+
+    state.inHtmlComment = false;
+    if (searchText === remaining) {
+      remaining = remaining.slice(commentEnd + 3);
+    } else {
+      const leadingWidth = remaining.length - searchText.length;
+      remaining = remaining.slice(0, leadingWidth) + searchText.slice(commentEnd + 3);
+    }
+  }
+  return remaining;
+}
+
+function stripHeartbeatHtmlComments(content: string): string[] {
+  const state = { inHtmlComment: false };
+  return content.split("\n").map((line) => stripLeadingHtmlCommentScaffolding(line, state));
+}
 
 /**
  * Check if HEARTBEAT.md content is "effectively empty" - meaning it has no actionable tasks.
  * This allows skipping heartbeat API calls when no tasks are configured.
  *
  * A file is considered effectively empty if it contains only:
- * - Whitespace
- * - Comment lines (lines starting with #)
- * - Empty lines
+ * - Whitespace / empty lines
+ * - Markdown/HTML comments
+ * - Markdown ATX headers (`#`, `##`, ...)
+ * - Markdown fence markers such as ``` or ```markdown
+ * - Empty list item stubs (`- `, `- [ ]`, `* `, `+ `)
  *
  * Note: A missing file returns false (not effectively empty) so the LLM can still
  * decide what to do. This function is only for when the file exists but has no content.
@@ -35,11 +82,15 @@ export function isHeartbeatContentEffectivelyEmpty(content: string | undefined |
     return false;
   }
 
-  const lines = content.split("\n");
+  const lines = stripHeartbeatHtmlComments(content);
   for (const line of lines) {
     const trimmed = line.trim();
     // Skip empty lines
     if (!trimmed) {
+      continue;
+    }
+    // Skip single-line HTML comments used by the bundled runtime template.
+    if (/^<!--.*-->$/.test(trimmed)) {
       continue;
     }
     // Skip markdown header lines (# followed by space or EOL, ## etc)
@@ -52,6 +103,11 @@ export function isHeartbeatContentEffectivelyEmpty(content: string | undefined |
     if (/^[-*+]\s*(\[[\sXx]?\]\s*)?$/.test(trimmed)) {
       continue;
     }
+    // Ignore markdown fence markers that were added for doc rendering but do
+    // not carry task semantics in the workspace template body.
+    if (/^```[A-Za-z0-9_-]*$/.test(trimmed)) {
+      continue;
+    }
     // Found a non-empty, non-comment line - there's actionable content
     return false;
   }
@@ -59,12 +115,32 @@ export function isHeartbeatContentEffectivelyEmpty(content: string | undefined |
   return true;
 }
 
+/** Resolves configured heartbeat prompt text with the built-in default fallback. */
 export function resolveHeartbeatPrompt(raw?: string): string {
-  const trimmed = typeof raw === "string" ? raw.trim() : "";
+  const trimmed = normalizeOptionalString(raw) ?? "";
   return trimmed || HEARTBEAT_PROMPT;
 }
 
-export type StripHeartbeatMode = "heartbeat" | "message";
+function appendHeartbeatResponseToolInstructions(prompt: string): string {
+  const trimmed = normalizeOptionalString(prompt) ?? "";
+  if (!trimmed) {
+    return HEARTBEAT_RESPONSE_TOOL_PROMPT;
+  }
+  if (trimmed.includes(HEARTBEAT_RESPONSE_TOOL_INSTRUCTIONS)) {
+    return trimmed;
+  }
+  return `${trimmed}\n\n${HEARTBEAT_RESPONSE_TOOL_INSTRUCTIONS}`;
+}
+
+/** Resolves heartbeat prompt text and guarantees heartbeat_respond tool instructions are present. */
+export function resolveHeartbeatPromptForResponseTool(raw?: string): string {
+  const trimmed = normalizeOptionalString(raw) ?? "";
+  return trimmed
+    ? appendHeartbeatResponseToolInstructions(trimmed)
+    : HEARTBEAT_RESPONSE_TOOL_PROMPT;
+}
+
+type StripHeartbeatMode = "heartbeat" | "message";
 
 function stripTokenAtEdges(raw: string): { text: string; didStrip: boolean } {
   let text = raw.trim();
@@ -114,6 +190,7 @@ function stripTokenAtEdges(raw: string): { text: string; didStrip: boolean } {
   return { text: collapsed, didStrip };
 }
 
+/** Strips HEARTBEAT_OK acknowledgements and decides whether visible notification is needed. */
 export function stripHeartbeatToken(
   raw?: string,
   opts: { mode?: StripHeartbeatMode; maxAckChars?: number } = {},
@@ -188,14 +265,22 @@ export function stripHeartbeatToken(
  */
 export function parseHeartbeatTasks(content: string): HeartbeatTask[] {
   const tasks: HeartbeatTask[] = [];
+<<<<<<< HEAD
   const lines = content.split("\n");
+=======
+  const lines = stripHeartbeatHtmlComments(content);
+>>>>>>> upstream/main
   let inTasksBlock = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmed = line.trim();
 
+<<<<<<< HEAD
     // Detect tasks block start
+=======
+    // Detect tasks block start.
+>>>>>>> upstream/main
     if (trimmed === "tasks:") {
       inTasksBlock = true;
       continue;
@@ -205,8 +290,12 @@ export function parseHeartbeatTasks(content: string): HeartbeatTask[] {
       continue;
     }
 
+<<<<<<< HEAD
     // End of tasks block (either empty line or new top-level content)
     // Don't exit for task fields (interval:, prompt:, - name:)
+=======
+    // End of tasks block is any new top-level content that is not a task field.
+>>>>>>> upstream/main
     const isTaskField =
       trimmed.startsWith("interval:") ||
       trimmed.startsWith("prompt:") ||
@@ -222,7 +311,11 @@ export function parseHeartbeatTasks(content: string): HeartbeatTask[] {
       continue;
     }
 
+<<<<<<< HEAD
     // Parse task entry
+=======
+    // Parse a task entry and scan following indented fields.
+>>>>>>> upstream/main
     if (trimmed.startsWith("- name:")) {
       const name = trimmed
         .replace("- name:", "")
@@ -242,12 +335,26 @@ export function parseHeartbeatTasks(content: string): HeartbeatTask[] {
         }
 
         // Check for task fields BEFORE checking for end of block
+<<<<<<< HEAD
         if (nextTrimmed.startsWith("interval:")) {
+=======
+        if (
+          nextTrimmed.startsWith("interval:") &&
+          (nextLine.startsWith(" ") || nextLine.startsWith("\t"))
+        ) {
+>>>>>>> upstream/main
           interval = nextTrimmed
             .replace("interval:", "")
             .trim()
             .replace(/^["']|["']$/g, "");
+<<<<<<< HEAD
         } else if (nextTrimmed.startsWith("prompt:")) {
+=======
+        } else if (
+          nextTrimmed.startsWith("prompt:") &&
+          (nextLine.startsWith(" ") || nextLine.startsWith("\t"))
+        ) {
+>>>>>>> upstream/main
           prompt = nextTrimmed
             .replace("prompt:", "")
             .trim()

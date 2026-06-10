@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import path from "node:path";
 import {
   definePluginEntry,
@@ -14,12 +15,19 @@ import { createDiffsHttpHandler } from "./src/http.js";
 import { DIFFS_AGENT_GUIDANCE } from "./src/prompt-guidance.js";
 import { DiffArtifactStore } from "./src/store.js";
 import { createDiffsTool } from "./src/tool.js";
+=======
+// Diffs plugin entrypoint registers its OpenClaw integration.
+import { definePluginEntry } from "./api.js";
+import { diffsPluginConfigSchema } from "./src/config.js";
+import { registerDiffsPlugin } from "./src/plugin.js";
+>>>>>>> upstream/main
 
 export default definePluginEntry({
   id: "diffs",
   name: "Diffs",
   description: "Read-only diff viewer and PNG/PDF renderer for agents.",
   configSchema: diffsPluginConfigSchema,
+<<<<<<< HEAD
   register(api: OpenClawPluginApi) {
     const defaults = resolveDiffsPluginDefaults(api.pluginConfig);
     const security = resolveDiffsPluginSecurity(api.pluginConfig);
@@ -51,4 +59,7 @@ export default definePluginEntry({
       prependSystemContext: DIFFS_AGENT_GUIDANCE,
     }));
   },
+=======
+  register: registerDiffsPlugin,
+>>>>>>> upstream/main
 });

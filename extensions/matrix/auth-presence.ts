@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Matrix plugin module implements auth presence behavior.
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import { resolveStateDir } from "openclaw/plugin-sdk/state-paths";
 import {
   resolveMatrixCredentialsDir,
@@ -43,10 +51,14 @@ export function hasAnyMatrixAuth(
   params: MatrixAuthPresenceParams,
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
+<<<<<<< HEAD
   const cfg =
     params && typeof params === "object" && "cfg" in params
       ? params.cfg
       : (params as OpenClawConfig);
+=======
+  const cfg = params && typeof params === "object" && "cfg" in params ? params.cfg : params;
+>>>>>>> upstream/main
   const resolvedEnv =
     params && typeof params === "object" && "cfg" in params ? (params.env ?? env) : env;
   return listMatrixCredentialPaths(cfg, resolvedEnv).some((filePath) => {

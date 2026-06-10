@@ -1,18 +1,35 @@
+<<<<<<< HEAD
 import { Command } from "commander";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import {
   loadConfig,
+=======
+// Plugins CLI update tests cover plugin update command behavior and output.
+import { Command } from "commander";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { OpenClawConfig } from "../config/config.js";
+import {
+  loadConfig,
+  refreshPluginRegistry,
+>>>>>>> upstream/main
   registerPluginsCli,
   resetPluginsCliTestState,
   runPluginsCommand,
   runtimeErrors,
   runtimeLogs,
+  setInstalledPluginIndexInstallRecords,
   updateNpmInstalledHookPacks,
   updateNpmInstalledPlugins,
   writeConfigFile,
+  writePersistedInstalledPluginIndexInstallRecords,
 } from "./plugins-cli-test-helpers.js";
 
+<<<<<<< HEAD
+=======
+const ORIGINAL_OPENCLAW_NIX_MODE = process.env.OPENCLAW_NIX_MODE;
+
+>>>>>>> upstream/main
 function createTrackedPluginConfig(params: {
   pluginId: string;
   spec: string;
@@ -32,12 +49,44 @@ function createTrackedPluginConfig(params: {
   } as OpenClawConfig;
 }
 
+<<<<<<< HEAD
+=======
+function expectRestartNoticeLogged() {
+  expect(
+    runtimeLogs.some((message) =>
+      message.includes("Restart the gateway to load plugins and hooks."),
+    ),
+  ).toBe(true);
+}
+
+function expectSingleCallParams(mockFn: ReturnType<typeof vi.fn>) {
+  expect(mockFn).toHaveBeenCalledTimes(1);
+  const params = mockFn.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
+  if (params === undefined) {
+    throw new Error("expected call params");
+  }
+  return params;
+}
+
+>>>>>>> upstream/main
 describe("plugins cli update", () => {
   beforeEach(() => {
     resetPluginsCliTestState();
   });
 
+<<<<<<< HEAD
   it("shows the dangerous unsafe install override in update help", () => {
+=======
+  afterEach(() => {
+    if (ORIGINAL_OPENCLAW_NIX_MODE === undefined) {
+      delete process.env.OPENCLAW_NIX_MODE;
+    } else {
+      process.env.OPENCLAW_NIX_MODE = ORIGINAL_OPENCLAW_NIX_MODE;
+    }
+  });
+
+  it("shows the deprecated unsafe install flag in update help", () => {
+>>>>>>> upstream/main
     const program = new Command();
     registerPluginsCli(program);
 
@@ -46,8 +95,34 @@ describe("plugins cli update", () => {
     const helpText = updateCommand?.helpInformation() ?? "";
 
     expect(helpText).toContain("--dangerously-force-unsafe-install");
+<<<<<<< HEAD
     expect(helpText).toContain("Bypass built-in dangerous-code update");
     expect(helpText).toContain("blocking for plugins");
+=======
+    expect(helpText).toContain("Deprecated no-op");
+    expect(helpText).toContain("install policy and");
+    expect(helpText).toContain("plugin hooks may still block");
+  });
+
+  it("refuses plugin updates in Nix mode before package-manager work", async () => {
+    const previous = process.env.OPENCLAW_NIX_MODE;
+    process.env.OPENCLAW_NIX_MODE = "1";
+    try {
+      await expect(runPluginsCommand(["plugins", "update", "--all"])).rejects.toThrow(
+        "OPENCLAW_NIX_MODE=1",
+      );
+    } finally {
+      if (previous === undefined) {
+        delete process.env.OPENCLAW_NIX_MODE;
+      } else {
+        process.env.OPENCLAW_NIX_MODE = previous;
+      }
+    }
+
+    expect(updateNpmInstalledPlugins).not.toHaveBeenCalled();
+    expect(updateNpmInstalledHookPacks).not.toHaveBeenCalled();
+    expect(writeConfigFile).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 
   it("updates tracked hook packs through plugins update", async () => {
@@ -99,16 +174,12 @@ describe("plugins cli update", () => {
 
     await runPluginsCommand(["plugins", "update", "demo-hooks"]);
 
-    expect(updateNpmInstalledHookPacks).toHaveBeenCalledWith(
-      expect.objectContaining({
-        config: cfg,
-        hookIds: ["demo-hooks"],
-      }),
-    );
+    const hookUpdateParams = expectSingleCallParams(updateNpmInstalledHookPacks);
+    expect(hookUpdateParams.config).toBe(cfg);
+    expect(hookUpdateParams.hookIds).toEqual(["demo-hooks"]);
     expect(writeConfigFile).toHaveBeenCalledWith(nextConfig);
-    expect(
-      runtimeLogs.some((line) => line.includes("Restart the gateway to load plugins and hooks.")),
-    ).toBe(true);
+    expect(refreshPluginRegistry).not.toHaveBeenCalled();
+    expectRestartNoticeLogged();
   });
 
   it("exits when update is called without id and without --all", async () => {
@@ -138,61 +209,56 @@ describe("plugins cli update", () => {
     expect(runtimeLogs.at(-1)).toBe("No tracked plugins or hook packs to update.");
   });
 
-  it("maps an explicit unscoped npm dist-tag update to the tracked plugin id", async () => {
-    const config = {
-      plugins: {
-        installs: {
-          "openclaw-codex-app-server": {
-            source: "npm",
-            spec: "openclaw-codex-app-server",
-            installPath: "/tmp/openclaw-codex-app-server",
-            resolvedName: "openclaw-codex-app-server",
-          },
-        },
-      },
-    } as OpenClawConfig;
+  it("passes dangerous force unsafe install to plugin updates", async () => {
+    const config = createTrackedPluginConfig({
+      pluginId: "openclaw-codex-app-server",
+      spec: "openclaw-codex-app-server@beta",
+    });
     loadConfig.mockReturnValue(config);
+    setInstalledPluginIndexInstallRecords(config.plugins?.installs ?? {});
     updateNpmInstalledPlugins.mockResolvedValue({
       config,
       changed: false,
       outcomes: [],
     });
 
-    await runPluginsCommand(["plugins", "update", "openclaw-codex-app-server@beta"]);
+    await runPluginsCommand([
+      "plugins",
+      "update",
+      "openclaw-codex-app-server",
+      "--dangerously-force-unsafe-install",
+    ]);
 
-    expect(updateNpmInstalledPlugins).toHaveBeenCalledWith(
-      expect.objectContaining({
-        config,
-        pluginIds: ["openclaw-codex-app-server"],
-        specOverrides: {
-          "openclaw-codex-app-server": "openclaw-codex-app-server@beta",
-        },
-      }),
-    );
+    const updateParams = expectSingleCallParams(updateNpmInstalledPlugins);
+    expect(updateParams.config).toEqual(config);
+    expect(updateParams.pluginIds).toEqual(["openclaw-codex-app-server"]);
+    expect(updateParams.dangerouslyForceUnsafeInstall).toBe(true);
+    expect(
+      runtimeLogs.some((message) =>
+        message.includes(
+          "--dangerously-force-unsafe-install is deprecated and no longer affects plugin updates",
+        ),
+      ),
+    ).toBe(true);
   });
 
-  it("maps an explicit scoped npm dist-tag update to the tracked plugin id", async () => {
-    const config = {
-      plugins: {
-        installs: {
-          "voice-call": {
-            source: "npm",
-            spec: "@openclaw/voice-call",
-            installPath: "/tmp/voice-call",
-            resolvedName: "@openclaw/voice-call",
-          },
-        },
-      },
-    } as OpenClawConfig;
+  it("does not sync official catalog specs for manual plugin updates", async () => {
+    const config = createTrackedPluginConfig({
+      pluginId: "codex",
+      spec: "@openclaw/codex@2026.5.28",
+      resolvedName: "@openclaw/codex",
+    });
     loadConfig.mockReturnValue(config);
+    setInstalledPluginIndexInstallRecords(config.plugins?.installs ?? {});
     updateNpmInstalledPlugins.mockResolvedValue({
       config,
       changed: false,
       outcomes: [],
     });
 
-    await runPluginsCommand(["plugins", "update", "@openclaw/voice-call@beta"]);
+    await runPluginsCommand(["plugins", "update", "codex"]);
 
+<<<<<<< HEAD
     expect(updateNpmInstalledPlugins).toHaveBeenCalledWith(
       expect.objectContaining({
         config,
@@ -298,6 +364,11 @@ describe("plugins cli update", () => {
         specOverrides: expect.anything(),
       }),
     );
+=======
+    const updateParams = expectSingleCallParams(updateNpmInstalledPlugins);
+    expect(updateParams.pluginIds).toEqual(["codex"]);
+    expect(updateParams.syncOfficialPluginInstalls).toBeUndefined();
+>>>>>>> upstream/main
   });
 
   it("writes updated config when updater reports changes", async () => {
@@ -322,6 +393,7 @@ describe("plugins cli update", () => {
       },
     } as OpenClawConfig;
     loadConfig.mockReturnValue(cfg);
+    setInstalledPluginIndexInstallRecords(cfg.plugins?.installs ?? {});
     updateNpmInstalledPlugins.mockResolvedValue({
       outcomes: [{ status: "ok", message: "Updated alpha -> 1.1.0" }],
       changed: true,
@@ -335,16 +407,118 @@ describe("plugins cli update", () => {
 
     await runPluginsCommand(["plugins", "update", "alpha"]);
 
-    expect(updateNpmInstalledPlugins).toHaveBeenCalledWith(
-      expect.objectContaining({
-        config: cfg,
-        pluginIds: ["alpha"],
-        dryRun: false,
-      }),
+    const updateParams = expectSingleCallParams(updateNpmInstalledPlugins);
+    expect(updateParams.config).toEqual(cfg);
+    expect(updateParams.pluginIds).toEqual(["alpha"]);
+    expect(updateParams.dryRun).toBe(false);
+    expect(writePersistedInstalledPluginIndexInstallRecords).toHaveBeenCalledWith(
+      nextConfig.plugins?.installs,
     );
-    expect(writeConfigFile).toHaveBeenCalledWith(nextConfig);
-    expect(
-      runtimeLogs.some((line) => line.includes("Restart the gateway to load plugins and hooks.")),
-    ).toBe(true);
+    expect(writeConfigFile).toHaveBeenCalledWith({});
+    expect(refreshPluginRegistry).toHaveBeenCalledWith({
+      config: {},
+      installRecords: nextConfig.plugins?.installs,
+      reason: "source-changed",
+    });
+    expectRestartNoticeLogged();
+  });
+
+  it("exits non-zero when a plugin update reports an error after persisting successes", async () => {
+    const cfg = {
+      plugins: {
+        installs: {
+          alpha: {
+            source: "npm",
+            spec: "@openclaw/alpha@1.0.0",
+          },
+          beta: {
+            source: "npm",
+            spec: "@openclaw/beta@1.0.0",
+          },
+        },
+      },
+    } as OpenClawConfig;
+    const nextConfig = {
+      plugins: {
+        installs: {
+          alpha: {
+            source: "npm",
+            spec: "@openclaw/alpha@1.1.0",
+          },
+          beta: {
+            source: "npm",
+            spec: "@openclaw/beta@1.0.0",
+          },
+        },
+      },
+    } as OpenClawConfig;
+    loadConfig.mockReturnValue(cfg);
+    setInstalledPluginIndexInstallRecords(cfg.plugins?.installs ?? {});
+    updateNpmInstalledPlugins.mockResolvedValue({
+      outcomes: [
+        { pluginId: "alpha", status: "updated", message: "Updated alpha -> 1.1.0" },
+        { pluginId: "beta", status: "error", message: "Failed to update beta: registry timeout" },
+      ],
+      changed: true,
+      config: nextConfig,
+    });
+    updateNpmInstalledHookPacks.mockResolvedValue({
+      outcomes: [],
+      changed: false,
+      config: nextConfig,
+    });
+
+    await expect(runPluginsCommand(["plugins", "update", "--all"])).rejects.toThrow("__exit__:1");
+
+    expect(writePersistedInstalledPluginIndexInstallRecords).toHaveBeenCalledWith(
+      nextConfig.plugins?.installs,
+    );
+    expect(refreshPluginRegistry).toHaveBeenCalledWith({
+      config: {},
+      installRecords: nextConfig.plugins?.installs,
+      reason: "source-changed",
+    });
+    expect(runtimeLogs).toContain("Failed to update beta: registry timeout");
+  });
+
+  it("exits non-zero when a hook pack update reports an error", async () => {
+    const cfg = {
+      hooks: {
+        internal: {
+          installs: {
+            "demo-hooks": {
+              source: "npm",
+              spec: "@acme/demo-hooks@1.0.0",
+              installPath: "/tmp/hooks/demo-hooks",
+              resolvedName: "@acme/demo-hooks",
+            },
+          },
+        },
+      },
+    } as OpenClawConfig;
+    loadConfig.mockReturnValue(cfg);
+    updateNpmInstalledPlugins.mockResolvedValue({
+      config: cfg,
+      changed: false,
+      outcomes: [],
+    });
+    updateNpmInstalledHookPacks.mockResolvedValue({
+      config: cfg,
+      changed: false,
+      outcomes: [
+        {
+          hookId: "demo-hooks",
+          status: "error",
+          message: 'Failed to update hook pack "demo-hooks": registry timeout',
+        },
+      ],
+    });
+
+    await expect(runPluginsCommand(["plugins", "update", "demo-hooks"])).rejects.toThrow(
+      "__exit__:1",
+    );
+
+    expect(writeConfigFile).not.toHaveBeenCalled();
+    expect(runtimeLogs).toContain('Failed to update hook pack "demo-hooks": registry timeout');
   });
 });

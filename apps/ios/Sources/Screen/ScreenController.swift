@@ -1,5 +1,5 @@
-import OpenClawKit
 import Observation
+import OpenClawKit
 import UIKit
 import WebKit
 
@@ -11,6 +11,7 @@ final class ScreenController {
 
     var urlString: String = ""
     var errorText: String?
+    var isCanvasPresented: Bool = false
 
     /// Callback invoked when an openclaw:// deep link is tapped in the canvas
     var onDeepLink: ((URL) -> Void)?
@@ -27,7 +28,11 @@ final class ScreenController {
         self.reload()
     }
 
+<<<<<<< HEAD
     func navigate(to urlString: String, trustA2UIActions: Bool = false) {
+=======
+    func navigate(to urlString: String, trustA2UIActions _: Bool = false) {
+>>>>>>> upstream/main
         let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             self.urlString = ""
@@ -77,6 +82,39 @@ final class ScreenController {
         self.urlString = ""
         self.trustedRemoteA2UIURL = nil
         self.reload()
+    }
+
+    func presentDefaultCanvas() {
+        self.isCanvasPresented = true
+        self.showDefaultCanvas()
+    }
+
+    func present(urlString: String) {
+        self.isCanvasPresented = true
+        self.navigate(to: urlString)
+    }
+
+    func hideCanvas() {
+        self.isCanvasPresented = false
+        self.showDefaultCanvas()
+    }
+
+    func showLocalA2UI() {
+        self.isCanvasPresented = true
+        guard let url = Self.localA2UIURL else {
+            self.showDefaultCanvas()
+            return
+        }
+        self.urlString = url.absoluteString
+        self.reload()
+    }
+
+    func isShowingLocalA2UI() -> Bool {
+        guard let url = URL(string: self.urlString),
+              url.isFileURL,
+              let expected = Self.localA2UIURL
+        else { return false }
+        return url.standardizedFileURL == expected.standardizedFileURL
     }
 
     func setDebugStatusEnabled(_ enabled: Bool) {
@@ -194,7 +232,7 @@ final class ScreenController {
                 NSLocalizedDescriptionKey: "web view unavailable",
             ])
         }
-        let image: UIImage = try await withCheckedThrowingContinuation { cont in
+        return try await withCheckedThrowingContinuation { cont in
             webView.takeSnapshot(with: config) { image, error in
                 if let error {
                     cont.resume(throwing: error)
@@ -209,7 +247,6 @@ final class ScreenController {
                 cont.resume(returning: image)
             }
         }
-        return image
     }
 
     func attachWebView(_ webView: WKWebView) {
@@ -240,6 +277,11 @@ final class ScreenController {
         ext: "html",
         subdirectory: "CanvasScaffold")
 
+    private static let localA2UIURL: URL? = ScreenController.bundledResourceURL(
+        name: "index",
+        ext: "html",
+        subdirectory: "CanvasA2UI")
+
     func isTrustedCanvasUIURL(_ url: URL) -> Bool {
         if url.isFileURL {
             let std = url.standardizedFileURL
@@ -248,10 +290,21 @@ final class ScreenController {
             {
                 return true
             }
+<<<<<<< HEAD
             return false
         }
         guard let trusted = self.trustedRemoteA2UIURL else { return false }
         return Self.normalizeTrustedRemoteA2UIURL(from: url) == trusted
+=======
+            if let expected = Self.localA2UIURL,
+               std == expected.standardizedFileURL
+            {
+                return true
+            }
+            return false
+        }
+        return false
+>>>>>>> upstream/main
     }
 
     nonisolated static func parseA2UIActionBody(_ body: Any) -> [String: Any]? {
@@ -281,6 +334,7 @@ final class ScreenController {
         scrollView.isScrollEnabled = allowScroll
         scrollView.bounces = allowScroll
     }
+<<<<<<< HEAD
 
     private static func normalizeTrustedRemoteA2UIURL(from raw: String) -> URL? {
         guard let url = URL(string: raw) else { return nil }
@@ -301,6 +355,8 @@ final class ScreenController {
         components?.fragment = nil
         return components?.url
     }
+=======
+>>>>>>> upstream/main
 }
 
 extension Double {

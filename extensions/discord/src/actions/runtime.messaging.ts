@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import { resolveDefaultDiscordAccountId } from "../accounts.js";
 import { createDiscordRuntimeAccountContext } from "../client.js";
@@ -91,11 +92,25 @@ function parseDiscordMessageLink(link: string) {
     messageId: match[3],
   };
 }
+=======
+// Discord plugin module implements runtime.messaging behavior.
+import type { AgentToolResult } from "openclaw/plugin-sdk/agent-core";
+import type { ActionGate, DiscordActionConfig, OpenClawConfig } from "../runtime-api.js";
+import { handleDiscordMessageManagementAction } from "./runtime.messaging.messages.js";
+import { handleDiscordReactionMessagingAction } from "./runtime.messaging.reactions.js";
+import { handleDiscordMessageSendAction } from "./runtime.messaging.send.js";
+import {
+  createDiscordMessagingActionContext,
+  type DiscordMessagingActionOptions,
+} from "./runtime.messaging.shared.js";
+export { discordMessagingActionRuntime } from "./runtime.messaging.runtime.js";
+>>>>>>> upstream/main
 
 export async function handleDiscordMessagingAction(
   action: string,
   params: Record<string, unknown>,
   isActionEnabled: ActionGate<DiscordActionConfig>,
+<<<<<<< HEAD
   options?: {
     mediaLocalRoots?: readonly string[];
     mediaReadFile?: (filePath: string) => Promise<Buffer>;
@@ -622,5 +637,27 @@ export async function handleDiscordMessagingAction(
     }
     default:
       throw new Error(`Unknown action: ${action}`);
+=======
+  cfg: OpenClawConfig,
+  options?: DiscordMessagingActionOptions,
+): Promise<AgentToolResult<unknown>> {
+  if (!cfg) {
+    throw new Error("Discord messaging actions require a resolved runtime config.");
+>>>>>>> upstream/main
   }
+  const ctx = createDiscordMessagingActionContext({
+    action,
+    input: params,
+    isActionEnabled,
+    cfg,
+    options,
+  });
+  return (
+    (await handleDiscordReactionMessagingAction(ctx)) ??
+    (await handleDiscordMessageSendAction(ctx)) ??
+    (await handleDiscordMessageManagementAction(ctx)) ??
+    (() => {
+      throw new Error(`Unknown action: ${action}`);
+    })()
+  );
 }

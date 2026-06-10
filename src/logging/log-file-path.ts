@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Log file path helpers resolve log output paths for local runtime logs.
+>>>>>>> upstream/main
 import path from "node:path";
 import type { OpenClawConfig } from "../config/types.js";
 import {
@@ -5,6 +9,10 @@ import {
   resolvePreferredOpenClawTmpDir,
 } from "../infra/tmp-openclaw-dir.js";
 
+<<<<<<< HEAD
+=======
+// Default logger path uses the preferred tmp directory when Node fs is available.
+>>>>>>> upstream/main
 const LOG_PREFIX = "openclaw";
 const LOG_SUFFIX = ".log";
 
@@ -31,11 +39,19 @@ function formatLocalDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+<<<<<<< HEAD
 export function resolveDefaultRollingLogFile(date = new Date()): string {
+=======
+function resolveDefaultRollingLogFile(date = new Date()): string {
+>>>>>>> upstream/main
   const logDir = canUseNodeFs() ? resolvePreferredOpenClawTmpDir() : POSIX_OPENCLAW_TMP_DIR;
   return path.join(logDir, `${LOG_PREFIX}-${formatLocalDate(date)}${LOG_SUFFIX}`);
 }
 
+<<<<<<< HEAD
+=======
+/** Resolves the configured log file or today's rolling default log path. */
+>>>>>>> upstream/main
 export function resolveConfiguredLogFilePath(config?: OpenClawConfig | null): string {
   return config?.logging?.file ?? resolveDefaultRollingLogFile();
 }

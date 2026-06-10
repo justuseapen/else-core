@@ -1,3 +1,6 @@
+/**
+ * Tests group access policy helpers and SDK-visible access decisions.
+ */
 import { describe, expect, it } from "vitest";
 import {
   evaluateGroupRouteAccessForPolicy,
@@ -48,7 +51,11 @@ describe("evaluateSenderGroupAccessForPolicy", () => {
   const cases: Array<{
     name: string;
     input: Parameters<typeof evaluateSenderGroupAccessForPolicy>[0];
+<<<<<<< HEAD
     expected: Partial<ReturnType<typeof evaluateSenderGroupAccessForPolicy>>;
+=======
+    expected: ReturnType<typeof evaluateSenderGroupAccessForPolicy>;
+>>>>>>> upstream/main
   }> = [
     {
       name: "blocks disabled policy",
@@ -58,7 +65,16 @@ describe("evaluateSenderGroupAccessForPolicy", () => {
         senderId: "123",
         isSenderAllowed: () => true,
       },
+<<<<<<< HEAD
       expected: { allowed: false, reason: "disabled", groupPolicy: "disabled" },
+=======
+      expected: {
+        allowed: false,
+        reason: "disabled",
+        groupPolicy: "disabled",
+        providerMissingFallbackApplied: false,
+      },
+>>>>>>> upstream/main
     },
     {
       name: "blocks allowlist with empty list",
@@ -72,12 +88,20 @@ describe("evaluateSenderGroupAccessForPolicy", () => {
         allowed: false,
         reason: "empty_allowlist",
         groupPolicy: "allowlist",
+<<<<<<< HEAD
+=======
+        providerMissingFallbackApplied: false,
+>>>>>>> upstream/main
       },
     },
   ];
 
   it.each(cases)("$name", ({ input, expected }) => {
+<<<<<<< HEAD
     expect(evaluateSenderGroupAccessForPolicy(input)).toMatchObject(expected);
+=======
+    expect(evaluateSenderGroupAccessForPolicy(input)).toEqual(expected);
+>>>>>>> upstream/main
   });
 });
 
@@ -232,8 +256,12 @@ describe("evaluateSenderGroupAccess", () => {
   const cases: Array<{
     name: string;
     input: Parameters<typeof evaluateSenderGroupAccess>[0];
+<<<<<<< HEAD
     expected: Partial<ReturnType<typeof evaluateSenderGroupAccess>>;
     matcher: "equal" | "match";
+=======
+    expected: ReturnType<typeof evaluateSenderGroupAccess>;
+>>>>>>> upstream/main
   }> = [
     {
       name: "defaults missing provider config to allowlist",
@@ -251,7 +279,10 @@ describe("evaluateSenderGroupAccess", () => {
         providerMissingFallbackApplied: true,
         reason: "allowed",
       },
+<<<<<<< HEAD
       matcher: "equal",
+=======
+>>>>>>> upstream/main
     },
     {
       name: "blocks disabled policy",
@@ -263,8 +294,17 @@ describe("evaluateSenderGroupAccess", () => {
         senderId: "123",
         isSenderAllowed: () => true,
       },
+<<<<<<< HEAD
       expected: { allowed: false, reason: "disabled", groupPolicy: "disabled" },
       matcher: "match",
+=======
+      expected: {
+        allowed: false,
+        reason: "disabled",
+        groupPolicy: "disabled",
+        providerMissingFallbackApplied: false,
+      },
+>>>>>>> upstream/main
     },
     {
       name: "blocks allowlist with empty list",
@@ -280,8 +320,13 @@ describe("evaluateSenderGroupAccess", () => {
         allowed: false,
         reason: "empty_allowlist",
         groupPolicy: "allowlist",
+<<<<<<< HEAD
       },
       matcher: "match",
+=======
+        providerMissingFallbackApplied: false,
+      },
+>>>>>>> upstream/main
     },
     {
       name: "blocks sender not allowlisted",
@@ -297,6 +342,7 @@ describe("evaluateSenderGroupAccess", () => {
         allowed: false,
         reason: "sender_not_allowlisted",
         groupPolicy: "allowlist",
+<<<<<<< HEAD
       },
       matcher: "match",
     },
@@ -309,5 +355,14 @@ describe("evaluateSenderGroupAccess", () => {
       return;
     }
     expect(decision).toMatchObject(expected);
+=======
+        providerMissingFallbackApplied: false,
+      },
+    },
+  ];
+
+  it.each(cases)("$name", ({ input, expected }) => {
+    expect(evaluateSenderGroupAccess(input)).toEqual(expected);
+>>>>>>> upstream/main
   });
 });

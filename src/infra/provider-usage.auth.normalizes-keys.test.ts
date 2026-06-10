@@ -1,6 +1,6 @@
+// Covers provider usage auth profile key normalization.
 import nodeFs from "node:fs";
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { NON_ENV_SECRETREF_MARKER } from "../agents/model-auth-markers.js";
@@ -10,7 +10,11 @@ import { createSuiteTempRootTracker } from "../test-helpers/temp-dir.js";
 
 vi.mock("../agents/auth-profiles.js", () => {
   const normalizeProvider = (provider?: string | null): string =>
+<<<<<<< HEAD
     String(provider ?? "")
+=======
+    (provider ?? "")
+>>>>>>> upstream/main
       .trim()
       .toLowerCase()
       .replace(/^z-ai$/, "zai");
@@ -122,6 +126,11 @@ vi.mock("../agents/auth-profiles.js", () => {
   return {
     clearRuntimeAuthProfileStoreSnapshots: () => {},
     ensureAuthProfileStore: (agentDir?: string) => readStore(agentDir),
+<<<<<<< HEAD
+=======
+    hasAnyAuthProfileStoreSource: (agentDir?: string) =>
+      Boolean(agentDir && nodeFs.existsSync(path.join(agentDir, "auth-profiles.json"))),
+>>>>>>> upstream/main
     dedupeProfileIds,
     listProfilesForProvider,
     resolveApiKeyForProfile,
@@ -135,7 +144,10 @@ const providerRuntimeMocks = vi.hoisted(() => ({
     buildProviderAuthDoctorHintWithPlugin: vi.fn(() => undefined),
     buildProviderMissingAuthMessageWithPlugin: vi.fn(() => undefined),
     buildProviderUnknownModelHintWithPlugin: vi.fn(() => undefined),
+<<<<<<< HEAD
     clearProviderRuntimeHookCache: vi.fn(() => {}),
+=======
+>>>>>>> upstream/main
     createProviderEmbeddingProvider: vi.fn(() => undefined),
     formatProviderAuthProfileApiKeyWithPlugin: vi.fn(() => undefined),
     normalizeProviderResolvedModelWithPlugin: vi.fn(() => undefined),
@@ -143,9 +155,13 @@ const providerRuntimeMocks = vi.hoisted(() => ({
     prepareProviderExtraParams: vi.fn(() => undefined),
     prepareProviderRuntimeAuth: vi.fn(async () => undefined),
     refreshProviderOAuthCredentialWithPlugin: vi.fn(async () => undefined),
+<<<<<<< HEAD
     resetProviderRuntimeHookCacheForTest: vi.fn(() => {}),
     resolveProviderBinaryThinking: vi.fn(() => undefined),
     resolveProviderBuiltInModelSuppression: vi.fn(() => undefined),
+=======
+    resolveProviderBinaryThinking: vi.fn(() => undefined),
+>>>>>>> upstream/main
     resolveProviderCacheTtlEligibility: vi.fn(() => undefined),
     resolveProviderCapabilitiesWithPlugin: vi.fn(() => undefined),
     resolveProviderDefaultThinkingLevel: vi.fn(() => undefined),
@@ -153,6 +169,82 @@ const providerRuntimeMocks = vi.hoisted(() => ({
     resolveProviderRuntimePlugin: vi.fn(() => undefined),
     resolveProviderStreamFn: vi.fn(() => undefined),
     resolveProviderSyntheticAuthWithPlugin: vi.fn(() => undefined),
+<<<<<<< HEAD
+=======
+    resolveProviderUsageAuthWithPlugin: vi.fn(async (params) => {
+      const resolveToken = (options?: {
+        providerIds?: string[];
+        envDirect?: Array<string | undefined>;
+      }) => params.context.resolveApiKeyFromConfigAndStore(options);
+      if (params.provider === "zai") {
+        const token = resolveToken({
+          providerIds: ["zai", "z-ai"],
+          envDirect: [params.context.env?.ZAI_API_KEY, params.context.env?.Z_AI_API_KEY],
+        });
+        return token ? { token } : null;
+      }
+
+      if (params.provider === "anthropic") {
+        const oauth = await params.context.resolveOAuthToken();
+        if (oauth) {
+          return oauth;
+        }
+        const token = resolveToken({
+          providerIds: ["anthropic"],
+          envDirect: [params.context.env?.ANTHROPIC_API_KEY],
+        });
+        return token?.startsWith("sk-ant-oat01-") ? { token } : { handled: true };
+      }
+
+      if (params.provider === "minimax") {
+        const token = resolveToken({
+          providerIds: ["minimax"],
+          envDirect: [
+            params.context.env?.MINIMAX_CODE_PLAN_KEY,
+            params.context.env?.MINIMAX_CODING_API_KEY,
+            params.context.env?.MINIMAX_API_KEY,
+          ],
+        });
+        return token ? { token } : null;
+      }
+
+      if (params.provider === "xiaomi") {
+        const token = resolveToken({
+          providerIds: ["xiaomi"],
+          envDirect: [params.context.env?.XIAOMI_API_KEY],
+        });
+        return token ? { token } : null;
+      }
+
+      if (params.provider === "xiaomi-token-plan") {
+        const token = resolveToken({
+          providerIds: ["xiaomi-token-plan"],
+          envDirect: [params.context.env?.XIAOMI_TOKEN_PLAN_API_KEY],
+        });
+        return token ? { token } : null;
+      }
+
+      if (params.provider === "google-gemini-cli") {
+        const resolved = await params.context.resolveOAuthToken({
+          provider: "google-gemini-cli",
+        });
+        if (!resolved?.token) {
+          return null;
+        }
+        try {
+          const parsed = JSON.parse(resolved.token) as { token?: string };
+          const token = parsed.token ?? resolved.token;
+          return resolved.accountId ? { token, accountId: resolved.accountId } : { token };
+        } catch {
+          return resolved.accountId
+            ? { token: resolved.token, accountId: resolved.accountId }
+            : { token: resolved.token };
+        }
+      }
+
+      return null;
+    }),
+>>>>>>> upstream/main
     resolveProviderXHighThinking: vi.fn(() => undefined),
     runProviderDynamicModel: vi.fn(() => undefined),
     wrapProviderStreamFn: vi.fn(() => undefined),
@@ -201,6 +293,10 @@ describe("resolveProviderAuths key normalization", () => {
     MINIMAX_API_KEY: undefined,
     MINIMAX_CODE_PLAN_KEY: undefined,
     MINIMAX_CODING_API_KEY: undefined,
+<<<<<<< HEAD
+=======
+    OPENAI_API_KEY: undefined,
+>>>>>>> upstream/main
     XIAOMI_API_KEY: undefined,
   } satisfies Record<string, string | undefined>;
 
@@ -302,12 +398,6 @@ describe("resolveProviderAuths key normalization", () => {
     );
   }
 
-  async function writeLegacyPiAuth(home: string, raw: string) {
-    const legacyDir = path.join(home, ".pi", "agent");
-    await fs.mkdir(legacyDir, { recursive: true });
-    await fs.writeFile(path.join(legacyDir, "auth.json"), raw, "utf8");
-  }
-
   function createTestModelDefinition(): ModelDefinitionConfig {
     return {
       id: "test-model",
@@ -368,16 +458,18 @@ describe("resolveProviderAuths key normalization", () => {
 
   it("strips embedded CR/LF from env keys", async () => {
     await expectResolvedAuthsFromSuiteHome({
-      providers: ["zai", "minimax", "xiaomi"],
+      providers: ["zai", "minimax", "xiaomi", "xiaomi-token-plan"],
       env: {
         ZAI_API_KEY: "zai-\r\nkey",
         MINIMAX_API_KEY: "minimax-\r\nkey",
         XIAOMI_API_KEY: "xiaomi-\r\nkey",
+        XIAOMI_TOKEN_PLAN_API_KEY: "xiaomi-token-\r\nplan",
       },
       expected: [
         { provider: "zai", token: "zai-key" },
         { provider: "minimax", token: "minimax-key" },
         { provider: "xiaomi", token: "xiaomi-key" },
+        { provider: "xiaomi-token-plan", token: "xiaomi-token-plan" },
       ],
     });
   }, 300_000);
@@ -426,16 +518,22 @@ describe("resolveProviderAuths key normalization", () => {
 
   it("strips embedded CR/LF from stored auth profiles (token + api_key)", async () => {
     await expectResolvedAuthsFromSuiteHome({
-      providers: ["minimax", "xiaomi"],
+      providers: ["minimax", "xiaomi", "xiaomi-token-plan"],
       setup: async (home) => {
         await writeAuthProfiles(home, {
           "minimax:default": { type: "token", provider: "minimax", token: "mini-\r\nmax" },
           "xiaomi:default": { type: "api_key", provider: "xiaomi", key: "xiao-\r\nmi" },
+          "xiaomi-token-plan:default": {
+            type: "api_key",
+            provider: "xiaomi-token-plan",
+            key: "token-\r\nplan",
+          },
         });
       },
       expected: [
         { provider: "minimax", token: "mini-max" },
         { provider: "xiaomi", token: "xiao-mi" },
+        { provider: "xiaomi-token-plan", token: "token-plan" },
       ],
     });
   });
@@ -446,21 +544,6 @@ describe("resolveProviderAuths key normalization", () => {
       auth: [{ provider: "anthropic", token: "token-1", accountId: "acc-1" }],
     });
     expect(auths).toEqual([{ provider: "anthropic", token: "token-1", accountId: "acc-1" }]);
-  });
-
-  it("falls back to legacy .pi auth file for zai keys even after os.homedir() is primed", async () => {
-    // Prime os.homedir() to simulate long-lived workers that may have touched it before HOME changes.
-    os.homedir();
-    await expectResolvedAuthsFromSuiteHome({
-      providers: ["zai"],
-      setup: async (home) => {
-        await writeLegacyPiAuth(
-          home,
-          `${JSON.stringify({ "z-ai": { access: "legacy-zai-key" } }, null, 2)}\n`,
-        );
-      },
-      expected: [{ provider: "zai", token: "legacy-zai-key" }],
-    });
   });
 
   it.each([
@@ -512,11 +595,16 @@ describe("resolveProviderAuths key normalization", () => {
             models: [createTestModelDefinition()],
             apiKey: "cfg-xiaomi-key", // pragma: allowlist secret
           },
+          "xiaomi-token-plan": {
+            baseUrl: "https://token-plan-sgp.xiaomimimo.com/v1",
+            models: [createTestModelDefinition()],
+            apiKey: "cfg-xiaomi-token-plan-key", // pragma: allowlist secret
+          },
         },
       },
     } satisfies OpenClawConfig;
     await expectResolvedAuthsFromSuiteHome({
-      providers: ["zai", "minimax", "xiaomi"],
+      providers: ["zai", "minimax", "xiaomi", "xiaomi-token-plan"],
       setup: async (home) => {
         await writeConfig(home, config);
       },
@@ -525,13 +613,14 @@ describe("resolveProviderAuths key normalization", () => {
         { provider: "zai", token: "cfg-zai-key" },
         { provider: "minimax", token: "cfg-minimax-key" },
         { provider: "xiaomi", token: "cfg-xiaomi-key" },
+        { provider: "xiaomi-token-plan", token: "cfg-xiaomi-token-plan-key" },
       ],
     });
   });
 
   it("returns no auth when providers have no configured credentials", async () => {
     await expectResolvedAuthsFromSuiteHome({
-      providers: ["zai", "minimax", "xiaomi"],
+      providers: ["zai", "minimax", "xiaomi", "xiaomi-token-plan"],
       expected: [],
     });
   });
@@ -548,13 +637,47 @@ describe("resolveProviderAuths key normalization", () => {
     });
   });
 
-  it("ignores invalid legacy z-ai auth files", async () => {
-    await expectResolvedAuthsFromSuiteHome({
-      providers: ["zai"],
-      setup: async (home) => {
-        await writeLegacyPiAuth(home, "{not-json");
+  it("does not use OpenAI api keys for ChatGPT usage auth", async () => {
+    const config = {
+      models: {
+        providers: {
+          openai: {
+            baseUrl: "https://api.openai.com/v1",
+            models: [createTestModelDefinition()],
+            apiKey: "cfg-openai-key", // pragma: allowlist secret
+          },
+        },
       },
+    } satisfies OpenClawConfig;
+    await expectResolvedAuthsFromSuiteHome({
+      providers: ["openai"],
+      env: {
+        OPENAI_API_KEY: "env-openai-key",
+      },
+      setup: async (home) => {
+        await writeConfig(home, config);
+        await writeAuthProfiles(home, {
+          "openai:default": { type: "api_key", provider: "openai", key: "profile-openai-key" },
+        });
+      },
+      config,
       expected: [],
+    });
+  });
+
+  it("uses OpenAI oauth-compatible profiles for ChatGPT usage auth", async () => {
+    await expectResolvedAuthsFromSuiteHome({
+      providers: ["openai"],
+      setup: async (home) => {
+        await writeAuthProfiles(home, {
+          "openai:default": {
+            type: "token",
+            provider: "openai",
+            token: "chatgpt-token",
+          },
+        });
+      },
+      expected: [{ provider: "openai", token: "chatgpt-token" }],
     });
   });
 
@@ -582,7 +705,7 @@ describe("resolveProviderAuths key normalization", () => {
         config,
         env: buildSuiteEnv(home),
       });
-      expect(auths).toEqual([]);
+      expect(auths).toStrictEqual([]);
     });
   });
 
@@ -594,7 +717,7 @@ describe("resolveProviderAuths key normalization", () => {
         config: {},
         env: buildSuiteEnv(home),
       });
-      expect(auths).toEqual([]);
+      expect(auths).toStrictEqual([]);
     });
   });
 
@@ -639,9 +762,29 @@ describe("resolveProviderAuths key normalization", () => {
     });
   });
 
+  it("does not use standard Anthropic API keys for provider usage auth", async () => {
+    await expectResolvedAuthsFromSuiteHome({
+      providers: ["anthropic"],
+      env: {
+        ANTHROPIC_API_KEY: "sk-ant-api03-status-key", // pragma: allowlist secret
+      },
+      expected: [],
+    });
+  });
+
+  it("allows Anthropic setup tokens from API-key sources for provider usage auth", async () => {
+    await expectResolvedAuthsFromSuiteHome({
+      providers: ["anthropic"],
+      env: {
+        ANTHROPIC_API_KEY: `sk-ant-oat01-${"a".repeat(80)}`,
+      },
+      expected: [{ provider: "anthropic", token: `sk-ant-oat01-${"a".repeat(80)}` }],
+    });
+  });
+
   it("ignores marker-backed config keys for provider usage auth resolution", async () => {
     const auths = await resolveMinimaxAuthFromConfiguredKey(NON_ENV_SECRETREF_MARKER);
-    expect(auths).toEqual([]);
+    expect(auths).toStrictEqual([]);
   });
 
   it("keeps all-caps plaintext config keys eligible for provider usage auth resolution", async () => {

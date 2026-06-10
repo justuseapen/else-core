@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 import {
   resolveDefaultGroupPolicy,
   resolveOpenProviderRuntimeGroupPolicy,
   warnMissingProviderGroupPolicyFallbackOnce,
 } from "openclaw/plugin-sdk/runtime-group-policy";
+=======
+// Whatsapp plugin module implements pairing security harness behavior.
+>>>>>>> upstream/main
 import { vi, type Mock } from "vitest";
 
 export type AsyncMock<TArgs extends unknown[] = unknown[], TResult = unknown> = {
@@ -23,12 +27,22 @@ export function resetPairingSecurityMocks(config: Record<string, unknown>) {
   upsertPairingRequestMock.mockReset().mockResolvedValue({ code: "PAIRCODE", created: true });
 }
 
+<<<<<<< HEAD
 vi.mock("openclaw/plugin-sdk/config-runtime", () => {
   return {
     loadConfig: (...args: unknown[]) => loadConfigMock(...args),
     resolveDefaultGroupPolicy,
     resolveOpenProviderRuntimeGroupPolicy,
     warnMissingProviderGroupPolicyFallbackOnce,
+=======
+vi.mock("openclaw/plugin-sdk/runtime-config-snapshot", async () => {
+  const actual = await vi.importActual<
+    typeof import("openclaw/plugin-sdk/runtime-config-snapshot")
+  >("openclaw/plugin-sdk/runtime-config-snapshot");
+  return {
+    ...actual,
+    getRuntimeConfig: (...args: unknown[]) => loadConfigMock(...args),
+>>>>>>> upstream/main
   };
 });
 

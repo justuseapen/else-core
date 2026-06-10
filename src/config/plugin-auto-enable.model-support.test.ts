@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Verifies model-support based plugin auto-enable decisions.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import type { PluginManifestRegistry } from "../plugins/manifest-registry.js";
 import { applyPluginAutoEnable } from "./plugin-auto-enable.js";
@@ -15,6 +19,10 @@ function makeRegistry(
       channels: [],
       providers: [],
       modelSupport: plugin.modelSupport,
+<<<<<<< HEAD
+=======
+      cliBackends: [],
+>>>>>>> upstream/main
       skills: [],
       hooks: [],
       origin: "config" as const,
@@ -79,6 +87,10 @@ describe("applyPluginAutoEnable modelSupport", () => {
 
     expect(result.config.plugins?.entries?.openai).toBeUndefined();
     expect(result.config.plugins?.entries?.["proxy-openai"]).toBeUndefined();
+<<<<<<< HEAD
     expect(result.changes).toEqual([]);
+=======
+    expect(result.changes).toStrictEqual([]);
+>>>>>>> upstream/main
   });
 });

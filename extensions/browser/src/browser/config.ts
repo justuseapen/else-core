@@ -1,8 +1,25 @@
+<<<<<<< HEAD
 import {
   type BrowserConfig,
   type BrowserProfileConfig,
   type OpenClawConfig,
 } from "../config/config.js";
+=======
+/**
+ * Browser config resolution.
+ *
+ * Normalizes raw browser config into resolved runtime defaults, profile
+ * records, SSRF policy, timeouts, headless mode, and managed Chrome settings.
+ */
+import os from "node:os";
+import path from "node:path";
+import { MAX_TIMER_TIMEOUT_MS } from "openclaw/plugin-sdk/number-runtime";
+import {
+  normalizeOptionalString,
+  normalizeOptionalTrimmedStringList,
+} from "openclaw/plugin-sdk/string-coerce-runtime";
+import type { BrowserConfig, BrowserProfileConfig, OpenClawConfig } from "../config/config.js";
+>>>>>>> upstream/main
 import { resolveGatewayPort } from "../config/paths.js";
 import {
   DEFAULT_BROWSER_CONTROL_PORT,
@@ -11,15 +28,31 @@ import {
 } from "../config/port-defaults.js";
 import type { SsrFPolicy } from "../infra/net/ssrf.js";
 import { resolveUserPath } from "../utils.js";
+<<<<<<< HEAD
 import { parseBrowserHttpUrl, redactCdpUrl, isLoopbackHost } from "./cdp.helpers.js";
 import {
   DEFAULT_AI_SNAPSHOT_MAX_CHARS,
   DEFAULT_BROWSER_DEFAULT_PROFILE_NAME,
   DEFAULT_BROWSER_EVALUATE_ENABLED,
+=======
+import { parseBooleanValue } from "../utils/boolean.js";
+import { parseBrowserHttpUrl, redactCdpUrl, isLoopbackHost } from "./cdp.helpers.js";
+import {
+  DEFAULT_AI_SNAPSHOT_MAX_CHARS,
+  DEFAULT_BROWSER_ACTION_TIMEOUT_MS,
+  DEFAULT_BROWSER_DEFAULT_PROFILE_NAME,
+  DEFAULT_BROWSER_EVALUATE_ENABLED,
+  DEFAULT_BROWSER_LOCAL_CDP_READY_TIMEOUT_MS,
+  DEFAULT_BROWSER_LOCAL_LAUNCH_TIMEOUT_MS,
+  DEFAULT_BROWSER_TAB_CLEANUP_IDLE_MINUTES,
+  DEFAULT_BROWSER_TAB_CLEANUP_MAX_TABS_PER_SESSION,
+  DEFAULT_BROWSER_TAB_CLEANUP_SWEEP_MINUTES,
+>>>>>>> upstream/main
   DEFAULT_OPENCLAW_BROWSER_COLOR,
   DEFAULT_OPENCLAW_BROWSER_ENABLED,
   DEFAULT_OPENCLAW_BROWSER_PROFILE_NAME,
 } from "./constants.js";
+<<<<<<< HEAD
 import { resolveBrowserControlAuth, type BrowserControlAuth } from "./control-auth.js";
 import { DEFAULT_UPLOAD_DIR } from "./paths.js";
 
@@ -37,7 +70,33 @@ export {
 };
 export type { BrowserControlAuth };
 export { parseBrowserHttpUrl as parseHttpUrl };
+=======
+import { DEFAULT_UPLOAD_DIR } from "./paths.js";
+>>>>>>> upstream/main
 
+export {
+  DEFAULT_AI_SNAPSHOT_MAX_CHARS,
+  DEFAULT_BROWSER_ACTION_TIMEOUT_MS,
+  DEFAULT_BROWSER_DEFAULT_PROFILE_NAME,
+  DEFAULT_BROWSER_EVALUATE_ENABLED,
+  DEFAULT_OPENCLAW_BROWSER_COLOR,
+  DEFAULT_OPENCLAW_BROWSER_ENABLED,
+  DEFAULT_OPENCLAW_BROWSER_PROFILE_NAME,
+  DEFAULT_UPLOAD_DIR,
+  parseBrowserHttpUrl,
+  redactCdpUrl,
+};
+export { parseBrowserHttpUrl as parseHttpUrl };
+
+type BrowserSsrFPolicyCompat = NonNullable<BrowserConfig["ssrfPolicy"]> & {
+  /**
+   * Legacy raw-config alias. Keep it out of the public BrowserConfig type while
+   * still accepting old user files until doctor rewrites them.
+   */
+  allowPrivateNetwork?: boolean;
+};
+
+/** Browser config after defaults, derived ports, and profile defaults are applied. */
 export type ResolvedBrowserConfig = {
   enabled: boolean;
   evaluateEnabled: boolean;
@@ -49,17 +108,31 @@ export type ResolvedBrowserConfig = {
   cdpIsLoopback: boolean;
   remoteCdpTimeoutMs: number;
   remoteCdpHandshakeTimeoutMs: number;
+  localLaunchTimeoutMs: number;
+  localCdpReadyTimeoutMs: number;
+  actionTimeoutMs: number;
   color: string;
   executablePath?: string;
   headless: boolean;
+  headlessSource?: "config" | "default";
   noSandbox: boolean;
   attachOnly: boolean;
   defaultProfile: string;
   profiles: Record<string, BrowserProfileConfig>;
+  tabCleanup: ResolvedBrowserTabCleanupConfig;
   ssrfPolicy?: SsrFPolicy;
   extraArgs: string[];
 };
 
+/** Normalized tab-cleanup settings for session-owned browser tabs. */
+export type ResolvedBrowserTabCleanupConfig = {
+  enabled: boolean;
+  idleMinutes: number;
+  maxTabsPerSession: number;
+  sweepMinutes: number;
+};
+
+/** Runtime browser profile settings resolved from global and profile config. */
 export type ResolvedBrowserProfile = {
   name: string;
   cdpPort: number;
@@ -67,12 +140,44 @@ export type ResolvedBrowserProfile = {
   cdpHost: string;
   cdpIsLoopback: boolean;
   userDataDir?: string;
+  mcpCommand?: string;
+  mcpArgs?: string[];
   color: string;
   driver: "openclaw" | "existing-session";
+  executablePath?: string;
+  headless: boolean;
+  headlessSource?: "profile" | "config" | "default";
   attachOnly: boolean;
 };
 
 const DEFAULT_BROWSER_CDP_PORT_RANGE_START = 18800;
+<<<<<<< HEAD
+=======
+const MAX_BROWSER_STARTUP_TIMEOUT_MS = 120_000;
+/** Environment variable that overrides managed Chrome headless mode. */
+export const OPENCLAW_BROWSER_HEADLESS_ENV = "OPENCLAW_BROWSER_HEADLESS";
+
+/** Source that determined managed Chrome headless mode. */
+export type ManagedBrowserHeadlessSource =
+  | "request"
+  | "env"
+  | "profile"
+  | "config"
+  | "linux-display-fallback"
+  | "default";
+
+type ManagedBrowserHeadlessMode = {
+  headless: boolean;
+  source: ManagedBrowserHeadlessSource;
+};
+
+/** Inputs used to resolve managed Chrome headless mode. */
+export type ManagedBrowserHeadlessOptions = {
+  headlessOverride?: boolean;
+  env?: NodeJS.ProcessEnv;
+  platform?: NodeJS.Platform;
+};
+>>>>>>> upstream/main
 
 function normalizeHexColor(raw: string | undefined): string {
   const value = (raw ?? "").trim();
@@ -89,6 +194,105 @@ function normalizeHexColor(raw: string | undefined): string {
 function normalizeTimeoutMs(raw: number | undefined, fallback: number): number {
   const value = typeof raw === "number" && Number.isFinite(raw) ? Math.floor(raw) : fallback;
   return value < 0 ? fallback : value;
+}
+
+function normalizeStartupTimeoutMs(raw: number | undefined, fallback: number): number {
+  const value = typeof raw === "number" && Number.isFinite(raw) ? Math.floor(raw) : fallback;
+  if (value <= 0) {
+    return fallback;
+  }
+  return Math.min(value, MAX_BROWSER_STARTUP_TIMEOUT_MS);
+}
+
+function normalizeNonNegativeInteger(raw: number | undefined, fallback: number): number {
+  const value = typeof raw === "number" && Number.isFinite(raw) ? Math.floor(raw) : fallback;
+  return value < 0 ? fallback : value;
+}
+
+function normalizePositiveInteger(raw: number | undefined, fallback: number): number {
+  const value = typeof raw === "number" && Number.isFinite(raw) ? Math.floor(raw) : fallback;
+  return value <= 0 ? fallback : value;
+}
+
+const MAX_BROWSER_TIMER_MINUTES = Math.floor(MAX_TIMER_TIMEOUT_MS / 60_000);
+
+function normalizeNonNegativeTimerMinutes(raw: number | undefined, fallback: number): number {
+  return Math.min(normalizeNonNegativeInteger(raw, fallback), MAX_BROWSER_TIMER_MINUTES);
+}
+
+function normalizePositiveTimerMinutes(raw: number | undefined, fallback: number): number {
+  return Math.min(normalizePositiveInteger(raw, fallback), MAX_BROWSER_TIMER_MINUTES);
+}
+
+function normalizeExecutablePath(raw: string | undefined): string | undefined {
+  const value = normalizeOptionalString(raw);
+  if (!value) {
+    return undefined;
+  }
+  if (!/^~(?=$|[\\/])/.test(value)) {
+    return value;
+  }
+  return path.resolve(value.replace(/^~(?=$|[\\/])/, os.homedir()));
+}
+
+function normalizeExistingSessionCdpUrl(
+  raw: string | undefined,
+  profileName: string,
+): { cdpUrl: string; cdpHost: string; cdpIsLoopback: boolean } | undefined {
+  const value = normalizeOptionalString(raw);
+  if (!value) {
+    return undefined;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error(`browser.profiles.${profileName}.cdpUrl must be a valid URL.`);
+  }
+
+  if (!["http:", "https:", "ws:", "wss:"].includes(parsed.protocol)) {
+    throw new Error(`browser.profiles.${profileName}.cdpUrl must use http, https, ws, or wss.`);
+  }
+
+  const normalized =
+    parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.toString().replace(/\/$/, "")
+      : parsed.toString();
+  return {
+    cdpUrl: normalized,
+    cdpHost: parsed.hostname,
+    cdpIsLoopback: isLoopbackHost(parsed.hostname),
+  };
+}
+
+function hasLinuxDisplay(env: NodeJS.ProcessEnv): boolean {
+  return Boolean(env.DISPLAY?.trim() || env.WAYLAND_DISPLAY?.trim());
+}
+
+function isLocalManagedProfile(profile: ResolvedBrowserProfile): boolean {
+  return profile.driver === "openclaw" && profile.cdpIsLoopback && !profile.attachOnly;
+}
+
+function resolveBrowserTabCleanupConfig(
+  cfg: BrowserConfig | undefined,
+): ResolvedBrowserTabCleanupConfig {
+  const raw = cfg?.tabCleanup;
+  return {
+    enabled: raw?.enabled ?? true,
+    idleMinutes: normalizeNonNegativeTimerMinutes(
+      raw?.idleMinutes,
+      DEFAULT_BROWSER_TAB_CLEANUP_IDLE_MINUTES,
+    ),
+    maxTabsPerSession: normalizeNonNegativeInteger(
+      raw?.maxTabsPerSession,
+      DEFAULT_BROWSER_TAB_CLEANUP_MAX_TABS_PER_SESSION,
+    ),
+    sweepMinutes: normalizePositiveTimerMinutes(
+      raw?.sweepMinutes,
+      DEFAULT_BROWSER_TAB_CLEANUP_SWEEP_MINUTES,
+    ),
+  };
 }
 
 function resolveCdpPortRangeStart(
@@ -112,20 +316,16 @@ function resolveCdpPortRangeStart(
   return start;
 }
 
-function normalizeStringList(raw: string[] | undefined): string[] | undefined {
-  if (!Array.isArray(raw) || raw.length === 0) {
-    return undefined;
-  }
-  const values = raw
-    .map((value) => value.trim())
-    .filter((value): value is string => value.length > 0);
-  return values.length > 0 ? values : undefined;
-}
+const normalizeStringList = normalizeOptionalTrimmedStringList;
 
 function resolveBrowserSsrFPolicy(cfg: BrowserConfig | undefined): SsrFPolicy | undefined {
+<<<<<<< HEAD
   const rawPolicy = cfg?.ssrfPolicy as
     | (BrowserConfig["ssrfPolicy"] & { allowPrivateNetwork?: boolean })
     | undefined;
+=======
+  const rawPolicy = cfg?.ssrfPolicy as BrowserSsrFPolicyCompat | undefined;
+>>>>>>> upstream/main
   const allowPrivateNetwork = rawPolicy?.allowPrivateNetwork;
   const dangerouslyAllowPrivateNetwork = rawPolicy?.dangerouslyAllowPrivateNetwork;
   const allowedHostnames = normalizeStringList(rawPolicy?.allowedHostnames);
@@ -133,9 +333,7 @@ function resolveBrowserSsrFPolicy(cfg: BrowserConfig | undefined): SsrFPolicy | 
   const hasExplicitPrivateSetting =
     allowPrivateNetwork !== undefined || dangerouslyAllowPrivateNetwork !== undefined;
   const resolvedAllowPrivateNetwork =
-    dangerouslyAllowPrivateNetwork === true ||
-    allowPrivateNetwork === true ||
-    !hasExplicitPrivateSetting;
+    dangerouslyAllowPrivateNetwork === true || allowPrivateNetwork === true;
 
   if (
     !resolvedAllowPrivateNetwork &&
@@ -143,11 +341,17 @@ function resolveBrowserSsrFPolicy(cfg: BrowserConfig | undefined): SsrFPolicy | 
     !allowedHostnames &&
     !hostnameAllowlist
   ) {
-    return undefined;
+    // Keep the default policy object present so CDP guards still enforce
+    // fail-closed private-network checks on unconfigured installs.
+    return {};
   }
 
   return {
-    ...(resolvedAllowPrivateNetwork ? { dangerouslyAllowPrivateNetwork: true } : {}),
+    ...(resolvedAllowPrivateNetwork ||
+    dangerouslyAllowPrivateNetwork === false ||
+    allowPrivateNetwork === false
+      ? { dangerouslyAllowPrivateNetwork: resolvedAllowPrivateNetwork }
+      : {}),
     ...(allowedHostnames ? { allowedHostnames } : {}),
     ...(hostnameAllowlist ? { hostnameAllowlist } : {}),
   };
@@ -186,6 +390,7 @@ function ensureDefaultUserBrowserProfile(
   return result;
 }
 
+/** Resolve raw browser config into runtime browser defaults. */
 export function resolveBrowserConfig(
   cfg: BrowserConfig | undefined,
   rootConfig?: OpenClawConfig,
@@ -199,6 +404,18 @@ export function resolveBrowserConfig(
   const remoteCdpHandshakeTimeoutMs = normalizeTimeoutMs(
     cfg?.remoteCdpHandshakeTimeoutMs,
     Math.max(2000, remoteCdpTimeoutMs * 2),
+  );
+  const localLaunchTimeoutMs = normalizeStartupTimeoutMs(
+    cfg?.localLaunchTimeoutMs,
+    DEFAULT_BROWSER_LOCAL_LAUNCH_TIMEOUT_MS,
+  );
+  const localCdpReadyTimeoutMs = normalizeStartupTimeoutMs(
+    cfg?.localCdpReadyTimeoutMs,
+    DEFAULT_BROWSER_LOCAL_CDP_READY_TIMEOUT_MS,
+  );
+  const actionTimeoutMs = normalizeTimeoutMs(
+    cfg?.actionTimeoutMs,
+    DEFAULT_BROWSER_ACTION_TIMEOUT_MS,
   );
 
   const derivedCdpRange = deriveDefaultBrowserCdpPortRange(controlPort);
@@ -236,10 +453,16 @@ export function resolveBrowserConfig(
   }
 
   const headless = cfg?.headless === true;
+  const headlessSource = typeof cfg?.headless === "boolean" ? "config" : "default";
   const noSandbox = cfg?.noSandbox === true;
   const attachOnly = cfg?.attachOnly === true;
+<<<<<<< HEAD
   const executablePath = cfg?.executablePath?.trim() || undefined;
   const defaultProfileFromConfig = cfg?.defaultProfile?.trim() || undefined;
+=======
+  const executablePath = normalizeExecutablePath(cfg?.executablePath);
+  const defaultProfileFromConfig = normalizeOptionalString(cfg?.defaultProfile);
+>>>>>>> upstream/main
 
   const legacyCdpPort = rawCdpUrl ? cdpInfo.port : undefined;
   const isWsUrl = cdpInfo.parsed.protocol === "ws:" || cdpInfo.parsed.protocol === "wss:";
@@ -280,18 +503,30 @@ export function resolveBrowserConfig(
     cdpIsLoopback: isLoopbackHost(cdpInfo.parsed.hostname),
     remoteCdpTimeoutMs,
     remoteCdpHandshakeTimeoutMs,
+    localLaunchTimeoutMs,
+    localCdpReadyTimeoutMs,
+    actionTimeoutMs,
     color: defaultColor,
     executablePath,
     headless,
+    headlessSource,
     noSandbox,
     attachOnly,
     defaultProfile,
     profiles,
+<<<<<<< HEAD
+=======
+    tabCleanup: resolveBrowserTabCleanupConfig(cfg),
+>>>>>>> upstream/main
     ssrfPolicy: resolveBrowserSsrFPolicy(cfg),
     extraArgs,
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Resolve one configured browser profile by name. */
+>>>>>>> upstream/main
 export function resolveProfile(
   resolved: ResolvedBrowserConfig,
   profileName: string,
@@ -304,19 +539,32 @@ export function resolveProfile(
   const rawProfileUrl = profile.cdpUrl?.trim() ?? "";
   let cdpHost = resolved.cdpHost;
   let cdpPort = profile.cdpPort ?? 0;
-  let cdpUrl = "";
+  let cdpUrl;
   const driver = profile.driver === "existing-session" ? "existing-session" : "openclaw";
+  const headless = profile.headless ?? resolved.headless;
+  const headlessSource =
+    typeof profile.headless === "boolean" ? "profile" : resolved.headlessSource;
+  const executablePath = normalizeExecutablePath(profile.executablePath) ?? resolved.executablePath;
 
   if (driver === "existing-session") {
+<<<<<<< HEAD
+=======
+    const existingSessionCdp = normalizeExistingSessionCdpUrl(rawProfileUrl, profileName);
+>>>>>>> upstream/main
     return {
       name: profileName,
       cdpPort: 0,
-      cdpUrl: "",
-      cdpHost: "",
-      cdpIsLoopback: true,
+      cdpUrl: existingSessionCdp?.cdpUrl ?? "",
+      cdpHost: existingSessionCdp?.cdpHost ?? "",
+      cdpIsLoopback: existingSessionCdp?.cdpIsLoopback ?? true,
       userDataDir: resolveUserPath(profile.userDataDir?.trim() || "") || undefined,
+      mcpCommand: normalizeOptionalString(profile.mcpCommand),
+      mcpArgs: normalizeStringList(profile.mcpArgs) ?? undefined,
       color: profile.color,
       driver,
+      executablePath,
+      headless,
+      headlessSource,
       attachOnly: true,
     };
   }
@@ -334,8 +582,20 @@ export function resolveProfile(
   } else if (rawProfileUrl) {
     const parsed = parseBrowserHttpUrl(rawProfileUrl, `browser.profiles.${profileName}.cdpUrl`);
     cdpHost = parsed.parsed.hostname;
-    cdpPort = parsed.port;
-    cdpUrl = parsed.normalized;
+    // Port precedence: explicit URL port > configured cdpPort > protocol default.
+    if (parsed.hasExplicitPort) {
+      cdpPort = parsed.port;
+      cdpUrl = parsed.normalizedWithPort;
+    } else if (cdpPort) {
+      // URL omitted the port but we have an explicit cdpPort — inject it while
+      // preserving the rest of the URL (path, query, credentials, etc.).
+      const rebuilt = new URL(rawProfileUrl);
+      rebuilt.port = String(cdpPort);
+      cdpUrl = rebuilt.toString().replace(/\/$/, "");
+    } else {
+      cdpPort = parsed.port;
+      cdpUrl = parsed.normalized;
+    }
   } else if (cdpPort) {
     cdpUrl = `${resolved.cdpProtocol}://${resolved.cdpHost}:${cdpPort}`;
   } else {
@@ -350,10 +610,85 @@ export function resolveProfile(
     cdpIsLoopback: isLoopbackHost(cdpHost),
     color: profile.color,
     driver,
+    executablePath,
+    headless,
+    headlessSource,
     attachOnly: profile.attachOnly ?? resolved.attachOnly,
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Resolve effective headless mode for a managed browser profile. */
+export function resolveManagedBrowserHeadlessMode(
+  resolved: ResolvedBrowserConfig,
+  profile: ResolvedBrowserProfile,
+  params: ManagedBrowserHeadlessOptions = {},
+): ManagedBrowserHeadlessMode {
+  if (!isLocalManagedProfile(profile)) {
+    return { headless: profile.headless, source: profile.headlessSource ?? "default" };
+  }
+
+  if (typeof params.headlessOverride === "boolean") {
+    return { headless: params.headlessOverride, source: "request" };
+  }
+
+  const env = params.env ?? process.env;
+  const platform = params.platform ?? process.platform;
+  const envHeadless = parseBooleanValue(env[OPENCLAW_BROWSER_HEADLESS_ENV]);
+  if (envHeadless !== undefined) {
+    return { headless: envHeadless, source: "env" };
+  }
+
+  const profileHeadlessSource = profile.headlessSource ?? "default";
+  if (profileHeadlessSource !== "default") {
+    return { headless: profile.headless, source: profileHeadlessSource };
+  }
+
+  if (platform === "linux" && !hasLinuxDisplay(env)) {
+    return { headless: true, source: "linux-display-fallback" };
+  }
+
+  return { headless: resolved.headless, source: "default" };
+}
+
+/** Return a Linux display error for headed managed Chrome when no display exists. */
+export function getManagedBrowserMissingDisplayError(
+  resolved: ResolvedBrowserConfig,
+  profile: ResolvedBrowserProfile,
+  params: ManagedBrowserHeadlessOptions = {},
+): string | null {
+  if (!isLocalManagedProfile(profile)) {
+    return null;
+  }
+  const env = params.env ?? process.env;
+  const platform = params.platform ?? process.platform;
+  if (platform !== "linux" || hasLinuxDisplay(env)) {
+    return null;
+  }
+
+  const mode = resolveManagedBrowserHeadlessMode(resolved, profile, { env, platform });
+  if (mode.headless) {
+    return null;
+  }
+
+  const sourceHint =
+    mode.source === "request"
+      ? "request override"
+      : mode.source === "env"
+        ? `${OPENCLAW_BROWSER_HEADLESS_ENV}=0`
+        : mode.source === "profile"
+          ? `browser.profiles.${profile.name}.headless=false`
+          : "browser.headless=false";
+  return (
+    `Headed browser start requested for profile "${profile.name}" via ${sourceHint}, ` +
+    "but no Linux display server was detected ($DISPLAY/$WAYLAND_DISPLAY unset). " +
+    `Set ${OPENCLAW_BROWSER_HEADLESS_ENV}=1, remove the headed override, or launch under Xvfb.`
+  );
+}
+
+/** Return whether local browser control should start for a resolved config. */
+>>>>>>> upstream/main
 export function shouldStartLocalBrowserServer(_resolved: unknown) {
   return true;
 }

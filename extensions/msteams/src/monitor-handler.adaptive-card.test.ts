@@ -1,11 +1,22 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig, PluginRuntime, RuntimeEnv } from "../runtime-api.js";
+=======
+// Msteams tests cover monitor handler.adaptive card plugin behavior.
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { OpenClawConfig, RuntimeEnv } from "../runtime-api.js";
+import type { MSTeamsConversationStore } from "./conversation-store.js";
+>>>>>>> upstream/main
 import {
   type MSTeamsActivityHandler,
   type MSTeamsMessageHandlerDeps,
   registerMSTeamsHandlers,
 } from "./monitor-handler.js";
+<<<<<<< HEAD
 import { setMSTeamsRuntime } from "./runtime.js";
+=======
+import { installMSTeamsTestRuntime } from "./monitor-handler.test-helpers.js";
+>>>>>>> upstream/main
 import type { MSTeamsTurnContext } from "./sdk-types.js";
 
 const runtimeApiMockState = vi.hoisted(() => ({
@@ -16,8 +27,13 @@ const runtimeApiMockState = vi.hoisted(() => ({
   })),
 }));
 
+<<<<<<< HEAD
 vi.mock("../runtime-api.js", async () => {
   const actual = await vi.importActual<typeof import("../runtime-api.js")>("../runtime-api.js");
+=======
+vi.mock("openclaw/plugin-sdk/channel-inbound", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("openclaw/plugin-sdk/channel-inbound")>();
+>>>>>>> upstream/main
   return {
     ...actual,
     dispatchReplyFromConfigWithSettledDispatcher:
@@ -34,6 +50,7 @@ vi.mock("./reply-dispatcher.js", () => ({
 }));
 
 function createDeps(): MSTeamsMessageHandlerDeps {
+<<<<<<< HEAD
   setMSTeamsRuntime({
     logging: { shouldLogVerbose: () => false },
     system: { enqueueSystemEvent: vi.fn() },
@@ -71,20 +88,37 @@ function createDeps(): MSTeamsMessageHandlerDeps {
       },
     },
   } as unknown as PluginRuntime);
+=======
+  installMSTeamsTestRuntime();
+>>>>>>> upstream/main
 
   return {
     cfg: {} as OpenClawConfig,
     runtime: { error: vi.fn() } as unknown as RuntimeEnv,
     appId: "test-app",
+<<<<<<< HEAD
     adapter: {} as MSTeamsMessageHandlerDeps["adapter"],
+=======
+    app: {} as MSTeamsMessageHandlerDeps["app"],
+>>>>>>> upstream/main
     tokenProvider: {
       getAccessToken: vi.fn(async () => "token"),
     },
     textLimit: 4000,
     mediaMaxBytes: 1024 * 1024,
     conversationStore: {
+<<<<<<< HEAD
       upsert: vi.fn(async () => undefined),
     } as unknown as MSTeamsMessageHandlerDeps["conversationStore"],
+=======
+      get: vi.fn(async () => null),
+      upsert: vi.fn(async () => undefined),
+      list: vi.fn(async () => []),
+      remove: vi.fn(async () => false),
+      findPreferredDmByUserId: vi.fn(async () => null),
+      findByUserId: vi.fn(async () => null),
+    } satisfies MSTeamsConversationStore,
+>>>>>>> upstream/main
     pollStore: {
       recordVote: vi.fn(async () => null),
     } as unknown as MSTeamsMessageHandlerDeps["pollStore"],
@@ -107,11 +141,17 @@ function createActivityHandler() {
       await handler(context, async () => {});
     }
   });
+<<<<<<< HEAD
 
   let handler: MSTeamsActivityHandler & {
     run: NonNullable<MSTeamsActivityHandler["run"]>;
   };
   handler = {
+=======
+  const handler: MSTeamsActivityHandler & {
+    run: NonNullable<MSTeamsActivityHandler["run"]>;
+  } = {
+>>>>>>> upstream/main
     onMessage: (nextHandler) => {
       messageHandlers.push(nextHandler);
       return handler;
@@ -179,6 +219,7 @@ describe("msteams adaptive card action invoke", () => {
     expect(runtimeApiMockState.dispatchReplyFromConfigWithSettledDispatcher).toHaveBeenCalledTimes(
       1,
     );
+<<<<<<< HEAD
     expect(
       runtimeApiMockState.dispatchReplyFromConfigWithSettledDispatcher.mock.calls[0]?.[0],
     ).toMatchObject({
@@ -190,5 +231,14 @@ describe("msteams adaptive card action invoke", () => {
         SenderId: "user-aad",
       },
     });
+=======
+    const dispatched = runtimeApiMockState.dispatchReplyFromConfigWithSettledDispatcher.mock
+      .calls[0]?.[0] as { ctxPayload?: Record<string, unknown> } | undefined;
+    expect(dispatched?.ctxPayload?.RawBody).toBe(JSON.stringify(payload));
+    expect(dispatched?.ctxPayload?.BodyForAgent).toBe(JSON.stringify(payload));
+    expect(dispatched?.ctxPayload?.CommandBody).toBe(JSON.stringify(payload));
+    expect(dispatched?.ctxPayload?.SessionKey).toBe("msteams:direct:user-aad");
+    expect(dispatched?.ctxPayload?.SenderId).toBe("user-aad");
+>>>>>>> upstream/main
   });
 });

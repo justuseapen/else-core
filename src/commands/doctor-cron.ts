@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { formatCliCommand } from "../cli/command-format.js";
 import type { OpenClawConfig } from "../config/config.js";
 import { resolveCronStorePath, loadCronStore, saveCronStore } from "../cron/store.js";
@@ -181,3 +182,7 @@ export async function maybeRepairLegacyCronStore(params: {
     note(notifyMigration.warnings.join("\n"), "Doctor warnings");
   }
 }
+=======
+/** Re-exports cron doctor checks from the grouped doctor/cron implementation. */
+export * from "./doctor/cron/index.js";
+>>>>>>> upstream/main

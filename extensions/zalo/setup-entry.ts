@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Zalo plugin module implements setup entry behavior.
+>>>>>>> upstream/main
 import { defineBundledChannelSetupEntry } from "openclaw/plugin-sdk/channel-entry-contract";
 
 export default defineBundledChannelSetupEntry({
@@ -6,4 +10,11 @@ export default defineBundledChannelSetupEntry({
     specifier: "./api.js",
     exportName: "zaloPlugin",
   },
+<<<<<<< HEAD
+=======
+  secrets: {
+    specifier: "./secret-contract-api.js",
+    exportName: "channelSecrets",
+  },
+>>>>>>> upstream/main
 });

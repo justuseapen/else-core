@@ -1,62 +1,26 @@
-import fs from "node:fs";
-import path from "node:path";
-import { describe, expect, it } from "vitest";
-import { withTempHome } from "../../test/helpers/temp-home.js";
-import { ensureAuthProfileStore, listProfilesForProvider } from "../agents/auth-profiles.js";
-import { withEnvAsync } from "../test-utils/env.js";
-import { createProviderUsageFetch, makeResponse } from "../test-utils/provider-usage-fetch.js";
+// Tests provider usage aggregation and formatting.
+import { beforeEach, describe, expect, it } from "vitest";
+import { createProviderUsageFetch } from "../test-utils/provider-usage-fetch.js";
+import {
+  getProviderUsageSnapshotWithPluginMock,
+  resetProviderUsageSnapshotWithPluginMock,
+} from "./provider-usage-plugin-runtime.test-mocks.js";
 import {
   formatUsageReportLines,
   formatUsageSummaryLine,
   loadProviderUsageSummary,
   type UsageSummary,
 } from "./provider-usage.js";
-import { loadUsageWithAuth, usageNow } from "./provider-usage.test-support.js";
+import { loadUsageWithAuth } from "./provider-usage.test-support.js";
+import type { ProviderUsageSnapshot } from "./provider-usage.types.js";
 
-const minimaxRemainsEndpoint = "api.minimaxi.com/v1/api/openplatform/coding_plan/remains";
-
-function expectSingleAnthropicProvider(summary: UsageSummary) {
-  expect(summary.providers).toHaveLength(1);
-  const claude = summary.providers[0];
-  expect(claude?.provider).toBe("anthropic");
-  return claude;
-}
-
-function createMinimaxOnlyFetch(payload: unknown) {
-  return createProviderUsageFetch(async (url) => {
-    if (url.includes(minimaxRemainsEndpoint)) {
-      return makeResponse(200, payload);
-    }
-    return makeResponse(404, "not found");
-  });
-}
-
-async function expectMinimaxUsage(
-  payload: unknown,
-  expected: {
-    usedPercent: number;
-    plan?: string;
-    label?: string;
-  },
-) {
-  const mockFetch = createMinimaxOnlyFetch(payload);
-
-  const summary = await loadUsageWithAuth(
-    loadProviderUsageSummary,
-    [{ provider: "minimax", token: "token-1b" }],
-    mockFetch,
-  );
-
-  const minimax = summary.providers.find((p) => p.provider === "minimax");
-  expect(minimax?.windows[0]?.usedPercent).toBe(expected.usedPercent);
-  expect(minimax?.windows[0]?.label).toBe(expected.label ?? "5h");
-  if (expected.plan !== undefined) {
-    expect(minimax?.plan).toBe(expected.plan);
-  }
-  expect(mockFetch).toHaveBeenCalled();
-}
+const resolveProviderUsageSnapshotWithPluginMock = getProviderUsageSnapshotWithPluginMock();
 
 describe("provider usage formatting", () => {
+  beforeEach(() => {
+    resetProviderUsageSnapshotWithPluginMock();
+  });
+
   it("returns null when no usage is available", () => {
     const summary: UsageSummary = { updatedAt: 0, providers: [] };
     expect(formatUsageSummaryLine(summary)).toBeNull();
@@ -87,7 +51,7 @@ describe("provider usage formatting", () => {
       updatedAt: 0,
       providers: [
         {
-          provider: "openai-codex",
+          provider: "openai",
           displayName: "Codex",
           windows: [],
           error: "Token expired",
@@ -96,6 +60,23 @@ describe("provider usage formatting", () => {
     };
     const lines = formatUsageReportLines(summary);
     expect(lines.join("\n")).toContain("Codex: Token expired");
+  });
+
+  it("prints balance-only provider summary output", () => {
+    const summary: UsageSummary = {
+      updatedAt: 0,
+      providers: [
+        {
+          provider: "deepseek",
+          displayName: "DeepSeek",
+          windows: [],
+          summary: "Balance ¥42.50",
+        },
+      ],
+    };
+
+    expect(formatUsageSummaryLine(summary)).toBe("📊 Usage: DeepSeek Balance ¥42.50");
+    expect(formatUsageReportLines(summary).join("\n")).toContain("DeepSeek: Balance ¥42.50");
   });
 
   it("includes reset countdowns in report lines", () => {
@@ -117,61 +98,66 @@ describe("provider usage formatting", () => {
 
 describe("provider usage loading", () => {
   it("loads usage snapshots with injected auth", async () => {
-    const mockFetch = createProviderUsageFetch(async (url) => {
-      if (url.includes("api.anthropic.com")) {
-        return makeResponse(200, {
-          five_hour: { utilization: 20, resets_at: "2026-01-07T01:00:00Z" },
-        });
-      }
-      if (url.includes("api.z.ai")) {
-        return makeResponse(200, {
-          success: true,
-          code: 200,
-          data: {
-            planName: "Pro",
-            limits: [
-              {
-                type: "TOKENS_LIMIT",
-                percentage: 25,
-                unit: 3,
-                number: 6,
-                nextResetTime: "2026-01-07T06:00:00Z",
-              },
-            ],
-          },
-        });
-      }
-      if (url.includes(minimaxRemainsEndpoint)) {
-        return makeResponse(200, {
-          base_resp: { status_code: 0, status_msg: "ok" },
-          data: {
-            total: 200,
-            remain: 50,
-            reset_at: "2026-01-07T05:00:00Z",
-            plan_name: "Coding Plan",
-          },
-        });
-      }
-      return makeResponse(404, "not found");
+    resolveProviderUsageSnapshotWithPluginMock.mockImplementation(
+      async ({ provider }): Promise<ProviderUsageSnapshot | null> => {
+        switch (provider) {
+          case "anthropic":
+            return {
+              provider,
+              displayName: "Claude",
+              windows: [{ label: "5h", usedPercent: 20 }],
+            };
+          case "minimax":
+            return {
+              provider,
+              displayName: "MiniMax",
+              windows: [{ label: "5h", usedPercent: 75 }],
+              plan: "Coding Plan",
+            };
+          case "deepseek":
+            return {
+              provider,
+              displayName: "DeepSeek",
+              windows: [],
+              summary: "Balance ¥42.50",
+            };
+          case "zai":
+            return {
+              provider,
+              displayName: "Z.ai",
+              windows: [{ label: "3h", usedPercent: 25 }],
+              plan: "Pro",
+            };
+          default:
+            return null;
+        }
+      },
+    );
+    const mockFetch = createProviderUsageFetch(async () => {
+      throw new Error("legacy fetch should not run");
     });
 
     const summary = await loadUsageWithAuth(
       loadProviderUsageSummary,
       [
         { provider: "anthropic", token: "token-1" },
+        { provider: "deepseek", token: "token-1a" },
         { provider: "minimax", token: "token-1b" },
         { provider: "zai", token: "token-2" },
       ],
       mockFetch,
     );
 
-    expect(summary.providers).toHaveLength(3);
+    expect(summary.providers).toHaveLength(4);
     const claude = summary.providers.find((p) => p.provider === "anthropic");
+    const deepseek = summary.providers.find((p) => p.provider === "deepseek");
     const minimax = summary.providers.find((p) => p.provider === "minimax");
     const zai = summary.providers.find((p) => p.provider === "zai");
     expect(claude?.windows[0]?.label).toBe("5h");
+    expect(deepseek?.summary).toBe("Balance ¥42.50");
     expect(minimax?.windows[0]?.usedPercent).toBe(75);
     expect(zai?.plan).toBe("Pro");
+<<<<<<< HEAD
     expect(mockFetch).toHaveBeenCalled();
   });
 
@@ -346,5 +332,8 @@ describe("provider usage loading", () => {
       expect(claude?.windows.some((w) => w.label === "5h")).toBe(true);
       expect(claude?.windows.some((w) => w.label === "Week")).toBe(true);
     });
+=======
+    expect(mockFetch).not.toHaveBeenCalled();
+>>>>>>> upstream/main
   });
 });

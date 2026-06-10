@@ -1,7 +1,24 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { withTempHome } from "../../../test/helpers/temp-home.js";
+=======
+// Matrix tests cover migration snapshot plugin behavior.
+import fs from "node:fs";
+import path from "node:path";
+import { withTempHome } from "openclaw/plugin-sdk/test-env";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const legacyCryptoInspectorAvailability = vi.hoisted(() => ({
+  available: true,
+}));
+
+vi.mock("./legacy-crypto-inspector-availability.js", () => ({
+  isMatrixLegacyCryptoInspectorAvailable: () => legacyCryptoInspectorAvailability.available,
+}));
+
+>>>>>>> upstream/main
 import { detectLegacyMatrixCrypto } from "./legacy-crypto.js";
 import {
   hasActionableMatrixMigration,
@@ -13,9 +30,44 @@ import { resolveMatrixAccountStorageRoot } from "./storage-paths.js";
 
 const createBackupArchiveMock = vi.hoisted(() => vi.fn());
 
+<<<<<<< HEAD
 describe("matrix migration snapshots", () => {
   beforeEach(() => {
     createBackupArchiveMock.mockReset();
+=======
+const MATRIX_CREDENTIALS = {
+  homeserver: "https://matrix.example.org",
+  userId: "@bot:example.org",
+  accessToken: "tok-123",
+} as const;
+
+function makeMatrixMigrationConfig() {
+  return {
+    channels: {
+      matrix: MATRIX_CREDENTIALS,
+    },
+  } as never;
+}
+
+function seedLegacyMatrixCrypto(home: string) {
+  const stateDir = path.join(home, ".openclaw");
+  const { rootDir } = resolveMatrixAccountStorageRoot({
+    stateDir,
+    ...MATRIX_CREDENTIALS,
+  });
+  fs.mkdirSync(path.join(rootDir, "crypto"), { recursive: true });
+  fs.writeFileSync(
+    path.join(rootDir, "crypto", "bot-sdk.json"),
+    JSON.stringify({ deviceId: "DEVICE123" }),
+    "utf8",
+  );
+}
+
+describe("matrix migration snapshots", () => {
+  beforeEach(() => {
+    createBackupArchiveMock.mockReset();
+    legacyCryptoInspectorAvailability.available = true;
+>>>>>>> upstream/main
     createBackupArchiveMock.mockImplementation(
       async (params: { output?: string; includeWorkspace?: boolean }) => {
         const outputDir = params.output;
@@ -86,6 +138,7 @@ describe("matrix migration snapshots", () => {
 
   it("treats legacy Matrix crypto as actionable when the extension inspector is present", async () => {
     await withTempHome(async (home) => {
+<<<<<<< HEAD
       const stateDir = path.join(home, ".openclaw");
       const { rootDir } = resolveMatrixAccountStorageRoot({
         stateDir,
@@ -109,13 +162,23 @@ describe("matrix migration snapshots", () => {
           },
         },
       } as never;
+=======
+      seedLegacyMatrixCrypto(home);
+      const cfg = makeMatrixMigrationConfig();
+>>>>>>> upstream/main
 
       const detection = detectLegacyMatrixCrypto({
         cfg,
         env: process.env,
       });
+<<<<<<< HEAD
       expect(detection.plans).toHaveLength(1);
       expect(detection.warnings).toEqual([]);
+=======
+      expect(detection.inspectorAvailable).toBe(true);
+      expect(detection.plans).toHaveLength(1);
+      expect(detection.warnings).toStrictEqual([]);
+>>>>>>> upstream/main
       expect(
         hasActionableMatrixMigration({
           cfg,
@@ -124,4 +187,32 @@ describe("matrix migration snapshots", () => {
       ).toBe(true);
     });
   });
+<<<<<<< HEAD
+=======
+
+  it("keeps legacy Matrix crypto pending but not actionable when the inspector artifact is unavailable", async () => {
+    legacyCryptoInspectorAvailability.available = false;
+
+    await withTempHome(async (home) => {
+      seedLegacyMatrixCrypto(home);
+      const cfg = makeMatrixMigrationConfig();
+
+      const detection = detectLegacyMatrixCrypto({
+        cfg,
+        env: process.env,
+      });
+      expect(detection.inspectorAvailable).toBe(false);
+      expect(detection.plans).toHaveLength(1);
+      expect(detection.warnings).toContain(
+        "Legacy Matrix encrypted state was detected, but the Matrix crypto inspector is unavailable.",
+      );
+      expect(
+        hasActionableMatrixMigration({
+          cfg,
+          env: process.env,
+        }),
+      ).toBe(false);
+    });
+  });
+>>>>>>> upstream/main
 });

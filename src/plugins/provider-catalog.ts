@@ -1,7 +1,29 @@
+<<<<<<< HEAD
 import { normalizeProviderId } from "../agents/provider-id.js";
+=======
+// Builds provider catalog entries from plugin manifest metadata.
+import { normalizeProviderId } from "@openclaw/model-catalog-core/provider-id";
+import {
+  normalizeLowercaseStringOrEmpty,
+  normalizeOptionalString,
+} from "@openclaw/normalization-core/string-coerce";
+>>>>>>> upstream/main
 import type { ModelProviderConfig } from "../config/types.js";
+import { copyRecordEntries } from "../shared/safe-record.js";
 import type { ProviderCatalogContext, ProviderCatalogResult } from "./types.js";
 
+function addApiKeyToProvider(
+  provider: ModelProviderConfig,
+  apiKey: string,
+): (ModelProviderConfig & { apiKey: string }) | undefined {
+  try {
+    return { ...provider, apiKey };
+  } catch {
+    return undefined;
+  }
+}
+
+/** Finds a provider catalog template entry by normalized provider and template id. */
 export function findCatalogTemplate(params: {
   entries: ReadonlyArray<{ provider: string; id: string }>;
   providerId: string;
@@ -12,12 +34,17 @@ export function findCatalogTemplate(params: {
       params.entries.find(
         (entry) =>
           normalizeProviderId(entry.provider) === normalizeProviderId(params.providerId) &&
+<<<<<<< HEAD
           entry.id.toLowerCase() === templateId.toLowerCase(),
+=======
+          normalizeLowercaseStringOrEmpty(entry.id) === normalizeLowercaseStringOrEmpty(templateId),
+>>>>>>> upstream/main
       ),
     )
     .find((entry) => entry !== undefined);
 }
 
+/** Builds a provider catalog result for providers that share one API key. */
 export async function buildSingleProviderApiKeyCatalog(params: {
   ctx: ProviderCatalogContext;
   providerId: string;
@@ -36,8 +63,12 @@ export async function buildSingleProviderApiKeyCatalog(params: {
           ([configuredProviderId]) => normalizeProviderId(configuredProviderId) === providerId,
         )?.[1]
       : undefined;
+<<<<<<< HEAD
   const explicitBaseUrl =
     typeof explicitProvider?.baseUrl === "string" ? explicitProvider.baseUrl.trim() : "";
+=======
+  const explicitBaseUrl = normalizeOptionalString(explicitProvider?.baseUrl) ?? "";
+>>>>>>> upstream/main
 
   return {
     provider: {
@@ -48,6 +79,7 @@ export async function buildSingleProviderApiKeyCatalog(params: {
   };
 }
 
+/** Builds a multi-provider catalog result backed by one provider API key. */
 export async function buildPairedProviderApiKeyCatalog(params: {
   ctx: ProviderCatalogContext;
   providerId: string;
@@ -63,7 +95,10 @@ export async function buildPairedProviderApiKeyCatalog(params: {
   const providers = await params.buildProviders();
   return {
     providers: Object.fromEntries(
-      Object.entries(providers).map(([id, provider]) => [id, { ...provider, apiKey }]),
+      copyRecordEntries<ModelProviderConfig>(providers).flatMap(([id, provider]) => {
+        const providerWithApiKey = addApiKeyToProvider(provider, apiKey);
+        return providerWithApiKey ? [[id, providerWithApiKey]] : [];
+      }),
     ),
   };
 }

@@ -1,17 +1,33 @@
 {
   "name": "@openclaw/googlechat",
+<<<<<<< HEAD
   "version": "2026.4.5",
   "private": true,
   "description": "OpenClaw Google Chat channel plugin",
+=======
+  "version": "2026.6.2",
+  "description": "OpenClaw Google Chat channel plugin for spaces and direct messages.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openclaw/openclaw"
+  },
+>>>>>>> upstream/main
   "type": "module",
   "dependencies": {
-    "google-auth-library": "^10.6.2"
+    "gaxios": "7.1.4",
+    "google-auth-library": "10.6.2",
+    "zod": "4.4.3"
   },
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "@openclaw/plugin-sdk": "workspace:*",
+    "openclaw": "2026.5.28"
   },
   "peerDependencies": {
+<<<<<<< HEAD
     "openclaw": ">=2026.4.5"
+=======
+    "openclaw": ">=2026.6.2"
+>>>>>>> upstream/main
   },
   "peerDependenciesMeta": {
     "openclaw": {
@@ -37,12 +53,54 @@
       ],
       "order": 55,
       "systemImage": "message.badge",
+<<<<<<< HEAD
       "markdownCapable": true
+=======
+      "markdownCapable": true,
+      "doctorCapabilities": {
+        "dmAllowFromMode": "nestedOnly",
+        "groupModel": "route",
+        "groupAllowFromFallbackToAllowFrom": false,
+        "warnOnEmptyGroupSenderAllowlist": false
+      },
+      "cliAddOptions": [
+        {
+          "flags": "--webhook-path <path>",
+          "description": "Google Chat webhook path"
+        },
+        {
+          "flags": "--webhook-url <url>",
+          "description": "Google Chat webhook URL"
+        },
+        {
+          "flags": "--audience-type <type>",
+          "description": "Google Chat audience type (app-url|project-number)"
+        },
+        {
+          "flags": "--audience <value>",
+          "description": "Google Chat audience value (app URL or project number)"
+        }
+      ]
+>>>>>>> upstream/main
     },
     "install": {
       "npmSpec": "@openclaw/googlechat",
       "defaultChoice": "npm",
+<<<<<<< HEAD
       "minHostVersion": ">=2026.4.5"
+=======
+      "minHostVersion": ">=2026.4.10"
+    },
+    "compat": {
+      "pluginApi": ">=2026.6.2"
+    },
+    "build": {
+      "openclawVersion": "2026.6.2"
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+>>>>>>> upstream/main
     }
   }
 }

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Openai tests cover transport policy plugin behavior.
+>>>>>>> upstream/main
 import type { ProviderRuntimeModel } from "openclaw/plugin-sdk/plugin-entry";
 import { describe, expect, it } from "vitest";
 import {
@@ -27,6 +31,7 @@ describe("openai transport policy", () => {
   } satisfies ProviderRuntimeModel;
 
   it("builds native turn state for direct OpenAI routes", () => {
+<<<<<<< HEAD
     expect(
       resolveOpenAITransportTurnState({
         provider: "openai",
@@ -51,6 +56,25 @@ describe("openai transport policy", () => {
         openclaw_transport: "websocket",
       },
     });
+=======
+    const state = resolveOpenAITransportTurnState({
+      provider: "openai",
+      modelId: nativeModel.id,
+      model: nativeModel,
+      sessionId: "session-123",
+      turnId: "turn-123",
+      attempt: 2,
+      transport: "websocket",
+    });
+    expect(state?.headers?.["x-client-request-id"]).toBe("session-123");
+    expect(state?.headers?.["x-openclaw-session-id"]).toBe("session-123");
+    expect(state?.headers?.["x-openclaw-turn-id"]).toBe("turn-123");
+    expect(state?.headers?.["x-openclaw-turn-attempt"]).toBe("2");
+    expect(state?.metadata?.openclaw_session_id).toBe("session-123");
+    expect(state?.metadata?.openclaw_turn_id).toBe("turn-123");
+    expect(state?.metadata?.openclaw_turn_attempt).toBe("2");
+    expect(state?.metadata?.openclaw_transport).toBe("websocket");
+>>>>>>> upstream/main
   });
 
   it("skips turn state for proxy-like OpenAI routes", () => {
@@ -67,6 +91,7 @@ describe("openai transport policy", () => {
     ).toBeUndefined();
   });
 
+<<<<<<< HEAD
   it("returns websocket session headers and cooldown for native routes", () => {
     expect(
       resolveOpenAIWebSocketSessionPolicy({
@@ -103,5 +128,71 @@ describe("openai transport policy", () => {
       },
       degradeCooldownMs: 60_000,
     });
+=======
+  it("keeps Codex request identity session-scoped while adding turn metadata", () => {
+    const state = resolveOpenAITransportTurnState({
+      provider: "openai",
+      modelId: "gpt-5.4",
+      model: {
+        ...nativeModel,
+        provider: "openai",
+        api: "openai-chatgpt-responses",
+        baseUrl: "https://chatgpt.com/backend-api/codex",
+      },
+      sessionId: "session-123",
+      turnId: "turn-123",
+      attempt: 2,
+      transport: "stream",
+    });
+    expect(state?.headers?.["x-client-request-id"]).toBe("session-123");
+    expect(state?.headers?.["x-openclaw-session-id"]).toBe("session-123");
+    expect(state?.headers?.["x-openclaw-turn-id"]).toBe("turn-123");
+    expect(state?.headers?.["x-openclaw-turn-attempt"]).toBe("2");
+  });
+
+  it("returns websocket session headers and cooldown for native routes", () => {
+    const policy = resolveOpenAIWebSocketSessionPolicy({
+      provider: "openai",
+      modelId: nativeModel.id,
+      model: nativeModel,
+      sessionId: "session-123",
+    });
+    expect(policy?.headers?.["x-client-request-id"]).toBe("session-123");
+    expect(policy?.headers?.["x-openclaw-session-id"]).toBe("session-123");
+    expect(policy?.degradeCooldownMs).toBe(60_000);
+  });
+
+  it("treats Azure routes as native OpenAI-family transports", () => {
+    const policy = resolveOpenAIWebSocketSessionPolicy({
+      provider: "azure-openai-responses",
+      modelId: "gpt-5.4",
+      model: {
+        ...nativeModel,
+        provider: "azure-openai-responses",
+        baseUrl: "https://demo.openai.azure.com/openai/v1",
+      },
+      sessionId: "session-123",
+    });
+    expect(policy?.headers?.["x-client-request-id"]).toBe("session-123");
+    expect(policy?.headers?.["x-openclaw-session-id"]).toBe("session-123");
+    expect(policy?.degradeCooldownMs).toBe(60_000);
+  });
+
+  it("treats ChatGPT Codex backend routes as native OpenAI-family transports", () => {
+    const policy = resolveOpenAIWebSocketSessionPolicy({
+      provider: "openai",
+      modelId: "gpt-5.4",
+      model: {
+        ...nativeModel,
+        provider: "openai",
+        api: "openai-chatgpt-responses",
+        baseUrl: "https://chatgpt.com/backend-api/codex",
+      },
+      sessionId: "session-123",
+    });
+    expect(policy?.headers?.["x-client-request-id"]).toBe("session-123");
+    expect(policy?.headers?.["x-openclaw-session-id"]).toBe("session-123");
+    expect(policy?.degradeCooldownMs).toBe(60_000);
+>>>>>>> upstream/main
   });
 });

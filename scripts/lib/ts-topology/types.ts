@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Types script supports OpenClaw repository automation.
+>>>>>>> upstream/main
 import type ts from "typescript";
 
 export type UsageBucket = "internal" | "production" | "test";

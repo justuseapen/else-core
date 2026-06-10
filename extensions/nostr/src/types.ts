@@ -1,3 +1,4 @@
+// Nostr type declarations define plugin contracts.
 import {
   DEFAULT_ACCOUNT_ID,
   normalizeAccountId,
@@ -7,13 +8,19 @@ import {
   listCombinedAccountIds,
   resolveListedDefaultAccountId,
 } from "openclaw/plugin-sdk/account-resolution";
+<<<<<<< HEAD
 import { normalizeSecretInputString, type SecretInput } from "openclaw/plugin-sdk/secret-input";
 import type { OpenClawConfig } from "../api.js";
+=======
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { normalizeSecretInputString, type SecretInput } from "openclaw/plugin-sdk/secret-input";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import type { NostrProfile } from "./config-schema.js";
 import { DEFAULT_RELAYS } from "./default-relays.js";
-import { getPublicKeyFromPrivate } from "./nostr-bus.js";
+import { getPublicKeyFromPrivate } from "./nostr-key-utils.js";
 
-export interface NostrAccountConfig {
+interface NostrAccountConfig {
   enabled?: boolean;
   name?: string;
   defaultAccount?: string;
@@ -96,7 +103,7 @@ export function resolveNostrAccount(opts: {
 
   return {
     accountId,
-    name: nostrCfg?.name?.trim() || undefined,
+    name: normalizeOptionalString(nostrCfg?.name),
     enabled: baseEnabled,
     configured,
     privateKey,

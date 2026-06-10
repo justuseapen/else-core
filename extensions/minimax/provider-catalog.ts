@@ -1,16 +1,24 @@
+// Minimax provider module implements model/runtime integration.
 import type {
   ModelDefinitionConfig,
   ModelProviderConfig,
 } from "openclaw/plugin-sdk/provider-model-shared";
 import {
+<<<<<<< HEAD
   DEFAULT_MINIMAX_CONTEXT_WINDOW,
+=======
+>>>>>>> upstream/main
   DEFAULT_MINIMAX_MAX_TOKENS,
   MINIMAX_API_BASE_URL,
   resolveMinimaxApiCost,
 } from "./model-definitions.js";
 import { MINIMAX_TEXT_MODEL_CATALOG, MINIMAX_TEXT_MODEL_ORDER } from "./provider-models.js";
 
+<<<<<<< HEAD
 function resolveMinimaxCatalogBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
+=======
+export function resolveMinimaxCatalogBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
+>>>>>>> upstream/main
   const rawHost = env.MINIMAX_API_HOST?.trim();
   if (!rawHost) {
     return MINIMAX_API_BASE_URL;
@@ -34,6 +42,10 @@ function buildMinimaxModel(params: {
   reasoning: boolean;
   input: ModelDefinitionConfig["input"];
   cost: ModelDefinitionConfig["cost"];
+<<<<<<< HEAD
+=======
+  contextWindow: number;
+>>>>>>> upstream/main
 }): ModelDefinitionConfig {
   return {
     id: params.id,
@@ -41,7 +53,11 @@ function buildMinimaxModel(params: {
     reasoning: params.reasoning,
     input: params.input,
     cost: params.cost,
+<<<<<<< HEAD
     contextWindow: DEFAULT_MINIMAX_CONTEXT_WINDOW,
+=======
+    contextWindow: params.contextWindow,
+>>>>>>> upstream/main
     maxTokens: DEFAULT_MINIMAX_MAX_TOKENS,
   };
 }
@@ -50,9 +66,15 @@ function buildMinimaxTextModel(params: {
   id: string;
   name: string;
   reasoning: boolean;
+<<<<<<< HEAD
   cost: ModelDefinitionConfig["cost"];
+=======
+  input: ModelDefinitionConfig["input"];
+  cost: ModelDefinitionConfig["cost"];
+  contextWindow: number;
+>>>>>>> upstream/main
 }): ModelDefinitionConfig {
-  return buildMinimaxModel({ ...params, input: ["text"] });
+  return buildMinimaxModel(params);
 }
 
 function buildMinimaxCatalog(): ModelDefinitionConfig[] {
@@ -62,7 +84,13 @@ function buildMinimaxCatalog(): ModelDefinitionConfig[] {
       id,
       name: model.name,
       reasoning: model.reasoning,
+<<<<<<< HEAD
       cost: resolveMinimaxApiCost(id),
+=======
+      input: [...model.input],
+      cost: resolveMinimaxApiCost(id),
+      contextWindow: model.contextWindow,
+>>>>>>> upstream/main
     });
   });
 }

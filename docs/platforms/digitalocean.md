@@ -1,15 +1,14 @@
 ---
-summary: "OpenClaw on DigitalOcean (simple paid VPS option)"
-read_when:
-  - Setting up OpenClaw on DigitalOcean
-  - Looking for cheap VPS hosting for OpenClaw
-title: "DigitalOcean (Platform)"
+summary: "Redirect to /install/digitalocean"
+title: "DigitalOcean (platform)"
+redirect: /install/digitalocean
 ---
 
-# OpenClaw on DigitalOcean
+This page has moved to [DigitalOcean](/install/digitalocean).
 
-## Goal
+## Related
 
+<<<<<<< HEAD
 Run a persistent OpenClaw Gateway on DigitalOcean for **$6/month** (or $4/mo with reserved pricing).
 
 If you want a $0/month option and don’t mind ARM + provider-specific setup, see the [Oracle Cloud guide](/platforms/oracle).
@@ -264,3 +263,7 @@ free -h
 - [Docker install](/install/docker) — containerized setup
 - [Tailscale](/gateway/tailscale) — secure remote access
 - [Configuration](/gateway/configuration) — full config reference
+=======
+- [Install overview](/install)
+- [VPS hosting](/vps)
+>>>>>>> upstream/main

@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { clearRuntimeConfigSnapshot } from "../../config/config.js";
+=======
+// Session conversation tests cover channel plugin conversation binding and session lookup.
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { clearRuntimeConfigSnapshot, setRuntimeConfigSnapshot } from "../../config/io.js";
+>>>>>>> upstream/main
 import { resetPluginRuntimeStateForTest, setActivePluginRegistry } from "../../plugins/runtime.js";
 import { createTestRegistry } from "../../test-utils/channel-plugins.js";
 import { createSessionConversationTestRegistry } from "../../test-utils/session-conversation-registry.js";
@@ -56,6 +62,18 @@ describe("session conversation routing", () => {
 
   it("does not load bundled session-key fallbacks for inactive channel plugins", () => {
     resetPluginRuntimeStateForTest();
+<<<<<<< HEAD
+=======
+    setRuntimeConfigSnapshot({
+      plugins: {
+        entries: {
+          telegram: {
+            enabled: false,
+          },
+        },
+      },
+    });
+>>>>>>> upstream/main
 
     expect(resolveSessionConversationRef("agent:main:telegram:group:-100123:topic:77")).toEqual({
       channel: "telegram",

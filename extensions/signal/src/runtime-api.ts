@@ -4,7 +4,11 @@
 export type { ChannelMessageActionAdapter } from "openclaw/plugin-sdk/channel-contract";
 export { buildChannelConfigSchema, SignalConfigSchema } from "../config-api.js";
 export { PAIRING_APPROVED_MESSAGE } from "openclaw/plugin-sdk/channel-status";
+<<<<<<< HEAD
 import type { OpenClawConfig as RuntimeOpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+import type { OpenClawConfig as RuntimeOpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 export type { RuntimeOpenClawConfig as OpenClawConfig };
 export type { OpenClawPluginApi, PluginRuntime } from "openclaw/plugin-sdk/core";
 export type { ChannelPlugin } from "openclaw/plugin-sdk/core";
@@ -26,14 +30,22 @@ export { detectBinary } from "openclaw/plugin-sdk/setup-tools";
 export {
   resolveAllowlistProviderRuntimeGroupPolicy,
   resolveDefaultGroupPolicy,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/config-runtime";
+=======
+} from "openclaw/plugin-sdk/runtime-group-policy";
+>>>>>>> upstream/main
 export {
   buildBaseAccountStatusSnapshot,
   buildBaseChannelStatusSummary,
   collectStatusIssuesFromLastError,
   createDefaultChannelRuntimeState,
 } from "openclaw/plugin-sdk/status-helpers";
+<<<<<<< HEAD
 export { normalizeE164 } from "openclaw/plugin-sdk/text-runtime";
+=======
+export { normalizeE164 } from "openclaw/plugin-sdk/text-utility-runtime";
+>>>>>>> upstream/main
 export { looksLikeSignalTargetId, normalizeSignalMessagingTarget } from "./normalize.js";
 export {
   listEnabledSignalAccounts,
@@ -49,7 +61,11 @@ export { removeReactionSignal, sendReactionSignal } from "./send-reactions.js";
 export { sendMessageSignal } from "./send.js";
 export { signalMessageActions } from "./message-actions.js";
 export type { ResolvedSignalAccount } from "./accounts.js";
+<<<<<<< HEAD
 export type SignalAccountConfig = Omit<
   Exclude<NonNullable<RuntimeOpenClawConfig["channels"]>["signal"], undefined>,
   "accounts"
 >;
+=======
+export type { SignalAccountConfig } from "./account-types.js";
+>>>>>>> upstream/main

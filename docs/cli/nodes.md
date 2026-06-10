@@ -1,9 +1,9 @@
 ---
 summary: "CLI reference for `openclaw nodes` (status, pairing, invoke, camera/canvas/screen)"
 read_when:
-  - You’re managing paired nodes (cameras, screen, canvas)
+  - You're managing paired nodes (cameras, screen, canvas)
   - You need to approve requests or invoke node commands
-title: "nodes"
+title: "Nodes"
 ---
 
 # `openclaw nodes`
@@ -29,6 +29,10 @@ openclaw nodes list --last-connected 24h
 openclaw nodes pending
 openclaw nodes approve <requestId>
 openclaw nodes reject <requestId>
+<<<<<<< HEAD
+=======
+openclaw nodes remove --node <id|name|ip>
+>>>>>>> upstream/main
 openclaw nodes rename --node <id|name|ip> --name <displayName>
 openclaw nodes status
 openclaw nodes status --connected
@@ -38,10 +42,17 @@ openclaw nodes status --last-connected 24h
 `nodes list` prints pending/paired tables. Paired rows include the most recent connect age (Last Connect).
 Use `--connected` to only show currently-connected nodes. Use `--last-connected <duration>` to
 filter to nodes that connected within a duration (e.g. `24h`, `7d`).
+Use `nodes remove --node <id|name|ip>` to delete a stale gateway-owned node pairing record.
 
 Approval note:
 
 - `openclaw nodes pending` only needs pairing scope.
+<<<<<<< HEAD
+=======
+- `gateway.nodes.pairing.autoApproveCidrs` can skip the pending step only for
+  explicitly trusted, first-time `role: node` device pairing. It is off by
+  default and does not approve upgrades.
+>>>>>>> upstream/main
 - `openclaw nodes approve <requestId>` inherits extra scope requirements from the
   pending request:
   - commandless request: pairing only
@@ -63,4 +74,13 @@ Invoke flags:
 
 For shell execution on a node, use the `exec` tool with `host=node` instead of `openclaw nodes run`.
 The `nodes` CLI is now capability-focused: direct RPC via `nodes invoke`, plus pairing, camera,
+<<<<<<< HEAD
 screen, location, canvas, and notifications.
+=======
+screen, location, Canvas, and notifications. Canvas commands are implemented by the bundled experimental Canvas plugin; core keeps a compatibility hook so they remain under `openclaw nodes canvas`.
+
+## Related
+
+- [CLI reference](/cli)
+- [Nodes](/nodes)
+>>>>>>> upstream/main

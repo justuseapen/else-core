@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import {
   registerSessionBindingAdapter,
@@ -48,10 +49,26 @@ type IMessageConversationBindingsState = {
   managersByAccountId: Map<string, IMessageConversationBindingManager>;
   bindingsByAccountConversation: Map<string, IMessageConversationBindingRecord>;
 };
+=======
+// Imessage plugin module implements conversation bindings behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import {
+  createAccountScopedConversationBindingManager,
+  resetAccountScopedConversationBindingsForTests,
+  type AccountScopedConversationBindingManager,
+  type BindingTargetKind,
+} from "openclaw/plugin-sdk/thread-bindings-runtime";
+
+type IMessageBindingTargetKind = "subagent" | "acp";
+
+type IMessageConversationBindingManager =
+  AccountScopedConversationBindingManager<IMessageBindingTargetKind>;
+>>>>>>> upstream/main
 
 const IMESSAGE_CONVERSATION_BINDINGS_STATE_KEY = Symbol.for(
   "openclaw.imessageConversationBindingsState",
 );
+<<<<<<< HEAD
 let state: IMessageConversationBindingsState | undefined;
 
 function getState(): IMessageConversationBindingsState {
@@ -71,6 +88,8 @@ function getState(): IMessageConversationBindingsState {
 function resolveBindingKey(params: { accountId: string; conversationId: string }): string {
   return `${params.accountId}:${params.conversationId}`;
 }
+=======
+>>>>>>> upstream/main
 
 function toSessionBindingTargetKind(raw: IMessageBindingTargetKind): BindingTargetKind {
   return raw === "subagent" ? "subagent" : "session";
@@ -80,6 +99,7 @@ function toIMessageTargetKind(raw: BindingTargetKind): IMessageBindingTargetKind
   return raw === "subagent" ? "subagent" : "acp";
 }
 
+<<<<<<< HEAD
 function toSessionBindingRecord(
   record: IMessageConversationBindingRecord,
   defaults: { idleTimeoutMs: number; maxAgeMs: number },
@@ -117,10 +137,13 @@ function toSessionBindingRecord(
   };
 }
 
+=======
+>>>>>>> upstream/main
 export function createIMessageConversationBindingManager(params: {
   accountId?: string;
   cfg: OpenClawConfig;
 }): IMessageConversationBindingManager {
+<<<<<<< HEAD
   const accountId = normalizeAccountId(params.accountId);
   const existing = getState().managersByAccountId.get(accountId);
   if (existing) {
@@ -296,5 +319,22 @@ export const __testing = {
     }
     getState().managersByAccountId.clear();
     getState().bindingsByAccountConversation.clear();
+=======
+  return createAccountScopedConversationBindingManager({
+    channel: "imessage",
+    cfg: params.cfg,
+    accountId: params.accountId,
+    stateKey: IMESSAGE_CONVERSATION_BINDINGS_STATE_KEY,
+    toStoredTargetKind: toIMessageTargetKind,
+    toSessionBindingTargetKind,
+  });
+}
+
+export const testing = {
+  resetIMessageConversationBindingsForTests() {
+    resetAccountScopedConversationBindingsForTests({
+      stateKey: IMESSAGE_CONVERSATION_BINDINGS_STATE_KEY,
+    });
+>>>>>>> upstream/main
   },
 };

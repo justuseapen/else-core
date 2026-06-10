@@ -1,11 +1,17 @@
+// Matrix helper module supports account config behavior.
 import { normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
 import {
   listConfiguredAccountIds,
   resolveMergedAccountConfig,
   resolveNormalizedAccountEntry,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/account-resolution";
 import { hasConfiguredSecretInput } from "openclaw/plugin-sdk/secret-input";
+=======
+} from "openclaw/plugin-sdk/account-resolution-runtime";
+import { hasConfiguredSecretInput } from "openclaw/plugin-sdk/secret-input-runtime";
+>>>>>>> upstream/main
 import type { CoreConfig, MatrixAccountConfig, MatrixConfig } from "../types.js";
 
 type MatrixRoomEntries = Record<string, NonNullable<MatrixConfig["groups"]>[string]>;
@@ -52,7 +58,11 @@ function mergeMatrixRoomEntries(
     return undefined;
   }
   const merged: MatrixRoomEntries = {
+<<<<<<< HEAD
     ...(inherited ?? {}),
+=======
+    ...inherited,
+>>>>>>> upstream/main
   };
   for (const [key, value] of Object.entries(accountEntries ?? {})) {
     const inheritedValue = merged[key];
@@ -121,7 +131,11 @@ export function resolveMatrixAccountConfig(params: {
       | undefined,
     accountId,
     normalizeAccountId,
+<<<<<<< HEAD
     nestedObjectKeys: ["dm", "actions", "execApprovals"],
+=======
+    nestedObjectKeys: ["dm", "actions", "execApprovals", "botLoopProtection"],
+>>>>>>> upstream/main
   });
   const accountConfig = findMatrixAccountConfig(params.cfg, accountId);
   const groups = mergeMatrixRoomEntries(
@@ -148,3 +162,31 @@ export function resolveMatrixAccountConfig(params: {
     ...(rooms ? { rooms } : {}),
   };
 }
+<<<<<<< HEAD
+=======
+
+export function resolveMatrixAccountAllowlistConfig(params: {
+  cfg: CoreConfig;
+  accountId?: string | null;
+}): {
+  dmAllowFrom?: NonNullable<MatrixConfig["dm"]>["allowFrom"];
+  groupAllowFrom?: MatrixConfig["groupAllowFrom"];
+} {
+  const accountId = normalizeAccountId(params.accountId);
+  const base = resolveMatrixBaseConfig(params.cfg);
+  const accountConfig = findMatrixAccountConfig(params.cfg, accountId);
+  const accountDm = accountConfig?.dm;
+
+  let dmAllowFrom = base.dm?.allowFrom;
+  if (accountDm && Object.hasOwn(accountDm, "allowFrom")) {
+    dmAllowFrom = accountDm.allowFrom;
+  }
+
+  let groupAllowFrom = base.groupAllowFrom;
+  if (accountConfig && Object.hasOwn(accountConfig, "groupAllowFrom")) {
+    groupAllowFrom = accountConfig.groupAllowFrom;
+  }
+
+  return { dmAllowFrom, groupAllowFrom };
+}
+>>>>>>> upstream/main

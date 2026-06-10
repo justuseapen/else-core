@@ -1,3 +1,4 @@
+// Minimax provider module implements model/runtime integration.
 import {
   describeImageWithModel,
   describeImagesWithModel,
@@ -8,6 +9,10 @@ export const minimaxMediaUnderstandingProvider: MediaUnderstandingProvider = {
   id: "minimax",
   capabilities: ["image"],
   defaultModels: { image: "MiniMax-VL-01" },
+<<<<<<< HEAD
+=======
+  documentModels: { pdf: { textExtraction: "MiniMax-M2.7", image: false } },
+>>>>>>> upstream/main
   autoPriority: { image: 40 },
   describeImage: describeImageWithModel,
   describeImages: describeImagesWithModel,
@@ -17,6 +22,10 @@ export const minimaxPortalMediaUnderstandingProvider: MediaUnderstandingProvider
   id: "minimax-portal",
   capabilities: ["image"],
   defaultModels: { image: "MiniMax-VL-01" },
+<<<<<<< HEAD
+=======
+  documentModels: { pdf: { textExtraction: "MiniMax-M2.7", image: false } },
+>>>>>>> upstream/main
   autoPriority: { image: 50 },
   describeImage: describeImageWithModel,
   describeImages: describeImagesWithModel,

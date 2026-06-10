@@ -1,15 +1,31 @@
+<<<<<<< HEAD
 import type {
   QaBusConversation,
   QaBusEvent,
+=======
+// Qa Channel plugin module implements bus client behavior.
+import http from "node:http";
+import https from "node:https";
+import { fetchWithSsrFGuard } from "openclaw/plugin-sdk/ssrf-runtime";
+import type {
+>>>>>>> upstream/main
   QaBusInboundMessageInput,
   QaBusMessage,
   QaBusPollResult,
   QaBusSearchMessagesInput,
   QaBusStateSnapshot,
   QaBusThread,
+<<<<<<< HEAD
 } from "./protocol.js";
 
 export type {
+=======
+  QaBusToolCall,
+} from "./protocol.js";
+
+export type {
+  QaBusAttachment,
+>>>>>>> upstream/main
   QaBusConversation,
   QaBusConversationKind,
   QaBusCreateThreadInput,
@@ -26,17 +42,30 @@ export type {
   QaBusSearchMessagesInput,
   QaBusStateSnapshot,
   QaBusThread,
+<<<<<<< HEAD
+=======
+  QaBusToolCall,
+>>>>>>> upstream/main
   QaBusWaitForInput,
 } from "./protocol.js";
 
 type JsonResult<T> = Promise<T>;
 
+<<<<<<< HEAD
+=======
+function buildQaBusUrl(baseUrl: string, path: string): URL {
+  const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  return new URL(path.replace(/^\/+/, ""), normalizedBaseUrl);
+}
+
+>>>>>>> upstream/main
 async function postJson<T>(
   baseUrl: string,
   path: string,
   body: unknown,
   signal?: AbortSignal,
 ): JsonResult<T> {
+<<<<<<< HEAD
   const response = await fetch(`${baseUrl}${path}`, {
     method: "POST",
     headers: {
@@ -52,6 +81,71 @@ async function postJson<T>(
     throw new Error(error || `qa-bus request failed: ${response.status}`);
   }
   return payload as T;
+=======
+  const url = buildQaBusUrl(baseUrl, path);
+  const payload = JSON.stringify(body);
+  const client = url.protocol === "https:" ? https : http;
+
+  return await new Promise<T>((resolve, reject) => {
+    const abortError = () =>
+      Object.assign(new Error("The operation was aborted"), { name: "AbortError" });
+    if (signal?.aborted) {
+      reject(abortError());
+      return;
+    }
+
+    const request = client.request(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "content-length": Buffer.byteLength(payload),
+          connection: "close",
+        },
+      },
+      (response) => {
+        const chunks: Buffer[] = [];
+        response.on("data", (chunk) => {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        });
+        response.on("end", () => {
+          const text = Buffer.concat(chunks).toString("utf8");
+          let parsed: T | { error?: string };
+          try {
+            parsed = text ? (JSON.parse(text) as T | { error?: string }) : ({} as T);
+          } catch (error) {
+            reject(toLintErrorObject(error, "Non-Error rejection"));
+            return;
+          }
+          if ((response.statusCode ?? 500) < 200 || (response.statusCode ?? 500) >= 300) {
+            const error =
+              typeof parsed === "object" && parsed && "error" in parsed ? parsed.error : undefined;
+            reject(new Error(error || `qa-bus request failed: ${response.statusCode ?? 500}`));
+            return;
+          }
+          resolve(parsed as T);
+        });
+        response.on("error", reject);
+      },
+    );
+
+    const onAbort = () => {
+      const error = abortError();
+      request.destroy(error);
+      reject(error);
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    request.on("error", (error) => {
+      signal?.removeEventListener("abort", onAbort);
+      reject(error);
+    });
+    request.on("close", () => {
+      signal?.removeEventListener("abort", onAbort);
+    });
+    request.end(payload);
+  });
+>>>>>>> upstream/main
 }
 
 export function normalizeQaTarget(raw: string): string | undefined {
@@ -63,7 +157,11 @@ export function normalizeQaTarget(raw: string): string | undefined {
 }
 
 export function parseQaTarget(raw: string): {
+<<<<<<< HEAD
   chatType: "direct" | "channel";
+=======
+  chatType: "direct" | "channel" | "group";
+>>>>>>> upstream/main
   conversationId: string;
   threadId?: string;
 } {
@@ -89,6 +187,15 @@ export function parseQaTarget(raw: string): {
       conversationId: normalized.slice("channel:".length),
     };
   }
+<<<<<<< HEAD
+=======
+  if (normalized.startsWith("group:")) {
+    return {
+      chatType: "group",
+      conversationId: normalized.slice("group:".length),
+    };
+  }
+>>>>>>> upstream/main
   if (normalized.startsWith("dm:")) {
     return {
       chatType: "direct",
@@ -102,14 +209,22 @@ export function parseQaTarget(raw: string): {
 }
 
 export function buildQaTarget(params: {
+<<<<<<< HEAD
   chatType: "direct" | "channel";
+=======
+  chatType: "direct" | "channel" | "group";
+>>>>>>> upstream/main
   conversationId: string;
   threadId?: string | null;
 }) {
   if (params.threadId) {
     return `thread:${params.conversationId}/${params.threadId}`;
   }
+<<<<<<< HEAD
   return `${params.chatType === "direct" ? "dm" : "channel"}:${params.conversationId}`;
+=======
+  return `${params.chatType === "direct" ? "dm" : params.chatType}:${params.conversationId}`;
+>>>>>>> upstream/main
 }
 
 export async function pollQaBus(params: {
@@ -140,6 +255,11 @@ export async function sendQaBusMessage(params: {
   senderName?: string;
   threadId?: string;
   replyToId?: string;
+<<<<<<< HEAD
+=======
+  attachments?: import("./protocol.js").QaBusAttachment[];
+  toolCalls?: QaBusToolCall[];
+>>>>>>> upstream/main
 }) {
   return await postJson<{ message: QaBusMessage }>(params.baseUrl, "/v1/outbound/message", params);
 }
@@ -216,9 +336,39 @@ export async function injectQaBusInboundMessage(params: {
 }
 
 export async function getQaBusState(baseUrl: string): Promise<QaBusStateSnapshot> {
+<<<<<<< HEAD
   const response = await fetch(`${baseUrl}/v1/state`);
   if (!response.ok) {
     throw new Error(`qa-bus request failed: ${response.status}`);
   }
   return (await response.json()) as QaBusStateSnapshot;
+=======
+  const { response, release } = await fetchWithSsrFGuard({
+    url: buildQaBusUrl(baseUrl, "/v1/state").toString(),
+    policy: { allowPrivateNetwork: true },
+    auditContext: "qa-channel.bus-state",
+  });
+  try {
+    if (!response.ok) {
+      throw new Error(`qa-bus request failed: ${response.status}`);
+    }
+    return (await response.json()) as QaBusStateSnapshot;
+  } finally {
+    await release();
+  }
+}
+
+function toLintErrorObject(value: unknown, fallbackMessage: string): Error {
+  if (value instanceof Error) {
+    return value;
+  }
+  if (typeof value === "string") {
+    return new Error(value);
+  }
+  const error = new Error(fallbackMessage, { cause: value });
+  if ((typeof value === "object" && value !== null) || typeof value === "function") {
+    Object.assign(error, value);
+  }
+  return error;
+>>>>>>> upstream/main
 }

@@ -1,13 +1,29 @@
+<<<<<<< HEAD
 import { Type } from "@sinclair/typebox";
 import { getRuntimeConfigSnapshot } from "openclaw/plugin-sdk/config-runtime";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/plugin-entry";
 import { jsonResult, readStringParam } from "openclaw/plugin-sdk/provider-web-search";
+=======
+// Xai plugin module implements code execution behavior.
+import { jsonResult, readStringParam } from "openclaw/plugin-sdk/provider-web-search";
+import { getRuntimeConfigSnapshot } from "openclaw/plugin-sdk/runtime-config-snapshot";
+import {
+  buildMissingCodeExecutionApiKeyPayload,
+  createCodeExecutionToolDefinition,
+} from "./code-execution-tool-shared.js";
+import {
+  readCodeExecutionConfigRecord,
+  readPluginCodeExecutionConfig,
+  resolveCodeExecutionEnabled,
+} from "./src/code-execution-config.js";
+>>>>>>> upstream/main
 import {
   buildXaiCodeExecutionPayload,
   requestXaiCodeExecution,
   resolveXaiCodeExecutionMaxTurns,
   resolveXaiCodeExecutionModel,
 } from "./src/code-execution-shared.js";
+<<<<<<< HEAD
 import { isXaiToolEnabled, resolveXaiToolApiKey } from "./src/tool-auth-shared.js";
 
 type XaiPluginConfig = NonNullable<
@@ -66,6 +82,14 @@ function resolveCodeExecutionEnabled(params: {
 export function createCodeExecutionTool(options?: {
   config?: OpenClawConfig;
   runtimeConfig?: OpenClawConfig | null;
+=======
+import { resolveXaiToolApiKeyWithAuth, type XaiToolAuthContext } from "./src/tool-auth-shared.js";
+
+export function createCodeExecutionTool(options?: {
+  config?: unknown;
+  runtimeConfig?: Record<string, unknown> | null;
+  auth?: XaiToolAuthContext;
+>>>>>>> upstream/main
 }) {
   const runtimeConfig = options?.runtimeConfig ?? getRuntimeConfigSnapshot();
   const codeExecutionConfig =
@@ -76,11 +100,16 @@ export function createCodeExecutionTool(options?: {
       sourceConfig: options?.config,
       runtimeConfig: runtimeConfig ?? undefined,
       config: codeExecutionConfig,
+<<<<<<< HEAD
+=======
+      auth: options?.auth,
+>>>>>>> upstream/main
     })
   ) {
     return null;
   }
 
+<<<<<<< HEAD
   return {
     label: "Code Execution",
     name: "code_execution",
@@ -104,6 +133,17 @@ export function createCodeExecutionTool(options?: {
             "code_execution needs an xAI API key. Set XAI_API_KEY in the Gateway environment, or configure plugins.entries.xai.config.webSearch.apiKey.",
           docs: "https://docs.openclaw.ai/tools/code-execution",
         });
+=======
+  return createCodeExecutionToolDefinition(
+    async (_toolCallId: string, args: Record<string, unknown>) => {
+      const apiKey = await resolveXaiToolApiKeyWithAuth({
+        runtimeConfig: (runtimeConfig ?? undefined) as never,
+        sourceConfig: options?.config as never,
+        auth: options?.auth,
+      });
+      if (!apiKey) {
+        return jsonResult(buildMissingCodeExecutionApiKeyPayload());
+>>>>>>> upstream/main
       }
 
       const task = readStringParam(args, "task", { required: true });
@@ -135,5 +175,9 @@ export function createCodeExecutionTool(options?: {
         }),
       );
     },
+<<<<<<< HEAD
   };
+=======
+  );
+>>>>>>> upstream/main
 }

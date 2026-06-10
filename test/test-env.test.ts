@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { importFreshModule } from "./helpers/import-fresh.js";
+=======
+// Test environment tests validate shared env setup helpers.
+import fs from "node:fs";
+import path from "node:path";
+import { importFreshModule } from "openclaw/plugin-sdk/test-fixtures";
+import { afterEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import { cleanupTempDirs, makeTempDir } from "./helpers/temp-dir.js";
 import { installTestEnv } from "./test-env.js";
 
@@ -34,6 +42,35 @@ function createTempHome(): string {
   return makeTempDir(tempDirs, "openclaw-test-env-real-home-");
 }
 
+<<<<<<< HEAD
+=======
+function requireRecord(
+  value: Record<string, unknown> | undefined,
+  label: string,
+): Record<string, unknown> {
+  if (!value) {
+    throw new Error(`expected copied ${label} config`);
+  }
+  return value;
+}
+
+function requireTelegramStreaming(
+  value:
+    | {
+        mode?: string;
+        chunkMode?: string;
+        block?: { enabled?: boolean };
+        preview?: { chunk?: { minChars?: number } };
+      }
+    | undefined,
+) {
+  if (!value) {
+    throw new Error("expected copied telegram streaming config");
+  }
+  return value;
+}
+
+>>>>>>> upstream/main
 afterEach(() => {
   while (cleanupFns.length > 0) {
     cleanupFns.pop()?.();
@@ -69,14 +106,51 @@ describe("installTestEnv", () => {
             custom: { baseUrl: "https://example.test/v1" },
           },
         },
+<<<<<<< HEAD
+=======
+        channels: {
+          telegram: {
+            streaming: {
+              mode: "block",
+              chunkMode: "newline",
+              block: {
+                enabled: true,
+              },
+              preview: {
+                chunk: {
+                  minChars: 120,
+                },
+              },
+            },
+          },
+        },
+>>>>>>> upstream/main
       }`,
     );
     writeFile(path.join(realHome, ".openclaw", "credentials", "token.txt"), "secret\n");
     writeFile(
+<<<<<<< HEAD
+=======
+      path.join(realHome, ".openclaw", "external-plugins", "glueclaw", "openclaw.plugin.json"),
+      '{"id":"glueclaw"}\n',
+    );
+    writeFile(
+>>>>>>> upstream/main
       path.join(realHome, ".openclaw", "agents", "main", "agent", "auth-profiles.json"),
       JSON.stringify({ version: 1, profiles: { default: { provider: "openai" } } }, null, 2),
     );
     writeFile(path.join(realHome, ".claude", ".credentials.json"), '{"accessToken":"token"}\n');
+<<<<<<< HEAD
+=======
+    writeFile(path.join(realHome, ".claude", "projects", "old-session.jsonl"), "session\n");
+    fs.mkdirSync(path.join(realHome, ".claude", "settings.local.json"), { recursive: true });
+    writeFile(path.join(realHome, ".codex", "auth.json"), '{"OPENAI_API_KEY":"token"}\n');
+    writeFile(path.join(realHome, ".codex", "config.toml"), 'model = "gpt-5.4"\n');
+    writeFile(
+      path.join(realHome, ".codex", "sessions", "2026", "02", "26", "rollout.jsonl"),
+      "session\n",
+    );
+>>>>>>> upstream/main
 
     process.env.HOME = realHome;
     process.env.USERPROFILE = realHome;
@@ -101,22 +175,78 @@ describe("installTestEnv", () => {
         list?: Array<Record<string, unknown>>;
       };
       models?: { providers?: Record<string, unknown> };
+<<<<<<< HEAD
     };
     expect(copiedConfig.models?.providers?.custom).toEqual({ baseUrl: "https://example.test/v1" });
     expect(copiedConfig.agents?.defaults?.workspace).toBeUndefined();
     expect(copiedConfig.agents?.defaults?.agentDir).toBeUndefined();
     expect(copiedConfig.agents?.list?.[0]?.workspace).toBeUndefined();
     expect(copiedConfig.agents?.list?.[0]?.agentDir).toBeUndefined();
+=======
+      channels?: {
+        telegram?: {
+          streaming?: {
+            mode?: string;
+            chunkMode?: string;
+            block?: { enabled?: boolean };
+            preview?: { chunk?: { minChars?: number } };
+          };
+        };
+      };
+    };
+    const providers = copiedConfig.models?.providers;
+    requireRecord(providers, "model providers");
+    expect(providers.custom).toEqual({ baseUrl: "https://example.test/v1" });
+
+    const agentDefaults = requireRecord(copiedConfig.agents?.defaults, "agent defaults");
+    const agentConfig = requireRecord(copiedConfig.agents?.list?.[0], "agent");
+    expect(agentDefaults.workspace).toBeUndefined();
+    expect(agentDefaults.agentDir).toBeUndefined();
+    expect(agentConfig.workspace).toBeUndefined();
+    expect(agentConfig.agentDir).toBeUndefined();
+
+    const telegramStreaming = requireTelegramStreaming(copiedConfig.channels?.telegram?.streaming);
+    expect(telegramStreaming).toEqual({
+      mode: "block",
+      chunkMode: "newline",
+      block: { enabled: true },
+      preview: { chunk: { minChars: 120 } },
+    });
+>>>>>>> upstream/main
 
     expect(
       fs.existsSync(path.join(testEnv.tempHome, ".openclaw", "credentials", "token.txt")),
     ).toBe(true);
     expect(
       fs.existsSync(
+<<<<<<< HEAD
+=======
+        path.join(
+          testEnv.tempHome,
+          ".openclaw",
+          "external-plugins",
+          "glueclaw",
+          "openclaw.plugin.json",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      fs.existsSync(
+>>>>>>> upstream/main
         path.join(testEnv.tempHome, ".openclaw", "agents", "main", "agent", "auth-profiles.json"),
       ),
     ).toBe(true);
     expect(fs.existsSync(path.join(testEnv.tempHome, ".claude", ".credentials.json"))).toBe(true);
+<<<<<<< HEAD
+=======
+    expect(fs.existsSync(path.join(testEnv.tempHome, ".claude", "projects"))).toBe(false);
+    expect(fs.existsSync(path.join(testEnv.tempHome, ".claude", "settings.local.json"))).toBe(
+      false,
+    );
+    expect(fs.existsSync(path.join(testEnv.tempHome, ".codex", "auth.json"))).toBe(true);
+    expect(fs.existsSync(path.join(testEnv.tempHome, ".codex", "config.toml"))).toBe(true);
+    expect(fs.existsSync(path.join(testEnv.tempHome, ".codex", "sessions"))).toBe(false);
+>>>>>>> upstream/main
   });
 
   it("allows explicit live runs against the real HOME", () => {

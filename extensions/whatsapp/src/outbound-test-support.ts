@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { expect, type MockInstance } from "vitest";
+=======
+// Whatsapp plugin module implements outbound test support behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 
 export function createWhatsAppPollFixture() {
   const cfg = { marker: "resolved-cfg" } as OpenClawConfig;
@@ -15,6 +20,7 @@ export function createWhatsAppPollFixture() {
     accountId: "work",
   };
 }
+<<<<<<< HEAD
 
 export function expectWhatsAppPollSent(
   sendPollWhatsApp: MockInstance,
@@ -31,3 +37,5 @@ export function expectWhatsAppPollSent(
     cfg: params.cfg,
   });
 }
+=======
+>>>>>>> upstream/main

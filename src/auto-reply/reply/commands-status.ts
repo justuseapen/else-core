@@ -1,21 +1,6 @@
-import {
-  resolveAgentConfig,
-  resolveAgentDir,
-  resolveDefaultAgentId,
-  resolveSessionAgentId,
-} from "../../agents/agent-scope.js";
-import { resolveFastModeState } from "../../agents/fast-mode.js";
-import { resolveModelAuthLabel } from "../../agents/model-auth-label.js";
-import { listControlledSubagentRuns } from "../../agents/subagent-control.js";
-import { countPendingDescendantRuns } from "../../agents/subagent-registry.js";
-import {
-  resolveInternalSessionKey,
-  resolveMainSessionAlias,
-} from "../../agents/tools/sessions-helpers.js";
-import type { OpenClawConfig } from "../../config/config.js";
-import { toAgentModelListLike } from "../../config/model-input.js";
-import type { SessionEntry, SessionScope } from "../../config/sessions.js";
+/** Builds /status replies using the command's authorized channel context. */
 import { logVerbose } from "../../globals.js";
+<<<<<<< HEAD
 import {
   formatUsageWindowSummary,
   loadProviderUsageSummary,
@@ -35,9 +20,14 @@ import { normalizeGroupActivation } from "../group-activation.js";
 import { resolveSelectedAndActiveModel } from "../model-runtime.js";
 import { buildStatusMessage } from "../status.js";
 import type { ElevatedLevel, ReasoningLevel, ThinkLevel, VerboseLevel } from "../thinking.js";
+=======
+import { buildStatusText } from "../../status/status-text.js";
+import type { BuildStatusTextParams } from "../../status/status-text.types.js";
+>>>>>>> upstream/main
 import type { ReplyPayload } from "../types.js";
 import { buildSubagentsStatusLine } from "./commands-status-subagents.js";
 import type { CommandContext } from "./commands-types.js";
+<<<<<<< HEAD
 import { getFollowupQueueDepth, resolveQueueSettings } from "./queue.js";
 
 // Some usage endpoints only work with CLI/session OAuth tokens, not API keys.
@@ -105,11 +95,24 @@ export async function buildStatusReply(params: {
   defaultGroupActivation: () => "always" | "mention";
   mediaDecisions?: MediaUnderstandingDecision[];
 }): Promise<ReplyPayload | undefined> {
+=======
+export { buildStatusText } from "../../status/status-text.js";
+
+type BuildStatusReplyParams = Omit<BuildStatusTextParams, "statusChannel"> & {
+  command: CommandContext;
+};
+
+/** Builds a status reply or suppresses unauthorized status requests. */
+export async function buildStatusReply(
+  params: BuildStatusReplyParams,
+): Promise<ReplyPayload | undefined> {
+>>>>>>> upstream/main
   const { command } = params;
   if (!command.isAuthorizedSender) {
     logVerbose(`Ignoring /status from unauthorized sender: ${command.senderId || "<unknown>"}`);
     return undefined;
   }
+<<<<<<< HEAD
 
   return {
     text: await buildStatusText({
@@ -334,4 +337,13 @@ export async function buildStatusText(params: {
   });
 
   return statusText;
+=======
+
+  return {
+    text: await buildStatusText({
+      ...params,
+      statusChannel: command.channel,
+    }),
+  };
+>>>>>>> upstream/main
 }

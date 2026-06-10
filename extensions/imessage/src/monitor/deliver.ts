@@ -1,15 +1,26 @@
+<<<<<<< HEAD
+=======
+// Imessage plugin module implements deliver behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import {
   deliverTextOrMediaReply,
   resolveSendableOutboundReplyParts,
 } from "openclaw/plugin-sdk/reply-payload";
 import type { ReplyPayload } from "openclaw/plugin-sdk/reply-runtime";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
+<<<<<<< HEAD
 import type { createIMessageRpcClient } from "../client.js";
+=======
+>>>>>>> upstream/main
 import { sendMessageIMessage } from "../send.js";
 import {
   chunkTextWithMode,
   convertMarkdownTables,
+<<<<<<< HEAD
   loadConfig,
+=======
+>>>>>>> upstream/main
   resolveChunkMode,
   resolveMarkdownTableMode,
 } from "./deliver.runtime.js";
@@ -17,19 +28,18 @@ import type { SentMessageCache } from "./echo-cache.js";
 import { sanitizeOutboundText } from "./sanitize-outbound.js";
 
 export async function deliverReplies(params: {
+  cfg: OpenClawConfig;
   replies: ReplyPayload[];
   target: string;
-  client: Awaited<ReturnType<typeof createIMessageRpcClient>>;
   accountId?: string;
   runtime: RuntimeEnv;
   maxBytes: number;
   textLimit: number;
   sentMessageCache?: Pick<SentMessageCache, "remember">;
 }) {
-  const { replies, target, client, runtime, maxBytes, textLimit, accountId, sentMessageCache } =
-    params;
+  const { replies, target, runtime, maxBytes, textLimit, accountId, sentMessageCache } = params;
   const scope = `${accountId ?? ""}:${target}`;
-  const cfg = loadConfig();
+  const { cfg } = params;
   const tableMode = resolveMarkdownTableMode({
     cfg,
     channel: "imessage",
@@ -47,7 +57,9 @@ export async function deliverReplies(params: {
       chunkText: (value) => chunkTextWithMode(value, textLimit, chunkMode),
       sendText: async (chunk) => {
         const sent = await sendMessageIMessage(target, chunk, {
+          config: params.cfg,
           maxBytes,
+<<<<<<< HEAD
           client,
           accountId,
           replyToId: payload.replyToId,
@@ -63,11 +75,30 @@ export async function deliverReplies(params: {
           mediaUrl,
           maxBytes,
           client,
+=======
+>>>>>>> upstream/main
           accountId,
           replyToId: payload.replyToId,
         });
         sentMessageCache?.remember(scope, {
+<<<<<<< HEAD
           text: sent.sentText || undefined,
+=======
+          text: sent.echoText ?? sent.sentText,
+          messageId: sent.messageId,
+        });
+      },
+      sendMedia: async ({ mediaUrl, caption }) => {
+        const sent = await sendMessageIMessage(target, caption ?? "", {
+          config: params.cfg,
+          mediaUrl,
+          maxBytes,
+          accountId,
+          replyToId: payload.replyToId,
+        });
+        sentMessageCache?.remember(scope, {
+          text: sent.echoText ?? (sent.sentText || undefined),
+>>>>>>> upstream/main
           messageId: sent.messageId,
         });
       },
@@ -76,4 +107,20 @@ export async function deliverReplies(params: {
       runtime.log?.(`imessage: delivered reply to ${target}`);
     }
   }
+}
+
+export function createIMessageEchoCachingSend(params: {
+  accountId?: string;
+  sentMessageCache?: Pick<SentMessageCache, "remember">;
+}): typeof sendMessageIMessage {
+  return async (target, text, opts) => {
+    const sanitizedText = sanitizeOutboundText(text);
+    const sent = await sendMessageIMessage(target, sanitizedText, opts);
+    const scope = `${params.accountId ?? opts.accountId ?? ""}:${target}`;
+    params.sentMessageCache?.remember(scope, {
+      text: sent.echoText ?? (sent.sentText || undefined),
+      messageId: sent.messageId,
+    });
+    return sent;
+  };
 }

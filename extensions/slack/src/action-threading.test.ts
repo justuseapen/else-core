@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Slack tests cover action threading plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { resolveSlackAutoThreadId } from "./action-threading.js";
 
@@ -6,6 +10,10 @@ type SlackThreadingToolContext = {
   currentThreadTs?: string;
   replyToMode?: "off" | "first" | "all" | "batched";
   hasRepliedRef?: { value: boolean };
+<<<<<<< HEAD
+=======
+  sameChannelThreadRequired?: boolean;
+>>>>>>> upstream/main
 };
 
 function createToolContext(
@@ -41,6 +49,24 @@ describe("resolveSlackAutoThreadId", () => {
     ).toBeUndefined();
   });
 
+<<<<<<< HEAD
+=======
+  it("threads first matching prefixed channel target with bare current channel", () => {
+    const hasRepliedRef = { value: false };
+
+    expect(
+      resolveSlackAutoThreadId({
+        to: "channel:C123",
+        toolContext: createToolContext({
+          replyToMode: "first",
+          hasRepliedRef,
+        }),
+      }),
+    ).toBe("thread-1");
+    expect(hasRepliedRef.value).toBe(false);
+  });
+
+>>>>>>> upstream/main
   it("skips auto-threading when reply mode or thread context blocks it", () => {
     expect(
       resolveSlackAutoThreadId({
@@ -64,4 +90,19 @@ describe("resolveSlackAutoThreadId", () => {
       }),
     ).toBeUndefined();
   });
+<<<<<<< HEAD
+=======
+
+  it("fails closed for same-channel threaded replies when the thread timestamp is missing", () => {
+    expect(() =>
+      resolveSlackAutoThreadId({
+        to: "C123",
+        toolContext: createToolContext({
+          currentThreadTs: undefined,
+          sameChannelThreadRequired: true,
+        }),
+      }),
+    ).toThrow("Slack thread context is required");
+  });
+>>>>>>> upstream/main
 });

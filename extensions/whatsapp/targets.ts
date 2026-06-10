@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Whatsapp plugin module implements targets behavior.
+>>>>>>> upstream/main
 export {
   isWhatsAppGroupJid,
   isWhatsAppUserTarget,

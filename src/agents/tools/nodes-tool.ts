@@ -1,13 +1,37 @@
+/**
+ * nodes built-in tool.
+ *
+ * Manages node pairing, notifications, device state, media capture, and approved command invocation.
+ */
 import crypto from "node:crypto";
+<<<<<<< HEAD
 import { Type } from "@sinclair/typebox";
 import type { OpenClawConfig } from "../../config/config.js";
 import type { OperatorScope } from "../../gateway/method-scopes.js";
+=======
+import { Type } from "typebox";
+import { readConnectPairingRequiredMessage } from "../../../packages/gateway-protocol/src/connect-error-details.js";
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
+import type { OperatorScope } from "../../gateway/method-scopes.js";
+import { formatErrorMessage } from "../../infra/errors.js";
+>>>>>>> upstream/main
 import { resolveNodePairApprovalScopes } from "../../infra/node-pairing-authz.js";
 import type { GatewayMessageChannel } from "../../utils/message-channel.js";
 import { resolveSessionAgentId } from "../agent-scope.js";
 import { resolveImageSanitizationLimits } from "../image-sanitization.js";
+<<<<<<< HEAD
 import { optionalStringEnum, stringEnum } from "../schema/typebox.js";
+=======
+import {
+  optionalFiniteNumberSchema,
+  optionalNonNegativeIntegerSchema,
+  optionalPositiveIntegerSchema,
+  optionalStringEnum,
+  stringEnum,
+} from "../schema/typebox.js";
+>>>>>>> upstream/main
 import { type AnyAgentTool, jsonResult, readStringParam } from "./common.js";
+import { gatewayCallOptionSchemaProperties } from "./gateway-schema.js";
 import { callGatewayTool, readGatewayCallOptions } from "./gateway.js";
 import { executeNodeCommandAction, type NodeCommandAction } from "./nodes-tool-commands.js";
 import { executeNodeMediaAction, MEDIA_INVOKE_ACTIONS } from "./nodes-tool-media.js";
@@ -44,6 +68,7 @@ type GatewayCallOptions = ReturnType<typeof readGatewayCallOptions>;
 
 function resolveApproveScopes(commands: unknown): OperatorScope[] {
   return resolveNodePairApprovalScopes(commands) as OperatorScope[];
+<<<<<<< HEAD
 }
 
 async function resolveNodePairApproveScopes(
@@ -69,28 +94,39 @@ async function resolveNodePairApproveScopes(
     }
   }
   return resolveApproveScopes(match?.commands);
+=======
+>>>>>>> upstream/main
 }
 
-function isPairingRequiredMessage(message: string): boolean {
-  const lower = message.toLowerCase();
-  return lower.includes("pairing required") || lower.includes("not_paired");
-}
-
-function extractPairingRequestId(message: string): string | null {
-  const match = message.match(/\(requestId:\s*([^)]+)\)/i);
-  if (!match) {
-    return null;
+async function resolveNodePairApproveScopes(
+  gatewayOpts: GatewayCallOptions,
+  requestId: string,
+): Promise<OperatorScope[]> {
+  const pairing: {
+    pending?: Array<{
+      requestId?: string;
+      commands?: unknown;
+      requiredApproveScopes?: unknown;
+    }>;
+  } = await callGatewayTool("node.pair.list", gatewayOpts, {}, { scopes: ["operator.pairing"] });
+  const pending = Array.isArray(pairing?.pending) ? pairing.pending : [];
+  const match = pending.find((entry) => entry?.requestId === requestId);
+  if (Array.isArray(match?.requiredApproveScopes)) {
+    const scopes = match.requiredApproveScopes.filter(
+      (scope): scope is OperatorScope =>
+        scope === "operator.pairing" || scope === "operator.write" || scope === "operator.admin",
+    );
+    if (scopes.length > 0) {
+      return scopes;
+    }
   }
-  const value = (match[1] ?? "").trim();
-  return value.length > 0 ? value : null;
+  return resolveApproveScopes(match?.commands);
 }
 
 // Flattened schema: runtime validates per-action requirements.
 const NodesToolSchema = Type.Object({
   action: stringEnum(NODES_TOOL_ACTIONS),
-  gatewayUrl: Type.Optional(Type.String()),
-  gatewayToken: Type.Optional(Type.String()),
-  timeoutMs: Type.Optional(Type.Number()),
+  ...gatewayCallOptionSchemaProperties(),
   node: Type.Optional(Type.String()),
   requestId: Type.Optional(Type.String()),
   // notify
@@ -103,21 +139,21 @@ const NodesToolSchema = Type.Object({
   facing: optionalStringEnum(CAMERA_FACING, {
     description: "camera_snap: front/back/both; camera_clip: front/back only.",
   }),
-  maxWidth: Type.Optional(Type.Number()),
-  quality: Type.Optional(Type.Number()),
-  delayMs: Type.Optional(Type.Number()),
+  maxWidth: optionalPositiveIntegerSchema(),
+  quality: optionalFiniteNumberSchema({ minimum: 0, maximum: 1 }),
+  delayMs: optionalNonNegativeIntegerSchema(),
   deviceId: Type.Optional(Type.String()),
-  limit: Type.Optional(Type.Number()),
+  limit: optionalPositiveIntegerSchema({ maximum: 20 }),
   duration: Type.Optional(Type.String()),
-  durationMs: Type.Optional(Type.Number({ maximum: 300_000 })),
+  durationMs: optionalPositiveIntegerSchema({ maximum: 300_000 }),
   includeAudio: Type.Optional(Type.Boolean()),
   // screen_record
-  fps: Type.Optional(Type.Number()),
-  screenIndex: Type.Optional(Type.Number()),
+  fps: optionalFiniteNumberSchema({ exclusiveMinimum: 0 }),
+  screenIndex: optionalNonNegativeIntegerSchema(),
   outPath: Type.Optional(Type.String()),
   // location_get
-  maxAgeMs: Type.Optional(Type.Number()),
-  locationTimeoutMs: Type.Optional(Type.Number()),
+  maxAgeMs: optionalNonNegativeIntegerSchema(),
+  locationTimeoutMs: optionalPositiveIntegerSchema(),
   desiredAccuracy: optionalStringEnum(LOCATION_ACCURACY),
   // notifications_action
   notificationAction: optionalStringEnum(NOTIFICATIONS_ACTIONS),
@@ -126,7 +162,11 @@ const NodesToolSchema = Type.Object({
   // invoke
   invokeCommand: Type.Optional(Type.String()),
   invokeParamsJson: Type.Optional(Type.String()),
+<<<<<<< HEAD
   invokeTimeoutMs: Type.Optional(Type.Number()),
+=======
+  invokeTimeoutMs: optionalPositiveIntegerSchema(),
+>>>>>>> upstream/main
 });
 
 export function createNodesTool(options?: {
@@ -147,9 +187,12 @@ export function createNodesTool(options?: {
   return {
     label: "Nodes",
     name: "nodes",
-    ownerOnly: true,
     description:
+<<<<<<< HEAD
       "Discover and control paired nodes (status/describe/pairing/notify/camera/photos/screen/location/notifications/invoke).",
+=======
+      "Discover/control paired nodes: status, describe, pairing, notify, camera/photos/screen/location/notifications/invoke. Use file_fetch for files.",
+>>>>>>> upstream/main
     parameters: NodesToolSchema,
     execute: async (_toolCallId, args) => {
       const params = args as Record<string, unknown>;
@@ -303,9 +346,10 @@ export function createNodesTool(options?: {
             ? gatewayOpts.gatewayUrl.trim()
             : "default";
         const agentLabel = agentId ?? "unknown";
-        let message = err instanceof Error ? err.message : String(err);
-        if (action === "invoke" && isPairingRequiredMessage(message)) {
-          const requestId = extractPairingRequestId(message);
+        let message = formatErrorMessage(err);
+        const pairing = action === "invoke" ? readConnectPairingRequiredMessage(message) : null;
+        if (pairing) {
+          const requestId = pairing.requestId ?? null;
           const approveHint = requestId
             ? `Approve pairing request ${requestId} and retry.`
             : "Approve the pending pairing request and retry.";

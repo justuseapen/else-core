@@ -1,6 +1,8 @@
+// Nextcloud Talk tests cover core plugin behavior.
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+<<<<<<< HEAD
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   escapeNextcloudTalkMarkdown,
@@ -11,12 +13,15 @@ import {
   stripNextcloudTalkFormatting,
   truncateNextcloudTalkText,
 } from "./format.js";
+=======
+import { afterEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import {
   looksLikeNextcloudTalkTargetId,
   normalizeNextcloudTalkMessagingTarget,
   stripNextcloudTalkTargetPrefix,
 } from "./normalize.js";
-import { resolveNextcloudTalkAllowlistMatch, resolveNextcloudTalkGroupAllow } from "./policy.js";
+import { resolveNextcloudTalkAllowlistMatch } from "./policy.js";
 import { createNextcloudTalkReplayGuard } from "./replay-guard.js";
 import { resolveNextcloudTalkOutboundSessionRoute } from "./session-route.js";
 import {
@@ -24,6 +29,7 @@ import {
   generateNextcloudTalkSignature,
   verifyNextcloudTalkSignature,
 } from "./signature.js";
+<<<<<<< HEAD
 
 const fetchWithSsrFGuard = vi.hoisted(() => vi.fn());
 const readFileSync = vi.hoisted(() => vi.fn());
@@ -43,6 +49,8 @@ vi.mock("node:fs", () => {
     readFileSync,
   }));
 });
+=======
+>>>>>>> upstream/main
 
 const tempDirs: string[] = [];
 let resolveNextcloudTalkRoomKind: typeof import("./room-info.js").resolveNextcloudTalkRoomKind;
@@ -55,9 +63,12 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
+<<<<<<< HEAD
   fetchWithSsrFGuard.mockReset();
   readFileSync.mockReset();
   resetNextcloudTalkRoomCache();
+=======
+>>>>>>> upstream/main
   while (tempDirs.length > 0) {
     const dir = tempDirs.pop();
     if (dir) {
@@ -72,7 +83,16 @@ async function makeTempDir(): Promise<string> {
   return dir;
 }
 
+function requireFirstTimingSafeEqualCall(mock: ReturnType<typeof vi.fn>): [unknown, unknown] {
+  const [call] = mock.mock.calls;
+  if (!call) {
+    throw new Error("expected timingSafeEqual call");
+  }
+  return call as [unknown, unknown];
+}
+
 describe("nextcloud talk core", () => {
+<<<<<<< HEAD
   it("accepts SecretRef botSecret and apiPassword at top-level", () => {
     expect(markdownToNextcloudTalk("  **hello**  ")).toBe("**hello**");
   });
@@ -97,6 +117,8 @@ describe("nextcloud talk core", () => {
     expect(truncateNextcloudTalkText("short", 14)).toBe("short");
   });
 
+=======
+>>>>>>> upstream/main
   it("builds an outbound session route for normalized room targets", () => {
     const route = resolveNextcloudTalkOutboundSessionRoute({
       cfg: {},
@@ -105,11 +127,14 @@ describe("nextcloud talk core", () => {
       target: "nextcloud-talk:room-123",
     });
 
-    expect(route).toMatchObject({
+    expect(route).toEqual({
+      sessionKey: "agent:main:nextcloud-talk:group:room-123",
+      baseSessionKey: "agent:main:nextcloud-talk:group:room-123",
       peer: {
         kind: "group",
         id: "room-123",
       },
+      chatType: "group",
       from: "nextcloud-talk:room:room-123",
       to: "nextcloud-talk:room-123",
     });
@@ -194,7 +219,104 @@ describe("nextcloud talk core", () => {
     ).toBeNull();
   });
 
-  it("persists replay decisions across guard instances", async () => {
+  it("rejects tampered bodies, wrong secrets, and tampered signatures", () => {
+    const body = JSON.stringify({ hello: "world" });
+    const generated = generateNextcloudTalkSignature({
+      body,
+      secret: "secret-123",
+    });
+
+    expect(
+      verifyNextcloudTalkSignature({
+        signature: generated.signature,
+        random: generated.random,
+        body: JSON.stringify({ hello: "tampered" }),
+        secret: "secret-123",
+      }),
+    ).toBe(false);
+    expect(
+      verifyNextcloudTalkSignature({
+        signature: generated.signature,
+        random: generated.random,
+        body,
+        secret: "wrong-secret",
+      }),
+    ).toBe(false);
+    expect(
+      verifyNextcloudTalkSignature({
+        signature: "a".repeat(generated.signature.length),
+        random: generated.random,
+        body,
+        secret: "secret-123",
+      }),
+    ).toBe(false);
+  });
+
+  it("takes the first value from array-backed headers", () => {
+    expect(
+      extractNextcloudTalkHeaders({
+        "x-nextcloud-talk-signature": ["sig1", "sig2"],
+        "x-nextcloud-talk-random": ["rand1", "rand2"],
+        "x-nextcloud-talk-backend": ["backend1", "backend2"],
+      }),
+    ).toEqual({
+      signature: "sig1",
+      random: "rand1",
+      backend: "backend1",
+    });
+  });
+
+  it("still runs timingSafeEqual when the supplied signature length mismatches", async () => {
+    const timingSafeEqualMock = vi.fn();
+
+    vi.resetModules();
+    vi.doMock("node:crypto", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("node:crypto")>();
+      return {
+        ...actual,
+        timingSafeEqual: vi.fn((left: NodeJS.ArrayBufferView, right: NodeJS.ArrayBufferView) => {
+          timingSafeEqualMock(left, right);
+          return actual.timingSafeEqual(left, right);
+        }),
+      };
+    });
+
+    try {
+      const {
+        generateNextcloudTalkSignature: generateNextcloudTalkSignatureLocal,
+        verifyNextcloudTalkSignature: verifyNextcloudTalkSignatureLocal,
+      } = await import("./signature.js");
+      const body = JSON.stringify({ hello: "world" });
+      const generated = generateNextcloudTalkSignatureLocal({
+        body,
+        secret: "secret-123",
+      });
+      const shortSignature = generated.signature.slice(0, 12);
+
+      expect(
+        verifyNextcloudTalkSignatureLocal({
+          signature: shortSignature,
+          random: generated.random,
+          body,
+          secret: "secret-123",
+        }),
+      ).toBe(false);
+
+      expect(timingSafeEqualMock).toHaveBeenCalledOnce();
+      const [leftBuffer, rightBuffer] = requireFirstTimingSafeEqualCall(timingSafeEqualMock);
+      expect(Buffer.isBuffer(leftBuffer)).toBe(true);
+      expect(Buffer.isBuffer(rightBuffer)).toBe(true);
+      if (!Buffer.isBuffer(leftBuffer) || !Buffer.isBuffer(rightBuffer)) {
+        throw new TypeError("Expected timingSafeEqual to receive Buffer arguments");
+      }
+      expect(leftBuffer).toHaveLength(rightBuffer.length);
+    } finally {
+      vi.doUnmock("node:crypto");
+      vi.resetModules();
+    }
+  });
+
+  it("persists replay decisions across guard instances and scopes account namespaces", async () => {
     const stateDir = await makeTempDir();
 
     const firstGuard = createNextcloudTalkReplayGuard({ stateDir });
@@ -215,32 +337,55 @@ describe("nextcloud talk core", () => {
       roomToken: "room-1",
       messageId: "msg-1",
     });
+    const otherAccountFirstAttempt = await secondGuard.shouldProcessMessage({
+      accountId: "account-b",
+      roomToken: "room-1",
+      messageId: "msg-1",
+    });
 
     expect(firstAttempt).toBe(true);
     expect(replayAttempt).toBe(false);
     expect(restartReplayAttempt).toBe(false);
+    expect(otherAccountFirstAttempt).toBe(true);
   });
 
-  it("scopes replay state by account namespace", async () => {
-    const stateDir = await makeTempDir();
-    const guard = createNextcloudTalkReplayGuard({ stateDir });
+  it("releases in-flight replay claims when processing fails", async () => {
+    const guard = createNextcloudTalkReplayGuard({});
 
-    const accountAFirst = await guard.shouldProcessMessage({
+    const firstClaim = await guard.claimMessage({
       accountId: "account-a",
       roomToken: "room-1",
-      messageId: "msg-9",
+      messageId: "msg-claim",
     });
-    const accountBFirst = await guard.shouldProcessMessage({
-      accountId: "account-b",
+    const secondClaim = await guard.claimMessage({
+      accountId: "account-a",
       roomToken: "room-1",
-      messageId: "msg-9",
+      messageId: "msg-claim",
     });
 
-    expect(accountAFirst).toBe(true);
-    expect(accountBFirst).toBe(true);
+    expect(firstClaim).toBe("claimed");
+    expect(secondClaim).toBe("inflight");
+
+<<<<<<< HEAD
+  it("resolves allowlist matches and group policy decisions", () => {
+=======
+    guard.releaseMessage({
+      accountId: "account-a",
+      roomToken: "room-1",
+      messageId: "msg-claim",
+      error: new Error("transient"),
+    });
+
+    const retryClaim = await guard.claimMessage({
+      accountId: "account-a",
+      roomToken: "room-1",
+      messageId: "msg-claim",
+    });
+    expect(retryClaim).toBe("claimed");
   });
 
-  it("resolves allowlist matches and group policy decisions", () => {
+  it("resolves allowlist matches", () => {
+>>>>>>> upstream/main
     expect(
       resolveNextcloudTalkAllowlistMatch({
         allowFrom: ["*"],
@@ -259,6 +404,7 @@ describe("nextcloud talk core", () => {
         senderId: "other",
       }).allowed,
     ).toBe(false);
+<<<<<<< HEAD
 
     expect(
       resolveNextcloudTalkGroupAllow({
@@ -431,5 +577,7 @@ describe("nextcloud talk core", () => {
     ).resolves.toBeUndefined();
 
     expect(fetchWithSsrFGuard).not.toHaveBeenCalled();
+=======
+>>>>>>> upstream/main
   });
 });

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   type ChannelOutboundAdapter,
   createAttachedChannelResultAdapter,
@@ -13,14 +14,32 @@ import { shouldLogVerbose } from "openclaw/plugin-sdk/runtime-env";
 import { WHATSAPP_LEGACY_OUTBOUND_SEND_DEP_KEYS } from "./outbound-send-deps.js";
 import { resolveWhatsAppOutboundTarget } from "./runtime-api.js";
 import { sendMessageWhatsApp, sendPollWhatsApp } from "./send.js";
+=======
+// Whatsapp plugin module implements outbound adapter behavior.
+import type { ChannelOutboundAdapter } from "openclaw/plugin-sdk/channel-send-result";
+import { chunkText } from "openclaw/plugin-sdk/reply-chunking";
+import { shouldLogVerbose } from "openclaw/plugin-sdk/runtime-env";
+import { createWhatsAppOutboundBase } from "./outbound-base.js";
+import { normalizeWhatsAppPayloadText } from "./outbound-media-contract.js";
+import { resolveWhatsAppOutboundTarget } from "./resolve-outbound-target.js";
+>>>>>>> upstream/main
 
-function trimLeadingWhitespace(text: string | undefined): string {
-  return text?.trimStart() ?? "";
+type WhatsAppSendModule = typeof import("./send.js");
+
+let whatsAppSendModulePromise: Promise<WhatsAppSendModule> | undefined;
+
+function loadWhatsAppSendModule(): Promise<WhatsAppSendModule> {
+  whatsAppSendModulePromise ??= import("./send.js");
+  return whatsAppSendModulePromise;
 }
 
-export const whatsappOutbound: ChannelOutboundAdapter = {
-  deliveryMode: "gateway",
+function normalizeOutboundText(text: string | undefined): string {
+  return normalizeWhatsAppPayloadText(text);
+}
+
+export const whatsappOutbound: ChannelOutboundAdapter = createWhatsAppOutboundBase({
   chunker: chunkText,
+<<<<<<< HEAD
   chunkerMode: "text",
   textChunkLimit: 4000,
   sanitizeText: ({ text }) => sanitizeForPlainText(text),
@@ -97,3 +116,19 @@ export const whatsappOutbound: ChannelOutboundAdapter = {
       }),
   }),
 };
+=======
+  sendMessageWhatsApp: async (to, text, options) =>
+    await (
+      await loadWhatsAppSendModule()
+    ).sendMessageWhatsApp(to, normalizeOutboundText(text), {
+      ...options,
+    }),
+  sendPollWhatsApp: async (to, poll, options) =>
+    await (await loadWhatsAppSendModule()).sendPollWhatsApp(to, poll, options),
+  shouldLogVerbose: () => shouldLogVerbose(),
+  resolveTarget: ({ to, allowFrom, mode }) =>
+    resolveWhatsAppOutboundTarget({ to, allowFrom, mode }),
+  normalizeText: normalizeOutboundText,
+  skipEmptyText: true,
+});
+>>>>>>> upstream/main

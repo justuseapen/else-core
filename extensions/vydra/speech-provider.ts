@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Vydra provider module implements model/runtime integration.
+>>>>>>> upstream/main
 import {
   assertOkOrThrowHttpError,
   postJsonRequest,
@@ -9,6 +13,10 @@ import type {
   SpeechProviderOverrides,
   SpeechProviderPlugin,
 } from "openclaw/plugin-sdk/speech-core";
+<<<<<<< HEAD
+=======
+import { asObject } from "openclaw/plugin-sdk/speech-core";
+>>>>>>> upstream/main
 import {
   DEFAULT_VYDRA_BASE_URL,
   DEFAULT_VYDRA_SPEECH_MODEL,
@@ -16,6 +24,10 @@ import {
   downloadVydraAsset,
   extractVydraResultUrls,
   normalizeVydraBaseUrl,
+<<<<<<< HEAD
+=======
+  resolveVydraGeneratedMediaMaxBytes,
+>>>>>>> upstream/main
   trimToUndefined,
 } from "./shared.js";
 
@@ -33,12 +45,15 @@ const VYDRA_SPEECH_VOICES = [
   },
 ] as const;
 
+<<<<<<< HEAD
 function asObject(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined;
 }
 
+=======
+>>>>>>> upstream/main
 function normalizeVydraSpeechConfig(rawConfig: Record<string, unknown>): VydraSpeechConfig {
   const providers = asObject(rawConfig.providers);
   const raw = asObject(providers?.vydra) ?? asObject(rawConfig.vydra);
@@ -91,7 +106,11 @@ export function buildVydraSpeechProvider(): SpeechProviderPlugin {
     models: [DEFAULT_VYDRA_SPEECH_MODEL],
     voices: VYDRA_SPEECH_VOICES.map((voice) => voice.id),
     resolveConfig: ({ rawConfig }) => normalizeVydraSpeechConfig(rawConfig),
+<<<<<<< HEAD
     listVoices: async () => VYDRA_SPEECH_VOICES.map((voice) => ({ ...voice })),
+=======
+    listVoices: async () => VYDRA_SPEECH_VOICES.map((voice) => Object.assign({}, voice)),
+>>>>>>> upstream/main
     isConfigured: ({ providerConfig }) =>
       Boolean(readVydraSpeechConfig(providerConfig).apiKey || process.env.VYDRA_API_KEY),
     synthesize: async (req) => {
@@ -142,6 +161,10 @@ export function buildVydraSpeechProvider(): SpeechProviderPlugin {
           kind: "audio",
           timeoutMs: req.timeoutMs,
           fetchFn,
+<<<<<<< HEAD
+=======
+          maxBytes: resolveVydraGeneratedMediaMaxBytes({ cfg: req.cfg, kind: "audio" }),
+>>>>>>> upstream/main
         });
         return {
           audioBuffer: audio.buffer,

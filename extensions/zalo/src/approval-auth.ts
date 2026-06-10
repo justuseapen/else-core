@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Zalo plugin module implements approval auth behavior.
+>>>>>>> upstream/main
 import {
   createResolvedApproverActionAuthAdapter,
   resolveApprovalApprovers,

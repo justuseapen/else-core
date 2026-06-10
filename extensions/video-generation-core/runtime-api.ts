@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Video Generation Core API module exposes the plugin public contract.
+>>>>>>> upstream/main
 export {
   generateVideo,
   listRuntimeVideoGenerationProviders,

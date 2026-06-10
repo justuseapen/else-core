@@ -1,3 +1,4 @@
+// Googlechat plugin module implements accounts behavior.
 import {
   createAccountListHelpers,
   DEFAULT_ACCOUNT_ID,
@@ -7,11 +8,17 @@ import {
   resolveMergedAccountConfig,
 } from "openclaw/plugin-sdk/account-resolution";
 import { safeParseJsonWithSchema, safeParseWithSchema } from "openclaw/plugin-sdk/extension-shared";
+<<<<<<< HEAD
 import { isSecretRef } from "openclaw/plugin-sdk/secret-input";
+=======
+import { mergePairLoopGuardConfig } from "openclaw/plugin-sdk/pair-loop-guard-runtime";
+import { isSecretRef } from "openclaw/plugin-sdk/secret-input";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import { z } from "zod";
 import type { GoogleChatAccountConfig } from "./types.config.js";
 
-export type GoogleChatCredentialSource = "file" | "inline" | "env" | "none";
+type GoogleChatCredentialSource = "file" | "inline" | "env" | "none";
 
 export type ResolvedGoogleChatAccount = {
   accountId: string;
@@ -23,6 +30,10 @@ export type ResolvedGoogleChatAccount = {
   credentialsFile?: string;
 };
 
+export type GoogleChatConfigAccessorAccount = {
+  config: GoogleChatAccountConfig;
+};
+
 const ENV_SERVICE_ACCOUNT = "GOOGLE_CHAT_SERVICE_ACCOUNT";
 const ENV_SERVICE_ACCOUNT_FILE = "GOOGLE_CHAT_SERVICE_ACCOUNT_FILE";
 const JsonRecordSchema = z.record(z.string(), z.unknown());
@@ -30,7 +41,12 @@ const JsonRecordSchema = z.record(z.string(), z.unknown());
 const {
   listAccountIds: listGoogleChatAccountIds,
   resolveDefaultAccountId: resolveDefaultGoogleChatAccountId,
-} = createAccountListHelpers("googlechat");
+} = createAccountListHelpers("googlechat", {
+  implicitDefaultAccount: {
+    channelKeys: ["serviceAccount", "serviceAccountRef", "serviceAccountFile"],
+    envVars: [ENV_SERVICE_ACCOUNT, ENV_SERVICE_ACCOUNT_FILE],
+  },
+});
 export { listGoogleChatAccountIds, resolveDefaultGoogleChatAccountId };
 
 function mergeGoogleChatAccountConfig(
@@ -43,12 +59,9 @@ function mergeGoogleChatAccountConfig(
     accounts: raw.accounts as Record<string, Partial<GoogleChatAccountConfig>> | undefined,
     accountId,
     omitKeys: ["defaultAccount"],
+    nestedObjectKeys: ["botLoopProtection"],
   });
-  const defaultAccountConfig =
-    resolveAccountEntry(
-      raw.accounts as Record<string, GoogleChatAccountConfig> | undefined,
-      DEFAULT_ACCOUNT_ID,
-    ) ?? {};
+  const defaultAccountConfig = resolveAccountEntry(raw.accounts, DEFAULT_ACCOUNT_ID) ?? {};
   if (accountId === DEFAULT_ACCOUNT_ID) {
     return base;
   }
@@ -62,7 +75,25 @@ function mergeGoogleChatAccountConfig(
   } = defaultAccountConfig;
   // In multi-account setups, allow accounts.default to provide shared defaults
   // (for example webhook/audience fields) while preserving top-level and account overrides.
-  return { ...defaultAccountShared, ...base } as GoogleChatAccountConfig;
+  const botLoopProtection = mergePairLoopGuardConfig(
+    defaultAccountShared.botLoopProtection,
+    base.botLoopProtection,
+  );
+  return {
+    ...defaultAccountShared,
+    ...base,
+    ...(botLoopProtection ? { botLoopProtection } : {}),
+  } as GoogleChatAccountConfig;
+}
+
+export function resolveGoogleChatConfigAccessorAccount(params: {
+  cfg: OpenClawConfig;
+  accountId?: string | null;
+}): GoogleChatConfigAccessorAccount {
+  const accountId = normalizeAccountId(
+    params.accountId ?? params.cfg.channels?.googlechat?.defaultAccount,
+  );
+  return { config: mergeGoogleChatAccountConfig(params.cfg, accountId) };
 }
 
 function parseServiceAccount(value: unknown): Record<string, unknown> | null {
@@ -107,7 +138,7 @@ function resolveCredentialsFromConfig(params: {
     );
   }
 
-  const file = account.serviceAccountFile?.trim();
+  const file = normalizeOptionalString(account.serviceAccountFile);
   if (file) {
     return { credentialsFile: file, source: "file" };
   }
@@ -118,7 +149,7 @@ function resolveCredentialsFromConfig(params: {
     if (envInline) {
       return { credentials: envInline, source: "env" };
     }
-    const envFile = process.env[ENV_SERVICE_ACCOUNT_FILE]?.trim();
+    const envFile = normalizeOptionalString(process.env[ENV_SERVICE_ACCOUNT_FILE]);
     if (envFile) {
       return { credentialsFile: envFile, source: "env" };
     }
@@ -142,7 +173,7 @@ export function resolveGoogleChatAccount(params: {
 
   return {
     accountId,
-    name: merged.name?.trim() || undefined,
+    name: normalizeOptionalString(merged.name),
     enabled,
     config: merged,
     credentialSource: credentials.source,

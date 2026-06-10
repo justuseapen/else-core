@@ -1,8 +1,13 @@
+<<<<<<< HEAD
+=======
+// Msteams plugin module implements secret contract behavior.
+>>>>>>> upstream/main
 import {
   collectSecretInputAssignment,
   getChannelRecord,
   type ResolverContext,
   type SecretDefaults,
+<<<<<<< HEAD
   type SecretTargetRegistryEntry,
 } from "openclaw/plugin-sdk/security-runtime";
 
@@ -23,6 +28,28 @@ export const secretTargetRegistryEntries = [
 export function collectRuntimeConfigAssignments(params: {
   config: { channels?: Record<string, unknown> };
   defaults: SecretDefaults | undefined;
+=======
+} from "openclaw/plugin-sdk/channel-secret-basic-runtime";
+
+export const secretTargetRegistryEntries: import("openclaw/plugin-sdk/channel-secret-basic-runtime").SecretTargetRegistryEntry[] =
+  [
+    {
+      id: "channels.msteams.appPassword",
+      targetType: "channels.msteams.appPassword",
+      configFile: "openclaw.json",
+      pathPattern: "channels.msteams.appPassword",
+      secretShape: "secret_input",
+      expectedResolvedValue: "string",
+      includeInPlan: true,
+      includeInConfigure: true,
+      includeInAudit: true,
+    },
+  ];
+
+export function collectRuntimeConfigAssignments(params: {
+  config: { channels?: Record<string, unknown> };
+  defaults?: SecretDefaults;
+>>>>>>> upstream/main
   context: ResolverContext;
 }): void {
   const msteams = getChannelRecord(params.config, "msteams");
@@ -42,3 +69,11 @@ export function collectRuntimeConfigAssignments(params: {
     },
   });
 }
+<<<<<<< HEAD
+=======
+
+export const channelSecrets = {
+  secretTargetRegistryEntries,
+  collectRuntimeConfigAssignments,
+};
+>>>>>>> upstream/main

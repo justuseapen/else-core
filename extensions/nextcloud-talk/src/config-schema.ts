@@ -1,6 +1,8 @@
+<<<<<<< HEAD
+=======
+// Nextcloud Talk helper module supports config schema behavior.
+>>>>>>> upstream/main
 import {
-  BlockStreamingCoalesceSchema,
-  DmConfigSchema,
   DmPolicySchema,
   GroupPolicySchema,
   MarkdownConfigSchema,
@@ -9,10 +11,14 @@ import {
   requireOpenAllowFrom,
 } from "openclaw/plugin-sdk/channel-config-schema";
 import { requireChannelOpenAllowFrom } from "openclaw/plugin-sdk/extension-shared";
+<<<<<<< HEAD
 import { z } from "openclaw/plugin-sdk/zod";
+=======
+import { z } from "zod";
+>>>>>>> upstream/main
 import { buildSecretInputSchema } from "./secret-input.js";
 
-export const NextcloudTalkRoomSchema = z
+const NextcloudTalkRoomSchema = z
   .object({
     requireMention: z.boolean().optional(),
     tools: ToolPolicySchema,
@@ -31,7 +37,11 @@ const NextcloudTalkNetworkSchema = z
   .strict()
   .optional();
 
+<<<<<<< HEAD
 export const NextcloudTalkAccountSchemaBase = z
+=======
+const NextcloudTalkAccountSchemaBase = z
+>>>>>>> upstream/main
   .object({
     name: z.string().optional(),
     enabled: z.boolean().optional(),
@@ -57,17 +67,15 @@ export const NextcloudTalkAccountSchemaBase = z
   })
   .strict();
 
-export const NextcloudTalkAccountSchema = NextcloudTalkAccountSchemaBase.superRefine(
-  (value, ctx) => {
-    requireChannelOpenAllowFrom({
-      channel: "nextcloud-talk",
-      policy: value.dmPolicy,
-      allowFrom: value.allowFrom,
-      ctx,
-      requireOpenAllowFrom,
-    });
-  },
-);
+const NextcloudTalkAccountSchema = NextcloudTalkAccountSchemaBase.superRefine((value, ctx) => {
+  requireChannelOpenAllowFrom({
+    channel: "nextcloud-talk",
+    policy: value.dmPolicy,
+    allowFrom: value.allowFrom,
+    ctx,
+    requireOpenAllowFrom,
+  });
+});
 
 export const NextcloudTalkConfigSchema = NextcloudTalkAccountSchemaBase.extend({
   accounts: z.record(z.string(), NextcloudTalkAccountSchema.optional()).optional(),

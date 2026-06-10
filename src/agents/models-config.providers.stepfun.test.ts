@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Verifies StepFun standard and Step Plan catalog pairing across regions.
+>>>>>>> upstream/main
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -37,6 +41,10 @@ function buildStepFunCatalog(params: {
   profileId?: string;
   env?: NodeJS.ProcessEnv;
 }): ModelProviderConfig | null {
+<<<<<<< HEAD
+=======
+  // Region can be explicit, profile-tagged, or env-inferred; catalog ids stay paired.
+>>>>>>> upstream/main
   if (!params.apiKey) {
     return null;
   }
@@ -75,6 +83,10 @@ function inferRegionFromBaseUrl(baseUrl: string | undefined): StepFunRegion | un
 }
 
 function inferRegionFromProfileId(profileId: string | undefined): StepFunRegion | undefined {
+<<<<<<< HEAD
+=======
+  // Auth profile suffixes are the lightweight region signal for paired providers.
+>>>>>>> upstream/main
   if (!profileId) {
     return undefined;
   }
@@ -115,6 +127,7 @@ describe("StepFun provider catalog", () => {
       throw new Error("expected StepFun providers");
     }
 
+<<<<<<< HEAD
     expect(standardProvider).toMatchObject({
       baseUrl: "https://api.stepfun.ai/v1",
       api: "openai-completions",
@@ -125,6 +138,14 @@ describe("StepFun provider catalog", () => {
       api: "openai-completions",
       apiKey: "STEPFUN_API_KEY",
     });
+=======
+    expect(standardProvider.baseUrl).toBe("https://api.stepfun.ai/v1");
+    expect(standardProvider.api).toBe("openai-completions");
+    expect(standardProvider.apiKey).toBe("STEPFUN_API_KEY");
+    expect(planProvider.baseUrl).toBe("https://api.stepfun.ai/step_plan/v1");
+    expect(planProvider.api).toBe("openai-completions");
+    expect(planProvider.apiKey).toBe("STEPFUN_API_KEY");
+>>>>>>> upstream/main
     expect(standardProvider.models?.map((model) => model.id)).toEqual(EXPECTED_STANDARD_MODELS);
     expect(planProvider.models?.map((model) => model.id)).toEqual(EXPECTED_PLAN_MODELS);
   });
@@ -187,6 +208,10 @@ describe("StepFun provider catalog", () => {
       }),
     };
     const pairedStandard = buildStepFunCatalog({
+<<<<<<< HEAD
+=======
+      // Paired surfaces should converge on the same regional host family.
+>>>>>>> upstream/main
       surface: "standard",
       apiKey: "test-stepfun-key",
       explicitBaseUrl: resolveDefaultBaseUrl(

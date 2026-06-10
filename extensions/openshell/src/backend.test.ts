@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { afterEach, describe, expect, it } from "vitest";
 import { buildOpenShellSshExecEnv } from "./backend.js";
+=======
+// Openshell tests cover backend plugin behavior.
+import { afterEach, describe, expect, it } from "vitest";
+import { buildOpenShellSandboxName, buildOpenShellSshExecEnv } from "./backend.js";
+>>>>>>> upstream/main
 
 describe("openshell backend env", () => {
   const originalEnv = { ...process.env };
@@ -27,3 +33,17 @@ describe("openshell backend env", () => {
     expect(env.NODE_ENV).toBe("test");
   });
 });
+<<<<<<< HEAD
+=======
+
+describe("openshell sandbox names", () => {
+  it("generates Kubernetes-safe names from OpenClaw session scope keys", () => {
+    const name = buildOpenShellSandboxName("agent:somalley_alice:dashboard-8");
+
+    expect(name).toMatch(/^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/);
+    expect(name).toContain("somalley-alice");
+    expect(name).not.toContain("_");
+    expect(name.length).toBeLessThanOrEqual(63);
+  });
+});
+>>>>>>> upstream/main

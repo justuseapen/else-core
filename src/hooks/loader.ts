@@ -7,22 +7,44 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import type { OpenClawConfig } from "../config/config.js";
-import { openBoundaryFile } from "../infra/boundary-file-read.js";
+import { sanitizeForLog } from "../../packages/terminal-core/src/ansi.js";
+import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { openRootFile } from "../infra/boundary-file-read.js";
+import { formatErrorMessage } from "../infra/errors.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
-import { sanitizeForLog } from "../terminal/ansi.js";
+import { resolveGlobalSingleton } from "../shared/global-singleton.js";
 import { shouldIncludeHook } from "./config.js";
+import { hasConfiguredInternalHooks, resolveConfiguredInternalHookNames } from "./configured.js";
 import { buildImportUrl } from "./import-url.js";
 import type { InternalHookHandler } from "./internal-hooks.js";
+<<<<<<< HEAD
 import { registerInternalHook } from "./internal-hooks.js";
+=======
+import { registerInternalHook, unregisterInternalHook } from "./internal-hooks.js";
+>>>>>>> upstream/main
 import { getLegacyInternalHookHandlers } from "./legacy-config.js";
 import { resolveFunctionModuleExport } from "./module-loader.js";
 import { loadWorkspaceHookEntries } from "./workspace.js";
 
 const log = createSubsystemLogger("hooks:loader");
+const LOADED_INTERNAL_HOOK_REGISTRATIONS_KEY = Symbol.for(
+  "openclaw.loadedInternalHookRegistrations",
+);
+const loadedHookRegistrations = resolveGlobalSingleton<
+  Array<{ event: string; handler: InternalHookHandler }>
+>(LOADED_INTERNAL_HOOK_REGISTRATIONS_KEY, () => []);
 
 function safeLogValue(value: string): string {
   return sanitizeForLog(value);
+}
+
+function isNonEmptyRelativePathInsideRoot(relativePath: string): boolean {
+  return (
+    relativePath !== "" &&
+    relativePath !== ".." &&
+    !relativePath.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relativePath)
+  );
 }
 
 function maybeWarnTrustedHookSource(source: string): void {
@@ -39,6 +61,16 @@ function maybeWarnTrustedHookSource(source: string): void {
   }
 }
 
+function resetLoadedInternalHooks(): void {
+  while (loadedHookRegistrations.length > 0) {
+    const registration = loadedHookRegistrations.pop();
+    if (!registration) {
+      continue;
+    }
+    unregisterInternalHook(registration.event, registration.handler);
+  }
+}
+
 /**
  * Load and register all hook handlers
  *
@@ -52,7 +84,7 @@ function maybeWarnTrustedHookSource(source: string): void {
  *
  * @example
  * ```ts
- * const config = await loadConfig();
+ * const config = await getRuntimeConfig();
  * const workspaceDir = resolveAgentWorkspaceDir(config, agentId);
  * const count = await loadInternalHooks(config, workspaceDir);
  * console.log(`Loaded ${count} hook handlers`);
@@ -66,12 +98,19 @@ export async function loadInternalHooks(
     bundledHooksDir?: string;
   },
 ): Promise<number> {
+<<<<<<< HEAD
   // Hooks are on by default; only skip when explicitly disabled.
   if (cfg.hooks?.internal?.enabled === false) {
+=======
+  resetLoadedInternalHooks();
+
+  if (!hasConfiguredInternalHooks(cfg)) {
+>>>>>>> upstream/main
     return 0;
   }
 
   let loadedCount = 0;
+  const configuredNames = resolveConfiguredInternalHookNames(cfg);
 
   // 1. Load hooks from directories (new system)
   try {
@@ -82,7 +121,12 @@ export async function loadInternalHooks(
     });
 
     // Filter by eligibility
-    const eligible = hookEntries.filter((entry) => shouldIncludeHook({ entry, config: cfg }));
+    const eligible = hookEntries.filter((entry) => {
+      if (configuredNames && !configuredNames.has(entry.hook.name)) {
+        return false;
+      }
+      return shouldIncludeHook({ entry, config: cfg });
+    });
 
     for (const entry of eligible) {
       try {
@@ -93,7 +137,7 @@ export async function loadInternalHooks(
           );
           continue;
         }
-        const opened = await openBoundaryFile({
+        const opened = await openRootFile({
           absolutePath: entry.hook.handlerPath,
           rootPath: hookBaseDir,
           boundaryLabel: "hook directory",
@@ -135,6 +179,7 @@ export async function loadInternalHooks(
 
         for (const event of events) {
           registerInternalHook(event, handler);
+          loadedHookRegistrations.push({ event, handler });
         }
 
         log.debug(
@@ -143,14 +188,12 @@ export async function loadInternalHooks(
         loadedCount++;
       } catch (err) {
         log.error(
-          `Failed to load hook ${safeLogValue(entry.hook.name)}: ${safeLogValue(err instanceof Error ? err.message : String(err))}`,
+          `Failed to load hook ${safeLogValue(entry.hook.name)}: ${safeLogValue(formatErrorMessage(err))}`,
         );
       }
     }
   } catch (err) {
-    log.error(
-      `Failed to load directory-based hooks: ${safeLogValue(err instanceof Error ? err.message : String(err))}`,
-    );
+    log.error(`Failed to load directory-based hooks: ${safeLogValue(formatErrorMessage(err))}`);
   }
 
   // 2. Load legacy config handlers (backwards compatibility)
@@ -186,11 +229,11 @@ export async function loadInternalHooks(
         continue;
       }
       const rel = path.relative(baseDirReal, modulePathSafe);
-      if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) {
+      if (!isNonEmptyRelativePathInsideRoot(rel)) {
         log.error(`Handler module path must stay within workspaceDir: ${safeLogValue(rawModule)}`);
         continue;
       }
-      const opened = await openBoundaryFile({
+      const opened = await openRootFile({
         absolutePath: modulePathSafe,
         rootPath: baseDirReal,
         boundaryLabel: "workspace directory",
@@ -226,13 +269,17 @@ export async function loadInternalHooks(
       }
 
       registerInternalHook(handlerConfig.event, handler);
+<<<<<<< HEAD
+=======
+      loadedHookRegistrations.push({ event: handlerConfig.event, handler });
+>>>>>>> upstream/main
       log.debug(
         `Registered hook (legacy): ${safeLogValue(handlerConfig.event)} -> ${safeLogValue(modulePath)}${exportName !== "default" ? `#${safeLogValue(exportName)}` : ""}`,
       );
       loadedCount++;
     } catch (err) {
       log.error(
-        `Failed to load hook handler from ${safeLogValue(handlerConfig.module)}: ${safeLogValue(err instanceof Error ? err.message : String(err))}`,
+        `Failed to load hook handler from ${safeLogValue(handlerConfig.module)}: ${safeLogValue(formatErrorMessage(err))}`,
       );
     }
   }

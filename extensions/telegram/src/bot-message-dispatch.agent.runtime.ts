@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Telegram plugin module implements bot message dispatch.agent behavior.
+>>>>>>> upstream/main
 export {
   findModelInCatalog,
   loadModelCatalog,

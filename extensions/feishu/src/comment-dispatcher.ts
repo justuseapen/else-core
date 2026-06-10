@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Feishu plugin module implements comment dispatcher behavior.
+>>>>>>> upstream/main
 import { resolveSendableOutboundReplyParts } from "openclaw/plugin-sdk/reply-payload";
 import { resolveFeishuRuntimeAccount } from "./accounts.js";
 import { createFeishuClient } from "./client.js";
@@ -7,11 +11,19 @@ import {
   type ReplyPayload,
   type RuntimeEnv,
 } from "./comment-dispatcher-runtime-api.js";
+<<<<<<< HEAD
+=======
+import { createCommentTypingReactionLifecycle } from "./comment-reaction.js";
+>>>>>>> upstream/main
 import type { CommentFileType } from "./comment-target.js";
 import { deliverCommentThreadText } from "./drive.js";
 import { getFeishuRuntime } from "./runtime.js";
 
+<<<<<<< HEAD
 export type CreateFeishuCommentReplyDispatcherParams = {
+=======
+type CreateFeishuCommentReplyDispatcherParams = {
+>>>>>>> upstream/main
   cfg: ClawdbotConfig;
   agentId: string;
   runtime: RuntimeEnv;
@@ -19,6 +31,10 @@ export type CreateFeishuCommentReplyDispatcherParams = {
   fileToken: string;
   fileType: CommentFileType;
   commentId: string;
+<<<<<<< HEAD
+=======
+  replyId?: string;
+>>>>>>> upstream/main
   isWholeComment?: boolean;
 };
 
@@ -43,12 +59,31 @@ export function createFeishuCommentReplyDispatcher(
     },
   );
   const chunkMode = core.channel.text.resolveChunkMode(params.cfg, "feishu");
+<<<<<<< HEAD
 
   const { dispatcher, replyOptions, markDispatchIdle } =
+=======
+  const typingReaction = createCommentTypingReactionLifecycle({
+    cfg: params.cfg,
+    fileToken: params.fileToken,
+    fileType: params.fileType,
+    replyId: params.replyId,
+    accountId: params.accountId,
+    runtime: params.runtime,
+  });
+
+  const { dispatcher, replyOptions, markDispatchIdle, markRunComplete } =
+>>>>>>> upstream/main
     core.channel.reply.createReplyDispatcherWithTyping({
       responsePrefix: prefixContext.responsePrefix,
       responsePrefixContextProvider: prefixContext.responsePrefixContextProvider,
       humanDelay: core.channel.reply.resolveHumanDelayConfig(params.cfg, params.agentId),
+<<<<<<< HEAD
+=======
+      onReplyStart: async () => {
+        await typingReaction.start();
+      },
+>>>>>>> upstream/main
       deliver: async (payload: ReplyPayload, info) => {
         if (info.kind !== "final") {
           return;
@@ -78,7 +113,23 @@ export function createFeishuCommentReplyDispatcher(
           `feishu[${params.accountId ?? "default"}]: comment dispatcher failed kind=${info.kind} comment=${params.commentId}: ${String(err)}`,
         );
       },
+<<<<<<< HEAD
     });
 
   return { dispatcher, replyOptions, markDispatchIdle };
+=======
+      onCleanup: () => {
+        void typingReaction.cleanup();
+      },
+    });
+
+  return {
+    dispatcher,
+    replyOptions,
+    markDispatchIdle,
+    markRunComplete,
+    startTypingReaction: typingReaction.start,
+    cleanupTypingReaction: typingReaction.cleanup,
+  };
+>>>>>>> upstream/main
 }

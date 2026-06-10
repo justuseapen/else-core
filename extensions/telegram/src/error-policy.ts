@@ -1,11 +1,26 @@
+<<<<<<< HEAD
+=======
+// Telegram plugin module implements error policy behavior.
+>>>>>>> upstream/main
 import type {
   TelegramAccountConfig,
   TelegramDirectConfig,
   TelegramGroupConfig,
   TelegramTopicConfig,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/config-runtime";
 
 export type TelegramErrorPolicy = "always" | "once" | "silent";
+=======
+} from "openclaw/plugin-sdk/config-contracts";
+import {
+  asDateTimestampMs,
+  isFutureDateTimestampMs,
+  resolveExpiresAtMsFromDurationMs,
+} from "openclaw/plugin-sdk/number-runtime";
+
+type TelegramErrorPolicy = "always" | "once" | "silent";
+>>>>>>> upstream/main
 
 type TelegramErrorConfig =
   | TelegramAccountConfig
@@ -18,7 +33,11 @@ const DEFAULT_ERROR_COOLDOWN_MS = 14400000;
 
 function pruneExpiredCooldowns(messageStore: Map<string, number>, now: number) {
   for (const [message, expiresAt] of messageStore) {
+<<<<<<< HEAD
     if (expiresAt <= now) {
+=======
+    if (!isFutureDateTimestampMs(expiresAt, { nowMs: now })) {
+>>>>>>> upstream/main
       messageStore.delete(message);
     }
   }
@@ -67,9 +86,19 @@ export function shouldSuppressTelegramError(params: {
   errorMessage?: string;
 }): boolean {
   const { scopeKey, cooldownMs, errorMessage } = params;
+<<<<<<< HEAD
   const now = Date.now();
   const messageKey = errorMessage ?? "";
   const scopeStore = errorCooldownStore.get(scopeKey);
+=======
+  const now = asDateTimestampMs(Date.now());
+  const messageKey = errorMessage ?? "";
+  const scopeStore = errorCooldownStore.get(scopeKey);
+  if (now === undefined) {
+    errorCooldownStore.delete(scopeKey);
+    return false;
+  }
+>>>>>>> upstream/main
 
   if (scopeStore) {
     pruneExpiredCooldowns(scopeStore, now);
@@ -88,12 +117,26 @@ export function shouldSuppressTelegramError(params: {
   }
 
   const expiresAt = scopeStore?.get(messageKey);
+<<<<<<< HEAD
   if (typeof expiresAt === "number" && expiresAt > now) {
     return true;
   }
 
   const nextScopeStore = scopeStore ?? new Map<string, number>();
   nextScopeStore.set(messageKey, now + cooldownMs);
+=======
+  if (isFutureDateTimestampMs(expiresAt, { nowMs: now })) {
+    return true;
+  }
+
+  const nextExpiresAt = resolveExpiresAtMsFromDurationMs(cooldownMs, { nowMs: now });
+  if (nextExpiresAt === undefined) {
+    scopeStore?.delete(messageKey);
+    return false;
+  }
+  const nextScopeStore = scopeStore ?? new Map<string, number>();
+  nextScopeStore.set(messageKey, nextExpiresAt);
+>>>>>>> upstream/main
   errorCooldownStore.set(scopeKey, nextScopeStore);
   return false;
 }

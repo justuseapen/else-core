@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Resolves trusted system binaries from platform-managed directories.
+>>>>>>> upstream/main
 import fs from "node:fs";
 import path from "node:path";
 import { getWindowsInstallRoots, getWindowsProgramFilesRoots } from "./windows-install-roots.js";
@@ -10,7 +14,11 @@ import { getWindowsInstallRoots, getWindowsProgramFilesRoots } from "./windows-i
  *   directories appended after system dirs. Use for tool binaries like
  *   ffmpeg that are rarely available via the OS itself.
  */
+<<<<<<< HEAD
 export type SystemBinTrust = "strict" | "standard";
+=======
+type SystemBinTrust = "strict" | "standard";
+>>>>>>> upstream/main
 
 // Unix directories where OS-managed or system-installed binaries live.
 // User-writable or package-manager-managed directories are excluded so that
@@ -27,6 +35,11 @@ const LINUX_STANDARD_DIRS = ["/usr/local/bin"] as const;
 
 // Windows extensions to probe when searching for executables.
 const WIN_PATHEXT = [".exe", ".cmd", ".bat", ".com"] as const;
+<<<<<<< HEAD
+=======
+const WINDOWS_PROGRAM_FILES_TOOL_DIR_PREFIXES = ["ImageMagick-", "GraphicsMagick-"] as const;
+const WINDOWS_PROGRAM_FILES_TOOL_DIRS = ["ImageMagick", "GraphicsMagick"] as const;
+>>>>>>> upstream/main
 
 const resolvedCacheStrict = new Map<string, string>();
 const resolvedCacheStandard = new Map<string, string>();
@@ -44,6 +57,26 @@ function defaultIsExecutable(filePath: string): boolean {
   }
 }
 
+<<<<<<< HEAD
+=======
+function collectWindowsProgramFilesToolDirs(programFilesRoot: string): string[] {
+  const dirs = WINDOWS_PROGRAM_FILES_TOOL_DIRS.map((dir) => path.win32.join(programFilesRoot, dir));
+  try {
+    for (const entry of fs.readdirSync(programFilesRoot, { withFileTypes: true })) {
+      if (
+        entry.isDirectory() &&
+        WINDOWS_PROGRAM_FILES_TOOL_DIR_PREFIXES.some((prefix) => entry.name.startsWith(prefix))
+      ) {
+        dirs.push(path.win32.join(programFilesRoot, entry.name));
+      }
+    }
+  } catch {
+    // Program Files can be unreadable in constrained contexts; static candidates still cover common installs.
+  }
+  return dirs;
+}
+
+>>>>>>> upstream/main
 let isExecutableFn: (filePath: string) => boolean = defaultIsExecutable;
 
 /**
@@ -55,6 +88,10 @@ function buildWindowsTrustedDirs(): readonly string[] {
   const { systemRoot } = getWindowsInstallRoots();
   dirs.push(path.win32.join(systemRoot, "System32"));
   dirs.push(path.win32.join(systemRoot, "SysWOW64"));
+<<<<<<< HEAD
+=======
+  dirs.push(path.win32.join(systemRoot, "System32", "WindowsPowerShell", "v1.0"));
+>>>>>>> upstream/main
 
   for (const programFilesRoot of getWindowsProgramFilesRoots()) {
     // Trust the machine's validated Program Files roots rather than assuming C:.
@@ -66,6 +103,19 @@ function buildWindowsTrustedDirs(): readonly string[] {
   return dirs;
 }
 
+<<<<<<< HEAD
+=======
+function buildWindowsStandardDirs(): readonly string[] {
+  const { systemRoot } = getWindowsInstallRoots();
+  const systemDriveRoot = path.win32.parse(systemRoot).root;
+  const dirs = [path.win32.join(systemDriveRoot, "ProgramData", "chocolatey", "bin")];
+  for (const programFilesRoot of getWindowsProgramFilesRoots()) {
+    dirs.push(...collectWindowsProgramFilesToolDirs(programFilesRoot));
+  }
+  return dirs;
+}
+
+>>>>>>> upstream/main
 /**
  * Build the trusted-dir list for Unix (macOS, Linux, etc.), extending
  * UNIX_BASE_TRUSTED_DIRS with platform/environment-specific paths.
@@ -106,9 +156,17 @@ let trustedDirsStandard: readonly string[] | null = null;
 
 function getTrustedDirs(trust: SystemBinTrust): readonly string[] {
   if (process.platform === "win32") {
+<<<<<<< HEAD
     // Windows does not currently widen "standard" beyond the registry-backed
     // system roots; both trust levels intentionally share the same set today.
     trustedDirsStrict ??= buildWindowsTrustedDirs();
+=======
+    trustedDirsStrict ??= buildWindowsTrustedDirs();
+    if (trust === "standard") {
+      trustedDirsStandard ??= [...trustedDirsStrict, ...buildWindowsStandardDirs()];
+      return trustedDirsStandard;
+    }
+>>>>>>> upstream/main
     return trustedDirsStrict;
   }
   if (trust === "standard") {
@@ -173,12 +231,20 @@ export function resolveSystemBin(
 }
 
 /** Visible for tests: the computed trusted directories. */
+<<<<<<< HEAD
 export function _getTrustedDirs(trust: SystemBinTrust = "strict"): readonly string[] {
+=======
+export function getTrustedDirsForTest(trust: SystemBinTrust = "strict"): readonly string[] {
+>>>>>>> upstream/main
   return getTrustedDirs(trust);
 }
 
 /** Reset cache and optionally override the executable-check function (for tests). */
+<<<<<<< HEAD
 export function _resetResolveSystemBin(overrideIsExecutable?: (p: string) => boolean): void {
+=======
+export function resetResolveSystemBin(overrideIsExecutable?: (p: string) => boolean): void {
+>>>>>>> upstream/main
   resolvedCacheStrict.clear();
   resolvedCacheStandard.clear();
   trustedDirsStrict = null;

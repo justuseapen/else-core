@@ -5,8 +5,6 @@ read_when:
 title: "Docs directory"
 ---
 
-# Docs Directory
-
 <Note>
 This page is a curated index. If you are new, start with [Getting Started](/start/getting-started).
 For a complete map of the docs, see [Docs hubs](/start/hubs).
@@ -41,9 +39,14 @@ For a complete map of the docs, see [Docs hubs](/start/hubs).
 - [Telegram](/channels/telegram)
 - [Discord](/channels/discord)
 - [Mattermost](/channels/mattermost)
+<<<<<<< HEAD
 - [BlueBubbles (iMessage)](/channels/bluebubbles)
 - [QQ Bot](/channels/qqbot)
 - [iMessage (legacy)](/channels/imessage)
+=======
+- [QQ Bot](/channels/qqbot)
+- [iMessage](/channels/imessage)
+>>>>>>> upstream/main
 - [Groups](/channels/groups)
 - [WhatsApp group messages](/channels/group-messages)
 - [Media images](/nodes/images)
@@ -54,7 +57,7 @@ For a complete map of the docs, see [Docs hubs](/start/hubs).
 - [macOS app](/platforms/macos)
 - [iOS app](/platforms/ios)
 - [Android app](/platforms/android)
-- [Windows (WSL2)](/platforms/windows)
+- [Windows Hub](/platforms/windows)
 - [Linux app](/platforms/linux)
 
 ## Operations and safety
@@ -65,3 +68,8 @@ For a complete map of the docs, see [Docs hubs](/start/hubs).
 - [Gmail hooks (Pub/Sub)](/automation/cron-jobs#gmail-pubsub-integration)
 - [Security](/gateway/security)
 - [Troubleshooting](/gateway/troubleshooting)
+
+## Related
+
+- [Getting started](/start/getting-started)
+- [Docs hubs](/start/hubs)

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Twitch plugin entrypoint registers its OpenClaw integration.
+>>>>>>> upstream/main
 import { defineBundledChannelEntry } from "openclaw/plugin-sdk/channel-entry-contract";
 
 export default defineBundledChannelEntry({
@@ -6,7 +10,11 @@ export default defineBundledChannelEntry({
   description: "Twitch IRC chat channel plugin",
   importMetaUrl: import.meta.url,
   plugin: {
+<<<<<<< HEAD
     specifier: "./api.js",
+=======
+    specifier: "./channel-plugin-api.js",
+>>>>>>> upstream/main
     exportName: "twitchPlugin",
   },
   runtime: {

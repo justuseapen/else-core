@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
+=======
+// Diffs tests cover render target plugin behavior.
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 
 const { preloadFileDiffMock, preloadMultiFileDiffMock } = vi.hoisted(() => ({
   preloadFileDiffMock: vi.fn(async ({ fileDiff }: { fileDiff: unknown }) => ({
@@ -19,6 +24,14 @@ vi.mock("@pierre/diffs/ssr", () => ({
   preloadMultiFileDiff: preloadMultiFileDiffMock,
 }));
 
+<<<<<<< HEAD
+=======
+afterAll(() => {
+  vi.doUnmock("@pierre/diffs/ssr");
+  vi.resetModules();
+});
+
+>>>>>>> upstream/main
 import { DEFAULT_DIFFS_TOOL_DEFAULTS, resolveDiffImageRenderOptions } from "./config.js";
 import { renderDiffDocument } from "./render.js";
 import { parseViewerPayloadJson } from "./viewer-payload.js";

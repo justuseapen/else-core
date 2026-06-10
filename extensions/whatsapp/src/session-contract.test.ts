@@ -1,5 +1,15 @@
+<<<<<<< HEAD
 import { describe, expect, it } from "vitest";
 import { canonicalizeLegacySessionKey, isLegacyGroupSessionKey } from "./session-contract.js";
+=======
+// Whatsapp tests cover session contract plugin behavior.
+import { describe, expect, it } from "vitest";
+import {
+  canonicalizeLegacySessionKey,
+  deriveLegacySessionChatType,
+  isLegacyGroupSessionKey,
+} from "./session-contract.js";
+>>>>>>> upstream/main
 
 describe("whatsapp legacy session contract", () => {
   it("canonicalizes legacy WhatsApp group keys to channel-qualified agent keys", () => {
@@ -16,6 +26,17 @@ describe("whatsapp legacy session contract", () => {
 
   it("does not claim generic non-WhatsApp group keys", () => {
     expect(isLegacyGroupSessionKey("group:abc")).toBe(false);
+<<<<<<< HEAD
     expect(canonicalizeLegacySessionKey({ key: "group:abc", agentId: "main" })).toBeNull();
   });
+=======
+    expect(deriveLegacySessionChatType("group:abc")).toBeUndefined();
+    expect(canonicalizeLegacySessionKey({ key: "group:abc", agentId: "main" })).toBeNull();
+  });
+
+  it("derives chat type for legacy WhatsApp group keys", () => {
+    expect(deriveLegacySessionChatType("123@g.us")).toBe("group");
+    expect(deriveLegacySessionChatType("whatsapp:123@g.us")).toBe("group");
+  });
+>>>>>>> upstream/main
 });

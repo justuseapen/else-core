@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Msteams plugin module implements graph members behavior.
+>>>>>>> upstream/main
 import type { OpenClawConfig } from "../runtime-api.js";
 import { fetchGraphJson, resolveGraphToken } from "./graph.js";
 
@@ -10,12 +14,20 @@ type GraphUserProfile = {
   officeLocation?: string;
 };
 
+<<<<<<< HEAD
 export type GetMemberInfoMSTeamsParams = {
+=======
+type GetMemberInfoMSTeamsParams = {
+>>>>>>> upstream/main
   cfg: OpenClawConfig;
   userId: string;
 };
 
+<<<<<<< HEAD
 export type GetMemberInfoMSTeamsResult = {
+=======
+type GetMemberInfoMSTeamsResult = {
+>>>>>>> upstream/main
   user: {
     id: string | undefined;
     displayName: string | undefined;

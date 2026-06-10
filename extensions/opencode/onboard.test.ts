@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   resolveAgentModelFallbackValues,
   resolveAgentModelPrimaryValue,
@@ -7,12 +8,21 @@ import {
   createConfigWithFallbacks,
   EXPECTED_FALLBACKS,
 } from "../../test/helpers/plugins/onboard-config.js";
+=======
+// Opencode tests cover onboard plugin behavior.
+import {
+  expectProviderOnboardAllowlistAlias,
+  expectProviderOnboardPrimaryAndFallbacks,
+} from "openclaw/plugin-sdk/provider-test-contracts";
+import { describe, it } from "vitest";
+>>>>>>> upstream/main
 import { applyOpencodeZenConfig, applyOpencodeZenProviderConfig } from "./onboard.js";
 
 const MODEL_REF = "opencode/claude-opus-4-6";
 
 describe("opencode onboard", () => {
   it("adds allowlist entry and preserves alias", () => {
+<<<<<<< HEAD
     const withDefault = applyOpencodeZenProviderConfig({});
     expect(Object.keys(withDefault.agents?.defaults?.models ?? {})).toContain(MODEL_REF);
 
@@ -36,5 +46,19 @@ describe("opencode onboard", () => {
     expect(resolveAgentModelFallbackValues(cfgWithFallbacks.agents?.defaults?.model)).toEqual([
       ...EXPECTED_FALLBACKS,
     ]);
+=======
+    expectProviderOnboardAllowlistAlias({
+      applyProviderConfig: applyOpencodeZenProviderConfig,
+      modelRef: MODEL_REF,
+      alias: "My Opus",
+    });
+  });
+
+  it("sets primary model and preserves existing model fallbacks", () => {
+    expectProviderOnboardPrimaryAndFallbacks({
+      applyConfig: applyOpencodeZenConfig,
+      modelRef: MODEL_REF,
+    });
+>>>>>>> upstream/main
   });
 });

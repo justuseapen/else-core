@@ -1,7 +1,11 @@
+// Googlechat plugin module implements setup core behavior.
 import {
   createPatchedAccountSetupAdapter,
   createSetupInputPresenceValidator,
+<<<<<<< HEAD
   DEFAULT_ACCOUNT_ID,
+=======
+>>>>>>> upstream/main
 } from "openclaw/plugin-sdk/setup-runtime";
 
 const channel = "googlechat" as const;

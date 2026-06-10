@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -5,6 +6,13 @@ import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
 const libraryPath = resolve(dirname(fileURLToPath(import.meta.url)), "library.ts");
+=======
+// Tests library entrypoint exports and package boundary behavior.
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+
+const libraryPath = new URL("./library.ts", import.meta.url);
+>>>>>>> upstream/main
 const lazyRuntimeSpecifiers = [
   "./auto-reply/reply.runtime.js",
   "./cli/prompt.js",
@@ -15,6 +23,7 @@ const lazyRuntimeSpecifiers = [
 
 function readLibraryModuleImports() {
   const sourceText = readFileSync(libraryPath, "utf8");
+<<<<<<< HEAD
   const sourceFile = ts.createSourceFile(libraryPath, sourceText, ts.ScriptTarget.Latest, true);
   const staticImports = new Set<string>();
   const dynamicImports = new Set<string>();
@@ -41,6 +50,19 @@ function readLibraryModuleImports() {
   }
 
   visit(sourceFile);
+=======
+  const staticImports = new Set<string>();
+  const dynamicImports = new Set<string>();
+  const staticImportPattern = /(?:^|\n)\s*import\s+(?!type\b)[\s\S]*?\s+from\s+["']([^"']+)["']/g;
+  const dynamicImportPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+
+  for (const match of sourceText.matchAll(staticImportPattern)) {
+    staticImports.add(match[1]);
+  }
+  for (const match of sourceText.matchAll(dynamicImportPattern)) {
+    dynamicImports.add(match[1]);
+  }
+>>>>>>> upstream/main
   return { dynamicImports, staticImports };
 }
 

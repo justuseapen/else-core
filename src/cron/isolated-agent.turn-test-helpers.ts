@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import "./isolated-agent.mocks.js";
 import fs from "node:fs/promises";
 import { expect, vi } from "vitest";
 import { runEmbeddedPiAgent } from "../agents/pi-embedded.js";
+=======
+/** Reusable turn-level fixtures for isolated cron agent regression tests. */
+import "./isolated-agent.mocks.js";
+import fs from "node:fs/promises";
+import { expect, vi } from "vitest";
+import { runEmbeddedAgent } from "../agents/embedded-agent.js";
+>>>>>>> upstream/main
 import type { CliDeps } from "../cli/deps.js";
 import { runCronIsolatedAgentTurn } from "./isolated-agent.js";
 import {
@@ -25,8 +33,13 @@ export function makeDeps(): CliDeps {
   };
 }
 
+<<<<<<< HEAD
 export function mockEmbeddedPayloads(payloads: Array<{ text?: string; isError?: boolean }>) {
   vi.mocked(runEmbeddedPiAgent).mockResolvedValue({
+=======
+function mockEmbeddedPayloads(payloads: Array<{ text?: string; isError?: boolean }>) {
+  vi.mocked(runEmbeddedAgent).mockResolvedValue({
+>>>>>>> upstream/main
     payloads,
     meta: {
       durationMs: 5,
@@ -35,7 +48,11 @@ export function mockEmbeddedPayloads(payloads: Array<{ text?: string; isError?: 
   });
 }
 
+<<<<<<< HEAD
 export function mockEmbeddedTexts(texts: string[]) {
+=======
+function mockEmbeddedTexts(texts: string[]) {
+>>>>>>> upstream/main
   mockEmbeddedPayloads(texts.map((text) => ({ text })));
 }
 
@@ -44,7 +61,11 @@ export function mockEmbeddedOk() {
 }
 
 export function expectEmbeddedProviderModel(expected: { provider: string; model: string }) {
+<<<<<<< HEAD
   const call = vi.mocked(runEmbeddedPiAgent).mock.calls.at(-1)?.[0] as {
+=======
+  const call = vi.mocked(runEmbeddedAgent).mock.calls.at(-1)?.[0] as {
+>>>>>>> upstream/main
     provider?: string;
     model?: string;
   };
@@ -60,12 +81,23 @@ export function expectEmbeddedProviderModel(expected: { provider: string; model:
 
 export async function readSessionEntry(storePath: string, key: string) {
   const raw = await fs.readFile(storePath, "utf-8");
+<<<<<<< HEAD
   const store = JSON.parse(raw) as Record<string, { sessionId?: string; label?: string }>;
+=======
+  const store = JSON.parse(raw) as Record<
+    string,
+    { sessionId?: string; label?: string; sessionFile?: string }
+  >;
+>>>>>>> upstream/main
   return store[key];
 }
 
 export const DEFAULT_MESSAGE = "do it";
+<<<<<<< HEAD
 export const DEFAULT_SESSION_KEY = "cron:job-1";
+=======
+const DEFAULT_SESSION_KEY = "cron:job-1";
+>>>>>>> upstream/main
 export const DEFAULT_AGENT_TURN_PAYLOAD: CronJob["payload"] = {
   kind: "agentTurn",
   message: DEFAULT_MESSAGE,
@@ -98,7 +130,11 @@ export async function runCronTurn(home: string, options: RunCronTurnOptions = {}
     }));
   const deps = options.deps ?? makeDeps();
   if (options.mockTexts === null) {
+<<<<<<< HEAD
     vi.mocked(runEmbeddedPiAgent).mockClear();
+=======
+    vi.mocked(runEmbeddedAgent).mockClear();
+>>>>>>> upstream/main
   } else {
     mockEmbeddedTexts(options.mockTexts ?? ["ok"]);
   }
@@ -142,14 +178,26 @@ export async function runTurnWithStoredModelOverride(
   home: string,
   jobPayload: CronJob["payload"],
   modelOverride = "gpt-4.1-mini",
+<<<<<<< HEAD
 ) {
   return runCronTurn(home, {
+=======
+  providerOverride = "openai",
+  cfgOverrides?: Parameters<typeof makeCfg>[2],
+) {
+  return runCronTurn(home, {
+    cfgOverrides,
+>>>>>>> upstream/main
     jobPayload,
     storeEntries: {
       "agent:main:cron:job-1": {
         sessionId: "existing-cron-session",
         updatedAt: Date.now(),
+<<<<<<< HEAD
         providerOverride: "openai",
+=======
+        providerOverride,
+>>>>>>> upstream/main
         modelOverride,
       },
     },

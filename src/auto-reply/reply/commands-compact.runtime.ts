@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 export {
   abortEmbeddedPiRun,
   compactEmbeddedPiSession,
   isEmbeddedPiRunActive,
   waitForEmbeddedPiRunEnd,
 } from "../../agents/pi-embedded.js";
+=======
+/** Runtime facade for compact command dependencies. */
+export {
+  abortEmbeddedAgentRun,
+  compactEmbeddedAgentSession,
+  isEmbeddedAgentRunAbortableForCompaction,
+  waitForEmbeddedAgentRunEnd,
+} from "../../agents/embedded-agent.js";
+>>>>>>> upstream/main
 export {
   resolveFreshSessionTotalTokens,
   resolveSessionFilePath,

@@ -1,7 +1,13 @@
+<<<<<<< HEAD
+=======
+// Xai plugin module implements web search shared behavior.
+import { readProviderJsonObjectResponse } from "openclaw/plugin-sdk/provider-http";
+>>>>>>> upstream/main
 import { postTrustedWebToolsJson, wrapWebContent } from "openclaw/plugin-sdk/provider-web-search";
 import { normalizeXaiModelId } from "../model-id.js";
 import {
   buildXaiResponsesToolBody,
+<<<<<<< HEAD
   extractXaiWebSearchContent,
   resolveXaiResponseTextAndCitations,
   XAI_RESPONSES_ENDPOINT,
@@ -36,13 +42,25 @@ export type XaiWebSearchResponse = {
     url: string;
   }>;
 };
+=======
+  requireXaiResponseTextCitationsAndInline,
+  resolveXaiResponsesEndpoint,
+} from "./responses-tool-shared.js";
+import { isRecord } from "./tool-config-shared.js";
+import type { XaiWebSearchResponse } from "./web-search-response.types.js";
+export { extractXaiWebSearchContent } from "./responses-tool-shared.js";
+export type { XaiWebSearchResponse } from "./web-search-response.types.js";
+
+const XAI_DEFAULT_WEB_SEARCH_MODEL = "grok-4-1-fast";
+>>>>>>> upstream/main
 
 type XaiWebSearchConfig = Record<string, unknown> & {
+  baseUrl?: unknown;
   model?: unknown;
   inlineCitations?: unknown;
 };
 
-export type XaiWebSearchResult = {
+type XaiWebSearchResult = {
   content: string;
   citations: string[];
   inlineCitations?: XaiWebSearchResponse["inline_citations"];
@@ -74,14 +92,10 @@ export function buildXaiWebSearchPayload(params: {
   };
 }
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
-export function resolveXaiSearchConfig(searchConfig?: Record<string, unknown>): XaiWebSearchConfig {
-  return (asRecord(searchConfig?.grok) as XaiWebSearchConfig | undefined) ?? {};
+function resolveXaiSearchConfig(searchConfig?: Record<string, unknown>): XaiWebSearchConfig {
+  return (
+    (isRecord(searchConfig?.grok) ? (searchConfig.grok as XaiWebSearchConfig) : undefined) ?? {}
+  );
 }
 
 export function resolveXaiWebSearchModel(searchConfig?: Record<string, unknown>): string {
@@ -91,20 +105,45 @@ export function resolveXaiWebSearchModel(searchConfig?: Record<string, unknown>)
     : XAI_DEFAULT_WEB_SEARCH_MODEL;
 }
 
+export function resolveXaiWebSearchEndpoint(searchConfig?: Record<string, unknown>): string {
+  return resolveXaiResponsesEndpoint(resolveXaiSearchConfig(searchConfig).baseUrl);
+}
+
 export function resolveXaiInlineCitations(searchConfig?: Record<string, unknown>): boolean {
   return resolveXaiSearchConfig(searchConfig).inlineCitations === true;
 }
 
+<<<<<<< HEAD
+=======
+function isAbortError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.name === "AbortError" || error.message === "This operation was aborted")
+  );
+}
+
+export function wrapXaiWebSearchError(error: unknown, timeoutSeconds: number): never {
+  if (isAbortError(error)) {
+    throw new Error(
+      `xAI web search timed out after ${timeoutSeconds}s. Increase tools.web.search.timeoutSeconds if queries are complex.`,
+      { cause: error },
+    );
+  }
+  throw error;
+}
+
+>>>>>>> upstream/main
 export async function requestXaiWebSearch(params: {
   query: string;
   model: string;
   apiKey: string;
+  endpoint: string;
   timeoutSeconds: number;
   inlineCitations: boolean;
 }): Promise<XaiWebSearchResult> {
   return await postTrustedWebToolsJson(
     {
-      url: XAI_WEB_SEARCH_ENDPOINT,
+      url: params.endpoint,
       timeoutSeconds: params.timeoutSeconds,
       apiKey: params.apiKey,
       body: buildXaiResponsesToolBody({
@@ -115,6 +154,7 @@ export async function requestXaiWebSearch(params: {
       errorLabel: "xAI",
     },
     async (response) => {
+<<<<<<< HEAD
       const data = (await response.json()) as XaiWebSearchResponse;
       const { content, citations } = resolveXaiResponseTextAndCitations(data);
       return {
@@ -125,16 +165,17 @@ export async function requestXaiWebSearch(params: {
             ? data.inline_citations
             : undefined,
       };
+=======
+      const data = (await readProviderJsonObjectResponse(
+        response,
+        "xAI web search failed",
+      )) as XaiWebSearchResponse;
+      return requireXaiResponseTextCitationsAndInline(
+        data,
+        "xAI web search failed",
+        params.inlineCitations,
+      );
+>>>>>>> upstream/main
     },
-  );
+  ).catch((error: unknown) => wrapXaiWebSearchError(error, params.timeoutSeconds));
 }
-
-export const __testing = {
-  buildXaiWebSearchPayload,
-  extractXaiWebSearchContent,
-  resolveXaiInlineCitations,
-  resolveXaiSearchConfig,
-  resolveXaiWebSearchModel,
-  requestXaiWebSearch,
-  XAI_DEFAULT_WEB_SEARCH_MODEL,
-} as const;

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Model override tests cover channel-level model selection and override precedence.
+>>>>>>> upstream/main
 import { beforeEach, describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import { resetPluginRuntimeStateForTest, setActivePluginRegistry } from "../plugins/runtime.js";
@@ -7,6 +11,10 @@ import { resolveChannelModelOverride } from "./model-overrides.js";
 
 describe("resolveChannelModelOverride", () => {
   beforeEach(() => {
+<<<<<<< HEAD
+=======
+    resetPluginRuntimeStateForTest();
+>>>>>>> upstream/main
     setActivePluginRegistry(createSessionConversationTestRegistry());
   });
 
@@ -64,6 +72,7 @@ describe("resolveChannelModelOverride", () => {
       },
       expected: { model: "demo-provider/demo-parent-model", matchKey: "123" },
     },
+<<<<<<< HEAD
     {
       name: "preserves feishu topic ids for direct matches",
       input: {
@@ -106,6 +115,8 @@ describe("resolveChannelModelOverride", () => {
         matchKey: "oc_group_chat:topic:om_topic_root",
       },
     },
+=======
+>>>>>>> upstream/main
   ] as const)("$name", ({ input, expected }) => {
     const resolved = resolveChannelModelOverride(input);
     expect(resolved?.model).toBe(expected.model);
@@ -168,19 +179,62 @@ describe("resolveChannelModelOverride", () => {
     expect(resolved?.matchKey).toBe("thread-parent");
   });
 
+<<<<<<< HEAD
   it("keeps bundled Feishu parent fallback matching before registry bootstrap", () => {
     resetPluginRuntimeStateForTest();
+=======
+  it("uses plugin-owned parent fallback candidates", () => {
+    setActivePluginRegistry(
+      createTestRegistry([
+        {
+          pluginId: "scoped-chat",
+          source: "test",
+          plugin: {
+            id: "scoped-chat",
+            meta: {
+              id: "scoped-chat",
+              label: "Scoped Chat",
+              selectionLabel: "Scoped Chat",
+              docsPath: "/channels/scoped-chat",
+              blurb: "test stub.",
+            },
+            capabilities: { chatTypes: ["group"] },
+            conversationBindings: {
+              buildModelOverrideParentCandidates: ({
+                parentConversationId,
+              }: {
+                parentConversationId?: string | null;
+              }) =>
+                parentConversationId === "room:topic:thread:sender:user"
+                  ? ["room:topic:thread", "room"]
+                  : [],
+            },
+            config: {
+              listAccountIds: () => ["default"],
+              resolveAccount: () => ({}),
+            },
+          },
+        },
+      ]),
+    );
+>>>>>>> upstream/main
 
     const resolved = resolveChannelModelOverride({
       cfg: {
         channels: {
           modelByChannel: {
+<<<<<<< HEAD
             feishu: {
               "oc_group_chat:topic:om_topic_root": "demo-provider/demo-feishu-topic-model",
+=======
+            "scoped-chat": {
+              "room:topic:thread": "demo-provider/demo-scoped-model",
+>>>>>>> upstream/main
             },
           },
         },
       } as unknown as OpenClawConfig,
+<<<<<<< HEAD
       channel: "feishu",
       groupId: "unrelated",
       parentSessionKey:
@@ -192,16 +246,34 @@ describe("resolveChannelModelOverride", () => {
   });
 
   it("keeps mixed-case Feishu scoped markers when matching parent session fallbacks", () => {
+=======
+      channel: "scoped-chat",
+      groupId: "unrelated",
+      parentSessionKey: "agent:main:scoped-chat:group:room:topic:thread:sender:user",
+    });
+
+    expect(resolved?.model).toBe("demo-provider/demo-scoped-model");
+    expect(resolved?.matchKey).toBe("room:topic:thread");
+  });
+
+  it("applies provider wildcard model overrides to direct chats", () => {
+>>>>>>> upstream/main
     const resolved = resolveChannelModelOverride({
       cfg: {
         channels: {
           modelByChannel: {
+<<<<<<< HEAD
             feishu: {
               "oc_group_chat:topic:om_topic_root": "demo-provider/demo-feishu-topic-model",
+=======
+            telegram: {
+              "*": "demo-provider/demo-direct-model",
+>>>>>>> upstream/main
             },
           },
         },
       } as unknown as OpenClawConfig,
+<<<<<<< HEAD
       channel: "feishu",
       groupId: "unrelated",
       parentSessionKey:
@@ -210,6 +282,15 @@ describe("resolveChannelModelOverride", () => {
 
     expect(resolved?.model).toBe("demo-provider/demo-feishu-topic-model");
     expect(resolved?.matchKey).toBe("oc_group_chat:topic:om_topic_root");
+=======
+      channel: "telegram",
+      groupChatType: "direct",
+    });
+
+    expect(resolved?.model).toBe("demo-provider/demo-direct-model");
+    expect(resolved?.matchKey).toBe("*");
+    expect(resolved?.matchSource).toBe("wildcard");
+>>>>>>> upstream/main
   });
 
   it("prefers parent conversation ids over channel-name fallbacks", () => {

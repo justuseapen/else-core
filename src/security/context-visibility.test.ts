@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Verifies security context visibility decisions.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import {
   evaluateSupplementalContextVisibility,

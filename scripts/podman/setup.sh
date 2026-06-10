@@ -28,6 +28,11 @@ OPENCLAW_CONTAINER_NAME="${OPENCLAW_PODMAN_CONTAINER:-openclaw}"
 PLATFORM_NAME="$(uname -s 2>/dev/null || echo unknown)"
 HOST_GATEWAY_PORT="${OPENCLAW_PODMAN_GATEWAY_HOST_PORT:-${OPENCLAW_GATEWAY_PORT:-18789}}"
 QUADLET_GATEWAY_PORT="18789"
+<<<<<<< HEAD
+=======
+PODMAN_PULL_TIMEOUT="${OPENCLAW_PODMAN_SETUP_PULL_TIMEOUT:-600s}"
+PODMAN_BUILD_TIMEOUT="${OPENCLAW_PODMAN_SETUP_BUILD_TIMEOUT:-1800s}"
+>>>>>>> upstream/main
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -43,6 +48,34 @@ fail() {
   exit 1
 }
 
+<<<<<<< HEAD
+=======
+run_podman_pull() {
+  local image="$1"
+  if command -v timeout >/dev/null 2>&1; then
+    if timeout --kill-after=1s 1s true >/dev/null 2>&1; then
+      timeout --kill-after=30s "$PODMAN_PULL_TIMEOUT" podman pull "$image"
+    else
+      timeout "$PODMAN_PULL_TIMEOUT" podman pull "$image"
+    fi
+    return
+  fi
+  podman pull "$image"
+}
+
+run_podman_build() {
+  if command -v timeout >/dev/null 2>&1; then
+    if timeout --kill-after=1s 1s true >/dev/null 2>&1; then
+      timeout --kill-after=30s "$PODMAN_BUILD_TIMEOUT" podman build "$@"
+    else
+      timeout "$PODMAN_BUILD_TIMEOUT" podman build "$@"
+    fi
+    return
+  fi
+  podman build "$@"
+}
+
+>>>>>>> upstream/main
 validate_single_line_value() {
   local label="$1"
   local value="$2"
@@ -332,6 +365,34 @@ if [[ ! -f "$RUN_SCRIPT_SRC" ]]; then
   echo "Launch script not found at $RUN_SCRIPT_SRC." >&2
   exit 1
 fi
+<<<<<<< HEAD
+
+if [[ -z "$OPENCLAW_HOME" ]]; then
+  OPENCLAW_HOME="$(resolve_user_home "$OPENCLAW_USER")"
+fi
+if [[ -z "$OPENCLAW_HOME" ]]; then
+  echo "Unable to resolve HOME for user $OPENCLAW_USER." >&2
+  exit 1
+fi
+if [[ -z "$OPENCLAW_CONFIG_DIR" ]]; then
+  OPENCLAW_CONFIG_DIR="$OPENCLAW_HOME/.openclaw"
+fi
+if [[ -z "$OPENCLAW_WORKSPACE_DIR" ]]; then
+  OPENCLAW_WORKSPACE_DIR="$OPENCLAW_CONFIG_DIR/workspace"
+fi
+validate_absolute_path "home directory" "$OPENCLAW_HOME"
+validate_mount_source_path "config directory" "$OPENCLAW_CONFIG_DIR"
+validate_mount_source_path "workspace directory" "$OPENCLAW_WORKSPACE_DIR"
+validate_container_name "$OPENCLAW_CONTAINER_NAME"
+validate_image_name "$OPENCLAW_IMAGE"
+validate_port "gateway host port" "$HOST_GATEWAY_PORT"
+validate_port "seed gateway port" "$SEED_GATEWAY_PORT"
+
+install -d -m 700 "$OPENCLAW_CONFIG_DIR" "$OPENCLAW_WORKSPACE_DIR"
+ensure_private_existing_dir_owned_by_user "config directory" "$OPENCLAW_CONFIG_DIR"
+ensure_private_existing_dir_owned_by_user "workspace directory" "$OPENCLAW_WORKSPACE_DIR"
+=======
+>>>>>>> upstream/main
 
 if [[ -z "$OPENCLAW_HOME" ]]; then
   OPENCLAW_HOME="$(resolve_user_home "$OPENCLAW_USER")"
@@ -358,23 +419,39 @@ install -d -m 700 "$OPENCLAW_CONFIG_DIR" "$OPENCLAW_WORKSPACE_DIR"
 ensure_private_existing_dir_owned_by_user "config directory" "$OPENCLAW_CONFIG_DIR"
 ensure_private_existing_dir_owned_by_user "workspace directory" "$OPENCLAW_WORKSPACE_DIR"
 
+OPENCLAW_IMAGE_APT_PACKAGES="${OPENCLAW_IMAGE_APT_PACKAGES-${OPENCLAW_DOCKER_APT_PACKAGES:-}}"
+OPENCLAW_IMAGE_PIP_PACKAGES="${OPENCLAW_IMAGE_PIP_PACKAGES:-}"
 BUILD_ARGS=()
-if [[ -n "${OPENCLAW_DOCKER_APT_PACKAGES:-}" ]]; then
-  BUILD_ARGS+=(--build-arg "OPENCLAW_DOCKER_APT_PACKAGES=${OPENCLAW_DOCKER_APT_PACKAGES}")
+if [[ -n "$OPENCLAW_IMAGE_APT_PACKAGES" ]]; then
+  BUILD_ARGS+=(--build-arg "OPENCLAW_IMAGE_APT_PACKAGES=${OPENCLAW_IMAGE_APT_PACKAGES}")
+fi
+if [[ -n "$OPENCLAW_IMAGE_PIP_PACKAGES" ]]; then
+  BUILD_ARGS+=(--build-arg "OPENCLAW_IMAGE_PIP_PACKAGES=${OPENCLAW_IMAGE_PIP_PACKAGES}")
 fi
 if [[ -n "${OPENCLAW_EXTENSIONS:-}" ]]; then
   BUILD_ARGS+=(--build-arg "OPENCLAW_EXTENSIONS=${OPENCLAW_EXTENSIONS}")
 fi
+if [[ -n "${OPENCLAW_INSTALL_BROWSER:-}" ]]; then
+  BUILD_ARGS+=(--build-arg "OPENCLAW_INSTALL_BROWSER=${OPENCLAW_INSTALL_BROWSER}")
+fi
 
 if [[ "$OPENCLAW_IMAGE" == "openclaw:local" ]]; then
   echo "Building image $OPENCLAW_IMAGE ..."
+<<<<<<< HEAD
   podman build -t "$OPENCLAW_IMAGE" -f "$REPO_PATH/Dockerfile" "${BUILD_ARGS[@]+"${BUILD_ARGS[@]}"}" "$REPO_PATH"
+=======
+  run_podman_build -t "$OPENCLAW_IMAGE" -f "$REPO_PATH/Dockerfile" "${BUILD_ARGS[@]+"${BUILD_ARGS[@]}"}" "$REPO_PATH"
+>>>>>>> upstream/main
 else
   if podman image exists "$OPENCLAW_IMAGE" >/dev/null 2>&1; then
     echo "Using existing image $OPENCLAW_IMAGE"
   else
     echo "Pulling image $OPENCLAW_IMAGE ..."
+<<<<<<< HEAD
     podman pull "$OPENCLAW_IMAGE"
+=======
+    run_podman_pull "$OPENCLAW_IMAGE"
+>>>>>>> upstream/main
   fi
 fi
 

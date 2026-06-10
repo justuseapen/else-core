@@ -1,4 +1,17 @@
+<<<<<<< HEAD
 import { Type } from "@sinclair/typebox";
+=======
+// Lobster plugin module implements lobster tool behavior.
+import {
+  optionalNonNegativeIntegerSchema,
+  optionalPositiveIntegerSchema,
+} from "openclaw/plugin-sdk/channel-actions";
+import {
+  readNonNegativeIntegerParam,
+  readPositiveIntegerParam,
+} from "openclaw/plugin-sdk/param-readers";
+import { Type } from "typebox";
+>>>>>>> upstream/main
 import type { OpenClawPluginApi } from "../runtime-api.js";
 import {
   createEmbeddedLobsterRunner,
@@ -6,10 +19,21 @@ import {
   type LobsterRunner,
   type LobsterRunnerParams,
 } from "./lobster-runner.js";
+<<<<<<< HEAD
 import { resumeManagedLobsterFlow, runManagedLobsterFlow } from "./lobster-taskflow.js";
 
 type BoundTaskFlow = ReturnType<
   NonNullable<OpenClawPluginApi["runtime"]>["taskFlow"]["bindSession"]
+=======
+import {
+  type ManagedLobsterFlowResult,
+  resumeManagedLobsterFlow,
+  runManagedLobsterFlow,
+} from "./lobster-taskflow.js";
+
+type BoundTaskFlow = ReturnType<
+  NonNullable<OpenClawPluginApi["runtime"]>["tasks"]["managedFlows"]["bindSession"]
+>>>>>>> upstream/main
 >;
 
 type JsonLike =
@@ -42,6 +66,16 @@ type ManagedFlowResumeParams = {
   waitingStep?: string;
 };
 
+<<<<<<< HEAD
+=======
+type ManagedFlowSuccessResult = {
+  ok: true;
+  envelope: unknown;
+  flow: unknown;
+  mutation: unknown;
+};
+
+>>>>>>> upstream/main
 function readOptionalTrimmedString(value: unknown, fieldName: string): string | undefined {
   if (value === undefined) {
     return undefined;
@@ -54,6 +88,7 @@ function readOptionalTrimmedString(value: unknown, fieldName: string): string | 
 }
 
 function readOptionalNumber(value: unknown, fieldName: string): number | undefined {
+<<<<<<< HEAD
   if (value === undefined) {
     return undefined;
   }
@@ -87,6 +122,37 @@ function parseOptionalFlowStateJson(value: unknown): JsonLike | undefined {
   }
 }
 
+=======
+  return readNonNegativeIntegerParam({ [fieldName]: value }, fieldName, {
+    message: `${fieldName} must be a non-negative integer`,
+  });
+}
+
+function readOptionalBoolean(value: unknown, fieldName: string): boolean | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "boolean") {
+    throw new Error(`${fieldName} must be a boolean`);
+  }
+  return value;
+}
+
+function parseOptionalFlowStateJson(value: unknown): JsonLike | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "string") {
+    throw new Error("flowStateJson must be a JSON string");
+  }
+  try {
+    return JSON.parse(value) as JsonLike;
+  } catch {
+    throw new Error("flowStateJson must be valid JSON");
+  }
+}
+
+>>>>>>> upstream/main
 function parseRunFlowParams(params: Record<string, unknown>): ManagedFlowRunParams | null {
   const controllerId = readOptionalTrimmedString(params.flowControllerId, "flowControllerId");
   const goal = readOptionalTrimmedString(params.flowGoal, "flowGoal");
@@ -130,6 +196,10 @@ function parseResumeFlowParams(params: Record<string, unknown>): ManagedFlowResu
   const currentStep = readOptionalTrimmedString(params.flowCurrentStep, "flowCurrentStep");
   const waitingStep = readOptionalTrimmedString(params.flowWaitingStep, "flowWaitingStep");
   const token = readOptionalTrimmedString(params.token, "token");
+<<<<<<< HEAD
+=======
+  const approvalId = readOptionalTrimmedString(params.approvalId, "approvalId");
+>>>>>>> upstream/main
   const approve = readOptionalBoolean(params.approve, "approve");
   const runControllerId = readOptionalTrimmedString(params.flowControllerId, "flowControllerId");
   const runGoal = readOptionalTrimmedString(params.flowGoal, "flowGoal");
@@ -153,8 +223,13 @@ function parseResumeFlowParams(params: Record<string, unknown>): ManagedFlowResu
   if (expectedRevision === undefined) {
     throw new Error("flowExpectedRevision required when using managed TaskFlow resume mode");
   }
+<<<<<<< HEAD
   if (!token) {
     throw new Error("token required when using managed TaskFlow resume mode");
+=======
+  if (!token && !approvalId) {
+    throw new Error("token or approvalId required when using managed TaskFlow resume mode");
+>>>>>>> upstream/main
   }
   if (approve === undefined) {
     throw new Error("approve required when using managed TaskFlow resume mode");
@@ -167,6 +242,39 @@ function parseResumeFlowParams(params: Record<string, unknown>): ManagedFlowResu
   };
 }
 
+<<<<<<< HEAD
+=======
+function formatManagedFlowResult(result: ManagedFlowSuccessResult) {
+  const envelope =
+    result.envelope && typeof result.envelope === "object" && !Array.isArray(result.envelope)
+      ? result.envelope
+      : { envelope: result.envelope };
+  const details = {
+    ...envelope,
+    flow: result.flow,
+    mutation: result.mutation,
+  };
+  return {
+    content: [{ type: "text", text: JSON.stringify(details, null, 2) }],
+    details,
+  };
+}
+
+function requireTaskFlowRuntime(taskFlow: BoundTaskFlow | undefined, action: "run" | "resume") {
+  if (!taskFlow) {
+    throw new Error(`Managed TaskFlow ${action} mode requires a bound taskFlow runtime`);
+  }
+  return taskFlow;
+}
+
+function resolveManagedFlowToolResult(result: ManagedLobsterFlowResult) {
+  if (!result.ok) {
+    throw result.error;
+  }
+  return formatManagedFlowResult(result);
+}
+
+>>>>>>> upstream/main
 export function createLobsterTool(api: OpenClawPluginApi, options?: LobsterToolOptions) {
   const runner = options?.runner ?? createEmbeddedLobsterRunner();
   return {
@@ -180,6 +288,7 @@ export function createLobsterTool(api: OpenClawPluginApi, options?: LobsterToolO
       pipeline: Type.Optional(Type.String()),
       argsJson: Type.Optional(Type.String()),
       token: Type.Optional(Type.String()),
+      approvalId: Type.Optional(Type.String()),
       approve: Type.Optional(Type.Boolean()),
       cwd: Type.Optional(
         Type.String({
@@ -187,13 +296,22 @@ export function createLobsterTool(api: OpenClawPluginApi, options?: LobsterToolO
             "Relative working directory (optional). Must stay within the gateway working directory.",
         }),
       ),
+<<<<<<< HEAD
       timeoutMs: Type.Optional(Type.Number()),
       maxStdoutBytes: Type.Optional(Type.Number()),
+=======
+      timeoutMs: optionalPositiveIntegerSchema(),
+      maxStdoutBytes: optionalPositiveIntegerSchema(),
+>>>>>>> upstream/main
       flowControllerId: Type.Optional(Type.String()),
       flowGoal: Type.Optional(Type.String()),
       flowStateJson: Type.Optional(Type.String()),
       flowId: Type.Optional(Type.String()),
+<<<<<<< HEAD
       flowExpectedRevision: Type.Optional(Type.Number()),
+=======
+      flowExpectedRevision: optionalNonNegativeIntegerSchema(),
+>>>>>>> upstream/main
       flowCurrentStep: Type.Optional(Type.String()),
       flowWaitingStep: Type.Optional(Type.String()),
     }),
@@ -207,9 +325,14 @@ export function createLobsterTool(api: OpenClawPluginApi, options?: LobsterToolO
       }
 
       const cwd = resolveLobsterCwd(params.cwd);
+<<<<<<< HEAD
       const timeoutMs = typeof params.timeoutMs === "number" ? params.timeoutMs : 20_000;
       const maxStdoutBytes =
         typeof params.maxStdoutBytes === "number" ? params.maxStdoutBytes : 512_000;
+=======
+      const timeoutMs = readPositiveIntegerParam(params, "timeoutMs") ?? 20_000;
+      const maxStdoutBytes = readPositiveIntegerParam(params, "maxStdoutBytes") ?? 512_000;
+>>>>>>> upstream/main
 
       if (api.runtime?.version && api.logger?.debug) {
         api.logger.debug(`lobster plugin runtime=${api.runtime.version}`);
@@ -220,6 +343,10 @@ export function createLobsterTool(api: OpenClawPluginApi, options?: LobsterToolO
         ...(typeof params.pipeline === "string" ? { pipeline: params.pipeline } : {}),
         ...(typeof params.argsJson === "string" ? { argsJson: params.argsJson } : {}),
         ...(typeof params.token === "string" ? { token: params.token } : {}),
+<<<<<<< HEAD
+=======
+        ...(typeof params.approvalId === "string" ? { approvalId: params.approvalId } : {}),
+>>>>>>> upstream/main
         ...(typeof params.approve === "boolean" ? { approve: params.approve } : {}),
         cwd,
         timeoutMs,
@@ -230,6 +357,7 @@ export function createLobsterTool(api: OpenClawPluginApi, options?: LobsterToolO
       if (action === "run") {
         const flowParams = parseRunFlowParams(params);
         if (flowParams) {
+<<<<<<< HEAD
           if (!taskFlow) {
             throw new Error("Managed TaskFlow run mode requires a bound taskFlow runtime");
           }
@@ -255,10 +383,25 @@ export function createLobsterTool(api: OpenClawPluginApi, options?: LobsterToolO
             content: [{ type: "text", text: JSON.stringify(details, null, 2) }],
             details,
           };
+=======
+          return resolveManagedFlowToolResult(
+            await runManagedLobsterFlow({
+              taskFlow: requireTaskFlowRuntime(taskFlow, "run"),
+              runner,
+              runnerParams,
+              controllerId: flowParams.controllerId,
+              goal: flowParams.goal,
+              ...(flowParams.stateJson !== undefined ? { stateJson: flowParams.stateJson } : {}),
+              ...(flowParams.currentStep ? { currentStep: flowParams.currentStep } : {}),
+              ...(flowParams.waitingStep ? { waitingStep: flowParams.waitingStep } : {}),
+            }),
+          );
+>>>>>>> upstream/main
         }
       } else {
         const flowParams = parseResumeFlowParams(params);
         if (flowParams) {
+<<<<<<< HEAD
           if (!taskFlow) {
             throw new Error("Managed TaskFlow resume mode requires a bound taskFlow runtime");
           }
@@ -287,6 +430,22 @@ export function createLobsterTool(api: OpenClawPluginApi, options?: LobsterToolO
             content: [{ type: "text", text: JSON.stringify(details, null, 2) }],
             details,
           };
+=======
+          return resolveManagedFlowToolResult(
+            await resumeManagedLobsterFlow({
+              taskFlow: requireTaskFlowRuntime(taskFlow, "resume"),
+              runner,
+              runnerParams: runnerParams as LobsterRunnerParams & {
+                action: "resume";
+                approve: boolean;
+              } & ({ token: string } | { approvalId: string }),
+              flowId: flowParams.flowId,
+              expectedRevision: flowParams.expectedRevision,
+              ...(flowParams.currentStep ? { currentStep: flowParams.currentStep } : {}),
+              ...(flowParams.waitingStep ? { waitingStep: flowParams.waitingStep } : {}),
+            }),
+          );
+>>>>>>> upstream/main
         }
       }
 

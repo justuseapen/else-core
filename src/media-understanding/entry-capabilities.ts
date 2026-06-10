@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { MediaUnderstandingModelConfig } from "../config/types.tools.js";
 import { normalizeMediaProviderId } from "./provider-id.js";
 import type { MediaUnderstandingCapability } from "./types.js";
@@ -8,6 +9,16 @@ export type MediaUnderstandingCapabilityRegistry = Map<
     capabilities?: MediaUnderstandingCapability[];
   }
 >;
+=======
+// Entry capability helpers validate explicit media capability tags and infer
+// shared provider entries from registry metadata.
+import type { MediaUnderstandingModelConfig } from "../config/types.tools.js";
+import { normalizeMediaProviderId } from "./provider-id.js";
+import type {
+  MediaUnderstandingCapability,
+  MediaUnderstandingCapabilityRegistry,
+} from "./types.js";
+>>>>>>> upstream/main
 
 const MEDIA_CAPABILITIES = ["audio", "image", "video"] as const;
 
@@ -19,6 +30,10 @@ function resolveEntryType(entry: MediaUnderstandingModelConfig): "provider" | "c
   return entry.type ?? (entry.command ? "cli" : "provider");
 }
 
+<<<<<<< HEAD
+=======
+/** Returns valid explicit capability tags from a media model entry. */
+>>>>>>> upstream/main
 export function resolveConfiguredMediaEntryCapabilities(
   entry: MediaUnderstandingModelConfig,
 ): MediaUnderstandingCapability[] | undefined {
@@ -29,6 +44,10 @@ export function resolveConfiguredMediaEntryCapabilities(
   return capabilities.length > 0 ? capabilities : undefined;
 }
 
+<<<<<<< HEAD
+=======
+/** Resolves the capability set for an entry, inferring shared provider entries from metadata. */
+>>>>>>> upstream/main
 export function resolveEffectiveMediaEntryCapabilities(params: {
   entry: MediaUnderstandingModelConfig;
   source: "shared" | "capability";
@@ -51,6 +70,10 @@ export function resolveEffectiveMediaEntryCapabilities(params: {
   return params.providerRegistry.get(providerId)?.capabilities;
 }
 
+<<<<<<< HEAD
+=======
+/** Tests whether an entry should be considered for a requested media capability. */
+>>>>>>> upstream/main
 export function matchesMediaEntryCapability(params: {
   entry: MediaUnderstandingModelConfig;
   source: "shared" | "capability";

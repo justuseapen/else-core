@@ -1,5 +1,11 @@
 {
   "id": "searxng",
+<<<<<<< HEAD
+=======
+  "activation": {
+    "onStartup": false
+  },
+>>>>>>> upstream/main
   "uiHints": {
     "webSearch.baseUrl": {
       "label": "SearXNG Base URL",

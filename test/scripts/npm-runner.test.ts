@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Npm Runner tests cover npm runner script behavior.
+>>>>>>> upstream/main
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveNpmRunner } from "../../scripts/npm-runner.mjs";

@@ -1,8 +1,26 @@
+<<<<<<< HEAD
 import type { Api } from "@mariozechner/pi-ai";
 import type { ModelDefinitionConfig } from "../config/types.js";
 import type { ConfiguredModelProviderRequest } from "../config/types.provider-request.js";
 import { assertSecretInputResolved } from "../config/types.secrets.js";
 import type { PinnedDispatcherPolicy } from "../infra/net/ssrf.js";
+=======
+/**
+ * Provider request configuration resolver.
+ *
+ * Normalizes operator request overrides into transport-ready auth, proxy, TLS, header, and SSRF policy state.
+ */
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
+import type { ModelDefinitionConfig } from "../config/types.js";
+import type {
+  ConfiguredModelProviderRequest,
+  ConfiguredProviderRequest,
+} from "../config/types.provider-request.js";
+import { assertSecretInputResolved } from "../config/types.secrets.js";
+import type { PinnedDispatcherPolicy } from "../infra/net/ssrf.js";
+import type { Api } from "../llm/types.js";
+import { COPILOT_INTEGRATION_ID, buildCopilotIdeHeaders } from "./copilot-dynamic-headers.js";
+>>>>>>> upstream/main
 import type {
   ProviderRequestCapabilities,
   ProviderRequestCapability,
@@ -16,6 +34,10 @@ import {
 
 type RequestApi = Api | ModelDefinitionConfig["api"];
 
+<<<<<<< HEAD
+=======
+/** Auth override accepted from sanitized provider/model request config. */
+>>>>>>> upstream/main
 export type ProviderRequestAuthOverride =
   | {
       mode: "provider-default";
@@ -31,6 +53,10 @@ export type ProviderRequestAuthOverride =
       prefix?: string;
     };
 
+<<<<<<< HEAD
+=======
+/** TLS override accepted from sanitized provider/model request config. */
+>>>>>>> upstream/main
 export type ProviderRequestTlsOverride = {
   ca?: string;
   cert?: string;
@@ -40,6 +66,10 @@ export type ProviderRequestTlsOverride = {
   insecureSkipVerify?: boolean;
 };
 
+<<<<<<< HEAD
+=======
+/** Proxy override accepted from sanitized provider/model request config. */
+>>>>>>> upstream/main
 export type ProviderRequestProxyOverride =
   | {
       mode: "env-proxy";
@@ -51,6 +81,10 @@ export type ProviderRequestProxyOverride =
       tls?: ProviderRequestTlsOverride;
     };
 
+<<<<<<< HEAD
+=======
+/** Transport override block shared by provider and model request config. */
+>>>>>>> upstream/main
 export type ProviderRequestTransportOverrides = {
   headers?: Record<string, string>;
   auth?: ProviderRequestAuthOverride;
@@ -58,7 +92,18 @@ export type ProviderRequestTransportOverrides = {
   tls?: ProviderRequestTlsOverride;
 };
 
+<<<<<<< HEAD
 export type ResolvedProviderRequestAuthConfig =
+=======
+/** Model-scoped transport overrides, including private-network policy. */
+export type ModelProviderRequestTransportOverrides = ProviderRequestTransportOverrides & {
+  allowPrivateNetwork?: boolean;
+};
+
+// Resolved request config separates configured vs default state so transports
+// can decide whether to inject provider defaults or operator-provided headers.
+type ResolvedProviderRequestAuthConfig =
+>>>>>>> upstream/main
   | {
       configured: false;
       mode: "provider-default" | "authorization-bearer";
@@ -80,7 +125,11 @@ export type ResolvedProviderRequestAuthConfig =
       injectAuthorizationHeader: false;
     };
 
+<<<<<<< HEAD
 export type ResolvedProviderRequestProxyConfig =
+=======
+type ResolvedProviderRequestProxyConfig =
+>>>>>>> upstream/main
   | {
       configured: false;
     }
@@ -96,7 +145,11 @@ export type ResolvedProviderRequestProxyConfig =
       tls: ResolvedProviderRequestTlsConfig;
     };
 
+<<<<<<< HEAD
 export type ResolvedProviderRequestTlsConfig =
+=======
+type ResolvedProviderRequestTlsConfig =
+>>>>>>> upstream/main
   | {
       configured: false;
     }
@@ -110,7 +163,11 @@ export type ResolvedProviderRequestTlsConfig =
       rejectUnauthorized?: boolean;
     };
 
+<<<<<<< HEAD
 export type ResolvedProviderRequestExtraHeadersConfig = {
+=======
+type ResolvedProviderRequestExtraHeadersConfig = {
+>>>>>>> upstream/main
   configured: boolean;
   headers?: Record<string, string>;
 };
@@ -126,10 +183,20 @@ export type ResolvedProviderRequestConfig = {
   policy: ProviderRequestPolicyResolution;
 };
 
+<<<<<<< HEAD
 export type ProviderRequestHeaderPrecedence = "caller-wins" | "defaults-win";
 
 export type ResolvedProviderRequestPolicyConfig = ResolvedProviderRequestConfig & {
   allowPrivateNetwork: boolean;
+=======
+type ProviderRequestHeaderPrecedence = "caller-wins" | "defaults-win";
+
+// Policy config includes the resolved transport plus attribution/security facts
+// required before a provider request can be attached to a model call.
+type ResolvedProviderRequestPolicyConfig = ResolvedProviderRequestConfig & {
+  allowPrivateNetwork: boolean;
+  privateNetworkExplicitlyDenied: boolean;
+>>>>>>> upstream/main
   capabilities: ProviderRequestCapabilities;
 };
 
@@ -139,6 +206,11 @@ const FORBIDDEN_INSECURE_TLS_MESSAGE =
 const FORBIDDEN_RUNTIME_TRANSPORT_OVERRIDE_MESSAGE =
   "Runtime auth request overrides do not allow proxy or TLS transport settings";
 
+<<<<<<< HEAD
+=======
+// Provider/model/caller request inputs are merged through one path so SSRF,
+// header precedence, and Copilot dynamic headers stay consistent.
+>>>>>>> upstream/main
 type ResolveProviderRequestPolicyConfigParams = {
   provider?: string;
   api?: RequestApi;
@@ -152,6 +224,7 @@ type ResolveProviderRequestPolicyConfigParams = {
   callerHeaders?: Record<string, string>;
   precedence?: ProviderRequestHeaderPrecedence;
   authHeader?: boolean;
+<<<<<<< HEAD
   compat?: {
     supportsStore?: boolean;
   } | null;
@@ -160,6 +233,33 @@ type ResolveProviderRequestPolicyConfigParams = {
   request?: ProviderRequestTransportOverrides;
 };
 
+=======
+  compat?: unknown;
+  modelId?: string | null;
+  allowPrivateNetwork?: boolean;
+  request?: ModelProviderRequestTransportOverrides;
+};
+
+function resolvePrivateNetworkAccess(params: ResolveProviderRequestPolicyConfigParams): {
+  allowPrivateNetwork: boolean;
+  explicitlyDenied: boolean;
+} {
+  // Preserve existing precedence: runtime/caller policy overrides model config.
+  const configuredAllowPrivateNetwork =
+    params.allowPrivateNetwork ?? params.request?.allowPrivateNetwork;
+  if (configuredAllowPrivateNetwork !== undefined) {
+    return {
+      allowPrivateNetwork: configuredAllowPrivateNetwork,
+      explicitlyDenied: !configuredAllowPrivateNetwork,
+    };
+  }
+  return {
+    allowPrivateNetwork: false,
+    explicitlyDenied: false,
+  };
+}
+
+>>>>>>> upstream/main
 function sanitizeConfiguredRequestString(value: unknown, path: string): string | undefined {
   if (typeof value !== "string") {
     // Config transport overrides are sanitized after secrets runtime resolution.
@@ -171,8 +271,14 @@ function sanitizeConfiguredRequestString(value: unknown, path: string): string |
   return trimmed ? trimmed : undefined;
 }
 
+<<<<<<< HEAD
 export function sanitizeConfiguredProviderRequest(
   request: ConfiguredModelProviderRequest | ProviderRequestTransportOverrides | undefined,
+=======
+/** Sanitizes provider-level request overrides after secret resolution. */
+export function sanitizeConfiguredProviderRequest(
+  request: ConfiguredProviderRequest | undefined,
+>>>>>>> upstream/main
 ): ProviderRequestTransportOverrides | undefined {
   if (!request || typeof request !== "object" || Array.isArray(request)) {
     return undefined;
@@ -297,6 +403,7 @@ export function sanitizeConfiguredProviderRequest(
   };
 }
 
+<<<<<<< HEAD
 export function sanitizeConfiguredModelProviderRequest(
   request: ConfiguredModelProviderRequest | undefined,
 ): ProviderRequestTransportOverrides | undefined {
@@ -307,10 +414,35 @@ export function mergeProviderRequestOverrides(
   ...overrides: Array<ProviderRequestTransportOverrides | undefined>
 ): ProviderRequestTransportOverrides | undefined {
   let merged: ProviderRequestTransportOverrides | undefined;
+=======
+/** Sanitizes model-level request overrides after secret resolution. */
+export function sanitizeConfiguredModelProviderRequest(
+  request: ConfiguredModelProviderRequest | undefined,
+): ModelProviderRequestTransportOverrides | undefined {
+  const sanitized = sanitizeConfiguredProviderRequest(request);
+  const rawAllow = request?.allowPrivateNetwork;
+  const allowPrivateNetwork = rawAllow === true ? true : rawAllow === false ? false : undefined;
+  if (!sanitized && allowPrivateNetwork === undefined) {
+    return undefined;
+  }
+  return {
+    ...sanitized,
+    ...(allowPrivateNetwork !== undefined ? { allowPrivateNetwork } : {}),
+  };
+}
+
+/** Merges provider request overrides with later entries taking precedence. */
+export function mergeProviderRequestOverrides(
+  ...overrides: Array<ProviderRequestTransportOverrides | undefined>
+): ProviderRequestTransportOverrides | undefined {
+  const merged: ProviderRequestTransportOverrides = {};
+  let hasMerged = false;
+>>>>>>> upstream/main
   for (const current of overrides) {
     if (!current) {
       continue;
     }
+<<<<<<< HEAD
     merged = {
       ...merged,
       ...(current.headers
@@ -325,10 +457,45 @@ export function mergeProviderRequestOverrides(
       ...(current.proxy ? { proxy: current.proxy } : {}),
       ...(current.tls ? { tls: current.tls } : {}),
     };
+=======
+    hasMerged = true;
+    if (current.headers) {
+      merged.headers = Object.assign({}, merged.headers, current.headers);
+    }
+    if (current.auth) {
+      merged.auth = current.auth;
+    }
+    if (current.proxy) {
+      merged.proxy = current.proxy;
+    }
+    if (current.tls) {
+      merged.tls = current.tls;
+    }
+  }
+  return hasMerged ? merged : undefined;
+}
+
+/** Merges model request overrides, preserving the latest private-network policy. */
+export function mergeModelProviderRequestOverrides(
+  ...overrides: Array<ModelProviderRequestTransportOverrides | undefined>
+): ModelProviderRequestTransportOverrides | undefined {
+  let merged: ModelProviderRequestTransportOverrides | undefined = mergeProviderRequestOverrides(
+    ...overrides,
+  );
+  for (const current of overrides) {
+    if (current?.allowPrivateNetwork !== undefined) {
+      merged ??= {};
+      merged.allowPrivateNetwork = current.allowPrivateNetwork;
+    }
+>>>>>>> upstream/main
   }
   return merged;
 }
 
+<<<<<<< HEAD
+=======
+/** Normalizes provider base URLs by trimming trailing slashes. */
+>>>>>>> upstream/main
 export function normalizeBaseUrl(baseUrl: string | undefined, fallback: string): string;
 export function normalizeBaseUrl(
   baseUrl: string | undefined,
@@ -345,7 +512,28 @@ export function normalizeBaseUrl(
   return raw.replace(/\/+$/, "");
 }
 
+<<<<<<< HEAD
 export function mergeProviderRequestHeaders(
+=======
+// Default Copilot headers are dynamic per IDE/runtime and must be merged through
+// the same header precedence path as configured provider headers.
+function resolveProviderDefaultRequestHeaders(
+  provider: string | undefined,
+): Record<string, string> | undefined {
+  if (normalizeLowercaseStringOrEmpty(provider) !== "github-copilot") {
+    return undefined;
+  }
+  return {
+    ...buildCopilotIdeHeaders(),
+    "Copilot-Integration-Id": COPILOT_INTEGRATION_ID,
+    "Openai-Organization": "github-copilot",
+  };
+}
+
+// Header keys are compared case-insensitively and prototype-polluting names are
+// dropped before values are attached to outbound provider requests.
+function mergeProviderRequestHeaders(
+>>>>>>> upstream/main
   ...headerSets: Array<Record<string, string> | undefined>
 ): Record<string, string> | undefined {
   let merged: Record<string, string> | undefined;
@@ -358,7 +546,11 @@ export function mergeProviderRequestHeaders(
       merged = Object.create(null) as Record<string, string>;
     }
     for (const [key, value] of Object.entries(headers)) {
+<<<<<<< HEAD
       const normalizedKey = key.toLowerCase();
+=======
+      const normalizedKey = normalizeLowercaseStringOrEmpty(key);
+>>>>>>> upstream/main
       if (FORBIDDEN_HEADER_KEYS.has(normalizedKey)) {
         continue;
       }
@@ -441,6 +633,10 @@ function resolveAuthOverride(params: {
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Sanitizes runtime-only provider request overrides for auth request paths. */
+>>>>>>> upstream/main
 export function sanitizeRuntimeProviderRequestOverrides(
   request: ProviderRequestTransportOverrides | undefined,
 ): ProviderRequestTransportOverrides | undefined {
@@ -496,12 +692,20 @@ function applyResolvedAuthHeader(
     return headers;
   }
   const next = mergeProviderRequestHeaders(headers) ?? Object.create(null);
+<<<<<<< HEAD
   const keysToDelete = new Set([auth.headerName.toLowerCase()]);
+=======
+  const keysToDelete = new Set([normalizeLowercaseStringOrEmpty(auth.headerName)]);
+>>>>>>> upstream/main
   if (auth.mode === "header") {
     keysToDelete.add("authorization");
   }
   for (const key of Object.keys(next)) {
+<<<<<<< HEAD
     if (keysToDelete.has(key.toLowerCase())) {
+=======
+    if (keysToDelete.has(normalizeLowercaseStringOrEmpty(key))) {
+>>>>>>> upstream/main
       delete next[key];
     }
   }
@@ -540,6 +744,10 @@ function toTlsConnectOptions(
   return Object.keys(next).length > 0 ? next : undefined;
 }
 
+<<<<<<< HEAD
+=======
+/** Builds the dispatcher proxy/TLS policy for outbound provider requests. */
+>>>>>>> upstream/main
 export function buildProviderRequestDispatcherPolicy(
   request: Pick<ResolvedProviderRequestConfig, "proxy" | "tls">,
 ): PinnedDispatcherPolicy | undefined {
@@ -562,12 +770,20 @@ export function buildProviderRequestDispatcherPolicy(
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Builds direct TLS client options for providers that own their transport client. */
+>>>>>>> upstream/main
 export function buildProviderRequestTlsClientOptions(
   request: Pick<ResolvedProviderRequestConfig, "tls">,
 ): Record<string, unknown> | undefined {
   return toTlsConnectOptions(request.tls);
 }
 
+<<<<<<< HEAD
+=======
+/** Resolves the full provider request policy, headers, auth, proxy, and TLS config. */
+>>>>>>> upstream/main
 export function resolveProviderRequestPolicyConfig(
   params: ResolveProviderRequestPolicyConfigParams,
 ): ResolvedProviderRequestPolicyConfig {
@@ -593,6 +809,10 @@ export function resolveProviderRequestPolicyConfig(
   });
   const extraHeaders = applyResolvedAuthHeader(
     mergeProviderRequestHeaders(
+<<<<<<< HEAD
+=======
+      resolveProviderDefaultRequestHeaders(params.provider),
+>>>>>>> upstream/main
       params.discoveredHeaders,
       params.providerHeaders,
       params.modelHeaders,
@@ -601,12 +821,20 @@ export function resolveProviderRequestPolicyConfig(
     auth,
   );
   const protectedAttributionKeys = new Set(
+<<<<<<< HEAD
     Object.keys(policy.attributionHeaders ?? {}).map((key) => key.toLowerCase()),
+=======
+    Object.keys(policy.attributionHeaders ?? {}).map((key) => normalizeLowercaseStringOrEmpty(key)),
+>>>>>>> upstream/main
   );
   const unprotectedCallerHeaders = params.callerHeaders
     ? Object.fromEntries(
         Object.entries(params.callerHeaders).filter(
+<<<<<<< HEAD
           ([key]) => !protectedAttributionKeys.has(key.toLowerCase()),
+=======
+          ([key]) => !protectedAttributionKeys.has(normalizeLowercaseStringOrEmpty(key)),
+>>>>>>> upstream/main
         ),
       )
     : undefined;
@@ -615,6 +843,10 @@ export function resolveProviderRequestPolicyConfig(
     params.precedence === "caller-wins"
       ? mergeProviderRequestHeaders(mergedDefaults, unprotectedCallerHeaders)
       : mergeProviderRequestHeaders(unprotectedCallerHeaders, mergedDefaults);
+<<<<<<< HEAD
+=======
+  const privateNetworkAccess = resolvePrivateNetworkAccess(params);
+>>>>>>> upstream/main
 
   return {
     api: params.api,
@@ -629,10 +861,19 @@ export function resolveProviderRequestPolicyConfig(
     tls: resolveTlsOverride(params.request?.tls),
     policy,
     capabilities,
+<<<<<<< HEAD
     allowPrivateNetwork: params.allowPrivateNetwork ?? false,
   };
 }
 
+=======
+    allowPrivateNetwork: privateNetworkAccess.allowPrivateNetwork,
+    privateNetworkExplicitlyDenied: privateNetworkAccess.explicitlyDenied,
+  };
+}
+
+/** Resolves request config used during model/catalog setup paths. */
+>>>>>>> upstream/main
 export function resolveProviderRequestConfig(params: {
   provider: string;
   api?: RequestApi;
@@ -661,6 +902,10 @@ export function resolveProviderRequestConfig(params: {
   };
 }
 
+<<<<<<< HEAD
+=======
+/** Resolves final headers for one provider request route. */
+>>>>>>> upstream/main
 export function resolveProviderRequestHeaders(params: {
   provider: string;
   api?: RequestApi;
@@ -690,12 +935,22 @@ const MODEL_PROVIDER_REQUEST_TRANSPORT_SYMBOL = Symbol.for(
 );
 
 type ModelWithProviderRequestTransport = {
+<<<<<<< HEAD
   [MODEL_PROVIDER_REQUEST_TRANSPORT_SYMBOL]?: ProviderRequestTransportOverrides;
 };
 
 export function attachModelProviderRequestTransport<TModel extends object>(
   model: TModel,
   request: ProviderRequestTransportOverrides | undefined,
+=======
+  [MODEL_PROVIDER_REQUEST_TRANSPORT_SYMBOL]?: ModelProviderRequestTransportOverrides;
+};
+
+/** Attaches model-scoped provider request transport metadata without mutating the model. */
+export function attachModelProviderRequestTransport<TModel extends object>(
+  model: TModel,
+  request: ModelProviderRequestTransportOverrides | undefined,
+>>>>>>> upstream/main
 ): TModel {
   if (!request) {
     return model;
@@ -705,8 +960,15 @@ export function attachModelProviderRequestTransport<TModel extends object>(
   return next;
 }
 
+<<<<<<< HEAD
 export function getModelProviderRequestTransport(
   model: object,
 ): ProviderRequestTransportOverrides | undefined {
+=======
+/** Reads provider request transport metadata attached to a model definition. */
+export function getModelProviderRequestTransport(
+  model: object,
+): ModelProviderRequestTransportOverrides | undefined {
+>>>>>>> upstream/main
   return (model as ModelWithProviderRequestTransport)[MODEL_PROVIDER_REQUEST_TRANSPORT_SYMBOL];
 }

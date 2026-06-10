@@ -1,3 +1,4 @@
+// Status helper tests cover plugin status normalization and user-facing summaries.
 import { describe, expect, it } from "vitest";
 import {
   createAsyncComputedAccountStatusAdapter,
@@ -318,6 +319,39 @@ describe("buildRuntimeAccountStatusSnapshot", () => {
         port: 3978,
       },
     },
+<<<<<<< HEAD
+=======
+    {
+      name: "preserves runtime connectivity metadata",
+      input: {
+        runtime: {
+          connected: true,
+          restartPending: true,
+          reconnectAttempts: 3,
+          lastConnectedAt: 11,
+          lastDisconnect: { at: 12, error: "boom" },
+          lastEventAt: 13,
+          lastTransportActivityAt: 14,
+          healthState: "healthy",
+          running: true,
+        },
+      },
+      extra: undefined,
+      expected: {
+        ...defaultRuntimeState,
+        running: true,
+        connected: true,
+        restartPending: true,
+        reconnectAttempts: 3,
+        lastConnectedAt: 11,
+        lastDisconnect: { at: 12, error: "boom" },
+        lastEventAt: 13,
+        lastTransportActivityAt: 14,
+        healthState: "healthy",
+        probe: undefined,
+      },
+    },
+>>>>>>> upstream/main
   ])("$name", ({ input, extra, expected }) => {
     expect(buildRuntimeAccountStatusSnapshot(input, extra)).toEqual(expected);
   });

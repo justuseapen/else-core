@@ -1,17 +1,32 @@
 {
   "name": "@openclaw/whatsapp",
+<<<<<<< HEAD
   "version": "2026.4.5",
   "description": "OpenClaw WhatsApp channel plugin",
+=======
+  "version": "2026.6.2",
+  "description": "OpenClaw WhatsApp channel plugin for WhatsApp Web chats.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openclaw/openclaw"
+  },
+>>>>>>> upstream/main
   "type": "module",
   "dependencies": {
-    "@whiskeysockets/baileys": "7.0.0-rc.9",
-    "jimp": "^1.6.0"
+    "audio-decode": "2.2.3",
+    "baileys": "7.0.0-rc13",
+    "typebox": "1.1.39"
   },
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "@openclaw/plugin-sdk": "workspace:*",
+    "openclaw": "2026.5.28"
   },
   "peerDependencies": {
+<<<<<<< HEAD
     "openclaw": ">=2026.4.5"
+=======
+    "openclaw": ">=2026.6.2"
+>>>>>>> upstream/main
   },
   "peerDependenciesMeta": {
     "openclaw": {
@@ -23,6 +38,10 @@
       "./index.ts"
     ],
     "setupEntry": "./setup-entry.ts",
+    "setupFeatures": {
+      "legacyStateMigrations": true,
+      "legacySessionSurfaces": true
+    },
     "channel": {
       "id": "whatsapp",
       "label": "WhatsApp",
@@ -35,10 +54,22 @@
       "persistedAuthState": {
         "specifier": "./auth-presence",
         "exportName": "hasAnyWhatsAppAuth"
+<<<<<<< HEAD
       }
+=======
+      },
+      "cliAddOptions": [
+        {
+          "flags": "--auth-dir <path>",
+          "description": "WhatsApp auth directory override"
+        }
+      ]
+>>>>>>> upstream/main
     },
     "install": {
+      "clawhubSpec": "clawhub:@openclaw/whatsapp",
       "npmSpec": "@openclaw/whatsapp",
+<<<<<<< HEAD
       "defaultChoice": "npm",
       "minHostVersion": ">=2026.4.5"
     },
@@ -47,6 +78,16 @@
     },
     "build": {
       "openclawVersion": "2026.4.5"
+=======
+      "defaultChoice": "clawhub",
+      "minHostVersion": ">=2026.4.25"
+    },
+    "compat": {
+      "pluginApi": ">=2026.6.2"
+    },
+    "build": {
+      "openclawVersion": "2026.6.2"
+>>>>>>> upstream/main
     },
     "release": {
       "publishToClawHub": true,

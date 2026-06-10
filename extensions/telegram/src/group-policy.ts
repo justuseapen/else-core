@@ -1,3 +1,4 @@
+// Telegram plugin module implements group policy behavior.
 import type { ChannelGroupContext } from "openclaw/plugin-sdk/channel-contract";
 import {
   resolveChannelGroupRequireMention,
@@ -40,9 +41,18 @@ function resolveTelegramRequireMention(params: {
     cfg.channels?.telegram?.groups;
   const groupConfig = scopedGroups?.[chatId];
   const groupDefault = scopedGroups?.["*"];
+<<<<<<< HEAD
   const topicConfig = topicId && groupConfig?.topics ? groupConfig.topics[topicId] : undefined;
+=======
+  const topicConfig =
+    topicId && groupConfig?.topics
+      ? { ...groupConfig.topics["*"], ...groupConfig.topics[topicId] }
+      : undefined;
+>>>>>>> upstream/main
   const defaultTopicConfig =
-    topicId && groupDefault?.topics ? groupDefault.topics[topicId] : undefined;
+    topicId && groupDefault?.topics
+      ? { ...groupDefault.topics["*"], ...groupDefault.topics[topicId] }
+      : undefined;
   if (typeof topicConfig?.requireMention === "boolean") {
     return topicConfig.requireMention;
   }

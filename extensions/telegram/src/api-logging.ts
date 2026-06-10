@@ -1,8 +1,12 @@
+<<<<<<< HEAD
+=======
+// Telegram plugin module implements api logging behavior.
+>>>>>>> upstream/main
 import { createSubsystemLogger } from "openclaw/plugin-sdk/runtime-env";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { formatErrorMessage } from "openclaw/plugin-sdk/ssrf-runtime";
 
-export type TelegramApiLogger = (message: string) => void;
+type TelegramApiLogger = (message: string) => void;
 
 type TelegramApiLoggingParams<T> = {
   operation: string;

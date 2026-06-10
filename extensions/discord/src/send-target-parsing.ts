@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   buildMessagingTarget,
   type MessagingTarget,
@@ -42,3 +43,20 @@ export function parseDiscordSendTarget(
   }
   return buildMessagingTarget("channel", trimmed, trimmed);
 }
+=======
+// Discord plugin module implements send target parsing behavior.
+import {
+  parseDiscordTarget,
+  type DiscordTarget,
+  type DiscordTargetParseOptions,
+} from "./target-parsing.js";
+
+export type SendDiscordTarget = DiscordTarget;
+
+type SendDiscordTargetParseOptions = DiscordTargetParseOptions;
+
+export const parseDiscordSendTarget = (
+  raw: string,
+  options: SendDiscordTargetParseOptions = {},
+): SendDiscordTarget | undefined => parseDiscordTarget(raw, options);
+>>>>>>> upstream/main

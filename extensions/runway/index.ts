@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Runway plugin entrypoint registers its OpenClaw integration.
+>>>>>>> upstream/main
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { buildRunwayVideoGenerationProvider } from "./video-generation-provider.js";
 

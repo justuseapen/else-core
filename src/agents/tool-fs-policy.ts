@@ -1,12 +1,19 @@
-import type { OpenClawConfig } from "../config/config.js";
+/**
+ * Tool filesystem policy resolver.
+ *
+ * Combines global and agent fs/tool policy into workspace-only and root-expansion decisions.
+ */
+import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { resolveAgentConfig } from "./agent-scope.js";
 import { pickSandboxToolPolicy } from "./sandbox-tool-policy.js";
+<<<<<<< HEAD
+=======
+import type { ToolFsPolicy } from "./tool-fs-policy.types.js";
+>>>>>>> upstream/main
 import { isToolAllowedByPolicies } from "./tool-policy-match.js";
 import { mergeAlsoAllowPolicy, resolveToolProfilePolicy } from "./tool-policy.js";
 
-export type ToolFsPolicy = {
-  workspaceOnly: boolean;
-};
+export type { ToolFsPolicy } from "./tool-fs-policy.types.js";
 
 export function createToolFsPolicy(params: { workspaceOnly?: boolean }): ToolFsPolicy {
   return {
@@ -46,6 +53,7 @@ export function resolveEffectiveToolFsRootExpansionAllowed(params: {
   const profile = agentTools?.profile ?? globalTools?.profile;
   const profileAlsoAllow = new Set(agentTools?.alsoAllow ?? globalTools?.alsoAllow ?? []);
   const fsConfig = resolveToolFsConfig(params);
+<<<<<<< HEAD
   const hasExplicitFsConfig = agentTools?.fs !== undefined || globalTools?.fs !== undefined;
   if (fsConfig.workspaceOnly === true) {
     return false;
@@ -55,6 +63,12 @@ export function resolveEffectiveToolFsRootExpansionAllowed(params: {
     profileAlsoAllow.add("write");
     profileAlsoAllow.add("edit");
   }
+=======
+  if (fsConfig.workspaceOnly === true) {
+    return false;
+  }
+  // tools.fs presence does not grant access; require profile or alsoAllow (#47487).
+>>>>>>> upstream/main
   const profilePolicy = mergeAlsoAllowPolicy(
     resolveToolProfilePolicy(profile),
     profileAlsoAllow.size > 0 ? Array.from(profileAlsoAllow) : undefined,

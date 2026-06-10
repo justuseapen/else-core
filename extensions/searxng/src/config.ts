@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
+=======
+// Searxng helper module supports config behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+>>>>>>> upstream/main
 import {
   normalizeResolvedSecretInputString,
   normalizeSecretInput,
@@ -48,7 +53,11 @@ function normalizeBaseUrl(value: string | undefined): string | undefined {
   return value?.replace(/\/+$/u, "") || undefined;
 }
 
+<<<<<<< HEAD
 export function resolveSearxngWebSearchConfig(
+=======
+function resolveSearxngWebSearchConfig(
+>>>>>>> upstream/main
   config?: OpenClawConfig,
 ): SearxngPluginConfig["webSearch"] | undefined {
   const pluginConfig = config?.plugins?.entries?.searxng?.config as SearxngPluginConfig | undefined;

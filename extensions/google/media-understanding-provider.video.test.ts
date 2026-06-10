@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import * as ssrf from "openclaw/plugin-sdk/infra-runtime";
 import { withFetchPreconnect } from "openclaw/plugin-sdk/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -37,6 +38,21 @@ describe("describeGeminiVideo", () => {
     resolvePinnedHostnameSpy = undefined;
   });
 
+=======
+// Google tests cover media understanding provider.video plugin behavior.
+import {
+  createRequestCaptureJsonFetch,
+  installPinnedHostnameTestHooks,
+  withFetchPreconnect,
+} from "openclaw/plugin-sdk/test-env";
+import { describe, expect, it } from "vitest";
+import { describeGeminiVideo, transcribeGeminiAudio } from "./media-understanding-provider.js";
+import { resolveGoogleGenerativeAiHttpRequestConfig } from "./runtime-api.js";
+
+installPinnedHostnameTestHooks();
+
+describe("describeGeminiVideo", () => {
+>>>>>>> upstream/main
   it("respects case-insensitive x-goog-api-key overrides", async () => {
     let seenKey: string | null = null;
     const fetchFn = withFetchPreconnect(async (_input: RequestInfo | URL, init?: RequestInit) => {
@@ -88,8 +104,11 @@ describe("describeGeminiVideo", () => {
       timeoutMs: 1000,
       fetchFn,
     });
+<<<<<<< HEAD
 
     expect(resolvePinnedHostnameWithPolicySpy).not.toHaveBeenCalled();
+=======
+>>>>>>> upstream/main
   });
 
   it("builds the expected request payload", async () => {
@@ -108,16 +127,28 @@ describe("describeGeminiVideo", () => {
       fileName: "clip.mp4",
       apiKey: "test-key",
       timeoutMs: 1500,
+<<<<<<< HEAD
       baseUrl: "https://example.com/v1beta/",
+=======
+      baseUrl: "https://generativelanguage.googleapis.com/v1beta/",
+>>>>>>> upstream/main
       model: "gemini-3-pro",
       headers: { "X-Other": "1" },
       fetchFn,
     });
     const { url: seenUrl, init: seenInit } = getRequest();
 
+<<<<<<< HEAD
     expect(result.model).toBe("gemini-3-pro-preview");
     expect(result.text).toBe("first\nsecond");
     expect(seenUrl).toBe("https://example.com/v1beta/models/gemini-3-pro-preview:generateContent");
+=======
+    expect(result.model).toBe("gemini-3.1-pro-preview");
+    expect(result.text).toBe("first\nsecond");
+    expect(seenUrl).toBe(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent",
+    );
+>>>>>>> upstream/main
     expect(seenInit?.method).toBe("POST");
     expect(seenInit?.signal).toBeInstanceOf(AbortSignal);
 
@@ -139,4 +170,50 @@ describe("describeGeminiVideo", () => {
       Buffer.from("video-bytes").toString("base64"),
     );
   });
+<<<<<<< HEAD
+=======
+
+  it("rejects non-Google video base URLs before sending authenticated requests", async () => {
+    await expect(
+      describeGeminiVideo({
+        buffer: Buffer.from("video-bytes"),
+        fileName: "clip.mp4",
+        apiKey: "test-key",
+        timeoutMs: 1500,
+        baseUrl: "https://example.com/v1beta/",
+        fetchFn: async () => {
+          throw new Error("fetch should not run");
+        },
+      }),
+    ).rejects.toThrow(
+      "Google Generative AI baseUrl must use https://generativelanguage.googleapis.com",
+    );
+  });
+
+  it("formats Google audio transcription HTTP errors with provider details", async () => {
+    await expect(
+      transcribeGeminiAudio({
+        buffer: Buffer.from("audio-bytes"),
+        fileName: "clip.wav",
+        apiKey: "test-key",
+        timeoutMs: 1500,
+        fetchFn: async () =>
+          new Response(
+            JSON.stringify({
+              error: {
+                message: "Unsupported audio",
+                status: "INVALID_ARGUMENT",
+              },
+            }),
+            {
+              status: 400,
+              headers: { "x-request-id": "google_audio_req" },
+            },
+          ),
+      }),
+    ).rejects.toThrow(
+      "Audio transcription failed (400): Unsupported audio [code=INVALID_ARGUMENT] [request_id=google_audio_req]",
+    );
+  });
+>>>>>>> upstream/main
 });

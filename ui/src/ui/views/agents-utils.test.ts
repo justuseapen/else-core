@@ -1,9 +1,16 @@
+// Control UI tests cover agents utils behavior.
 import { describe, expect, it } from "vitest";
 import {
   agentLogoUrl,
+<<<<<<< HEAD
+=======
+  assistantAvatarFallbackUrl,
+>>>>>>> upstream/main
   buildAgentContext,
   resolveConfiguredCronModelSuggestions,
   resolveAgentAvatarUrl,
+  resolveAssistantTextAvatar,
+  resolveChatAvatarRenderUrl,
   resolveEffectiveModelFallbacks,
   sortLocaleStrings,
 } from "./agents-utils.ts";
@@ -44,7 +51,7 @@ describe("resolveEffectiveModelFallbacks", () => {
       fallbacks: ["google/gemini-2.0-flash"],
     };
 
-    expect(resolveEffectiveModelFallbacks(entryModel, defaultModel)).toEqual([]);
+    expect(resolveEffectiveModelFallbacks(entryModel, defaultModel)).toStrictEqual([]);
   });
 });
 
@@ -84,11 +91,11 @@ describe("resolveConfiguredCronModelSuggestions", () => {
   });
 
   it("returns empty array for invalid or missing config shape", () => {
-    expect(resolveConfiguredCronModelSuggestions(null)).toEqual([]);
-    expect(resolveConfiguredCronModelSuggestions({})).toEqual([]);
-    expect(resolveConfiguredCronModelSuggestions({ agents: { defaults: { model: "" } } })).toEqual(
-      [],
-    );
+    expect(resolveConfiguredCronModelSuggestions(null)).toStrictEqual([]);
+    expect(resolveConfiguredCronModelSuggestions({})).toStrictEqual([]);
+    expect(
+      resolveConfiguredCronModelSuggestions({ agents: { defaults: { model: "" } } }),
+    ).toStrictEqual([]);
   });
 });
 
@@ -108,8 +115,24 @@ describe("agentLogoUrl", () => {
     expect(agentLogoUrl("/apps/openclaw/")).toBe("/apps/openclaw/favicon.svg");
   });
 
-  it("uses a route-relative fallback before basePath bootstrap finishes", () => {
-    expect(agentLogoUrl("")).toBe("favicon.svg");
+  it("uses a root-relative fallback when no basePath is configured", () => {
+    expect(agentLogoUrl("")).toBe("/favicon.svg");
+  });
+});
+
+describe("assistantAvatarFallbackUrl", () => {
+  it("uses the bundled Molty png for assistant profile fallbacks", () => {
+    expect(assistantAvatarFallbackUrl("/ui")).toBe("/ui/apple-touch-icon.png");
+    expect(assistantAvatarFallbackUrl("")).toBe("/apple-touch-icon.png");
+  });
+});
+
+describe("resolveAssistantTextAvatar", () => {
+  it("rejects unsafe invisible controls in assistant text avatars", () => {
+    expect(resolveAssistantTextAvatar("VC")).toBe("VC");
+    expect(resolveAssistantTextAvatar("\u{1F43E}")).toBe("\u{1F43E}");
+    expect(resolveAssistantTextAvatar("V\u202eC")).toBeNull();
+    expect(resolveAssistantTextAvatar("V\u200bC")).toBeNull();
   });
 });
 
@@ -127,12 +150,57 @@ describe("resolveAgentAvatarUrl", () => {
     ).toBe("/avatar/main");
   });
 
+  it("ignores remote http avatars so the control UI falls back to a local badge", () => {
+    expect(
+      resolveAgentAvatarUrl({
+        identity: { avatarUrl: "https://example.com/avatar.png" },
+      }),
+    ).toBeNull();
+  });
+
+  it("ignores protocol-relative avatars so the control UI cannot be tricked into a cross-origin fetch", () => {
+    expect(
+      resolveAgentAvatarUrl({
+        identity: { avatarUrl: "//evil.example/avatar.png" },
+      }),
+    ).toBeNull();
+  });
+
   it("returns null for initials or emoji avatar values without a URL", () => {
     expect(resolveAgentAvatarUrl({ identity: { avatar: "A" } })).toBeNull();
     expect(resolveAgentAvatarUrl({ identity: { avatar: "🦞" } })).toBeNull();
   });
 });
 
+<<<<<<< HEAD
+=======
+describe("resolveChatAvatarRenderUrl", () => {
+  it("accepts a blob: URL produced by an authenticated avatar fetch", () => {
+    expect(
+      resolveChatAvatarRenderUrl("blob:http://localhost/uuid-123", {
+        identity: { avatarUrl: "/avatar/main" },
+      }),
+    ).toBe("blob:http://localhost/uuid-123");
+  });
+
+  it("falls back to the config-sanitized avatar when no blob candidate is present", () => {
+    expect(
+      resolveChatAvatarRenderUrl(null, {
+        identity: { avatarUrl: "/avatar/main" },
+      }),
+    ).toBe("/avatar/main");
+  });
+
+  it("rejects remote URLs passed as the render candidate", () => {
+    expect(
+      resolveChatAvatarRenderUrl("https://example.com/avatar.png", {
+        identity: { avatarUrl: "/avatar/main" },
+      }),
+    ).toBe("/avatar/main");
+  });
+});
+
+>>>>>>> upstream/main
 describe("buildAgentContext", () => {
   it("falls back to agent payload workspace/model when config form is unavailable", () => {
     const context = buildAgentContext(
@@ -140,9 +208,16 @@ describe("buildAgentContext", () => {
         id: "main",
         workspace: "/tmp/agent-workspace",
         model: {
+<<<<<<< HEAD
           primary: "openai/gpt-5.4",
           fallbacks: ["openai-codex/gpt-5.2-codex"],
         },
+=======
+          primary: "openai/gpt-5.5",
+          fallbacks: ["openai/gpt-5.2-codex"],
+        },
+        agentRuntime: { id: "claude-cli", fallback: "none", source: "agent" },
+>>>>>>> upstream/main
       },
       null,
       null,
@@ -151,7 +226,12 @@ describe("buildAgentContext", () => {
     );
 
     expect(context.workspace).toBe("/tmp/agent-workspace");
+<<<<<<< HEAD
     expect(context.model).toBe("openai/gpt-5.4 (+1 fallback)");
+=======
+    expect(context.model).toBe("openai/gpt-5.5 (+1 fallback)");
+    expect(context.runtime).toBe("claude-cli (fallback none)");
+>>>>>>> upstream/main
     expect(context.isDefault).toBe(true);
   });
 
@@ -163,8 +243,13 @@ describe("buildAgentContext", () => {
           defaults: {
             workspace: "/tmp/default-workspace",
             model: {
+<<<<<<< HEAD
               primary: "openai/gpt-5.4",
               fallbacks: ["openai-codex/gpt-5.2-codex"],
+=======
+              primary: "openai/gpt-5.5",
+              fallbacks: ["openai/gpt-5.2-codex"],
+>>>>>>> upstream/main
             },
           },
           list: [{ id: "main" }],
@@ -176,6 +261,32 @@ describe("buildAgentContext", () => {
     );
 
     expect(context.workspace).toBe("/tmp/default-workspace");
+<<<<<<< HEAD
     expect(context.model).toBe("openai/gpt-5.4 (+1 fallback)");
+=======
+    expect(context.model).toBe("openai/gpt-5.5 (+1 fallback)");
+  });
+
+  it("prefers per-agent configured identity over runtime global identity in agent panels", () => {
+    const context = buildAgentContext(
+      {
+        id: "fs-daying",
+        name: "File-system agent",
+        identity: { name: "大颖", emoji: "⚙️" },
+      },
+      null,
+      null,
+      "main",
+      {
+        agentId: "fs-daying",
+        name: "AI大管家",
+        avatar: "M",
+        emoji: "🤖",
+      },
+    );
+
+    expect(context.identityName).toBe("大颖");
+    expect(context.identityAvatar).toBe("⚙️");
+>>>>>>> upstream/main
   });
 });

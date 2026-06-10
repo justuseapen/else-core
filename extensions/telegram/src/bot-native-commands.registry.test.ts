@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -5,6 +6,15 @@ let registerTelegramNativeCommands: typeof import("./bot-native-commands.js").re
 let clearPluginCommands: typeof import("../../../src/plugins/commands.js").clearPluginCommands;
 let registerPluginCommand: typeof import("../../../src/plugins/commands.js").registerPluginCommand;
 let setActivePluginRegistry: typeof import("../../../src/plugins/runtime.js").setActivePluginRegistry;
+=======
+// Telegram tests cover bot native commands.registry plugin behavior.
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
+import { clearPluginCommands, registerPluginCommand } from "openclaw/plugin-sdk/plugin-runtime";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+
+let registerTelegramNativeCommands: typeof import("./bot-native-commands.js").registerTelegramNativeCommands;
+let setActivePluginRegistry: typeof import("openclaw/plugin-sdk/plugin-test-runtime").setActivePluginRegistry;
+>>>>>>> upstream/main
 let createCommandBot: typeof import("./bot-native-commands.menu-test-support.js").createCommandBot;
 let createNativeCommandTestParams: typeof import("./bot-native-commands.menu-test-support.js").createNativeCommandTestParams;
 let createPrivateCommandContext: typeof import("./bot-native-commands.menu-test-support.js").createPrivateCommandContext;
@@ -60,6 +70,10 @@ function createTelegramPluginRegistry() {
     videoGenerationProviders: [],
     webFetchProviders: [],
     webSearchProviders: [],
+<<<<<<< HEAD
+=======
+    migrationProviders: [],
+>>>>>>> upstream/main
     gatewayHandlers: {},
     httpRoutes: [],
     cliRegistrars: [],
@@ -110,11 +124,52 @@ async function registerPairMenu(params: {
   return await waitForRegisteredCommands(params.setMyCommands);
 }
 
+function requireCommandHandler(
+  commandHandlers: ReturnType<typeof createCommandBot>["commandHandlers"],
+  commandName: string,
+) {
+  const handler = commandHandlers.get(commandName);
+  if (!handler) {
+    throw new Error(`expected ${commandName} command handler`);
+  }
+  return handler;
+}
+
+function expectRegisteredCommand(
+  commands: Array<{ command: string; description: string }>,
+  expected: { command: string; description: string },
+): void {
+  expect(
+    commands.some(
+      (command) =>
+        command.command === expected.command && command.description === expected.description,
+    ),
+  ).toBe(true);
+}
+
+function expectLastDeliveredReplyText(text: string): void {
+  const calls = deliverReplies.mock.calls as unknown[][];
+  const payload = calls.at(-1)?.[0] as { replies?: Array<{ text?: string }> } | undefined;
+  expect(payload?.replies?.map((reply) => reply.text)).toEqual([text]);
+}
+
+function mockCall(mock: { mock: { calls: unknown[][] } }, index: number): unknown[] {
+  const call = mock.mock.calls[index];
+  if (!call) {
+    throw new Error(`expected mock call ${index}`);
+  }
+  return call;
+}
+
 describe("registerTelegramNativeCommands real plugin registry", () => {
   beforeAll(async () => {
+<<<<<<< HEAD
     ({ clearPluginCommands, registerPluginCommand } =
       await import("../../../src/plugins/commands.js"));
     ({ setActivePluginRegistry } = await import("../../../src/plugins/runtime.js"));
+=======
+    ({ setActivePluginRegistry } = await import("openclaw/plugin-sdk/plugin-test-runtime"));
+>>>>>>> upstream/main
     ({ registerTelegramNativeCommands } = await import("./bot-native-commands.js"));
     ({
       createCommandBot,
@@ -141,20 +196,21 @@ describe("registerTelegramNativeCommands real plugin registry", () => {
     const { bot, commandHandlers, sendMessage, setMyCommands } = createCommandBot();
 
     const registeredCommands = await registerPairMenu({ bot, setMyCommands });
-    expect(registeredCommands).toEqual(
-      expect.arrayContaining([{ command: "pair", description: "Pair device" }]),
-    );
+    expectRegisteredCommand(registeredCommands, { command: "pair", description: "Pair device" });
 
-    const handler = commandHandlers.get("pair");
-    expect(handler).toBeTruthy();
+    const handler = requireCommandHandler(commandHandlers, "pair");
 
-    await handler?.(createPrivateCommandContext({ match: "now" }));
+    await handler(createPrivateCommandContext({ match: "now" }));
 
+<<<<<<< HEAD
     expect(deliverReplies).toHaveBeenCalledWith(
       expect.objectContaining({
         replies: [expect.objectContaining({ text: "paired:now" })],
       }),
     );
+=======
+    expectLastDeliveredReplyText("paired:now");
+>>>>>>> upstream/main
     expect(sendMessage).not.toHaveBeenCalledWith(123, "Command not found.");
   });
 
@@ -170,6 +226,7 @@ describe("registerTelegramNativeCommands real plugin registry", () => {
       },
     });
 
+<<<<<<< HEAD
     const handler = commandHandlers.get("pair");
     expect(handler).toBeTruthy();
 
@@ -186,6 +243,21 @@ describe("registerTelegramNativeCommands real plugin registry", () => {
       "paired:now",
       expect.objectContaining({ accountId: "default" }),
     );
+=======
+    const handler = requireCommandHandler(commandHandlers, "pair");
+
+    await handler(createPrivateCommandContext({ match: "now" }));
+
+    const sendCall = mockCall(sendMessage, 0);
+    expect(sendCall[0]).toBe(100);
+    expect(sendCall[1]).toContain("Running pair now");
+    expect(sendCall[2]).toBeUndefined();
+    const editCall = mockCall(editMessageTelegram, 0);
+    expect(editCall[0]).toBe(100);
+    expect(editCall[1]).toBe(999);
+    expect(editCall[2]).toBe("paired:now");
+    expect((editCall[3] as { accountId?: string }).accountId).toBe("default");
+>>>>>>> upstream/main
     expect(deliverReplies).not.toHaveBeenCalled();
   });
 
@@ -200,20 +272,24 @@ describe("registerTelegramNativeCommands real plugin registry", () => {
         discord: "pairdiscord",
       },
     });
-    expect(registeredCommands).toEqual(
-      expect.arrayContaining([{ command: "pair_device", description: "Pair device" }]),
-    );
+    expectRegisteredCommand(registeredCommands, {
+      command: "pair_device",
+      description: "Pair device",
+    });
 
-    const handler = commandHandlers.get("pair_device");
-    expect(handler).toBeTruthy();
+    const handler = requireCommandHandler(commandHandlers, "pair_device");
 
-    await handler?.(createPrivateCommandContext({ match: "now", messageId: 2 }));
+    await handler(createPrivateCommandContext({ match: "now", messageId: 2 }));
 
+<<<<<<< HEAD
     expect(deliverReplies).toHaveBeenCalledWith(
       expect.objectContaining({
         replies: [expect.objectContaining({ text: "paired:now" })],
       }),
     );
+=======
+    expectLastDeliveredReplyText("paired:now");
+>>>>>>> upstream/main
     expect(sendMessage).not.toHaveBeenCalledWith(123, "Command not found.");
   });
 
@@ -248,10 +324,9 @@ describe("registerTelegramNativeCommands real plugin registry", () => {
 
     expect(setMyCommands).not.toHaveBeenCalled();
 
-    const handler = commandHandlers.get("pair");
-    expect(handler).toBeTruthy();
+    const handler = requireCommandHandler(commandHandlers, "pair");
 
-    await handler?.(
+    await handler(
       createPrivateCommandContext({
         match: "now",
         messageId: 10,
@@ -261,11 +336,15 @@ describe("registerTelegramNativeCommands real plugin registry", () => {
       }),
     );
 
+<<<<<<< HEAD
     expect(deliverReplies).toHaveBeenCalledWith(
       expect.objectContaining({
         replies: [expect.objectContaining({ text: "paired:now" })],
       }),
     );
+=======
+    expectLastDeliveredReplyText("paired:now");
+>>>>>>> upstream/main
     expect(sendMessage).not.toHaveBeenCalled();
   });
 });

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createNonExitingRuntime } from "../runtime.js";
 const resolveCleanupPlanFromDisk = vi.fn();
@@ -23,6 +24,20 @@ vi.mock("./cleanup-utils.js", () => ({
 
 describe("resetCommand", () => {
   const runtime = createNonExitingRuntime();
+=======
+// Reset command tests cover cleanup runtime behavior, workspace attestations, and reset prompts.
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  cleanupCommandLogMessages,
+  createCleanupCommandRuntime,
+  removeWorkspaceAttestationPaths,
+  resetCleanupCommandMocks,
+  silenceCleanupCommandRuntime,
+} from "./cleanup-command.test-support.js";
+
+describe("resetCommand", () => {
+  const runtime = createCleanupCommandRuntime();
+>>>>>>> upstream/main
   let resetCommand: typeof import("./reset.js").resetCommand;
 
   beforeAll(async () => {
@@ -30,21 +45,8 @@ describe("resetCommand", () => {
   });
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    resolveCleanupPlanFromDisk.mockReturnValue({
-      stateDir: "/tmp/.openclaw",
-      configPath: "/tmp/.openclaw/openclaw.json",
-      oauthDir: "/tmp/.openclaw/credentials",
-      configInsideState: true,
-      oauthInsideState: true,
-      workspaceDirs: ["/tmp/.openclaw/workspace"],
-    });
-    removePath.mockResolvedValue({ ok: true });
-    listAgentSessionDirs.mockResolvedValue(["/tmp/.openclaw/agents/main/sessions"]);
-    removeStateAndLinkedPaths.mockResolvedValue(undefined);
-    removeWorkspaceDirs.mockResolvedValue(undefined);
-    vi.spyOn(runtime, "log").mockImplementation(() => {});
-    vi.spyOn(runtime, "error").mockImplementation(() => {});
+    resetCleanupCommandMocks();
+    silenceCleanupCommandRuntime(runtime);
   });
 
   it("recommends creating a backup before state-destructive reset scopes", async () => {
@@ -55,7 +57,11 @@ describe("resetCommand", () => {
       dryRun: true,
     });
 
-    expect(runtime.log).toHaveBeenCalledWith(expect.stringContaining("openclaw backup create"));
+    expect(
+      cleanupCommandLogMessages(runtime).some((message) =>
+        message.includes("openclaw backup create"),
+      ),
+    ).toBe(true);
   });
 
   it("does not recommend backup for config-only reset", async () => {
@@ -66,6 +72,25 @@ describe("resetCommand", () => {
       dryRun: true,
     });
 
-    expect(runtime.log).not.toHaveBeenCalledWith(expect.stringContaining("openclaw backup create"));
+    expect(
+      cleanupCommandLogMessages(runtime).some((message) =>
+        message.includes("openclaw backup create"),
+      ),
+    ).toBe(false);
+  });
+
+  it("removes workspace attestations during full reset", async () => {
+    await resetCommand(runtime, {
+      scope: "full",
+      yes: true,
+      nonInteractive: true,
+      dryRun: true,
+    });
+
+    expect(removeWorkspaceAttestationPaths).toHaveBeenCalledWith(
+      ["/tmp/.openclaw/workspace"],
+      runtime,
+      { dryRun: true },
+    );
   });
 });

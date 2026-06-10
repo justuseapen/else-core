@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import { writeJsonFileAtomically } from "../runtime-api.js";
+=======
+// Matrix plugin module implements credentials behavior.
+import { writeJsonFileAtomically } from "openclaw/plugin-sdk/json-store";
+>>>>>>> upstream/main
 import { createAsyncLock, type AsyncLock } from "./async-lock.js";
 import { loadMatrixCredentials, resolveMatrixCredentialsPath } from "./credentials-read.js";
 import type { MatrixStoredCredentials } from "./credentials-read.js";

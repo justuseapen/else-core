@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Type } from "@sinclair/typebox";
 import {
   DEFAULT_CACHE_TTL_MINUTES,
@@ -32,12 +33,18 @@ import {
   setPluginXSearchConfigValue,
 } from "./src/x-search-config.js";
 import { XAI_DEFAULT_X_SEARCH_MODEL } from "./src/x-search-shared.js";
+=======
+// Xai plugin module implements web search behavior.
+import type {
+  WebSearchProviderPlugin,
+  WebSearchProviderSetupContext,
+} from "openclaw/plugin-sdk/provider-web-search-config-contract";
+import { buildXaiWebSearchProviderBase } from "./web-search-provider-shared.js";
+>>>>>>> upstream/main
 
-const XAI_WEB_SEARCH_CACHE = new Map<
-  string,
-  { value: Record<string, unknown>; insertedAt: number; expiresAt: number }
->();
+type XaiWebSearchProviderRuntime = typeof import("./src/web-search-provider.runtime.js");
 
+<<<<<<< HEAD
 const X_SEARCH_MODEL_OPTIONS = [
   {
     value: XAI_DEFAULT_X_SEARCH_MODEL,
@@ -140,29 +147,34 @@ function runXaiWebSearch(params: {
   if (cached) {
     return Promise.resolve({ ...cached.value, cached: true });
   }
+=======
+let xaiWebSearchProviderRuntimePromise: Promise<XaiWebSearchProviderRuntime> | undefined;
+>>>>>>> upstream/main
 
-  return (async () => {
-    const startedAt = Date.now();
-    const result = await requestXaiWebSearch({
-      query: params.query,
-      model: params.model,
-      apiKey: params.apiKey,
-      timeoutSeconds: params.timeoutSeconds,
-      inlineCitations: params.inlineCitations,
-    });
-    const payload = buildXaiWebSearchPayload({
-      query: params.query,
-      provider: "grok",
-      model: params.model,
-      tookMs: Date.now() - startedAt,
-      content: result.content,
-      citations: result.citations,
-      inlineCitations: result.inlineCitations,
-    });
+function loadXaiWebSearchProviderRuntime(): Promise<XaiWebSearchProviderRuntime> {
+  xaiWebSearchProviderRuntimePromise ??= import("./src/web-search-provider.runtime.js");
+  return xaiWebSearchProviderRuntimePromise;
+}
 
-    writeCache(XAI_WEB_SEARCH_CACHE, cacheKey, payload, params.cacheTtlMs);
-    return payload;
-  })();
+const GenericXaiSearchSchema = {
+  type: "object",
+  properties: {
+    query: { type: "string", description: "Search query string." },
+    count: {
+      type: "number",
+      description: "Number of results to return (1-10).",
+      minimum: 1,
+      maximum: 10,
+    },
+  },
+  additionalProperties: false,
+} satisfies Record<string, unknown>;
+
+async function runXaiSearchProviderSetup(
+  ctx: WebSearchProviderSetupContext,
+): Promise<WebSearchProviderSetupContext["config"]> {
+  const runtime = await loadXaiWebSearchProviderRuntime();
+  return await runtime.runXaiSearchProviderSetup(ctx);
 }
 
 function resolveXaiToolSearchConfig(ctx: {
@@ -186,6 +198,7 @@ function resolveXaiWebSearchCredential(searchConfig?: SearchConfigRecord): strin
 
 export function createXaiWebSearchProvider(): WebSearchProviderPlugin {
   return {
+<<<<<<< HEAD
     id: "grok",
     label: "Grok (xAI)",
     hint: "Requires xAI API key · xAI web-grounded responses",
@@ -267,3 +280,18 @@ export const __testing = {
   resolveXaiWebSearchModel,
   requestXaiWebSearch,
 };
+=======
+    ...buildXaiWebSearchProviderBase(),
+    runSetup: runXaiSearchProviderSetup,
+    createTool: (ctx) => ({
+      description:
+        "Search the web using xAI Grok. Returns AI-synthesized answers with citations from real-time web search.",
+      parameters: GenericXaiSearchSchema,
+      execute: async (args) => {
+        const { executeXaiWebSearchProviderTool } = await loadXaiWebSearchProviderRuntime();
+        return await executeXaiWebSearchProviderTool(ctx, args);
+      },
+    }),
+  };
+}
+>>>>>>> upstream/main

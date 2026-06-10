@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Tavily tests cover tavily client plugin behavior.
+>>>>>>> upstream/main
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Capture every call to postTrustedWebToolsJson so we can assert on extraHeaders.
@@ -45,15 +49,50 @@ describe("tavily client X-Client-Source header", () => {
     await runTavilySearch({ query: "test query" });
 
     expect(postTrustedWebToolsJson).toHaveBeenCalledOnce();
+<<<<<<< HEAD
     const params = postTrustedWebToolsJson.mock.calls[0][0];
     expect(params.extraHeaders).toEqual({ "X-Client-Source": "openclaw" });
   });
 
+=======
+    const params = postTrustedWebToolsJson.mock.calls[0]?.[0];
+    expect(params.extraHeaders).toEqual({ "X-Client-Source": "openclaw" });
+  });
+
+  it("runTavilySearch reports malformed JSON with a stable provider error", async () => {
+    postTrustedWebToolsJson.mockImplementationOnce(
+      async (_params: unknown, parse: (r: Response) => Promise<unknown>) =>
+        parse(new Response("{ nope")),
+    );
+
+    await expect(runTavilySearch({ query: "test query" })).rejects.toThrow(
+      "Tavily Search: malformed JSON response",
+    );
+  });
+
+>>>>>>> upstream/main
   it("runTavilyExtract sends X-Client-Source: openclaw", async () => {
     await runTavilyExtract({ urls: ["https://example.com"] });
 
     expect(postTrustedWebToolsJson).toHaveBeenCalledOnce();
+<<<<<<< HEAD
     const params = postTrustedWebToolsJson.mock.calls[0][0];
     expect(params.extraHeaders).toEqual({ "X-Client-Source": "openclaw" });
   });
+=======
+    const params = postTrustedWebToolsJson.mock.calls[0]?.[0];
+    expect(params.extraHeaders).toEqual({ "X-Client-Source": "openclaw" });
+  });
+
+  it("runTavilyExtract reports malformed JSON with a stable provider error", async () => {
+    postTrustedWebToolsJson.mockImplementationOnce(
+      async (_params: unknown, parse: (r: Response) => Promise<unknown>) =>
+        parse(new Response("{ nope")),
+    );
+
+    await expect(runTavilyExtract({ urls: ["https://example.com"] })).rejects.toThrow(
+      "Tavily Extract: malformed JSON response",
+    );
+  });
+>>>>>>> upstream/main
 });

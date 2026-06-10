@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// Covers outbound identity normalization and configured agent identity/avatar
+// projection.
+>>>>>>> upstream/main
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const resolveAgentIdentityMock = vi.hoisted(() => vi.fn());

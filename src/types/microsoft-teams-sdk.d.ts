@@ -1,4 +1,6 @@
+/** Minimal ambient types for Microsoft Teams SDK packages used by the Teams plugin. */
 declare module "@microsoft/teams.apps" {
+  /** Teams app auth helper used to fetch bot and Graph tokens. */
   export class App {
     constructor(options: { clientId: string; clientSecret: string; tenantId?: string });
 
@@ -8,6 +10,7 @@ declare module "@microsoft/teams.apps" {
 }
 
 declare module "@microsoft/teams.api" {
+  /** Teams API client subset used for conversation activity sends. */
   export class Client {
     constructor(
       serviceUrl: string,
@@ -24,6 +27,7 @@ declare module "@microsoft/teams.api" {
     };
   }
 }
+<<<<<<< HEAD
 
 declare module "@microsoft/teams.apps/dist/middleware/auth/jwt-validator.js" {
   export type JwtValidationOptions = {
@@ -56,3 +60,5 @@ declare module "@microsoft/teams.apps/dist/middleware/auth/jwt-validator.js" {
     ): Promise<unknown>;
   };
 }
+=======
+>>>>>>> upstream/main

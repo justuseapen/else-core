@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Memory Core tests cover memory events plugin behavior.
+>>>>>>> upstream/main
 import fs from "node:fs/promises";
 import path from "node:path";
 import { readMemoryHostEvents } from "openclaw/plugin-sdk/memory-host-events";
@@ -62,6 +66,7 @@ describe("memory host event journal integration", () => {
       "memory.recall.recorded",
       "memory.promotion.applied",
     ]);
+<<<<<<< HEAD
     expect(events[0]).toMatchObject({
       type: "memory.recall.recorded",
       resultCount: 1,
@@ -71,6 +76,19 @@ describe("memory host event journal integration", () => {
       type: "memory.promotion.applied",
       applied: 1,
     });
+=======
+    const recallEvent = events[0];
+    if (recallEvent?.type !== "memory.recall.recorded") {
+      throw new Error("expected recall event");
+    }
+    expect(recallEvent.resultCount).toBe(1);
+    expect(recallEvent.query).toBe("alpha memory");
+    const promotionEvent = events[1];
+    if (promotionEvent?.type !== "memory.promotion.applied") {
+      throw new Error("expected promotion event");
+    }
+    expect(promotionEvent.applied).toBe(1);
+>>>>>>> upstream/main
   });
 
   it("records dreaming completion events when phase artifacts are written", async () => {
@@ -86,6 +104,7 @@ describe("memory host event journal integration", () => {
 
     const events = await readMemoryHostEvents({ workspaceDir });
 
+<<<<<<< HEAD
     expect(written.inlinePath).toBeTruthy();
     expect(written.reportPath).toBeTruthy();
     expect(events).toHaveLength(1);
@@ -95,5 +114,21 @@ describe("memory host event journal integration", () => {
       lineCount: 2,
       storageMode: "both",
     });
+=======
+    expect(written.inlinePath).toBe(path.join(workspaceDir, "memory", "2026-04-05.md"));
+    expect(written.reportPath).toBe(
+      path.join(workspaceDir, "memory", "dreaming", "light", "2026-04-05.md"),
+    );
+    await expect(fs.readFile(written.inlinePath ?? "", "utf8")).resolves.toContain("- staged note");
+    await expect(fs.readFile(written.reportPath ?? "", "utf8")).resolves.toContain("- second note");
+    expect(events).toHaveLength(1);
+    const dreamEvent = events[0];
+    if (dreamEvent?.type !== "memory.dream.completed") {
+      throw new Error("expected dream completion event");
+    }
+    expect(dreamEvent.phase).toBe("light");
+    expect(dreamEvent.lineCount).toBe(2);
+    expect(dreamEvent.storageMode).toBe("both");
+>>>>>>> upstream/main
   });
 });

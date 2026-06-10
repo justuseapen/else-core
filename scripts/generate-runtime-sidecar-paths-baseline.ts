@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+<<<<<<< HEAD
+=======
+// Generate Runtime Sidecar Paths Baseline script supports OpenClaw repository automation.
+>>>>>>> upstream/main
 import path from "node:path";
 import { writeBundledRuntimeSidecarPathBaseline } from "../src/plugins/runtime-sidecar-paths-baseline.js";
 

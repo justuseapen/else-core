@@ -1,47 +1,31 @@
+/**
+ * Regression coverage for core tool allow/deny policy helpers.
+ * Verifies sandbox policy resolution, explicit lists, and tool matching.
+ */
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
+<<<<<<< HEAD
 import { DEFAULT_GATEWAY_HTTP_TOOL_DENY } from "../security/dangerous-tools.js";
+=======
+import { pickSandboxToolPolicy } from "./sandbox-tool-policy.js";
+>>>>>>> upstream/main
 import { isToolAllowed, resolveSandboxToolPolicyForAgent } from "./sandbox/tool-policy.js";
 import type { SandboxToolPolicy } from "./sandbox/types.js";
-import { TOOL_POLICY_CONFORMANCE } from "./tool-policy.conformance.js";
+import { isToolAllowedByPolicyName } from "./tool-policy-match.js";
 import {
+<<<<<<< HEAD
   applyOwnerOnlyToolPolicy,
   collectExplicitAllowlist,
+=======
+  collectExplicitAllowlist,
+  DEFAULT_PLUGIN_TOOLS_ALLOWLIST_ENTRY,
+>>>>>>> upstream/main
   expandToolGroups,
-  isOwnerOnlyToolName,
   normalizeToolName,
   resolveOwnerOnlyToolApprovalClass,
   resolveToolProfilePolicy,
   TOOL_GROUPS,
 } from "./tool-policy.js";
-import type { AnyAgentTool } from "./tools/common.js";
-
-function createOwnerPolicyTools() {
-  return [
-    {
-      name: "read",
-      // oxlint-disable-next-line typescript/no-explicit-any
-      execute: async () => ({ content: [], details: {} }) as any,
-    },
-    {
-      name: "cron",
-      ownerOnly: true,
-      // oxlint-disable-next-line typescript/no-explicit-any
-      execute: async () => ({ content: [], details: {} }) as any,
-    },
-    {
-      name: "gateway",
-      ownerOnly: true,
-      // oxlint-disable-next-line typescript/no-explicit-any
-      execute: async () => ({ content: [], details: {} }) as any,
-    },
-    {
-      name: "whatsapp_login",
-      // oxlint-disable-next-line typescript/no-explicit-any
-      execute: async () => ({ content: [], details: {} }) as any,
-    },
-  ] as unknown as AnyAgentTool[];
-}
 
 describe("tool-policy", () => {
   it("expands groups and normalizes aliases", () => {
@@ -79,14 +63,17 @@ describe("tool-policy", () => {
     expect(normalizeToolName("READ")).toBe("read");
   });
 
-  it("identifies owner-only tools", () => {
-    expect(isOwnerOnlyToolName("whatsapp_login")).toBe(true);
-    expect(isOwnerOnlyToolName("cron")).toBe(true);
-    expect(isOwnerOnlyToolName("gateway")).toBe(true);
-    expect(isOwnerOnlyToolName("nodes")).toBe(true);
-    expect(isOwnerOnlyToolName("read")).toBe(false);
+  it("collects explicit allowlist entries", () => {
+    expect(
+      collectExplicitAllowlist([
+        {
+          allow: ["*", "optional-demo"],
+        },
+      ]),
+    ).toContain("optional-demo");
   });
 
+<<<<<<< HEAD
   it("exposes stable approval classes for shared owner-only fallbacks", () => {
     expect(resolveOwnerOnlyToolApprovalClass("whatsapp_login")).toBe("interactive");
     expect(resolveOwnerOnlyToolApprovalClass("cron")).toBe("control_plane");
@@ -162,17 +149,23 @@ describe("tool-policy", () => {
     expect(applyOwnerOnlyToolPolicy(tools, true).map((tool) => tool.name)).toEqual([
       "read",
       "nodes",
+=======
+  it("uses alsoAllow entries for plugin discovery without the synthetic allow-all", () => {
+    expect(collectExplicitAllowlist([pickSandboxToolPolicy({ alsoAllow: ["lobster"] })])).toEqual([
+      "lobster",
+      DEFAULT_PLUGIN_TOOLS_ALLOWLIST_ENTRY,
+>>>>>>> upstream/main
     ]);
-  });
-});
-
-describe("TOOL_POLICY_CONFORMANCE", () => {
-  it("matches exported TOOL_GROUPS exactly", () => {
-    expect(TOOL_POLICY_CONFORMANCE.toolGroups).toEqual(TOOL_GROUPS);
+    expect(
+      collectExplicitAllowlist([pickSandboxToolPolicy({ allow: [], alsoAllow: ["lobster"] })]),
+    ).toEqual(["*", "lobster"]);
   });
 
-  it("is JSON-serializable", () => {
-    expect(() => JSON.stringify(TOOL_POLICY_CONFORMANCE)).not.toThrow();
+  it("preserves explicit alsoAllow wildcards for plugin discovery", () => {
+    expect(collectExplicitAllowlist([pickSandboxToolPolicy({ alsoAllow: ["*"] })])).toEqual(["*"]);
+    expect(collectExplicitAllowlist([pickSandboxToolPolicy({ alsoAllow: [" * "] })])).toEqual([
+      "*",
+    ]);
   });
 });
 
@@ -232,7 +225,7 @@ describe("resolveSandboxToolPolicyForAgent", () => {
       source: "global",
       key: "tools.sandbox.tools.allow",
     });
-    expect(resolved.allow).toEqual([]);
+    expect(resolved.allow).toStrictEqual([]);
     expect(resolved.deny).toEqual(["browser"]);
 
     const policy: SandboxToolPolicy = { allow: resolved.allow, deny: resolved.deny };
@@ -258,5 +251,25 @@ describe("resolveSandboxToolPolicyForAgent", () => {
     const resolved = resolveSandboxToolPolicyForAgent(cfg, undefined);
     expect(resolved.allow).toEqual(["read"]);
     expect(resolved.deny).toEqual(["image"]);
+  });
+});
+
+describe("isToolAllowedByPolicyName — apply_patch / write deny decoupling (#76749)", () => {
+  it("does not deny apply_patch when write is denied", () => {
+    expect(isToolAllowedByPolicyName("apply_patch", { deny: ["write"] })).toBe(true);
+  });
+
+  it("still denies apply_patch when apply_patch is explicitly denied", () => {
+    expect(isToolAllowedByPolicyName("apply_patch", { deny: ["apply_patch"] })).toBe(false);
+  });
+
+  it("still allows apply_patch via write in the allow list", () => {
+    expect(isToolAllowedByPolicyName("apply_patch", { allow: ["write"], deny: [] })).toBe(true);
+  });
+
+  it("denies apply_patch when both write and apply_patch are denied", () => {
+    expect(isToolAllowedByPolicyName("apply_patch", { deny: ["write", "apply_patch"] })).toBe(
+      false,
+    );
   });
 });

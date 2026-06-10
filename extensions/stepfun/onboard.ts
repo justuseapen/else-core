@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Stepfun setup module handles plugin onboarding behavior.
+>>>>>>> upstream/main
 import {
   createModelCatalogPresetAppliers,
   type ModelProviderConfig,
@@ -17,6 +21,7 @@ import {
   STEPFUN_STANDARD_INTL_BASE_URL,
 } from "./provider-catalog.js";
 
+<<<<<<< HEAD
 export {
   STEPFUN_DEFAULT_MODEL_REF,
   STEPFUN_PLAN_CN_BASE_URL,
@@ -26,6 +31,8 @@ export {
   STEPFUN_STANDARD_INTL_BASE_URL,
 };
 
+=======
+>>>>>>> upstream/main
 function createStepFunPresetAppliers(params: {
   providerId: string;
   primaryModelRef: string;

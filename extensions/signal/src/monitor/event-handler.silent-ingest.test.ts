@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Signal tests cover event handler.silent ingest plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it, vi } from "vitest";
 import {
   createBaseSignalEventHandlerDeps,
@@ -31,6 +35,17 @@ vi.mock("openclaw/plugin-sdk/hook-runtime", async () => {
 
 import { createSignalEventHandler } from "./event-handler.js";
 
+<<<<<<< HEAD
+=======
+function requireInternalHookEventCall() {
+  const [call] = internalHookMocks.createInternalHookEvent.mock.calls;
+  if (!call) {
+    throw new Error("expected internal hook event call");
+  }
+  return call;
+}
+
+>>>>>>> upstream/main
 describe("signal mention-skip silent ingest", () => {
   it("emits internal message:received when ingest is enabled", async () => {
     internalHookMocks.createInternalHookEvent.mockClear();
@@ -66,6 +81,7 @@ describe("signal mention-skip silent ingest", () => {
       }),
     );
 
+<<<<<<< HEAD
     expect(internalHookMocks.createInternalHookEvent).toHaveBeenCalledWith(
       "message",
       "received",
@@ -75,6 +91,35 @@ describe("signal mention-skip silent ingest", () => {
         content: "hello without mention",
       }),
     );
+=======
+    expect(internalHookMocks.createInternalHookEvent).toHaveBeenCalledTimes(1);
+    const [type, action, sessionKey, context] = requireInternalHookEventCall();
+    expect(type).toBe("message");
+    expect(action).toBe("received");
+    expect(sessionKey).toContain("signal");
+    expect(context).toEqual({
+      from: "group:group-123",
+      content: "hello without mention",
+      timestamp: 1700000000000,
+      channelId: "signal",
+      accountId: "default",
+      conversationId: "group:group-123",
+      messageId: "1700000000000",
+      metadata: {
+        to: "group:group-123",
+        provider: "signal",
+        surface: "signal",
+        threadId: undefined,
+        senderId: "+15550001111",
+        senderName: "Alice",
+        senderUsername: undefined,
+        senderE164: undefined,
+        guildId: undefined,
+        channelName: undefined,
+        topicName: undefined,
+      },
+    });
+>>>>>>> upstream/main
     expect(internalHookMocks.triggerInternalHook).toHaveBeenCalledTimes(1);
   });
 

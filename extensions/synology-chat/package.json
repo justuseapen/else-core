@@ -1,8 +1,20 @@
 {
   "name": "@openclaw/synology-chat",
+<<<<<<< HEAD
   "version": "2026.4.5",
   "description": "Synology Chat channel plugin for OpenClaw",
+=======
+  "version": "2026.6.2",
+  "description": "Synology Chat channel plugin for OpenClaw channels and direct messages.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openclaw/openclaw"
+  },
+>>>>>>> upstream/main
   "type": "module",
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
   "openclaw": {
     "extensions": [
       "./index.ts"
@@ -20,7 +32,24 @@
     "install": {
       "npmSpec": "@openclaw/synology-chat",
       "defaultChoice": "npm",
+<<<<<<< HEAD
       "minHostVersion": ">=2026.4.5"
+=======
+      "minHostVersion": ">=2026.4.10"
+    },
+    "compat": {
+      "pluginApi": ">=2026.6.2"
+    },
+    "build": {
+      "openclawVersion": "2026.6.2"
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+>>>>>>> upstream/main
     }
+  },
+  "dependencies": {
+    "zod": "4.4.3"
   }
 }

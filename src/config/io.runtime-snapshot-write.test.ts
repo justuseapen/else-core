@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -7,10 +8,15 @@ import {
   loadConfig,
   projectConfigOntoRuntimeSourceSnapshot,
   registerConfigWriteListener,
+=======
+// Covers runtime snapshot writes produced by config IO.
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  projectConfigOntoRuntimeSourceSnapshot,
+>>>>>>> upstream/main
   resetConfigRuntimeState,
   setRuntimeConfigSnapshotRefreshHandler,
   setRuntimeConfigSnapshot,
-  writeConfigFile,
 } from "./io.js";
 import type { OpenClawConfig } from "./types.js";
 
@@ -50,6 +56,7 @@ function resetRuntimeConfigState(): void {
 describe("runtime config snapshot writes", () => {
   beforeEach(() => {
     resetRuntimeConfigState();
+<<<<<<< HEAD
   });
 
   afterEach(() => {
@@ -67,53 +74,45 @@ describe("runtime config snapshot writes", () => {
         resetRuntimeConfigState();
       }
     });
+=======
+>>>>>>> upstream/main
   });
 
-  it("skips source projection for non-runtime-derived configs", async () => {
-    await withTempHome("openclaw-config-runtime-projection-shape-", async () => {
-      const sourceConfig: OpenClawConfig = {
-        ...createSourceConfig(),
-        gateway: {
-          auth: {
-            mode: "token",
-          },
-        },
-      };
-      const runtimeConfig: OpenClawConfig = {
-        ...createRuntimeConfig(),
-        gateway: {
-          auth: {
-            mode: "token",
-          },
-        },
-      };
-      const independentConfig: OpenClawConfig = {
-        models: {
-          providers: {
-            openai: {
-              baseUrl: "https://api.openai.com/v1",
-              apiKey: "sk-independent-config", // pragma: allowlist secret
-              models: [],
-            },
-          },
-        },
-      };
-
-      try {
-        setRuntimeConfigSnapshot(runtimeConfig, sourceConfig);
-        const projected = projectConfigOntoRuntimeSourceSnapshot(independentConfig);
-        expect(projected).toBe(independentConfig);
-      } finally {
-        resetRuntimeConfigState();
-      }
-    });
+  afterEach(() => {
+    resetRuntimeConfigState();
   });
 
-  it("clears runtime source snapshot when runtime snapshot is cleared", async () => {
-    const sourceConfig = createSourceConfig();
-    const runtimeConfig = createRuntimeConfig();
+  it("skips source projection for non-runtime-derived configs", () => {
+    const sourceConfig: OpenClawConfig = {
+      ...createSourceConfig(),
+      gateway: {
+        auth: {
+          mode: "token",
+        },
+      },
+    };
+    const runtimeConfig: OpenClawConfig = {
+      ...createRuntimeConfig(),
+      gateway: {
+        auth: {
+          mode: "token",
+        },
+      },
+    };
+    const independentConfig: OpenClawConfig = {
+      models: {
+        providers: {
+          openai: {
+            baseUrl: "https://api.openai.com/v1",
+            apiKey: "sk-independent-config", // pragma: allowlist secret
+            models: [],
+          },
+        },
+      },
+    };
 
     setRuntimeConfigSnapshot(runtimeConfig, sourceConfig);
+<<<<<<< HEAD
     resetRuntimeConfigState();
     expect(getRuntimeConfigSourceSnapshot()).toBeNull();
   });
@@ -257,6 +256,10 @@ describe("runtime config snapshot writes", () => {
         resetRuntimeConfigState();
       }
     });
+=======
+    const projected = projectConfigOntoRuntimeSourceSnapshot(independentConfig);
+    expect(projected).toBe(independentConfig);
+>>>>>>> upstream/main
   });
 
   it("notifies in-process write listeners with the refreshed runtime snapshot", async () => {

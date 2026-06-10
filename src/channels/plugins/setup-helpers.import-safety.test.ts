@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { importFreshModule } from "../../../test/helpers/import-fresh.ts";
 import { clearSetupPromotionRuntimeModuleCache } from "./setup-helpers.js";
@@ -5,6 +6,14 @@ import { clearSetupPromotionRuntimeModuleCache } from "./setup-helpers.js";
 afterEach(() => {
   vi.doUnmock("../../plugins/discovery.js");
   clearSetupPromotionRuntimeModuleCache();
+=======
+// Setup helper import-safety tests cover lazy boundaries for channel plugin setup helpers.
+import { importFreshModule } from "openclaw/plugin-sdk/test-fixtures";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+afterEach(() => {
+  vi.doUnmock("../../plugins/discovery.js");
+>>>>>>> upstream/main
 });
 
 describe("setup helper import safety", () => {
@@ -24,11 +33,19 @@ describe("setup helper import safety", () => {
     );
 
     expect(state.discoveryLoaded).toBe(false);
+<<<<<<< HEAD
     expect(
       helpers.createPatchedAccountSetupAdapter({
         channelKey: "demo-setup",
         buildPatch: () => ({}),
       }),
     ).toBeDefined();
+=======
+    const adapter = helpers.createPatchedAccountSetupAdapter({
+      channelKey: "demo-setup",
+      buildPatch: () => ({}),
+    });
+    expect(adapter.resolveAccountId?.({ cfg: {}, accountId: "demo" })).toBe("demo");
+>>>>>>> upstream/main
   });
 });

@@ -1,10 +1,16 @@
+<<<<<<< HEAD
 import { formatTrimmedAllowFromEntries } from "openclaw/plugin-sdk/channel-config-helpers";
 import type { ChannelStatusIssue } from "openclaw/plugin-sdk/channel-contract";
+=======
+// Imessage API module exposes the plugin public contract.
+import { formatTrimmedAllowFromEntries } from "openclaw/plugin-sdk/channel-config-helpers";
+>>>>>>> upstream/main
 import { PAIRING_APPROVED_MESSAGE } from "openclaw/plugin-sdk/channel-status";
 import {
   DEFAULT_ACCOUNT_ID,
   getChatChannelMeta,
   type ChannelPlugin,
+<<<<<<< HEAD
   type OpenClawConfig,
 } from "openclaw/plugin-sdk/core";
 import { resolveChannelMediaMaxBytes } from "openclaw/plugin-sdk/media-runtime";
@@ -14,12 +20,20 @@ import {
   resolveIMessageConfigDefaultTo,
 } from "./config-accessors.js";
 import { looksLikeIMessageTargetId, normalizeIMessageMessagingTarget } from "./normalize.js";
+=======
+} from "openclaw/plugin-sdk/core";
+import { resolveChannelMediaMaxBytes } from "openclaw/plugin-sdk/media-runtime";
+import { collectStatusIssuesFromLastError } from "openclaw/plugin-sdk/status-helpers";
+import { normalizeIMessageMessagingTarget } from "./normalize.js";
+export { chunkTextForOutbound } from "openclaw/plugin-sdk/text-chunking";
+>>>>>>> upstream/main
 
 export {
   collectStatusIssuesFromLastError,
   DEFAULT_ACCOUNT_ID,
   formatTrimmedAllowFromEntries,
   getChatChannelMeta,
+<<<<<<< HEAD
   looksLikeIMessageTargetId,
   normalizeIMessageMessagingTarget,
   PAIRING_APPROVED_MESSAGE,
@@ -45,3 +59,11 @@ export function chunkTextForOutbound(text: string, limit: number): string[] {
   }
   return chunks;
 }
+=======
+  normalizeIMessageMessagingTarget,
+  PAIRING_APPROVED_MESSAGE,
+  resolveChannelMediaMaxBytes,
+};
+
+export type { ChannelPlugin };
+>>>>>>> upstream/main

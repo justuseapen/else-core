@@ -8,7 +8,10 @@ export type BundledExtensionSourceClassification = {
   isProductionSource: boolean;
 };
 
+<<<<<<< HEAD
 export function normalizeExtensionSourcePath(filePath: string): string;
+=======
+>>>>>>> upstream/main
 export function classifyBundledExtensionSourcePath(
   filePath: string,
 ): BundledExtensionSourceClassification;

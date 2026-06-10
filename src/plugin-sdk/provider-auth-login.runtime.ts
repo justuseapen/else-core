@@ -1,3 +1,10 @@
+/** @deprecated Provider-owned login helpers; use provider auth hooks instead. */
 export { loginChutes } from "../commands/chutes-oauth.js";
+<<<<<<< HEAD
 export { loginOpenAICodexOAuth } from "../plugins/provider-openai-codex-oauth.js";
+=======
+/** @deprecated Provider-owned login helpers; use provider auth hooks instead. */
+export { loginOpenAICodexOAuth } from "../plugins/provider-openai-chatgpt-oauth.js";
+/** @deprecated Provider-owned login helpers; use provider auth hooks instead. */
+>>>>>>> upstream/main
 export { githubCopilotLoginCommand } from "./github-copilot-login.js";

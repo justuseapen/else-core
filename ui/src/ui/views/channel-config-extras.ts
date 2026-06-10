@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Control UI view renders channel config extras screen content.
+>>>>>>> upstream/main
 import { t } from "../../i18n/index.ts";
 
 export function resolveChannelConfigValue(

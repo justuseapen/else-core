@@ -1,4 +1,12 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
+=======
+// ACPX tests cover index plugin behavior.
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import { createTestPluginApi } from "openclaw/plugin-sdk/plugin-test-api";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import setupPlugin from "./setup-api.js";
+>>>>>>> upstream/main
 
 const { createAcpxRuntimeServiceMock, tryDispatchAcpReplyHookMock } = vi.hoisted(() => ({
   createAcpxRuntimeServiceMock: vi.fn(),
@@ -9,12 +17,37 @@ vi.mock("./register.runtime.js", () => ({
   createAcpxRuntimeService: createAcpxRuntimeServiceMock,
 }));
 
+<<<<<<< HEAD
 vi.mock("./runtime-api.js", () => ({
+=======
+vi.mock("openclaw/plugin-sdk/acp-runtime-backend", () => ({
+>>>>>>> upstream/main
   tryDispatchAcpReplyHook: tryDispatchAcpReplyHookMock,
 }));
 
 import plugin from "./index.js";
 
+<<<<<<< HEAD
+=======
+type AcpxAutoEnableProbe = Parameters<OpenClawPluginApi["registerAutoEnableProbe"]>[0];
+
+function registerAcpxAutoEnableProbe(): AcpxAutoEnableProbe {
+  const probes: AcpxAutoEnableProbe[] = [];
+  setupPlugin.register(
+    createTestPluginApi({
+      registerAutoEnableProbe(probe) {
+        probes.push(probe);
+      },
+    }),
+  );
+  const probe = probes[0];
+  if (!probe) {
+    throw new Error("expected ACPX setup plugin to register an auto-enable probe");
+  }
+  return probe;
+}
+
+>>>>>>> upstream/main
 describe("acpx plugin", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -23,9 +56,17 @@ describe("acpx plugin", () => {
   it("registers the runtime service and reply_dispatch hook", () => {
     const service = { id: "acpx-service", start: vi.fn() };
     createAcpxRuntimeServiceMock.mockReturnValue(service);
+<<<<<<< HEAD
 
     const api = {
       pluginConfig: { stateDir: "/tmp/acpx" },
+=======
+    const openKeyedStore = vi.fn();
+
+    const api = {
+      pluginConfig: { stateDir: "/tmp/acpx" },
+      runtime: { state: { openKeyedStore } },
+>>>>>>> upstream/main
       registerService: vi.fn(),
       on: vi.fn(),
     };
@@ -34,8 +75,95 @@ describe("acpx plugin", () => {
 
     expect(createAcpxRuntimeServiceMock).toHaveBeenCalledWith({
       pluginConfig: api.pluginConfig,
+<<<<<<< HEAD
     });
     expect(api.registerService).toHaveBeenCalledWith(service);
     expect(api.on).toHaveBeenCalledWith("reply_dispatch", tryDispatchAcpReplyHookMock);
   });
+=======
+      openKeyedStore: expect.any(Function),
+    });
+    const params = createAcpxRuntimeServiceMock.mock.calls[0]?.[0] as {
+      openKeyedStore: typeof openKeyedStore;
+    };
+    params.openKeyedStore({ namespace: "test", maxEntries: 1 });
+    expect(openKeyedStore).toHaveBeenCalledWith({ namespace: "test", maxEntries: 1 });
+    expect(api.registerService).toHaveBeenCalledWith(service);
+    expect(api.on).toHaveBeenCalledWith("reply_dispatch", tryDispatchAcpReplyHookMock);
+  });
+
+  it("does not touch runtime state while registering metadata-only plugin APIs", () => {
+    const service = { id: "acpx-service", start: vi.fn() };
+    createAcpxRuntimeServiceMock.mockReturnValue(service);
+
+    const api = {
+      pluginConfig: {},
+      runtime: {},
+      registerService: vi.fn(),
+      on: vi.fn(),
+    };
+
+    expect(() => plugin.register(api as never)).not.toThrow();
+    expect(api.registerService).toHaveBeenCalledWith(service);
+  });
+
+  it("preserves the ACP reply_dispatch runtime path through the registered hook", async () => {
+    const service = { id: "acpx-service", start: vi.fn() };
+    createAcpxRuntimeServiceMock.mockReturnValue(service);
+    tryDispatchAcpReplyHookMock.mockResolvedValue({
+      handled: true,
+      queuedFinal: true,
+      counts: { tool: 1, block: 0, final: 1 },
+    });
+
+    const on = vi.fn();
+    const openKeyedStore = vi.fn();
+    const api = createTestPluginApi({
+      pluginConfig: { stateDir: "/tmp/acpx" },
+      runtime: { state: { openKeyedStore } } as never,
+      registerService: vi.fn(),
+      on,
+    });
+
+    plugin.register(api);
+
+    const hook = on.mock.calls.find(([hookName]) => hookName === "reply_dispatch")?.[1];
+    if (!hook) {
+      throw new Error("expected reply_dispatch hook to be registered");
+    }
+
+    const event = {
+      ctx: { raw: "reply ctx" },
+      runId: "run-1",
+      sessionKey: "agent:test:session",
+      inboundAudio: false,
+      shouldRouteToOriginating: false,
+      shouldSendToolSummaries: true,
+      sendPolicy: "allow",
+    };
+    const ctx = {
+      cfg: {},
+      dispatcher: { dispatch: vi.fn(), getQueuedCounts: vi.fn(), getFailedCounts: vi.fn() },
+      recordProcessed: vi.fn(),
+      markIdle: vi.fn(),
+    };
+
+    await expect(hook(event, ctx)).resolves.toEqual({
+      handled: true,
+      queuedFinal: true,
+      counts: { tool: 1, block: 0, final: 1 },
+    });
+    expect(tryDispatchAcpReplyHookMock).toHaveBeenCalledWith(event, ctx);
+  });
+
+  it("declares setup auto-enable reasons for ACPX-owned ACP config", () => {
+    const probe = registerAcpxAutoEnableProbe();
+
+    expect(probe({ config: { acp: { enabled: true } }, env: {} })).toBe("ACP runtime configured");
+    expect(probe({ config: { acp: { backend: "acpx" } }, env: {} })).toBe("ACP runtime configured");
+    expect(probe({ config: { acp: { enabled: true, backend: "custom-runtime" } }, env: {} })).toBe(
+      null,
+    );
+  });
+>>>>>>> upstream/main
 });

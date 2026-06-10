@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 import os from "node:os";
 import path from "node:path";
+=======
+// Memory Wiki helper module supports config behavior.
+import os from "node:os";
+import path from "node:path";
+import { mapPluginConfigIssues } from "openclaw/plugin-sdk/extension-shared";
+>>>>>>> upstream/main
 import { buildPluginConfigSchema, z, type OpenClawPluginConfigSchema } from "../api.js";
 
 export const WIKI_VAULT_MODES = ["isolated", "bridge", "unsafe-local"] as const;
@@ -26,7 +33,11 @@ export type MemoryWikiPluginConfig = {
   };
   bridge?: {
     enabled?: boolean;
+<<<<<<< HEAD
     readMemoryCore?: boolean;
+=======
+    readMemoryArtifacts?: boolean;
+>>>>>>> upstream/main
     indexDreamReports?: boolean;
     indexDailyNotes?: boolean;
     indexMemoryRoot?: boolean;
@@ -45,6 +56,12 @@ export type MemoryWikiPluginConfig = {
     backend?: WikiSearchBackend;
     corpus?: WikiSearchCorpus;
   };
+<<<<<<< HEAD
+=======
+  context?: {
+    includeCompiledDigestPrompt?: boolean;
+  };
+>>>>>>> upstream/main
   render?: {
     preserveHumanBlocks?: boolean;
     createBacklinks?: boolean;
@@ -66,7 +83,11 @@ export type ResolvedMemoryWikiConfig = {
   };
   bridge: {
     enabled: boolean;
+<<<<<<< HEAD
     readMemoryCore: boolean;
+=======
+    readMemoryArtifacts: boolean;
+>>>>>>> upstream/main
     indexDreamReports: boolean;
     indexDailyNotes: boolean;
     indexMemoryRoot: boolean;
@@ -85,6 +106,12 @@ export type ResolvedMemoryWikiConfig = {
     backend: WikiSearchBackend;
     corpus: WikiSearchCorpus;
   };
+<<<<<<< HEAD
+=======
+  context: {
+    includeCompiledDigestPrompt: boolean;
+  };
+>>>>>>> upstream/main
   render: {
     preserveHumanBlocks: boolean;
     createBacklinks: boolean;
@@ -116,7 +143,11 @@ const MemoryWikiConfigSource = z.strictObject({
   bridge: z
     .strictObject({
       enabled: z.boolean().optional(),
+<<<<<<< HEAD
       readMemoryCore: z.boolean().optional(),
+=======
+      readMemoryArtifacts: z.boolean().optional(),
+>>>>>>> upstream/main
       indexDreamReports: z.boolean().optional(),
       indexDailyNotes: z.boolean().optional(),
       indexMemoryRoot: z.boolean().optional(),
@@ -142,6 +173,14 @@ const MemoryWikiConfigSource = z.strictObject({
       corpus: z.enum(WIKI_SEARCH_CORPORA).optional(),
     })
     .optional(),
+<<<<<<< HEAD
+=======
+  context: z
+    .strictObject({
+      includeCompiledDigestPrompt: z.boolean().optional(),
+    })
+    .optional(),
+>>>>>>> upstream/main
   render: z
     .strictObject({
       preserveHumanBlocks: z.boolean().optional(),
@@ -163,6 +202,7 @@ const memoryWikiConfigSchemaBase = buildPluginConfigSchema(MemoryWikiConfigSourc
     return {
       success: false,
       error: {
+<<<<<<< HEAD
         issues: result.error.issues.map((issue) => ({
           path: issue.path.filter((segment): segment is string | number => {
             const kind = typeof segment;
@@ -170,6 +210,9 @@ const memoryWikiConfigSchemaBase = buildPluginConfigSchema(MemoryWikiConfigSourc
           }),
           message: issue.message,
         })),
+=======
+        issues: mapPluginConfigIssues(result.error.issues),
+>>>>>>> upstream/main
       },
     };
   },
@@ -216,7 +259,11 @@ export function resolveMemoryWikiConfig(
     },
     bridge: {
       enabled: safeConfig.bridge?.enabled ?? false,
+<<<<<<< HEAD
       readMemoryCore: safeConfig.bridge?.readMemoryCore ?? true,
+=======
+      readMemoryArtifacts: safeConfig.bridge?.readMemoryArtifacts ?? true,
+>>>>>>> upstream/main
       indexDreamReports: safeConfig.bridge?.indexDreamReports ?? true,
       indexDailyNotes: safeConfig.bridge?.indexDailyNotes ?? true,
       indexMemoryRoot: safeConfig.bridge?.indexMemoryRoot ?? true,
@@ -235,6 +282,12 @@ export function resolveMemoryWikiConfig(
       backend: safeConfig.search?.backend ?? DEFAULT_WIKI_SEARCH_BACKEND,
       corpus: safeConfig.search?.corpus ?? DEFAULT_WIKI_SEARCH_CORPUS,
     },
+<<<<<<< HEAD
+=======
+    context: {
+      includeCompiledDigestPrompt: safeConfig.context?.includeCompiledDigestPrompt ?? false,
+    },
+>>>>>>> upstream/main
     render: {
       preserveHumanBlocks: safeConfig.render?.preserveHumanBlocks ?? true,
       createBacklinks: safeConfig.render?.createBacklinks ?? true,

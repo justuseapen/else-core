@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Telegram plugin module implements delivery behavior.
+>>>>>>> upstream/main
 export {
   deliverReplies,
   emitInternalMessageSentHook,

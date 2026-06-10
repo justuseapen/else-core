@@ -1,6 +1,14 @@
+<<<<<<< HEAD
+=======
+// Doctor warnings for multi-account channels missing explicit default account routing.
+import {
+  normalizeLowercaseStringOrEmpty,
+  normalizeOptionalString,
+} from "@openclaw/normalization-core/string-coerce";
+>>>>>>> upstream/main
 import { normalizeChatChannelId } from "../../../channels/ids.js";
 import { listRouteBindings } from "../../../config/bindings.js";
-import type { OpenClawConfig } from "../../../config/config.js";
+import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import {
   formatChannelAccountsDefaultPath,
   formatSetExplicitDefaultInstruction,
@@ -24,7 +32,7 @@ function normalizeBindingChannelKey(raw?: string | null): string {
   if (normalized) {
     return normalized;
   }
-  return (raw ?? "").trim().toLowerCase();
+  return normalizeLowercaseStringOrEmpty(raw);
 }
 
 function collectChannelsMissingDefaultAccount(
@@ -61,6 +69,7 @@ function collectChannelsMissingDefaultAccount(
   return contexts;
 }
 
+/** Warn when account-scoped route bindings do not cover channels without accounts.default. */
 export function collectMissingDefaultAccountBindingWarnings(cfg: OpenClawConfig): string[] {
   const bindings = listRouteBindings(cfg);
   const warnings: string[] = [];
@@ -87,7 +96,7 @@ export function collectMissingDefaultAccountBindingWarnings(cfg: OpenClawConfig)
         continue;
       }
 
-      const rawAccountId = typeof match.accountId === "string" ? match.accountId.trim() : "";
+      const rawAccountId = normalizeOptionalString(match.accountId) ?? "";
       if (!rawAccountId) {
         continue;
       }
@@ -126,6 +135,7 @@ export function collectMissingDefaultAccountBindingWarnings(cfg: OpenClawConfig)
   return warnings;
 }
 
+/** Warn when multi-account channels omit or misconfigure an explicit default account. */
 export function collectMissingExplicitDefaultAccountWarnings(cfg: OpenClawConfig): string[] {
   const warnings: string[] = [];
   for (const { channelKey, channel, normalizedAccountIds } of collectChannelsMissingDefaultAccount(

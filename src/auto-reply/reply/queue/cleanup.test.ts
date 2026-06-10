@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { __testing, clearSessionQueues } from "./cleanup.js";
+=======
+// Tests queue cleanup behavior for expired state and dedupe records.
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { testing, clearSessionQueues } from "./cleanup.js";
+>>>>>>> upstream/main
 
 const followupQueueMocks = vi.hoisted(() => ({
   clearFollowupDrainCallback: vi.fn(),
@@ -22,20 +28,32 @@ vi.mock("../../../process/command-queue.js", () => ({
   clearCommandLane: commandQueueMocks.clearCommandLane,
 }));
 
+<<<<<<< HEAD
 vi.mock("../../../agents/pi-embedded-runner/lanes.js", () => ({
+=======
+vi.mock("../../../agents/embedded-agent-runner/lanes.js", () => ({
+>>>>>>> upstream/main
   resolveEmbeddedSessionLane: (key: string) => `session:${key.trim() || "main"}`,
 }));
 
 describe("clearSessionQueues", () => {
   afterEach(() => {
+<<<<<<< HEAD
     __testing.resetDepsForTests();
+=======
+    testing.resetDepsForTests();
+>>>>>>> upstream/main
     followupQueueMocks.clearFollowupDrainCallback.mockReset();
     followupQueueMocks.clearFollowupQueue.mockReset().mockReturnValue(2);
     commandQueueMocks.clearCommandLane.mockReset().mockReturnValue(3);
   });
 
   it("falls back to default runtime deps when injected deps are invalid", () => {
+<<<<<<< HEAD
     __testing.setDepsForTests({
+=======
+    testing.setDepsForTests({
+>>>>>>> upstream/main
       resolveEmbeddedSessionLane: undefined,
       clearCommandLane: undefined,
     });
@@ -53,12 +71,20 @@ describe("clearSessionQueues", () => {
   });
 
   it("falls back at call time when a test mutates deps to non-functions", () => {
+<<<<<<< HEAD
     __testing.setDepsForTests({
+=======
+    testing.setDepsForTests({
+>>>>>>> upstream/main
       resolveEmbeddedSessionLane: ((key: string) => `custom:${key}`) as never,
       clearCommandLane: ((lane: string) => (lane === "custom:alpha" ? 7 : 0)) as never,
     });
     (
+<<<<<<< HEAD
       __testing as {
+=======
+      testing as {
+>>>>>>> upstream/main
         setDepsForTests: (deps: Partial<Record<string, unknown>> | undefined) => void;
       }
     ).setDepsForTests({

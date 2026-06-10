@@ -1,3 +1,4 @@
+// Google provider module implements model/runtime integration.
 import {
   describeImageWithModel,
   describeImagesWithModel,
@@ -8,7 +9,11 @@ import {
   type VideoDescriptionResult,
 } from "openclaw/plugin-sdk/media-understanding";
 import {
+<<<<<<< HEAD
   assertOkOrThrowHttpError,
+=======
+  assertOkOrThrowProviderError,
+>>>>>>> upstream/main
   postJsonRequest,
   type ProviderRequestTransportOverrides,
 } from "openclaw/plugin-sdk/provider-http";
@@ -96,7 +101,7 @@ async function generateGeminiInlineDataText(params: {
   });
 
   try {
-    await assertOkOrThrowHttpError(res, params.httpErrorLabel);
+    await assertOkOrThrowProviderError(res, params.httpErrorLabel);
 
     const payload = (await res.json()) as {
       candidates?: Array<{

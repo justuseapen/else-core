@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Status format tests cover compact token and prompt-cache display helpers.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { formatPromptCacheCompact, formatTokensCompact } from "./status.format.js";
 

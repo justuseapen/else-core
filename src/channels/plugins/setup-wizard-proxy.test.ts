@@ -1,11 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+// Setup wizard proxy tests cover proxying setup wizard calls through channel plugin facades.
 import {
   promptSetupWizardAllowFrom,
   resolveSetupWizardAllowFromEntries,
   resolveSetupWizardGroupAllowlist,
   runSetupWizardFinalize,
   runSetupWizardPrepare,
+<<<<<<< HEAD
 } from "../../../test/helpers/plugins/setup-wizard.js";
+=======
+} from "openclaw/plugin-sdk/plugin-test-runtime";
+import { describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 import {
   createAllowlistSetupWizardProxy,
   createDelegatedFinalize,
@@ -153,7 +158,7 @@ describe("createAllowlistSetupWizardProxy", () => {
 
     expect(
       await promptSetupWizardAllowFrom({ promptAllowFrom: wizard.dmPolicy?.promptAllowFrom }),
-    ).toEqual({});
+    ).toStrictEqual({});
     expect(
       await resolveSetupWizardAllowFromEntries({
         resolveEntries: wizard.allowFrom?.resolveEntries,

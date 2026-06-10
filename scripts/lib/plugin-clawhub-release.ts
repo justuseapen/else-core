@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -29,6 +30,31 @@ export {
 };
 
 export type PluginPackageJson = {
+=======
+// Plugin Clawhub Release script supports OpenClaw repository automation.
+import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
+import { validateExternalCodePluginPackageJson } from "../../packages/plugin-package-contract/src/index.ts";
+import { readBoundedResponseText } from "./bounded-response.ts";
+import {
+  collectExtensionPackageJsonCandidates,
+  collectChangedPathsFromGitRange,
+  collectChangedExtensionIdsFromPaths,
+  collectPublishablePluginPackageErrors,
+  assertPluginReleaseVersionFloors,
+  parsePluginReleaseArgs,
+  resolvePublishablePluginVersion,
+  resolveGitCommitSha,
+  resolveChangedPublishablePluginPackages,
+  resolveSelectedPublishablePluginPackages,
+  type GitRangeSelection,
+  type PluginReleaseSelectionMode,
+} from "./plugin-npm-release.ts";
+
+export { assertPluginReleaseVersionFloors, parsePluginReleaseArgs };
+
+type PluginPackageJson = {
+>>>>>>> upstream/main
   name?: string;
   version?: string;
   private?: boolean;
@@ -57,6 +83,7 @@ export type PublishablePluginPackage = {
   packageDir: string;
   packageName: string;
   version: string;
+<<<<<<< HEAD
   channel: "stable" | "beta";
   publishTag: "latest" | "beta";
 };
@@ -66,12 +93,40 @@ export type PluginReleasePlanItem = PublishablePluginPackage & {
 };
 
 export type PluginReleasePlan = {
+=======
+  channel: "stable" | "alpha" | "beta";
+  publishTag: "latest" | "alpha" | "beta";
+};
+
+type PluginReleasePlanItem = PublishablePluginPackage & {
+  alreadyPublished: boolean;
+  artifactName: string;
+};
+
+type PluginReleasePlan = {
+>>>>>>> upstream/main
   all: PluginReleasePlanItem[];
   candidates: PluginReleasePlanItem[];
   skippedPublished: PluginReleasePlanItem[];
 };
 
+<<<<<<< HEAD
 const CLAWHUB_DEFAULT_REGISTRY = "https://clawhub.ai";
+=======
+type ClawHubPackageOwnerDetail = {
+  owner?: {
+    handle?: unknown;
+  } | null;
+};
+
+type ClawHubPublishablePluginPackageFilters = {
+  extensionIds?: readonly string[];
+  packageNames?: readonly string[];
+};
+
+const CLAWHUB_DEFAULT_REGISTRY = "https://clawhub.ai";
+const CLAWHUB_RESPONSE_BODY_MAX_BYTES = 1024 * 1024;
+>>>>>>> upstream/main
 const SAFE_EXTENSION_ID_RE = /^[a-z0-9][a-z0-9._-]*$/;
 const CLAWHUB_SHARED_RELEASE_INPUT_PATHS = [
   ".github/workflows/plugin-clawhub-release.yml",
@@ -79,15 +134,24 @@ const CLAWHUB_SHARED_RELEASE_INPUT_PATHS = [
   "package.json",
   "pnpm-lock.yaml",
   "packages/plugin-package-contract/src/index.ts",
+<<<<<<< HEAD
   "scripts/lib/npm-publish-plan.mjs",
   "scripts/lib/plugin-npm-release.ts",
   "scripts/lib/plugin-clawhub-release.ts",
+=======
+  "scripts/lib/bounded-response.ts",
+  "scripts/lib/npm-publish-plan.mjs",
+  "scripts/lib/plugin-npm-release.ts",
+  "scripts/lib/plugin-clawhub-release.ts",
+  "scripts/plugin-clawhub-owner-preflight.ts",
+>>>>>>> upstream/main
   "scripts/openclaw-npm-release-check.ts",
   "scripts/plugin-clawhub-publish.sh",
   "scripts/plugin-clawhub-release-check.ts",
   "scripts/plugin-clawhub-release-plan.ts",
 ] as const;
 
+<<<<<<< HEAD
 function readPluginPackageJson(path: string): PluginPackageJson {
   return JSON.parse(readFileSync(path, "utf8")) as PluginPackageJson;
 }
@@ -129,6 +193,8 @@ function resolveGitCommitSha(rootDir: string, ref: string, label: string) {
   }
 }
 
+=======
+>>>>>>> upstream/main
 function getRegistryBaseUrl(explicit?: string) {
   return (
     explicit?.trim() ||
@@ -138,6 +204,7 @@ function getRegistryBaseUrl(explicit?: string) {
   );
 }
 
+<<<<<<< HEAD
 export function collectClawHubPublishablePluginPackages(
   rootDir = resolve("."),
 ): PublishablePluginPackage[] {
@@ -166,27 +233,91 @@ export function collectClawHubPublishablePluginPackages(
     if (!SAFE_EXTENSION_ID_RE.test(dir.name)) {
       validationErrors.push(
         `${dir.name}: extension directory name must match ^[a-z0-9][a-z0-9._-]*$ for ClawHub publish.`,
+=======
+function formatClawHubPackageArtifactName(
+  plugin: Pick<PublishablePluginPackage, "packageName" | "version">,
+) {
+  const safeName = plugin.packageName
+    .replace(/^@/u, "")
+    .replace(/[^A-Za-z0-9_.-]+/gu, "-")
+    .replace(/^-+|-+$/gu, "");
+  return `clawhub-package-${safeName}-${plugin.version}`;
+}
+
+async function readClawHubPackageOwnerDetail(
+  response: Response,
+  packageName: string,
+): Promise<ClawHubPackageOwnerDetail> {
+  return JSON.parse(
+    await readBoundedResponseText(
+      response,
+      `ClawHub package owner response for ${packageName}`,
+      CLAWHUB_RESPONSE_BODY_MAX_BYTES,
+    ),
+  ) as ClawHubPackageOwnerDetail;
+}
+
+export function collectClawHubPublishablePluginPackages(
+  rootDir = resolve("."),
+  filters: ClawHubPublishablePluginPackageFilters = {},
+): PublishablePluginPackage[] {
+  const publishable: PublishablePluginPackage[] = [];
+  const validationErrors: string[] = [];
+  const selectedExtensionIds = new Set(filters.extensionIds ?? []);
+  const selectedPackageNames = new Set(filters.packageNames ?? []);
+  const hasSelectedExtensionIds = Array.isArray(filters.extensionIds);
+  const hasSelectedPackageNames = Array.isArray(filters.packageNames);
+
+  for (const candidate of collectExtensionPackageJsonCandidates(rootDir)) {
+    const { extensionId, packageDir, packageJson } = candidate;
+    if (hasSelectedExtensionIds && !selectedExtensionIds.has(extensionId)) {
+      continue;
+    }
+    const packageName = packageJson.name?.trim() ?? "";
+    if (hasSelectedPackageNames && !selectedPackageNames.has(packageName)) {
+      continue;
+    }
+    if (packageJson.openclaw?.release?.publishToClawHub !== true) {
+      continue;
+    }
+    if (!SAFE_EXTENSION_ID_RE.test(extensionId)) {
+      validationErrors.push(
+        `${extensionId}: extension directory name must match ^[a-z0-9][a-z0-9._-]*$ for ClawHub publish.`,
+>>>>>>> upstream/main
       );
       continue;
     }
 
     const errors = collectPublishablePluginPackageErrors({
+<<<<<<< HEAD
       extensionId: dir.name,
+=======
+      extensionId,
+>>>>>>> upstream/main
       packageDir,
       packageJson,
     });
     if (errors.length > 0) {
+<<<<<<< HEAD
       validationErrors.push(...errors.map((error) => `${dir.name}: ${error}`));
+=======
+      validationErrors.push(...errors.map((error) => `${extensionId}: ${error}`));
+>>>>>>> upstream/main
       continue;
     }
     const contractValidation = validateExternalCodePluginPackageJson(packageJson);
     if (contractValidation.issues.length > 0) {
       validationErrors.push(
+<<<<<<< HEAD
         ...contractValidation.issues.map((issue) => `${dir.name}: ${issue.message}`),
+=======
+        ...contractValidation.issues.map((issue) => `${extensionId}: ${issue.message}`),
+>>>>>>> upstream/main
       );
       continue;
     }
 
+<<<<<<< HEAD
     const version = packageJson.version!.trim();
     const parsedVersion = parseReleaseVersion(version);
     if (parsedVersion === null) {
@@ -203,6 +334,30 @@ export function collectClawHubPublishablePluginPackages(
       version,
       channel: parsedVersion.channel,
       publishTag: parsedVersion.channel === "beta" ? "beta" : "latest",
+=======
+    const resolvedVersion = resolvePublishablePluginVersion({
+      extensionId,
+      packageJson,
+      validationErrors,
+    });
+    if (!resolvedVersion) {
+      continue;
+    }
+    const { version, parsedVersion } = resolvedVersion;
+
+    publishable.push({
+      extensionId,
+      packageDir,
+      packageName,
+      version,
+      channel: parsedVersion.channel,
+      publishTag:
+        parsedVersion.channel === "alpha"
+          ? "alpha"
+          : parsedVersion.channel === "beta"
+            ? "beta"
+            : "latest",
+>>>>>>> upstream/main
     });
   }
 
@@ -239,6 +394,7 @@ function collectPluginClawHubReleasePathsFromGitRangeForPathspecs(
   },
   pathspecs: readonly string[],
 ): string[] {
+<<<<<<< HEAD
   const rootDir = params.rootDir ?? resolve(".");
   const { baseRef, headRef } = params.gitRange;
 
@@ -262,6 +418,13 @@ function collectPluginClawHubReleasePathsFromGitRangeForPathspecs(
     .map((line) => line.trim())
     .filter(Boolean)
     .map((path) => normalizePath(path));
+=======
+  return collectChangedPathsFromGitRange({
+    rootDir: params.rootDir,
+    gitRange: params.gitRange,
+    pathspecs,
+  });
+>>>>>>> upstream/main
 }
 
 function hasSharedClawHubReleaseInputChanges(changedPaths: readonly string[]) {
@@ -372,7 +535,11 @@ export function collectClawHubVersionGateErrors(params: {
   return errors;
 }
 
+<<<<<<< HEAD
 export async function isPluginVersionPublishedOnClawHub(
+=======
+async function isPluginVersionPublishedOnClawHub(
+>>>>>>> upstream/main
   packageName: string,
   version: string,
   options: {
@@ -404,6 +571,62 @@ export async function isPluginVersionPublishedOnClawHub(
   );
 }
 
+<<<<<<< HEAD
+=======
+export async function collectClawHubOpenClawOwnerErrors(params: {
+  plugins: readonly Pick<PublishablePluginPackage, "packageName">[];
+  requiredOwnerHandle?: string;
+  registryBaseUrl?: string;
+  fetchImpl?: typeof fetch;
+}): Promise<string[]> {
+  const fetchImpl = params.fetchImpl ?? fetch;
+  const requiredOwnerHandle = params.requiredOwnerHandle ?? "openclaw";
+  const errors: string[] = [];
+
+  await Promise.all(
+    params.plugins.map(async (plugin) => {
+      if (!plugin.packageName.startsWith("@openclaw/")) {
+        return;
+      }
+
+      const url = new URL(
+        `/api/v1/packages/${encodeURIComponent(plugin.packageName)}`,
+        getRegistryBaseUrl(params.registryBaseUrl),
+      );
+      const response = await fetchImpl(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (response.status === 404) {
+        errors.push(
+          `${plugin.packageName}: ClawHub package row must already exist under @${requiredOwnerHandle} before OpenClaw release publish.`,
+        );
+        return;
+      }
+      if (!response.ok) {
+        errors.push(
+          `${plugin.packageName}: failed to query ClawHub owner: ${response.status} ${response.statusText}`,
+        );
+        return;
+      }
+
+      const detail = await readClawHubPackageOwnerDetail(response, plugin.packageName);
+      const ownerHandle = typeof detail.owner?.handle === "string" ? detail.owner.handle : null;
+      if (ownerHandle !== requiredOwnerHandle) {
+        errors.push(
+          `${plugin.packageName}: ClawHub package owner must be @${requiredOwnerHandle}; got ${ownerHandle ? `@${ownerHandle}` : "<missing>"}.`,
+        );
+      }
+    }),
+  );
+
+  return errors.toSorted();
+}
+
+>>>>>>> upstream/main
 export async function collectPluginClawHubReleasePlan(params?: {
   rootDir?: string;
   selection?: string[];
@@ -412,6 +635,7 @@ export async function collectPluginClawHubReleasePlan(params?: {
   registryBaseUrl?: string;
   fetchImpl?: typeof fetch;
 }): Promise<PluginReleasePlan> {
+<<<<<<< HEAD
   const allPublishable = collectClawHubPublishablePluginPackages(params?.rootDir);
   const selectedPublishable = resolveSelectedClawHubPublishablePluginPackages({
     plugins: allPublishable,
@@ -433,6 +657,49 @@ export async function collectPluginClawHubReleasePlan(params?: {
         },
       ),
     })),
+=======
+  const rootDir = params?.rootDir;
+  const selection = params?.selection ?? [];
+  const changedPaths = params?.gitRange
+    ? collectPluginClawHubRelevantPathsFromGitRange({
+        rootDir,
+        gitRange: params.gitRange,
+      })
+    : [];
+  const sharedInputChanged = hasSharedClawHubReleaseInputChanges(changedPaths);
+  const extensionIds =
+    params?.selectionMode === "all-publishable" || !params?.gitRange || sharedInputChanged
+      ? undefined
+      : collectChangedExtensionIdsFromPaths(changedPaths);
+  const allPublishable = collectClawHubPublishablePluginPackages(rootDir, {
+    extensionIds,
+    packageNames: selection.length > 0 ? selection : undefined,
+  });
+  const selectedPublishable = resolveSelectedClawHubPublishablePluginPackages({
+    plugins: allPublishable,
+    selection,
+    selectionMode: params?.selectionMode,
+    gitRange: params?.gitRange,
+    rootDir,
+  });
+
+  const explicitPublishSelection = params?.selectionMode !== undefined || selection.length > 0;
+  if (explicitPublishSelection) {
+    assertPluginReleaseVersionFloors(selectedPublishable, "Plugin ClawHub release plan");
+  }
+
+  const all = await Promise.all(
+    selectedPublishable.map(async (plugin) =>
+      Object.assign({}, plugin, {
+        alreadyPublished: await isPluginVersionPublishedOnClawHub(
+          plugin.packageName,
+          plugin.version,
+          { registryBaseUrl: params?.registryBaseUrl, fetchImpl: params?.fetchImpl },
+        ),
+        artifactName: formatClawHubPackageArtifactName(plugin),
+      }),
+    ),
+>>>>>>> upstream/main
   );
 
   return {

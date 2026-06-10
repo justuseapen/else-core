@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Diffs tests cover render plugin behavior.
+>>>>>>> upstream/main
 import {
   disposeHighlighter,
   RegisteredCustomThemes,
@@ -31,6 +35,10 @@ describe("renderDiffDocument", () => {
 
     expect(rendered.title).toBe("src/example.ts");
     expect(rendered.fileCount).toBe(1);
+<<<<<<< HEAD
+=======
+    expect(rendered.viewerRuntime).toBe("base");
+>>>>>>> upstream/main
     expect(rendered.html).toContain("data-openclaw-diff-root");
     expect(rendered.html).toContain("src/example.ts");
     expect(rendered.html).toContain("../../assets/viewer.js");
@@ -45,6 +53,34 @@ describe("renderDiffDocument", () => {
     expect(rendered.html).not.toContain("fonts.googleapis.com");
   });
 
+<<<<<<< HEAD
+=======
+  it("normalizes non-finite presentation numbers before rendering CSS", async () => {
+    const rendered = await renderDiffDocument(
+      {
+        kind: "before_after",
+        before: "old\n",
+        after: "new\n",
+      },
+      {
+        presentation: {
+          ...DEFAULT_DIFFS_TOOL_DEFAULTS,
+          fontSize: Number.NaN,
+          lineSpacing: Number.POSITIVE_INFINITY,
+        },
+        image: resolveDiffImageRenderOptions({ defaults: DEFAULT_DIFFS_TOOL_DEFAULTS }),
+        expandUnchanged: false,
+      },
+    );
+
+    expect(rendered.html).toContain("--diffs-font-size: 15px;");
+    expect(rendered.html).toContain("--diffs-line-height: 24px;");
+    expect(rendered.imageHtml).toContain("--diffs-font-size: 16px;");
+    expect(rendered.html).not.toContain("NaNpx");
+    expect(rendered.imageHtml).not.toContain("NaNpx");
+  });
+
+>>>>>>> upstream/main
   it("resolves viewer assets under an optional base path", async () => {
     const rendered = await renderDiffDocument(
       {
@@ -97,6 +133,63 @@ describe("renderDiffDocument", () => {
     expect(payloads[0]?.newFile?.lang).toBeUndefined();
   });
 
+<<<<<<< HEAD
+=======
+  it("keeps uncommon language diffs readable without the language pack", async () => {
+    const rendered = await renderDiffDocument(
+      {
+        kind: "before_after",
+        before: "REPORT z_demo.\n",
+        after: "REPORT z_demo2.\n",
+        lang: "abap",
+      },
+      {
+        presentation: DEFAULT_DIFFS_TOOL_DEFAULTS,
+        image: resolveDiffImageRenderOptions({ defaults: DEFAULT_DIFFS_TOOL_DEFAULTS }),
+        expandUnchanged: false,
+      },
+      "viewer",
+    );
+
+    const html = rendered.html ?? "";
+    const payload = parseViewerPayloadJson(
+      html.match(/data-openclaw-diff-payload>(.*?)<\/script>/)?.[1] ?? "",
+    );
+
+    expect(rendered.viewerRuntime).toBe("base");
+    expect(html).toContain("../../assets/viewer.js");
+    expect(html).not.toContain("diffs-language-pack");
+    expect(payload.langs).toEqual(["text"]);
+  });
+
+  it("uses the language-pack viewer runtime for uncommon languages when available", async () => {
+    const rendered = await renderDiffDocument(
+      {
+        kind: "before_after",
+        before: "REPORT z_demo.\n",
+        after: "REPORT z_demo2.\n",
+        lang: "abap",
+      },
+      {
+        presentation: DEFAULT_DIFFS_TOOL_DEFAULTS,
+        image: resolveDiffImageRenderOptions({ defaults: DEFAULT_DIFFS_TOOL_DEFAULTS }),
+        expandUnchanged: false,
+        languagePackAvailable: true,
+      },
+      "viewer",
+    );
+
+    const html = rendered.html ?? "";
+    const payload = parseViewerPayloadJson(
+      html.match(/data-openclaw-diff-payload>(.*?)<\/script>/)?.[1] ?? "",
+    );
+
+    expect(rendered.viewerRuntime).toBe("language-pack");
+    expect(html).toContain("../../../diffs-language-pack/assets/viewer.js");
+    expect(payload.langs).toEqual(["abap"]);
+  });
+
+>>>>>>> upstream/main
   it("renders multi-file patch input", async () => {
     const patch = [
       "diff --git a/a.ts b/a.ts",

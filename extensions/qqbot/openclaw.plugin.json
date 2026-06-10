@@ -1,10 +1,30 @@
 {
   "id": "qqbot",
+<<<<<<< HEAD
   "channels": ["qqbot"],
   "skills": ["./skills"],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
+=======
+  "name": "QQ Bot",
+  "description": "OpenClaw QQ Bot channel plugin for group and direct-message workflows.",
+  "activation": {
+    "onStartup": false
+  },
+  "channels": ["qqbot"],
+  "contracts": {
+    "tools": ["qqbot_channel_api", "qqbot_remind"]
+  },
+  "channelEnvVars": {
+    "qqbot": ["QQBOT_APP_ID", "QQBOT_CLIENT_SECRET"]
+  },
+  "enabledByDefault": true,
+  "skills": ["./skills"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": true,
+>>>>>>> upstream/main
     "$defs": {
       "audioFormatPolicy": {
         "type": "object",
@@ -21,6 +41,7 @@
           "transcodeEnabled": { "type": "boolean" }
         }
       },
+<<<<<<< HEAD
       "speechQueryParams": {
         "type": "object",
         "additionalProperties": {
@@ -45,6 +66,8 @@
           "speed": { "type": "number" }
         }
       },
+=======
+>>>>>>> upstream/main
       "stt": {
         "type": "object",
         "additionalProperties": false,
@@ -74,7 +97,11 @@
       },
       "account": {
         "type": "object",
+<<<<<<< HEAD
         "additionalProperties": false,
+=======
+        "additionalProperties": true,
+>>>>>>> upstream/main
         "properties": {
           "enabled": { "type": "boolean" },
           "name": { "type": "string" },
@@ -97,6 +124,31 @@
           "upgradeMode": {
             "type": "string",
             "enum": ["doc", "hot-reload"]
+<<<<<<< HEAD
+=======
+          },
+          "streaming": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": ["off", "partial"],
+                    "default": "partial"
+                  },
+                  "c2cStreamApi": {
+                    "type": "boolean",
+                    "description": "Use QQ C2C official stream_messages API (single-message typing-style updates)."
+                  }
+                }
+              }
+            ]
+>>>>>>> upstream/main
           }
         }
       }
@@ -118,7 +170,10 @@
         "items": { "type": "string" }
       },
       "audioFormatPolicy": { "$ref": "#/$defs/audioFormatPolicy" },
+<<<<<<< HEAD
       "tts": { "$ref": "#/$defs/tts" },
+=======
+>>>>>>> upstream/main
       "stt": { "$ref": "#/$defs/stt" },
       "urlDirectUpload": { "type": "boolean" },
       "upgradeUrl": { "type": "string" },
@@ -126,6 +181,31 @@
         "type": "string",
         "enum": ["doc", "hot-reload"]
       },
+<<<<<<< HEAD
+=======
+      "streaming": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": ["off", "partial"],
+                "default": "partial"
+              },
+              "c2cStreamApi": {
+                "type": "boolean",
+                "description": "Use QQ C2C official stream_messages API (single-message typing-style updates)."
+              }
+            }
+          }
+        ]
+      },
+>>>>>>> upstream/main
       "accounts": {
         "type": "object",
         "additionalProperties": {

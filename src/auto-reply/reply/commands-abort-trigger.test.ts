@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
 import { handleAbortTrigger } from "./commands-session-abort.js";
@@ -9,6 +10,22 @@ const setAbortMemoryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../agents/pi-embedded.js", () => ({
   abortEmbeddedPiRun: abortEmbeddedPiRunMock,
+=======
+// Tests abort trigger command parsing and cancellation requests.
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { OpenClawConfig } from "../../config/config.js";
+import { handleAbortTrigger } from "./commands-session-abort.js";
+import "./commands-session-abort.test-support.js";
+import type { HandleCommandsParams } from "./commands-types.js";
+
+const abortEmbeddedAgentRunMock = vi.hoisted(() => vi.fn());
+const persistAbortTargetEntryMock = vi.hoisted(() => vi.fn());
+const setAbortMemoryMock = vi.hoisted(() => vi.fn());
+const abortSessionRunTargetMock = vi.hoisted(() => vi.fn());
+
+vi.mock("../../agents/embedded-agent.js", () => ({
+  abortEmbeddedAgentRun: abortEmbeddedAgentRunMock,
+>>>>>>> upstream/main
 }));
 
 vi.mock("../../globals.js", () => ({
@@ -26,6 +43,10 @@ vi.mock("./abort-cutoff.js", () => ({
 }));
 
 vi.mock("./abort.js", () => ({
+<<<<<<< HEAD
+=======
+  abortSessionRunTarget: abortSessionRunTargetMock,
+>>>>>>> upstream/main
   formatAbortReplyText: vi.fn(() => "⚙️ Agent was aborted."),
   isAbortTrigger: vi.fn((raw: string) => raw === "stop"),
   resolveSessionEntryForKey: vi.fn(() => ({ entry: undefined, key: "agent:main:main" })),
@@ -37,10 +58,13 @@ vi.mock("./commands-session-store.js", () => ({
   persistAbortTargetEntry: persistAbortTargetEntryMock,
 }));
 
+<<<<<<< HEAD
 vi.mock("./queue.js", () => ({
   clearSessionQueues: vi.fn(() => ({ followupCleared: 0, laneCleared: 0, keys: [] })),
 }));
 
+=======
+>>>>>>> upstream/main
 vi.mock("./reply-run-registry.js", () => ({
   replyRunRegistry: {
     abort: vi.fn(),
@@ -96,7 +120,12 @@ describe("handleAbortTrigger", () => {
   it("rejects unauthorized natural-language abort triggers", async () => {
     const result = await handleAbortTrigger(buildAbortParams(), true);
     expect(result).toEqual({ shouldContinue: false });
+<<<<<<< HEAD
     expect(abortEmbeddedPiRunMock).not.toHaveBeenCalled();
+=======
+    expect(abortSessionRunTargetMock).not.toHaveBeenCalled();
+    expect(abortEmbeddedAgentRunMock).not.toHaveBeenCalled();
+>>>>>>> upstream/main
     expect(persistAbortTargetEntryMock).not.toHaveBeenCalled();
     expect(setAbortMemoryMock).not.toHaveBeenCalled();
   });

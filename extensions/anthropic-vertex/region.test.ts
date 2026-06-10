@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Anthropic Vertex tests cover region plugin behavior.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { resolveAnthropicVertexRegion, resolveAnthropicVertexRegionFromBaseUrl } from "./api.js";
 

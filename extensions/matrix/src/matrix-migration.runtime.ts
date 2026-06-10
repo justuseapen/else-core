@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export {
   autoMigrateLegacyMatrixState,
   autoPrepareLegacyMatrixCrypto,
@@ -7,3 +8,15 @@ export {
   hasPendingMatrixMigration,
   maybeCreateMatrixMigrationSnapshot,
 } from "./runtime-heavy-api.js";
+=======
+// Matrix plugin module implements matrix migration behavior.
+export { autoMigrateLegacyMatrixState, detectLegacyMatrixState } from "./legacy-state.js";
+export { autoPrepareLegacyMatrixCrypto, detectLegacyMatrixCrypto } from "./legacy-crypto.js";
+export {
+  hasActionableMatrixMigration,
+  hasPendingMatrixMigration,
+  resolveMatrixMigrationStatus,
+  type MatrixMigrationStatus,
+} from "./migration-snapshot.js";
+export { maybeCreateMatrixMigrationSnapshot } from "./migration-snapshot-backup.js";
+>>>>>>> upstream/main

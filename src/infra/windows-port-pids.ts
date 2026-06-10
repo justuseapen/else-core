@@ -1,5 +1,14 @@
+<<<<<<< HEAD
 import { spawnSync } from "node:child_process";
 import { parseCmdScriptCommandLine } from "../daemon/cmd-argv.js";
+=======
+// Resolves Windows process ids that own listening ports.
+import { spawnSync } from "node:child_process";
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
+import { normalizeStringEntries } from "@openclaw/normalization-core/string-normalization";
+import { parseCmdScriptCommandLine } from "../daemon/cmd-argv.js";
+import { parseStrictPositiveInteger } from "./parse-finite-number.js";
+>>>>>>> upstream/main
 
 const DEFAULT_TIMEOUT_MS = 5_000;
 
@@ -32,10 +41,14 @@ function readListeningPidsViaPowerShell(port: number, timeoutMs: number): number
   if (ps.error || ps.status !== 0) {
     return null;
   }
+<<<<<<< HEAD
   return ps.stdout
     .split(/\r?\n/)
     .map((line) => Number.parseInt(line.trim(), 10))
     .filter((pid) => Number.isFinite(pid) && pid > 0);
+=======
+  return ps.stdout.split(/\r?\n/).flatMap((line) => parseStrictPositiveInteger(line.trim()) ?? []);
+>>>>>>> upstream/main
 }
 
 function parseListeningPidsFromNetstat(stdout: string, port: number): number[] {
@@ -90,18 +103,28 @@ export function readWindowsListeningPidsResultSync(
 // ---------------------------------------------------------------------------
 
 function extractWindowsCommandLine(raw: string): string | null {
+<<<<<<< HEAD
   const lines = raw
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
   for (const line of lines) {
     if (!line.toLowerCase().startsWith("commandline=")) {
+=======
+  const lines = normalizeStringEntries(raw.split(/\r?\n/));
+  for (const line of lines) {
+    if (!normalizeLowercaseStringOrEmpty(line).startsWith("commandline=")) {
+>>>>>>> upstream/main
       continue;
     }
     const value = line.slice("commandline=".length).trim();
     return value || null;
   }
+<<<<<<< HEAD
   return lines.find((line) => line.toLowerCase() !== "commandline") ?? null;
+=======
+  return lines.find((line) => normalizeLowercaseStringOrEmpty(line) !== "commandline") ?? null;
+>>>>>>> upstream/main
 }
 
 export function readWindowsProcessArgsSync(

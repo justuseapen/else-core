@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Feishu plugin module implements secret contract behavior.
+>>>>>>> upstream/main
 import {
   collectConditionalChannelFieldAssignments,
   collectSimpleChannelFieldAssignments,
@@ -7,9 +11,15 @@ import {
   type ResolverContext,
   type SecretDefaults,
   type SecretTargetRegistryEntry,
+<<<<<<< HEAD
 } from "openclaw/plugin-sdk/security-runtime";
 
 export const secretTargetRegistryEntries = [
+=======
+} from "openclaw/plugin-sdk/channel-secret-basic-runtime";
+
+export const secretTargetRegistryEntries: SecretTargetRegistryEntry[] = [
+>>>>>>> upstream/main
   {
     id: "channels.feishu.accounts.*.appSecret",
     targetType: "channels.feishu.accounts.*.appSecret",
@@ -76,11 +86,19 @@ export const secretTargetRegistryEntries = [
     includeInConfigure: true,
     includeInAudit: true,
   },
+<<<<<<< HEAD
 ] satisfies SecretTargetRegistryEntry[];
 
 export function collectRuntimeConfigAssignments(params: {
   config: { channels?: Record<string, unknown> };
   defaults: SecretDefaults | undefined;
+=======
+];
+
+export function collectRuntimeConfigAssignments(params: {
+  config: { channels?: Record<string, unknown> };
+  defaults?: SecretDefaults;
+>>>>>>> upstream/main
   context: ResolverContext;
 }): void {
   const resolved = getChannelSurface(params.config, "feishu");
@@ -138,3 +156,11 @@ export function collectRuntimeConfigAssignments(params: {
     accountInactiveReason: "Feishu account is disabled or not running in webhook mode.",
   });
 }
+<<<<<<< HEAD
+=======
+
+export const channelSecrets = {
+  secretTargetRegistryEntries,
+  collectRuntimeConfigAssignments,
+};
+>>>>>>> upstream/main

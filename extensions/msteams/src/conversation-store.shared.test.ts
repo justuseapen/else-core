@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -7,6 +8,19 @@ import { createMSTeamsConversationStoreMemory } from "./conversation-store-memor
 import type { MSTeamsConversationStore } from "./conversation-store.js";
 import { setMSTeamsRuntime } from "./runtime.js";
 import { msteamsRuntimeStub } from "./test-runtime.js";
+=======
+// Msteams tests cover conversation store.shared plugin behavior.
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { resetPluginStateStoreForTests } from "openclaw/plugin-sdk/plugin-state-test-runtime";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createMSTeamsConversationStoreMemory } from "./conversation-store-memory.js";
+import { createMSTeamsConversationStoreState } from "./conversation-store-state.js";
+import type { MSTeamsConversationStore } from "./conversation-store.js";
+import { setMSTeamsRuntime } from "./runtime.js";
+import { msteamsRuntimeStub } from "./test-support/runtime.js";
+>>>>>>> upstream/main
 
 type StoreFactory = {
   name: string;
@@ -15,10 +29,17 @@ type StoreFactory = {
 
 const storeFactories: StoreFactory[] = [
   {
+<<<<<<< HEAD
     name: "fs",
     createStore: async () => {
       const stateDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "openclaw-msteams-store-"));
       return createMSTeamsConversationStoreFs({
+=======
+    name: "state",
+    createStore: async () => {
+      const stateDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "openclaw-msteams-store-"));
+      return createMSTeamsConversationStoreState({
+>>>>>>> upstream/main
         env: { ...process.env, OPENCLAW_STATE_DIR: stateDir },
         ttlMs: 60_000,
       });
@@ -32,6 +53,10 @@ const storeFactories: StoreFactory[] = [
 
 describe.each(storeFactories)("msteams conversation store ($name)", ({ createStore }) => {
   beforeEach(() => {
+<<<<<<< HEAD
+=======
+    resetPluginStateStoreForTests();
+>>>>>>> upstream/main
     setMSTeamsRuntime(msteamsRuntimeStub);
   });
 
@@ -45,11 +70,23 @@ describe.each(storeFactories)("msteams conversation store ($name)", ({ createSto
       user: { id: "u1" },
     });
 
+<<<<<<< HEAD
     await expect(store.get("conv-norm")).resolves.toEqual(
       expect.objectContaining({
         conversation: { id: "conv-norm" },
       }),
     );
+=======
+    const normalized = await store.get("conv-norm");
+    expect(normalized).toEqual({
+      conversation: { id: "conv-norm" },
+      channelId: "msteams",
+      serviceUrl: "https://service.example.com",
+      user: { id: "u1" },
+      lastSeenAt: normalized?.lastSeenAt,
+    });
+    expect(typeof normalized?.lastSeenAt).toBe("string");
+>>>>>>> upstream/main
     await expect(store.remove("conv-norm")).resolves.toBe(true);
     await expect(store.get("conv-norm;messageid=123")).resolves.toBeNull();
   });
@@ -57,6 +94,7 @@ describe.each(storeFactories)("msteams conversation store ($name)", ({ createSto
   it("upserts, lists, removes, and resolves users by both AAD and Bot Framework ids", async () => {
     const store = await createStore();
 
+<<<<<<< HEAD
     await store.upsert("conv-a", {
       conversation: { id: "conv-a" },
       channelId: "msteams",
@@ -91,12 +129,65 @@ describe.each(storeFactories)("msteams conversation store ($name)", ({ createSto
         },
       },
       {
+=======
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-03-25T20:00:00.000Z"));
+      await store.upsert("conv-a", {
+        conversation: { id: "conv-a" },
+        channelId: "msteams",
+        serviceUrl: "https://service.example.com",
+        user: { id: "user-a", aadObjectId: "aad-a", name: "Alice" },
+      });
+
+      vi.setSystemTime(new Date("2026-03-25T20:00:30.000Z"));
+      await store.upsert("conv-b", {
+        conversation: { id: "conv-b" },
+        channelId: "msteams",
+        serviceUrl: "https://service.example.com",
+        user: { id: "user-b", aadObjectId: "aad-b", name: "Bob" },
+      });
+
+      await expect(store.get("conv-a")).resolves.toEqual({
+        conversation: { id: "conv-a" },
+        channelId: "msteams",
+        serviceUrl: "https://service.example.com",
+        user: { id: "user-a", aadObjectId: "aad-a", name: "Alice" },
+        lastSeenAt: "2026-03-25T20:00:00.000Z",
+      });
+
+      await expect(store.list()).resolves.toEqual([
+        {
+          conversationId: "conv-a",
+          reference: {
+            conversation: { id: "conv-a" },
+            channelId: "msteams",
+            serviceUrl: "https://service.example.com",
+            user: { id: "user-a", aadObjectId: "aad-a", name: "Alice" },
+            lastSeenAt: "2026-03-25T20:00:00.000Z",
+          },
+        },
+        {
+          conversationId: "conv-b",
+          reference: {
+            conversation: { id: "conv-b" },
+            channelId: "msteams",
+            serviceUrl: "https://service.example.com",
+            user: { id: "user-b", aadObjectId: "aad-b", name: "Bob" },
+            lastSeenAt: "2026-03-25T20:00:30.000Z",
+          },
+        },
+      ]);
+
+      await expect(store.findPreferredDmByUserId("  aad-b  ")).resolves.toEqual({
+>>>>>>> upstream/main
         conversationId: "conv-b",
         reference: {
           conversation: { id: "conv-b" },
           channelId: "msteams",
           serviceUrl: "https://service.example.com",
           user: { id: "user-b", aadObjectId: "aad-b", name: "Bob" },
+<<<<<<< HEAD
           lastSeenAt: expect.any(String),
         },
       },
@@ -130,11 +221,38 @@ describe.each(storeFactories)("msteams conversation store ($name)", ({ createSto
     await expect(store.remove("conv-a")).resolves.toBe(true);
     await expect(store.get("conv-a")).resolves.toBeNull();
     await expect(store.remove("missing")).resolves.toBe(false);
+=======
+          lastSeenAt: "2026-03-25T20:00:30.000Z",
+        },
+      });
+      await expect(store.findPreferredDmByUserId("user-a")).resolves.toEqual({
+        conversationId: "conv-a",
+        reference: {
+          conversation: { id: "conv-a" },
+          channelId: "msteams",
+          serviceUrl: "https://service.example.com",
+          user: { id: "user-a", aadObjectId: "aad-a", name: "Alice" },
+          lastSeenAt: "2026-03-25T20:00:00.000Z",
+        },
+      });
+      await expect(store.findByUserId("user-a")).resolves.toEqual(
+        await store.findPreferredDmByUserId("user-a"),
+      );
+      await expect(store.findPreferredDmByUserId("   ")).resolves.toBeNull();
+
+      await expect(store.remove("conv-a")).resolves.toBe(true);
+      await expect(store.get("conv-a")).resolves.toBeNull();
+      await expect(store.remove("missing")).resolves.toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+>>>>>>> upstream/main
   });
 
   it("preserves existing timezone when upsert omits timezone", async () => {
     const store = await createStore();
 
+<<<<<<< HEAD
     await store.upsert("conv-tz", {
       conversation: { id: "conv-tz" },
       channelId: "msteams",
@@ -153,6 +271,74 @@ describe.each(storeFactories)("msteams conversation store ($name)", ({ createSto
     await expect(store.get("conv-tz")).resolves.toMatchObject({
       timezone: "Europe/London",
     });
+=======
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-03-25T20:00:00.000Z"));
+      await store.upsert("conv-tz", {
+        conversation: { id: "conv-tz" },
+        channelId: "msteams",
+        serviceUrl: "https://service.example.com",
+        user: { id: "u1" },
+        timezone: "Europe/London",
+      });
+
+      vi.setSystemTime(new Date("2026-03-25T20:01:00.000Z"));
+      await store.upsert("conv-tz", {
+        conversation: { id: "conv-tz" },
+        channelId: "msteams",
+        serviceUrl: "https://service.example.com",
+        user: { id: "u1" },
+      });
+
+      await expect(store.get("conv-tz")).resolves.toEqual({
+        conversation: { id: "conv-tz" },
+        channelId: "msteams",
+        serviceUrl: "https://service.example.com",
+        user: { id: "u1" },
+        timezone: "Europe/London",
+        lastSeenAt: "2026-03-25T20:01:00.000Z",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("preserves graphChatId across upserts that omit it", async () => {
+    const store = await createStore();
+
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-03-25T20:00:00.000Z"));
+      await store.upsert("conv-graph", {
+        conversation: { id: "conv-graph", conversationType: "personal" },
+        channelId: "msteams",
+        serviceUrl: "https://service.example.com",
+        user: { id: "u1" },
+        graphChatId: "19:resolved-chat-id@unq.gbl.spaces",
+      });
+
+      vi.setSystemTime(new Date("2026-03-25T20:01:00.000Z"));
+      // Second upsert without graphChatId (normal activity-based upsert)
+      await store.upsert("conv-graph", {
+        conversation: { id: "conv-graph", conversationType: "personal" },
+        channelId: "msteams",
+        serviceUrl: "https://service.example.com",
+        user: { id: "u1" },
+      });
+
+      await expect(store.get("conv-graph")).resolves.toEqual({
+        conversation: { id: "conv-graph", conversationType: "personal" },
+        channelId: "msteams",
+        serviceUrl: "https://service.example.com",
+        user: { id: "u1" },
+        graphChatId: "19:resolved-chat-id@unq.gbl.spaces",
+        lastSeenAt: "2026-03-25T20:01:00.000Z",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+>>>>>>> upstream/main
   });
 
   it("prefers the freshest personal conversation for repeated upserts of the same user", async () => {

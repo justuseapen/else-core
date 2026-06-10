@@ -1,6 +1,14 @@
+<<<<<<< HEAD
 import { logVerbose } from "../../globals.js";
 import type { CommandHandler } from "./commands-types.js";
 
+=======
+/** Handles /whoami identity reporting for authorized command senders. */
+import { logVerbose } from "../../globals.js";
+import type { CommandHandler } from "./commands-types.js";
+
+/** Command handler for the /whoami identity diagnostic. */
+>>>>>>> upstream/main
 export const handleWhoamiCommand: CommandHandler = async (params, allowTextCommands) => {
   if (!allowTextCommands) {
     return null;
@@ -30,8 +38,14 @@ export const handleWhoamiCommand: CommandHandler = async (params, allowTextComma
   if (params.ctx.MessageThreadId != null) {
     lines.push(`Thread: ${params.ctx.MessageThreadId}`);
   }
+<<<<<<< HEAD
   if (senderId) {
     lines.push(`AllowFrom: ${senderId}`);
+=======
+  const allowFromSender = params.command.senderId ?? "";
+  if (allowFromSender) {
+    lines.push(`AllowFrom: ${allowFromSender}`);
+>>>>>>> upstream/main
   }
   return { shouldContinue: false, reply: { text: lines.join("\n") } };
 };

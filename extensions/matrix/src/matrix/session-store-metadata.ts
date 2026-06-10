@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import { normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import { resolveMatrixDirectUserId, resolveMatrixTargetIdentity } from "./target-ids.js";
 
 export function trimMaybeString(value: unknown): string | undefined {
+=======
+// Matrix plugin module implements session store metadata behavior.
+import { normalizeAccountId } from "openclaw/plugin-sdk/account-id";
+import { resolveMatrixDirectUserId, resolveMatrixTargetIdentity } from "./target-ids.js";
+
+function trimMaybeString(value: unknown): string | undefined {
+>>>>>>> upstream/main
   if (typeof value !== "string") {
     return undefined;
   }
@@ -18,12 +26,20 @@ function resolveMatrixRoomTargetId(value: unknown): string | undefined {
   return target?.kind === "room" && target.id.startsWith("!") ? target.id : undefined;
 }
 
+<<<<<<< HEAD
 export function resolveMatrixSessionAccountId(value: unknown): string | undefined {
+=======
+function resolveMatrixSessionAccountId(value: unknown): string | undefined {
+>>>>>>> upstream/main
   const trimmed = trimMaybeString(value);
   return trimmed ? normalizeAccountId(trimmed) : undefined;
 }
 
+<<<<<<< HEAD
 export function resolveMatrixStoredRoomId(params: {
+=======
+function resolveMatrixStoredRoomId(params: {
+>>>>>>> upstream/main
   deliveryTo?: unknown;
   lastTo?: unknown;
   originNativeChannelId?: unknown;

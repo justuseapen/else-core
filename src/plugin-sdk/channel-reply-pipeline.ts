@@ -1,13 +1,20 @@
+<<<<<<< HEAD
 import type { ReplyPayload } from "../auto-reply/types.js";
 import { getChannelPlugin, normalizeChannelId } from "../channels/plugins/index.js";
 import {
+=======
+/**
+ * @deprecated Legacy reply-pipeline subpath. New channel message code should
+ * use `openclaw/plugin-sdk/channel-outbound`.
+ */
+
+export {
+  createChannelReplyPipeline,
+>>>>>>> upstream/main
   createReplyPrefixContext,
   createReplyPrefixOptions,
-  type ReplyPrefixContextBundle,
-  type ReplyPrefixOptions,
-} from "../channels/reply-prefix.js";
-import {
   createTypingCallbacks,
+<<<<<<< HEAD
   type CreateTypingCallbacksParams,
   type TypingCallbacks,
 } from "../channels/typing.js";
@@ -57,3 +64,16 @@ export function createChannelReplyPipeline(params: {
         : {}),
   };
 }
+=======
+  resolveChannelSourceReplyDeliveryMode,
+} from "./channel-reply-core.js";
+export type {
+  ChannelReplyPipeline,
+  CreateTypingCallbacksParams,
+  ReplyPrefixContext,
+  ReplyPrefixContextBundle,
+  ReplyPrefixOptions,
+  SourceReplyDeliveryMode,
+  TypingCallbacks,
+} from "./channel-reply-core.js";
+>>>>>>> upstream/main

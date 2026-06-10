@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   type ChannelDoctorAdapter,
   type ChannelDoctorConfigMutation,
@@ -7,6 +8,16 @@ import { type OpenClawConfig } from "openclaw/plugin-sdk/config-runtime";
 import { collectProviderDangerousNameMatchingScopes } from "openclaw/plugin-sdk/runtime-doctor";
 import { isSlackMutableAllowEntry } from "./security-doctor.js";
 import { resolveSlackNativeStreaming, resolveSlackStreamingMode } from "./streaming-compat.js";
+=======
+// Slack plugin module implements doctor behavior.
+import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
+import { createDangerousNameMatchingMutableAllowlistWarningCollector } from "openclaw/plugin-sdk/channel-policy";
+import {
+  legacyConfigRules as SLACK_LEGACY_CONFIG_RULES,
+  normalizeCompatibilityConfig as normalizeSlackCompatibilityConfig,
+} from "./doctor-contract.js";
+import { isSlackMutableAllowEntry } from "./security-doctor.js";
+>>>>>>> upstream/main
 
 function asObjectRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -14,6 +25,7 @@ function asObjectRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+<<<<<<< HEAD
 function ensureNestedRecord(owner: Record<string, unknown>, key: string): Record<string, unknown> {
   const existing = asObjectRecord(owner[key]);
   if (existing) {
@@ -385,10 +397,54 @@ const SLACK_LEGACY_CONFIG_RULES: ChannelDoctorLegacyConfigRule[] = [
 
 export const slackDoctor: ChannelDoctorAdapter = {
   dmAllowFromMode: "topOrNested",
+=======
+const collectSlackMutableAllowlistWarnings =
+  createDangerousNameMatchingMutableAllowlistWarningCollector({
+    channel: "slack",
+    detector: isSlackMutableAllowEntry,
+    collectLists: (scope) => {
+      const lists = [
+        {
+          pathLabel: `${scope.prefix}.allowFrom`,
+          list: scope.account.allowFrom,
+        },
+      ];
+      const dm = asObjectRecord(scope.account.dm);
+      if (dm) {
+        lists.push({
+          pathLabel: `${scope.prefix}.dm.allowFrom`,
+          list: dm.allowFrom,
+        });
+      }
+      const channels = asObjectRecord(scope.account.channels);
+      if (channels) {
+        for (const [channelKey, channelRaw] of Object.entries(channels)) {
+          const channel = asObjectRecord(channelRaw);
+          if (!channel) {
+            continue;
+          }
+          lists.push({
+            pathLabel: `${scope.prefix}.channels.${channelKey}.users`,
+            list: channel.users,
+          });
+        }
+      }
+      return lists;
+    },
+  });
+
+export const slackDoctor: ChannelDoctorAdapter = {
+  dmAllowFromMode: "topOnly",
+>>>>>>> upstream/main
   groupModel: "route",
   groupAllowFromFallbackToAllowFrom: false,
   warnOnEmptyGroupSenderAllowlist: false,
   legacyConfigRules: SLACK_LEGACY_CONFIG_RULES,
+<<<<<<< HEAD
   normalizeCompatibilityConfig: ({ cfg }) => normalizeSlackCompatibilityConfig(cfg),
   collectMutableAllowlistWarnings: ({ cfg }) => collectSlackMutableAllowlistWarnings(cfg),
+=======
+  normalizeCompatibilityConfig: normalizeSlackCompatibilityConfig,
+  collectMutableAllowlistWarnings: collectSlackMutableAllowlistWarnings,
+>>>>>>> upstream/main
 };

@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+// Covers channel-specific outbound adapter behavior for message sends,
+// structured payloads, and channel capability interactions.
+>>>>>>> upstream/main
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChannelOutboundAdapter, ChannelPlugin } from "../../channels/plugins/types.js";
 import { setActivePluginRegistry } from "../../plugins/runtime.js";
@@ -34,13 +39,35 @@ afterEach(() => {
   setRegistry(emptyRegistry);
 });
 
+<<<<<<< HEAD
 const gatewayCall = () =>
   callGatewayMock.mock.calls[0]?.[0] as {
+=======
+function gatewayCall(): {
+  url?: string;
+  token?: string;
+  timeoutMs?: number;
+  params?: Record<string, unknown>;
+} {
+  const [call] = callGatewayMock.mock.calls;
+  if (!call) {
+    throw new Error("expected gateway call");
+  }
+  const [arg] = call;
+  if (typeof arg !== "object" || arg === null || Array.isArray(arg)) {
+    throw new Error("expected gateway call input to be an object");
+  }
+  return arg as {
+>>>>>>> upstream/main
     url?: string;
     token?: string;
     timeoutMs?: number;
     params?: Record<string, unknown>;
   };
+<<<<<<< HEAD
+=======
+}
+>>>>>>> upstream/main
 
 describe("sendMessage channel normalization", () => {
   it("threads resolved cfg through alias + target normalization in outbound dispatch", async () => {
@@ -53,15 +80,15 @@ describe("sendMessage channel normalization", () => {
       sendCfg?: unknown;
       to?: string;
     } = {};
-    const imessageAliasPlugin: ChannelPlugin = {
-      id: "imessage",
+    const localChatAliasPlugin: ChannelPlugin = {
+      id: "localchat",
       meta: {
-        id: "imessage",
-        label: "iMessage",
-        selectionLabel: "iMessage",
-        docsPath: "/channels/imessage",
-        blurb: "iMessage test stub.",
-        aliases: ["imsg"],
+        id: "localchat",
+        label: "LocalChat",
+        selectionLabel: "LocalChat",
+        docsPath: "/channels/localchat",
+        blurb: "LocalChat test stub.",
+        aliases: ["localmsg"],
       },
       capabilities: { chatTypes: ["direct"] },
       config: {
@@ -72,20 +99,18 @@ describe("sendMessage channel normalization", () => {
         deliveryMode: "direct",
         resolveTarget: ({ to, cfg }) => {
           seen.resolveCfg = cfg;
-          const normalized = String(to ?? "")
-            .trim()
-            .replace(/^imessage:/i, "");
+          const normalized = (to ?? "").trim().replace(/^localchat:/i, "");
           return { ok: true, to: normalized };
         },
         sendText: async ({ cfg, to }) => {
           seen.sendCfg = cfg;
           seen.to = to;
-          return { channel: "imessage", messageId: "i-resolved" };
+          return { channel: "localchat", messageId: "local-resolved" };
         },
         sendMedia: async ({ cfg, to }) => {
           seen.sendCfg = cfg;
           seen.to = to;
-          return { channel: "imessage", messageId: "i-resolved-media" };
+          return { channel: "localchat", messageId: "local-resolved-media" };
         },
       },
     };
@@ -93,21 +118,21 @@ describe("sendMessage channel normalization", () => {
     setRegistry(
       createTestRegistry([
         {
-          pluginId: "imessage",
+          pluginId: "localchat",
           source: "test",
-          plugin: imessageAliasPlugin,
+          plugin: localChatAliasPlugin,
         },
       ]),
     );
 
     const result = await sendMessage({
       cfg: resolvedCfg,
-      to: " imessage:+15551234567 ",
+      to: " localchat:+15551234567 ",
       content: "hi",
-      channel: "imsg",
+      channel: "localmsg",
     });
 
-    expect(result.channel).toBe("imessage");
+    expect(result.channel).toBe("localchat");
     expect(seen.resolveCfg).toBe(resolvedCfg);
     expect(seen.sendCfg).toBe(resolvedCfg);
     expect(seen.to).toBe("+15551234567");
@@ -142,25 +167,41 @@ describe("sendMessage channel normalization", () => {
       expectedChannel: "demo-alias-channel",
     },
     {
-      name: "normalizes iMessage aliases",
+      name: "normalizes direct local aliases",
       registry: createTestRegistry([
         {
-          pluginId: "imessage",
+          pluginId: "localchat",
           source: "test",
+<<<<<<< HEAD
           plugin: createIMessageAliasPlugin(),
+=======
+          plugin: createLocalChatAliasPlugin(),
+>>>>>>> upstream/main
         },
       ]),
       params: {
         to: "someone@example.com",
-        channel: "imsg",
+        channel: "localmsg",
         deps: {
+<<<<<<< HEAD
           imessage: vi.fn(async () => ({ messageId: "i1" })),
         },
       },
       assertDeps: (deps: { imessage?: ReturnType<typeof vi.fn> }) => {
         expect(deps.imessage).toHaveBeenCalledWith("someone@example.com", "hi", expect.any(Object));
+=======
+          localchat: vi.fn(async () => ({ messageId: "local1" })),
+        },
       },
-      expectedChannel: "imessage",
+      assertDeps: (deps: { localchat?: ReturnType<typeof vi.fn> }) => {
+        expect(deps.localchat).toHaveBeenCalledTimes(1);
+        const [to, text, options] = deps.localchat?.mock.calls[0] ?? [];
+        expect(to).toBe("someone@example.com");
+        expect(text).toBe("hi");
+        expect(typeof options).toBe("object");
+>>>>>>> upstream/main
+      },
+      expectedChannel: "localchat",
     },
   ])("$name", async ({ registry, params, assertDeps, expectedChannel }) => {
     setRegistry(registry);
@@ -177,14 +218,14 @@ describe("sendMessage channel normalization", () => {
 });
 
 describe("sendMessage replyToId threading", () => {
-  const setupMattermostCapture = () => {
+  const setupThreadChatCapture = () => {
     const capturedCtx: Record<string, unknown>[] = [];
-    const plugin = createMattermostLikePlugin({
+    const plugin = createThreadChatLikePlugin({
       onSendText: (ctx) => {
         capturedCtx.push(ctx);
       },
     });
-    setRegistry(createTestRegistry([{ pluginId: "mattermost", source: "test", plugin }]));
+    setRegistry(createTestRegistry([{ pluginId: "threadchat", source: "test", plugin }]));
     return capturedCtx;
   };
 
@@ -202,12 +243,12 @@ describe("sendMessage replyToId threading", () => {
       expected: "topic456",
     },
   ])("$name", async ({ params, field, expected }) => {
-    const capturedCtx = setupMattermostCapture();
+    const capturedCtx = setupThreadChatCapture();
 
     await sendMessage({
       cfg: {},
       to: "channel:town-square",
-      channel: "mattermost",
+      channel: "threadchat",
       ...params,
     });
 
@@ -245,14 +286,14 @@ describe("sendPoll channel normalization", () => {
   });
 });
 
-const setMattermostGatewayRegistry = () => {
+const setThreadChatGatewayRegistry = () => {
   setRegistry(
     createTestRegistry([
       {
-        pluginId: "mattermost",
+        pluginId: "threadchat",
         source: "test",
         plugin: {
-          ...createMattermostLikePlugin({ onSendText: () => {} }),
+          ...createThreadChatLikePlugin({ onSendText: () => {} }),
           outbound: { deliveryMode: "gateway" },
         },
       },
@@ -261,10 +302,17 @@ const setMattermostGatewayRegistry = () => {
 };
 
 describe("gateway url override hardening", () => {
+<<<<<<< HEAD
   const sendMattermostGatewayMessage = async (
     params: Partial<Parameters<typeof sendMessage>[0]> = {},
   ) => {
     setMattermostGatewayRegistry();
+=======
+  const sendThreadChatGatewayMessage = async (
+    params: Partial<Parameters<typeof sendMessage>[0]> = {},
+  ) => {
+    setThreadChatGatewayRegistry();
+>>>>>>> upstream/main
     callGatewayMock.mockResolvedValueOnce({
       messageId: params.agentId ? "m-agent" : "m1",
     });
@@ -272,7 +320,11 @@ describe("gateway url override hardening", () => {
       cfg: {},
       to: "channel:town-square",
       content: "hi",
+<<<<<<< HEAD
       channel: "mattermost",
+=======
+      channel: "threadchat",
+>>>>>>> upstream/main
       ...params,
     });
     return gatewayCall();
@@ -308,8 +360,87 @@ describe("gateway url override hardening", () => {
         },
       },
     },
+<<<<<<< HEAD
   ])("$name", async ({ params, expected }) => {
     expect(await sendMattermostGatewayMessage(params)).toMatchObject(expected);
+=======
+    {
+      name: "forwards replyToId in gateway send params",
+      params: {
+        replyToId: "wamid.42",
+      },
+      expected: {
+        params: {
+          replyToId: "wamid.42",
+        },
+      },
+    },
+    {
+      name: "forwards gateway delivery options in send params",
+      params: {
+        threadId: "topic456",
+        forceDocument: true,
+        silent: true,
+        parseMode: "HTML" as const,
+      },
+      expected: {
+        params: {
+          threadId: "topic456",
+          forceDocument: true,
+          silent: true,
+          parseMode: "HTML",
+        },
+      },
+    },
+  ])("$name", async ({ params, expected }) => {
+    const result = await sendThreadChatGatewayMessage(params);
+    for (const [key, value] of Object.entries(expected)) {
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        for (const [nestedKey, nestedValue] of Object.entries(value)) {
+          expect(
+            ((result as Record<string, unknown>)[key] as Record<string, unknown>)[nestedKey],
+          ).toEqual(nestedValue);
+        }
+        continue;
+      }
+      expect((result as Record<string, unknown>)[key]).toEqual(value);
+    }
+  });
+
+  it("forwards buffer metadata for gateway delivery-mode sends", async () => {
+    const buffer = Buffer.from("gateway delivery bytes").toString("base64");
+    const result = await sendThreadChatGatewayMessage({
+      mediaUrl: "buffer://message-send/attachment",
+      mediaUrls: ["buffer://message-send/attachment"],
+      buffer,
+      filename: "delivery.txt",
+      contentType: "text/plain",
+    });
+
+    expect(result.params).toMatchObject({
+      mediaUrl: "buffer://message-send/attachment",
+      mediaUrls: ["buffer://message-send/attachment"],
+      buffer,
+      filename: "delivery.txt",
+      contentType: "text/plain",
+    });
+  });
+
+  it("drops unused buffer metadata when explicit gateway media is present", async () => {
+    const result = await sendThreadChatGatewayMessage({
+      mediaUrl: "https://example.com/photo.png",
+      buffer: Buffer.from("ignored bytes").toString("base64"),
+      filename: "ignored.txt",
+      contentType: "text/plain",
+    });
+
+    expect(result.params).toMatchObject({
+      mediaUrl: "https://example.com/photo.png",
+    });
+    expect(result.params?.buffer).toBeUndefined();
+    expect(result.params?.filename).toBeUndefined();
+    expect(result.params?.contentType).toBeUndefined();
+>>>>>>> upstream/main
   });
 });
 
@@ -335,6 +466,7 @@ const createDemoAliasPlugin = (params?: {
   };
 };
 
+<<<<<<< HEAD
 const createIMessageAliasPlugin = (): ChannelPlugin => ({
   id: "imessage",
   meta: {
@@ -344,6 +476,17 @@ const createIMessageAliasPlugin = (): ChannelPlugin => ({
     docsPath: "/channels/imessage",
     blurb: "iMessage test stub.",
     aliases: ["imsg"],
+=======
+const createLocalChatAliasPlugin = (): ChannelPlugin => ({
+  id: "localchat",
+  meta: {
+    id: "localchat",
+    label: "LocalChat",
+    selectionLabel: "LocalChat (localmsg)",
+    docsPath: "/channels/localchat",
+    blurb: "LocalChat test stub.",
+    aliases: ["localmsg"],
+>>>>>>> upstream/main
   },
   capabilities: { chatTypes: ["direct", "group"], media: true },
   config: {
@@ -353,6 +496,7 @@ const createIMessageAliasPlugin = (): ChannelPlugin => ({
   outbound: {
     deliveryMode: "direct",
     sendText: async ({ deps, to, text }) => {
+<<<<<<< HEAD
       const send = deps?.imessage as
         | ((to: string, text: string, opts?: unknown) => Promise<{ messageId: string }>)
         | undefined;
@@ -361,6 +505,16 @@ const createIMessageAliasPlugin = (): ChannelPlugin => ({
       }
       const result = await send(to, text, {});
       return { channel: "imessage", ...result };
+=======
+      const send = deps?.localchat as
+        | ((to: string, text: string, opts?: unknown) => Promise<{ messageId: string }>)
+        | undefined;
+      if (!send) {
+        throw new Error("localchat missing");
+      }
+      const result = await send(to, text, {});
+      return { channel: "localchat", ...result };
+>>>>>>> upstream/main
     },
   },
 });
@@ -395,16 +549,16 @@ const createDemoAliasOutbound = (opts?: { includePoll?: boolean }): ChannelOutbo
     : {}),
 });
 
-const createMattermostLikePlugin = (opts: {
+const createThreadChatLikePlugin = (opts: {
   onSendText: (ctx: Record<string, unknown>) => void;
 }): ChannelPlugin => ({
-  id: "mattermost",
+  id: "threadchat",
   meta: {
-    id: "mattermost",
-    label: "Mattermost",
-    selectionLabel: "Mattermost",
-    docsPath: "/channels/mattermost",
-    blurb: "Mattermost test stub.",
+    id: "threadchat",
+    label: "ThreadChat",
+    selectionLabel: "ThreadChat",
+    docsPath: "/channels/threadchat",
+    blurb: "ThreadChat test stub.",
   },
   capabilities: { chatTypes: ["direct", "channel"] },
   config: {
@@ -415,8 +569,8 @@ const createMattermostLikePlugin = (opts: {
     deliveryMode: "direct",
     sendText: async (ctx) => {
       opts.onSendText(ctx as unknown as Record<string, unknown>);
-      return { channel: "mattermost", messageId: "m1" };
+      return { channel: "threadchat", messageId: "m1" };
     },
-    sendMedia: async () => ({ channel: "mattermost", messageId: "m2" }),
+    sendMedia: async () => ({ channel: "threadchat", messageId: "m2" }),
   },
 });

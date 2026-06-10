@@ -1,4 +1,6 @@
+// Regresses rejection of legacy routing allowFrom config.
 import { describe, expect, it } from "vitest";
+<<<<<<< HEAD
 import { migrateLegacyConfig } from "../commands/doctor/shared/legacy-config-migrate.js";
 import type { OpenClawConfig } from "./config.js";
 import { validateConfigObject } from "./validation.js";
@@ -8,6 +10,9 @@ function getChannelConfig(config: unknown, provider: string) {
     ?.channels;
   return channels?.[provider];
 }
+=======
+import { validateConfigObject } from "./validation.js";
+>>>>>>> upstream/main
 
 describe("legacy config detection", () => {
   it.each([
@@ -35,7 +40,11 @@ describe("legacy config detection", () => {
     },
   );
 
+<<<<<<< HEAD
   it("accepts per-agent tools.elevated overrides", async () => {
+=======
+  it("accepts per-agent tools.elevated overrides", () => {
+>>>>>>> upstream/main
     const res = validateConfigObject({
       tools: {
         elevated: {
@@ -65,7 +74,7 @@ describe("legacy config detection", () => {
       });
     }
   });
-  it("rejects telegram.requireMention", async () => {
+  it("rejects telegram.requireMention", () => {
     const res = validateConfigObject({
       telegram: { requireMention: true },
     });
@@ -75,6 +84,7 @@ describe("legacy config detection", () => {
       expect(res.issues[0]?.message).toContain('"telegram"');
     }
   });
+<<<<<<< HEAD
   it("rejects channels.telegram.groupMentionsOnly", async () => {
     const res = validateConfigObject({
       channels: { telegram: { groupMentionsOnly: true } },
@@ -87,6 +97,9 @@ describe("legacy config detection", () => {
     }
   });
   it("rejects gateway.token", async () => {
+=======
+  it("rejects gateway.token", () => {
+>>>>>>> upstream/main
     const res = validateConfigObject({
       gateway: { token: "legacy-token" },
     });
@@ -108,6 +121,7 @@ describe("legacy config detection", () => {
       }
     },
   );
+<<<<<<< HEAD
   it.each([
     {
       provider: "telegram",
@@ -377,4 +391,6 @@ describe("legacy config detection", () => {
       expect(res.config.channels?.discord?.historyLimit).toBe(3);
     }
   });
+=======
+>>>>>>> upstream/main
 });

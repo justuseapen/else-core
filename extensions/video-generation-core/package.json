@@ -1,7 +1,17 @@
 {
   "name": "@openclaw/video-generation-core",
+<<<<<<< HEAD
   "version": "2026.4.5",
   "private": true,
   "description": "OpenClaw video generation runtime package",
   "type": "module"
+=======
+  "version": "2026.6.2",
+  "private": true,
+  "description": "OpenClaw video generation runtime package",
+  "type": "module",
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  }
+>>>>>>> upstream/main
 }

@@ -31,6 +31,17 @@ third-party plugins see.
 - Do not use relative imports that escape the current extension package root.
 - Keep plugin metadata accurate in `openclaw.plugin.json` and the package
   `openclaw` block so discovery and setup work without executing plugin code.
+<<<<<<< HEAD
+=======
+- Plugin runtime dependencies belong to the owning plugin package. If a plugin
+  dependency has a runtime peer, declare/provide it in that plugin's
+  `package.json`; do not move it to root unless root/package dist owns the
+  import. Runtime never installs deps; install/update/doctor are repair points.
+- Keep plugin dependency assertions in generic contracts
+  (`package-manifest.contract.test.ts`,
+  `extension-runtime-dependencies.contract.test.ts`) rather than plugin e2e
+  tests when they express package ownership.
+>>>>>>> upstream/main
 - Treat files like `src/**`, `onboard.ts`, and other local helpers as private
   unless you intentionally promote them through `api.ts` and, if needed, a
   matching `src/plugin-sdk/<id>.ts` facade.
@@ -51,6 +62,7 @@ third-party plugins see.
   provider needs OpenAI-style Anthropic tool payload compat, Gemini schema
   cleanup, or an XAI compat patch, use a named shared helper instead of
   inlining the policy knobs again.
+<<<<<<< HEAD
 
 ## Expanding The Boundary
 
@@ -58,5 +70,27 @@ third-party plugins see.
   export instead of reaching into core.
 - Keep new plugin-facing seams backwards-compatible and versioned. Third-party
   plugins consume this surface.
+=======
+- Keep control-plane metadata separate from runtime logic. Discovery, config
+  validation, setup hints, onboarding hints, and activation planning should be
+  expressible from manifest/descriptors whenever possible.
+- If setup truly requires runtime execution, make that explicit in the plugin's
+  declared setup/runtime surface instead of letting metadata flows import
+  runtime code accidentally.
+- Do not rely on eager global registry seeding or import-time side effects to
+  make a plugin “available”. Plugin availability should come from manifest
+  ownership plus targeted activation.
+- When core needs plugin-owned static data on a hot path, expose a lightweight
+  top-level artifact such as `gateway-auth-api.ts`, `message-tool-api.ts`, or a
+  similarly narrow `*-api.ts`. Reuse the same local helper from the artifact and
+  the full plugin so fast paths do not drift from runtime behavior.
+
+## Expanding The Boundary
+
+- If an extension needs a new seam, add or replace a typed Plugin SDK subpath
+  instead of reaching into core.
+- ALL bundled plugins must move to modern SDK seams in the same change. Do not
+  keep extension-local compat paths for internal callers.
+>>>>>>> upstream/main
 - When intentionally expanding the contract, update the docs, exported subpath
   list, package exports, and API/contract checks in the same change.

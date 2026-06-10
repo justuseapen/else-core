@@ -4,7 +4,10 @@ import android.content.Intent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+<<<<<<< HEAD
 import org.junit.Assert.assertTrue
+=======
+>>>>>>> upstream/main
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -33,7 +36,11 @@ class AssistantLaunchTest {
     requireNotNull(parsed)
     assertEquals("app_action", parsed.source)
     assertEquals("summarize my unread texts", parsed.prompt)
+<<<<<<< HEAD
     assertTrue(parsed.autoSend)
+=======
+    assertFalse(parsed.autoSend)
+>>>>>>> upstream/main
   }
 
   @Test

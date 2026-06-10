@@ -1,17 +1,31 @@
+<<<<<<< HEAD
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import { hasConfiguredSecretInput } from "openclaw/plugin-sdk/secret-input";
+=======
+// Matrix plugin module implements accounts behavior.
+import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
+import { hasConfiguredSecretInput } from "openclaw/plugin-sdk/secret-input-runtime";
+import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
+>>>>>>> upstream/main
 import {
   resolveConfiguredMatrixAccountIds,
   resolveMatrixDefaultOrOnlyAccountId,
 } from "../account-selection.js";
 import { resolveMatrixAccountStringValues } from "../auth-precedence.js";
+<<<<<<< HEAD
 import { getMatrixScopedEnvVarNames } from "../env-vars.js";
+=======
+>>>>>>> upstream/main
 import type { CoreConfig, MatrixConfig } from "../types.js";
 import {
   findMatrixAccountConfig,
   resolveMatrixAccountConfig,
   resolveMatrixBaseConfig,
 } from "./account-config.js";
+<<<<<<< HEAD
+=======
+import { resolveGlobalMatrixEnvConfig, resolveScopedMatrixEnvConfig } from "./client/env-auth.js";
+>>>>>>> upstream/main
 import { credentialsMatchConfig, loadMatrixCredentials } from "./credentials-read.js";
 
 export type ResolvedMatrixAccount = {
@@ -24,6 +38,7 @@ export type ResolvedMatrixAccount = {
   config: MatrixConfig;
 };
 
+<<<<<<< HEAD
 type MatrixEnvConfig = {
   homeserver: string;
   userId: string;
@@ -58,6 +73,10 @@ function resolveScopedMatrixEnvConfig(accountId: string, env: NodeJS.ProcessEnv)
     deviceId: clean(env[keys.deviceId]) || undefined,
     deviceName: clean(env[keys.deviceName]) || undefined,
   };
+=======
+function clean(value: unknown): string {
+  return normalizeOptionalString(value) ?? "";
+>>>>>>> upstream/main
 }
 
 function resolveMatrixAccountAuthView(params: {
@@ -210,11 +229,11 @@ export function resolveMatrixAccount(params: {
           userId: authView.userId || "",
         })
       : false;
-  const configured = hasHomeserver && (hasAccessToken || hasPasswordAuth || Boolean(hasStored));
+  const configured = hasHomeserver && (hasAccessToken || hasPasswordAuth || hasStored);
   return {
     accountId,
     enabled,
-    name: base.name?.trim() || undefined,
+    name: normalizeOptionalString(base.name),
     configured,
     homeserver: authView.homeserver || undefined,
     userId: authView.userId || undefined,

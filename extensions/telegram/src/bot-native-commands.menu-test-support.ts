@@ -1,3 +1,4 @@
+// Telegram plugin module implements bot native commands.menu test support behavior.
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { expect, vi, type Mock } from "vitest";
 import type { OpenClawConfig } from "../runtime-api.js";
@@ -20,6 +21,9 @@ type CreateCommandBotResult = {
   sendMessage: ReturnType<typeof vi.fn>;
   deleteMessage: ReturnType<typeof vi.fn>;
   setMyCommands: ReturnType<typeof vi.fn>;
+};
+type CreateCommandBotParams = {
+  api?: Record<string, unknown>;
 };
 
 const skillCommandMocks = vi.hoisted(() => ({
@@ -54,7 +58,7 @@ export async function waitForRegisteredCommands(
   await vi.waitFor(() => {
     expect(setMyCommands).toHaveBeenCalled();
   });
-  return setMyCommands.mock.calls[0]?.[0] as RegisteredCommand[];
+  return setMyCommands.mock.calls.at(0)?.[0] as RegisteredCommand[];
 }
 
 export function resetNativeCommandMenuMocks() {
@@ -67,7 +71,7 @@ export function resetNativeCommandMenuMocks() {
   emitTelegramMessageSentHooks.mockClear();
 }
 
-export function createCommandBot(): CreateCommandBotResult {
+export function createCommandBot(params: CreateCommandBotParams = {}): CreateCommandBotResult {
   const commandHandlers = new Map<string, (ctx: unknown) => Promise<void>>();
   const sendMessage = vi.fn().mockResolvedValue({ message_id: 999 });
   const deleteMessage = vi.fn().mockResolvedValue(true);
@@ -77,6 +81,10 @@ export function createCommandBot(): CreateCommandBotResult {
       setMyCommands,
       sendMessage,
       deleteMessage,
+<<<<<<< HEAD
+=======
+      ...params.api,
+>>>>>>> upstream/main
     },
     command: vi.fn((name: string, cb: (ctx: unknown) => Promise<void>) => {
       commandHandlers.set(name, cb);
@@ -96,7 +104,11 @@ export function createNativeCommandTestParams(
     counts: { block: 0, final: 0, tool: 0 },
   };
   const telegramDeps: TelegramNativeCommandDeps = {
+<<<<<<< HEAD
     loadConfig: vi.fn(() => cfg) as TelegramNativeCommandDeps["loadConfig"],
+=======
+    getRuntimeConfig: vi.fn(() => cfg) as TelegramNativeCommandDeps["getRuntimeConfig"],
+>>>>>>> upstream/main
     readChannelAllowFromStore: vi.fn(
       async () => [],
     ) as TelegramNativeCommandDeps["readChannelAllowFromStore"],

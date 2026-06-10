@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { execFile } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,4 +34,16 @@ describe("zalo runtime api", () => {
 
     expect(stdout).toBe("zalo");
   }, 45_000);
+=======
+// Zalo tests cover runtime api plugin behavior.
+import { describe, expect, it } from "vitest";
+import * as runtime from "./runtime-api.js";
+
+describe("zalo runtime api", () => {
+  it("loads the narrow runtime api without reentering setup surfaces", () => {
+    expect(Object.hasOwn(runtime, "zaloPlugin")).toBe(false);
+    expect(Object.hasOwn(runtime, "zaloSetupWizard")).toBe(false);
+    expect(typeof runtime.setZaloRuntime).toBe("function");
+  });
+>>>>>>> upstream/main
 });

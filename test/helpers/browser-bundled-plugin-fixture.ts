@@ -1,7 +1,16 @@
+<<<<<<< HEAD
+=======
+// Browser bundled plugin fixtures build browser extension plugin layouts for tests.
+>>>>>>> upstream/main
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+<<<<<<< HEAD
+=======
+// Bundled browser plugin fixture used by plugin/package tests.
+
+>>>>>>> upstream/main
 const BROWSER_FIXTURE_MANIFEST = {
   id: "browser",
   enabledByDefault: true,
@@ -22,7 +31,11 @@ const BROWSER_FIXTURE_ENTRY = `module.exports = {
     properties: {},
   },
   register(api) {
+<<<<<<< HEAD
     api.registerTool(() => ({
+=======
+    api.registerTool((ctx) => ({
+>>>>>>> upstream/main
       name: "browser",
       label: "browser",
       description: "browser fixture tool",
@@ -33,7 +46,13 @@ const BROWSER_FIXTURE_ENTRY = `module.exports = {
       async execute() {
         return {
           content: [{ type: "text", text: "ok" }],
+<<<<<<< HEAD
           details: {},
+=======
+          details: {
+            workspaceOnly: ctx.fsPolicy?.workspaceOnly ?? null,
+          },
+>>>>>>> upstream/main
         };
       },
     }));
@@ -41,7 +60,11 @@ const BROWSER_FIXTURE_ENTRY = `module.exports = {
       program.command("browser");
     }, { commands: ["browser"] });
     api.registerGatewayMethod("browser.request", async () => ({ ok: true }), {
+<<<<<<< HEAD
       scope: "operator.write",
+=======
+      scope: "operator.admin",
+>>>>>>> upstream/main
     });
     api.registerService({
       id: "browser-control",
@@ -50,6 +73,10 @@ const BROWSER_FIXTURE_ENTRY = `module.exports = {
   },
 };`;
 
+<<<<<<< HEAD
+=======
+/** Create a temporary bundled browser plugin fixture and cleanup callback. */
+>>>>>>> upstream/main
 export function createBundledBrowserPluginFixture(): { rootDir: string; cleanup: () => void } {
   const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "openclaw-browser-bundled-"));
   const pluginDir = path.join(rootDir, "browser");

@@ -1,4 +1,6 @@
+// Diffs plugin module implements http behavior.
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
 import type { PluginLogger } from "../api.js";
 import { resolveRequestClientIp } from "../runtime-api.js";
 import type { DiffArtifactStore } from "./store.js";
@@ -28,6 +30,14 @@ export function createDiffsHttpHandler(params: {
   allowRemoteViewer?: boolean;
   trustedProxies?: readonly string[];
   allowRealIpFallback?: boolean;
+<<<<<<< HEAD
+=======
+  resolveAccessConfig?: () => {
+    allowRemoteViewer?: boolean;
+    trustedProxies?: readonly string[];
+    allowRealIpFallback?: boolean;
+  };
+>>>>>>> upstream/main
 }) {
   const viewerFailureLimiter = new ViewerFailureLimiter();
 
@@ -45,11 +55,24 @@ export function createDiffsHttpHandler(params: {
       return false;
     }
 
+<<<<<<< HEAD
     const access = resolveViewerAccess(req, {
       trustedProxies: params.trustedProxies,
       allowRealIpFallback: params.allowRealIpFallback,
     });
     if (!access.localRequest && params.allowRemoteViewer !== true) {
+=======
+    const accessConfig = params.resolveAccessConfig?.() ?? {
+      allowRemoteViewer: params.allowRemoteViewer,
+      trustedProxies: params.trustedProxies,
+      allowRealIpFallback: params.allowRealIpFallback,
+    };
+    const access = resolveViewerAccess(req, {
+      trustedProxies: accessConfig.trustedProxies,
+      allowRealIpFallback: accessConfig.allowRealIpFallback,
+    });
+    if (!access.localRequest && accessConfig.allowRemoteViewer !== true) {
+>>>>>>> upstream/main
       respondText(res, 404, "Diff not found");
       return true;
     }
@@ -170,7 +193,7 @@ function setSharedHeaders(res: ServerResponse, contentType: string): void {
 }
 
 function normalizeRemoteClientKey(remoteAddress: string | undefined): string {
-  const normalized = remoteAddress?.trim().toLowerCase();
+  const normalized = normalizeLowercaseStringOrEmpty(remoteAddress);
   if (!normalized) {
     return "unknown";
   }

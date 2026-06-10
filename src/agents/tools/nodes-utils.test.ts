@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+=======
+// Node utility tests cover node selection defaults and gateway fallback between
+// current and legacy node list methods.
+import { beforeEach, describe, expect, it, vi } from "vitest";
+>>>>>>> upstream/main
 
 const gatewayMocks = vi.hoisted(() => ({
   callGatewayTool: vi.fn(),
@@ -8,9 +14,7 @@ vi.mock("./gateway.js", () => ({
 }));
 
 import type { NodeListNode } from "./nodes-utils.js";
-
-let listNodes: typeof import("./nodes-utils.js").listNodes;
-let resolveNodeIdFromList: typeof import("./nodes-utils.js").resolveNodeIdFromList;
+import { listNodes, resolveNodeIdFromList } from "./nodes-utils.js";
 
 function node({ nodeId, ...overrides }: Partial<NodeListNode> & { nodeId: string }): NodeListNode {
   return {
@@ -21,8 +25,13 @@ function node({ nodeId, ...overrides }: Partial<NodeListNode> & { nodeId: string
   };
 }
 
+<<<<<<< HEAD
 beforeAll(async () => {
   ({ listNodes, resolveNodeIdFromList } = await import("./nodes-utils.js"));
+=======
+beforeEach(() => {
+  gatewayMocks.callGatewayTool.mockReset();
+>>>>>>> upstream/main
 });
 
 beforeEach(() => {
@@ -49,6 +58,8 @@ describe("resolveNodeIdFromList defaults", () => {
   });
 
   it("uses stable nodeId ordering when connectedAtMs is unavailable", () => {
+    // Deterministic tie-breaking keeps repeated tool calls from bouncing
+    // between connected nodes.
     const nodes: NodeListNode[] = [
       node({ nodeId: "z-node", platform: "ios", connectedAtMs: undefined }),
       node({ nodeId: "a-node", platform: "android", connectedAtMs: undefined }),
@@ -60,6 +71,8 @@ describe("resolveNodeIdFromList defaults", () => {
 
 describe("listNodes", () => {
   it("falls back to node.pair.list only when node.list is unavailable", async () => {
+    // Old gateways only expose node.pair.list; newer authorization failures
+    // must still surface instead of being hidden by fallback.
     gatewayMocks.callGatewayTool
       .mockRejectedValueOnce(new Error("unknown method: node.list"))
       .mockResolvedValueOnce({

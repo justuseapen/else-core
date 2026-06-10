@@ -1,7 +1,17 @@
+<<<<<<< HEAD
+=======
+// Vydra tests cover speech provider plugin behavior.
+import { installPinnedHostnameTestHooks } from "openclaw/plugin-sdk/test-env";
+>>>>>>> upstream/main
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildVydraSpeechProvider } from "./speech-provider.js";
 
 describe("vydra speech provider", () => {
+<<<<<<< HEAD
+=======
+  installPinnedHostnameTestHooks();
+
+>>>>>>> upstream/main
   const provider = buildVydraSpeechProvider();
 
   afterEach(() => {
@@ -50,6 +60,7 @@ describe("vydra speech provider", () => {
       timeoutMs: 30_000,
     });
 
+<<<<<<< HEAD
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       "https://www.vydra.ai/api/v1/models/elevenlabs/tts",
@@ -62,10 +73,58 @@ describe("vydra speech provider", () => {
       }),
     );
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+=======
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://www.vydra.ai/api/v1/models/elevenlabs/tts");
+    expect(init.method).toBe("POST");
+    expect(init.body).toBe(
+      JSON.stringify({
+        text: "OpenClaw test",
+        voice_id: "21m00Tcm4TlvDq8ikWAM",
+      }),
+    );
+>>>>>>> upstream/main
     const headers = new Headers(init.headers);
     expect(headers.get("authorization")).toBe("Bearer vydra-test-key");
     expect(result.outputFormat).toBe("mp3");
     expect(result.fileExtension).toBe(".mp3");
     expect(result.audioBuffer).toEqual(Buffer.from("mp3-data"));
   });
+<<<<<<< HEAD
+=======
+
+  it("rejects generated audio downloads that exceed the configured media cap", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            audioUrl: "https://cdn.vydra.ai/generated/test.mp3",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(Buffer.from("too-large"), {
+          status: 200,
+          headers: { "Content-Type": "audio/mpeg" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      provider.synthesize({
+        text: "OpenClaw test",
+        cfg: { agents: { defaults: { mediaMaxMb: 0.000001 } } } as never,
+        providerConfig: { apiKey: "vydra-test-key" },
+        target: "audio-file",
+        timeoutMs: 30_000,
+      }),
+    ).rejects.toThrow("Vydra audio download exceeds 1 bytes");
+  });
+>>>>>>> upstream/main
 });

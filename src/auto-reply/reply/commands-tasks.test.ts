@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
+=======
+// Tests task command routing and persisted task state replies.
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resolveSessionAgentId } from "../../agents/agent-scope.js";
+>>>>>>> upstream/main
 import {
   completeTaskRunByRunId,
   createQueuedTaskRun,
@@ -8,6 +14,7 @@ import {
 } from "../../tasks/task-executor.js";
 import { resetTaskRegistryForTests } from "../../tasks/task-registry.js";
 import { buildTasksReply, handleTasksCommand } from "./commands-tasks.js";
+<<<<<<< HEAD
 import { buildCommandTestParams } from "./commands.test-harness.js";
 
 const baseCfg = {
@@ -15,6 +22,25 @@ const baseCfg = {
   channels: { whatsapp: { allowFrom: ["*"] } },
   session: { mainKey: "main", scope: "per-sender" },
 } as OpenClawConfig;
+=======
+import {
+  baseCommandTestConfig,
+  buildCommandTestParams,
+  configureInMemoryTaskRegistryStoreForTests,
+} from "./commands.test-harness.js";
+
+vi.mock("../../agents/agent-scope.js", async () => {
+  const actual = await vi.importActual<typeof import("../../agents/agent-scope.js")>(
+    "../../agents/agent-scope.js",
+  );
+  return {
+    ...actual,
+    resolveSessionAgentId: vi.fn(actual.resolveSessionAgentId),
+  };
+});
+
+const baseCfg = baseCommandTestConfig;
+>>>>>>> upstream/main
 
 async function buildTasksReplyForTest(params: { sessionKey?: string } = {}) {
   const commandParams = buildCommandTestParams("/tasks", baseCfg);
@@ -26,11 +52,21 @@ async function buildTasksReplyForTest(params: { sessionKey?: string } = {}) {
 
 describe("buildTasksReply", () => {
   beforeEach(() => {
+<<<<<<< HEAD
     resetTaskRegistryForTests();
   });
 
   afterEach(() => {
     resetTaskRegistryForTests();
+=======
+    vi.clearAllMocks();
+    resetTaskRegistryForTests({ persist: false });
+    configureInMemoryTaskRegistryStoreForTests();
+  });
+
+  afterEach(() => {
+    resetTaskRegistryForTests({ persist: false });
+>>>>>>> upstream/main
   });
 
   it("lists active and recent tasks for the current session", async () => {
@@ -72,6 +108,55 @@ describe("buildTasksReply", () => {
     expect(reply.text).toContain("approval denied");
   });
 
+<<<<<<< HEAD
+=======
+  it("lists session-backed video generation tasks for the current session", async () => {
+    createRunningTaskRun({
+      runtime: "cli",
+      taskKind: "video_generation",
+      sourceId: "video_generate:openai",
+      requesterSessionKey: "agent:main:main",
+      childSessionKey: "agent:main:main",
+      runId: "tool:video_generate:tasks-visible",
+      label: "Video generation",
+      task: "friendly lobster surfing",
+      progressSummary: "Queued video generation",
+      deliveryStatus: "not_applicable",
+      notifyPolicy: "silent",
+    });
+
+    const reply = await buildTasksReplyForTest();
+
+    expect(reply.text).toContain("Current session: 1 active · 1 total");
+    expect(reply.text).toContain("🟢 Video generation");
+    expect(reply.text).toContain("CLI · running");
+    expect(reply.text).toContain("Queued video generation");
+  });
+
+  it("lists session-backed image generation tasks for the current session", async () => {
+    createRunningTaskRun({
+      runtime: "cli",
+      taskKind: "image_generation",
+      sourceId: "image_generate:openai",
+      requesterSessionKey: "agent:main:main",
+      childSessionKey: "agent:main:main",
+      runId: "tool:image_generate:tasks-visible",
+      label: "Image generation",
+      task: "blue square icon",
+      progressSummary: "Queued image generation",
+      deliveryStatus: "not_applicable",
+      notifyPolicy: "silent",
+    });
+
+    const reply = await buildTasksReplyForTest();
+
+    expect(reply.text).toContain("Current session: 1 active · 1 total");
+    expect(reply.text).toContain("🟢 Image generation");
+    expect(reply.text).toContain("CLI · running");
+    expect(reply.text).toContain("Queued image generation");
+  });
+
+>>>>>>> upstream/main
   it("sanitizes leaked internal runtime context from visible task details", async () => {
     createRunningTaskRun({
       runtime: "acp",
@@ -123,7 +208,13 @@ describe("buildTasksReply", () => {
 
     const reply = await buildTasksReplyForTest();
 
+<<<<<<< HEAD
     expect(reply.text).toContain("[Mon 2026-04-06 02:42 GMT+1]");
+=======
+    expect(reply.text).toContain("Background task");
+    expect(reply.text).toContain("Finished.");
+    expect(reply.text).not.toContain("[Mon 2026-04-06 02:42 GMT+1]");
+>>>>>>> upstream/main
     expect(reply.text).not.toContain("BEGIN_OPENCLAW_INTERNAL_CONTEXT");
     expect(reply.text).not.toContain("OpenClaw runtime context (internal):");
   });
@@ -169,6 +260,58 @@ describe("buildTasksReply", () => {
     expect(reply.text).not.toContain("hidden background task");
     expect(reply.text).not.toContain("hidden progress detail");
   });
+<<<<<<< HEAD
+=======
+
+  it("counts session-backed video generation tasks in agent-local fallback", async () => {
+    createRunningTaskRun({
+      runtime: "cli",
+      taskKind: "video_generation",
+      sourceId: "video_generate:openai",
+      requesterSessionKey: "agent:main:other-session",
+      childSessionKey: "agent:main:other-session",
+      runId: "tool:video_generate:tasks-agent-fallback",
+      label: "Video generation",
+      task: "hidden video background task",
+      progressSummary: "Queued video generation",
+      deliveryStatus: "not_applicable",
+      notifyPolicy: "silent",
+    });
+
+    const reply = await buildTasksReplyForTest({
+      sessionKey: "agent:main:empty-session",
+    });
+
+    expect(reply.text).toContain("All clear - nothing linked to this session right now.");
+    expect(reply.text).toContain("Agent-local: 1 active · 1 total");
+    expect(reply.text).not.toContain("hidden video background task");
+    expect(reply.text).not.toContain("Queued video generation");
+  });
+
+  it("uses the canonical target session agent for agent-local fallback counts", async () => {
+    createRunningTaskRun({
+      runtime: "subagent",
+      requesterSessionKey: "agent:target:other-session",
+      childSessionKey: "agent:target:subagent:tasks-target-fallback",
+      runId: "run-tasks-target-fallback",
+      agentId: "target",
+      task: "target hidden background task",
+      progressSummary: "hidden target progress detail",
+    });
+    vi.mocked(resolveSessionAgentId).mockReturnValue("target");
+
+    const commandParams = buildCommandTestParams("/tasks", baseCfg);
+    const reply = await buildTasksReply({
+      ...commandParams,
+      agentId: "main",
+      sessionKey: "agent:target:empty-session",
+    });
+
+    expect(reply.text).toContain("All clear - nothing linked to this session right now.");
+    expect(reply.text).toContain("Agent-local: 1 active · 1 total");
+    expect(reply.text).not.toContain("target hidden background task");
+  });
+>>>>>>> upstream/main
 });
 
 describe("handleTasksCommand", () => {

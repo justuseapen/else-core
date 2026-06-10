@@ -1,11 +1,32 @@
+<<<<<<< HEAD
 import type { HeartbeatEventPayload } from "../infra/heartbeat-events.js";
 import type { Tone } from "../memory-host-sdk/status.js";
 import type { HealthSummary } from "./health.js";
+=======
+// Section-level value and row builders for the standard status report.
+// These helpers own compact operator text for agents, tasks, memory, health, sessions, and footers.
+
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
+import {
+  buildPairingConnectRecoveryTitle,
+  describePairingConnectRequirement,
+  type ConnectPairingRequiredReason,
+} from "../../packages/gateway-protocol/src/connect-error-details.js";
+import type { TableColumn } from "../../packages/terminal-core/src/table.js";
+import { areRuntimeModelRefsEquivalent } from "../agents/model-runtime-aliases.js";
+import type { HeartbeatEventPayload } from "../infra/heartbeat-events.js";
+import type { Tone } from "../memory-host-sdk/status.js";
+import type { HealthSummary } from "./health.js";
+import type { AgentLocalStatus } from "./status.agent-local.js";
+import type { MemoryStatusSnapshot, MemoryPluginStatus } from "./status.scan.shared.js";
+import type { SessionStatus, StatusSummary } from "./status.types.js";
+>>>>>>> upstream/main
 
 type AgentStatusLike = {
   defaultId?: string | null;
   bootstrapPendingCount: number;
   totalSessions: number;
+<<<<<<< HEAD
   agents: Array<{
     id: string;
     lastActiveAgeMs?: number | null;
@@ -63,20 +84,58 @@ type MemoryPluginLike = {
 
 type SessionsRecentLike = SummaryLike["sessions"]["recent"][number];
 
+=======
+  agents: AgentLocalStatus[];
+};
+
+type SummaryLike = Pick<StatusSummary, "tasks" | "taskAudit" | "heartbeat" | "sessions">;
+type MemoryLike = MemoryStatusSnapshot | null;
+type MemoryPluginLike = MemoryPluginStatus;
+type SessionsRecentLike = SessionStatus;
+type EventLoopHealthLike = NonNullable<HealthSummary["eventLoop"]>;
+
+export type StatusMemoryStateResolvers = {
+  resolveMemoryVectorState: (value: NonNullable<MemoryStatusSnapshot["vector"]>) => {
+    state: string;
+    tone: Tone;
+  };
+  resolveMemoryFtsState: (value: NonNullable<MemoryStatusSnapshot["fts"]>) => {
+    state: string;
+    tone: Tone;
+  };
+  resolveMemoryCacheSummary: (value: NonNullable<MemoryStatusSnapshot["cache"]>) => {
+    text: string;
+    tone: Tone;
+  };
+};
+
+>>>>>>> upstream/main
 type PluginCompatibilityNoticeLike = {
   severity?: "warn" | "info" | null;
 };
 
 type PairingRecoveryLike = {
   requestId?: string | null;
+<<<<<<< HEAD
 };
 
 export const statusHealthColumns = [
+=======
+  reason?: ConnectPairingRequiredReason | null;
+  remediationHint?: string | null;
+};
+
+export const statusHealthColumns: TableColumn[] = [
+>>>>>>> upstream/main
   { key: "Item", header: "Item", minWidth: 10 },
   { key: "Status", header: "Status", minWidth: 8 },
   { key: "Detail", header: "Detail", flex: true, minWidth: 28 },
 ];
 
+<<<<<<< HEAD
+=======
+/** Formats the agents overview row value, including default-agent recent activity. */
+>>>>>>> upstream/main
 export function buildStatusAgentsValue(params: {
   agentStatus: AgentStatusLike;
   formatTimeAgo: (ageMs: number) => string;
@@ -84,7 +143,11 @@ export function buildStatusAgentsValue(params: {
   const pending =
     params.agentStatus.bootstrapPendingCount > 0
       ? `${params.agentStatus.bootstrapPendingCount} bootstrap file${params.agentStatus.bootstrapPendingCount === 1 ? "" : "s"} present`
+<<<<<<< HEAD
       : "no bootstrap files";
+=======
+      : "no workspaces bootstrapping";
+>>>>>>> upstream/main
   const def = params.agentStatus.agents.find((a) => a.id === params.agentStatus.defaultId);
   const defActive =
     def?.lastActiveAgeMs != null ? params.formatTimeAgo(def.lastActiveAgeMs) : "unknown";
@@ -92,6 +155,10 @@ export function buildStatusAgentsValue(params: {
   return `${params.agentStatus.agents.length} · ${pending} · sessions ${params.agentStatus.totalSessions}${defSuffix}`;
 }
 
+<<<<<<< HEAD
+=======
+/** Formats task counters and audit state for the overview table. */
+>>>>>>> upstream/main
 export function buildStatusTasksValue(params: {
   summary: Pick<SummaryLike, "tasks" | "taskAudit">;
   warn: (value: string) => string;
@@ -120,6 +187,10 @@ export function buildStatusTasksValue(params: {
   ].join(" · ");
 }
 
+<<<<<<< HEAD
+=======
+/** Formats configured heartbeat intervals by agent. */
+>>>>>>> upstream/main
 export function buildStatusHeartbeatValue(params: { summary: Pick<SummaryLike, "heartbeat"> }) {
   const parts = params.summary.heartbeat.agents
     .map((agent) => {
@@ -132,6 +203,10 @@ export function buildStatusHeartbeatValue(params: { summary: Pick<SummaryLike, "
   return parts.length > 0 ? parts.join(", ") : "disabled";
 }
 
+<<<<<<< HEAD
+=======
+/** Formats the last observed heartbeat when deep status queried the gateway. */
+>>>>>>> upstream/main
 export function buildStatusLastHeartbeatValue(params: {
   deep?: boolean;
   gatewayReachable: boolean;
@@ -141,6 +216,10 @@ export function buildStatusLastHeartbeatValue(params: {
   formatTimeAgo: (ageMs: number) => string;
 }) {
   if (!params.deep) {
+<<<<<<< HEAD
+=======
+    // Fast status omits the row entirely instead of implying heartbeat is missing.
+>>>>>>> upstream/main
     return null;
   }
   if (!params.gatewayReachable) {
@@ -159,6 +238,7 @@ export function buildStatusLastHeartbeatValue(params: {
     .join(" · ");
 }
 
+<<<<<<< HEAD
 export function buildStatusMemoryValue(params: {
   memory: MemoryLike;
   memoryPlugin: MemoryPluginLike;
@@ -169,13 +249,30 @@ export function buildStatusMemoryValue(params: {
   resolveMemoryFtsState: (value: unknown) => { state: string; tone: Tone };
   resolveMemoryCacheSummary: (value: unknown) => { text: string; tone: Tone };
 }) {
+=======
+/** Formats memory plugin/index/cache state for the overview table. */
+export function buildStatusMemoryValue(
+  params: {
+    memory: MemoryLike;
+    memoryPlugin: MemoryPluginLike;
+    ok: (value: string) => string;
+    warn: (value: string) => string;
+    muted: (value: string) => string;
+    memoryUnavailableLabel?: string;
+  } & StatusMemoryStateResolvers,
+) {
+>>>>>>> upstream/main
   if (!params.memoryPlugin.enabled) {
     const suffix = params.memoryPlugin.reason ? ` (${params.memoryPlugin.reason})` : "";
     return params.muted(`disabled${suffix}`);
   }
   if (!params.memory) {
     const slot = params.memoryPlugin.slot ? `plugin ${params.memoryPlugin.slot}` : "plugin";
+<<<<<<< HEAD
     return params.muted(`enabled (${slot}) · unavailable`);
+=======
+    return params.muted(`enabled (${slot}) · ${params.memoryUnavailableLabel ?? "unavailable"}`);
+>>>>>>> upstream/main
   }
   const parts: string[] = [];
   const dirtySuffix = params.memory.dirty ? ` · ${params.warn("dirty")}` : "";
@@ -189,8 +286,19 @@ export function buildStatusMemoryValue(params: {
   const colorByTone = (tone: Tone, text: string) =>
     tone === "ok" ? params.ok(text) : tone === "warn" ? params.warn(text) : params.muted(text);
   if (params.memory.vector) {
+<<<<<<< HEAD
     const state = params.resolveMemoryVectorState(params.memory.vector);
     const label = state.state === "disabled" ? "vector off" : `vector ${state.state}`;
+=======
+    const vector =
+      params.memory.backend === "builtin" && params.memory.vector.storeAvailable !== undefined
+        ? // Built-in memory reports store availability under a backend-specific field.
+          { ...params.memory.vector, available: params.memory.vector.storeAvailable }
+        : params.memory.vector;
+    const state = params.resolveMemoryVectorState(vector);
+    const prefix = params.memory.backend === "builtin" ? "vector store" : "vector";
+    const label = state.state === "disabled" ? `${prefix} off` : `${prefix} ${state.state}`;
+>>>>>>> upstream/main
     parts.push(colorByTone(state.tone, label));
   }
   if (params.memory.fts) {
@@ -205,6 +313,10 @@ export function buildStatusMemoryValue(params: {
   return parts.join(" · ");
 }
 
+<<<<<<< HEAD
+=======
+/** Builds the security audit text section for status output. */
+>>>>>>> upstream/main
 export function buildStatusSecurityAuditLines(params: {
   securityAudit: {
     summary: { critical: number; warn: number; info: number };
@@ -246,6 +358,10 @@ export function buildStatusSecurityAuditLines(params: {
     const sevRank = (sev: "critical" | "warn" | "info") =>
       sev === "critical" ? 0 : sev === "warn" ? 1 : 2;
     const shown = [...importantFindings]
+<<<<<<< HEAD
+=======
+      // Always show critical findings before warnings, regardless of audit insertion order.
+>>>>>>> upstream/main
       .toSorted((a, b) => sevRank(a.severity) - sevRank(b.severity))
       .slice(0, 6);
     for (const finding of shown) {
@@ -268,6 +384,10 @@ export function buildStatusSecurityAuditLines(params: {
   return lines;
 }
 
+<<<<<<< HEAD
+=======
+/** Builds health table rows from gateway health and channel health text. */
+>>>>>>> upstream/main
 export function buildStatusHealthRows(params: {
   health: HealthSummary;
   formatHealthChannelLines: (summary: HealthSummary, opts: { accountMode: "all" }) => string[];
@@ -282,6 +402,25 @@ export function buildStatusHealthRows(params: {
       Detail: `${params.health.durationMs}ms`,
     },
   ];
+<<<<<<< HEAD
+=======
+  if (params.health.eventLoop) {
+    rows.push({
+      Item: "Event loop",
+      Status: params.health.eventLoop.degraded ? params.warn("WARN") : params.ok("OK"),
+      Detail: formatEventLoopHealthDetail(params.health.eventLoop),
+    });
+  }
+  if (params.health.modelPricing?.state === "degraded") {
+    rows.push({
+      Item: "Model pricing",
+      Status: params.warn("WARN"),
+      Detail: `optional pricing refresh degraded${
+        params.health.modelPricing.detail ? `: ${params.health.modelPricing.detail}` : ""
+      }`,
+    });
+  }
+>>>>>>> upstream/main
   for (const line of params.formatHealthChannelLines(params.health, { accountMode: "all" })) {
     const colon = line.indexOf(":");
     if (colon === -1) {
@@ -289,7 +428,12 @@ export function buildStatusHealthRows(params: {
     }
     const item = line.slice(0, colon).trim();
     const detail = line.slice(colon + 1).trim();
+<<<<<<< HEAD
     const normalized = detail.toLowerCase();
+=======
+    const normalized = normalizeLowercaseStringOrEmpty(detail);
+    // Channel health format is string-based; classify known prefixes into table status chips.
+>>>>>>> upstream/main
     const status = normalized.startsWith("ok")
       ? params.ok("OK")
       : normalized.startsWith("failed")
@@ -308,6 +452,22 @@ export function buildStatusHealthRows(params: {
   return rows;
 }
 
+<<<<<<< HEAD
+=======
+/** Formats event-loop latency/utilization health into one table detail string. */
+export function formatEventLoopHealthDetail(eventLoop: EventLoopHealthLike): string {
+  const parts = [
+    eventLoop.reasons.length > 0 ? `reasons ${eventLoop.reasons.join(",")}` : "healthy",
+    `max ${Math.round(eventLoop.delayMaxMs)}ms`,
+    `p99 ${Math.round(eventLoop.delayP99Ms)}ms`,
+    `util ${eventLoop.utilization}`,
+    `cpu ${eventLoop.cpuCoreRatio}`,
+  ];
+  return parts.join(" · ");
+}
+
+/** Builds recent session table rows, optionally including prompt-cache data. */
+>>>>>>> upstream/main
 export function buildStatusSessionsRows(params: {
   recent: SessionsRecentLike[];
   verbose?: boolean;
@@ -318,6 +478,7 @@ export function buildStatusSessionsRows(params: {
   muted: (value: string) => string;
 }) {
   if (params.recent.length === 0) {
+<<<<<<< HEAD
     return [
       {
         Key: params.muted("no sessions yet"),
@@ -328,12 +489,21 @@ export function buildStatusSessionsRows(params: {
         ...(params.verbose ? { Cache: "" } : {}),
       },
     ];
+=======
+    return [];
+>>>>>>> upstream/main
   }
   return params.recent.map((sess) => ({
     Key: params.shortenText(sess.key, 32),
     Kind: sess.kind,
+<<<<<<< HEAD
     Age: sess.updatedAt ? params.formatTimeAgo(sess.age) : "no activity",
     Model: sess.model ?? "unknown",
+=======
+    Age: sess.updatedAt && sess.age != null ? params.formatTimeAgo(sess.age) : "no activity",
+    Model: sess.model ?? "unknown",
+    Runtime: sess.runtime ?? "unknown",
+>>>>>>> upstream/main
     Tokens: params.formatTokensCompact(sess),
     ...(params.verbose
       ? { Cache: params.formatPromptCacheCompact(sess) || params.muted("—") }
@@ -341,6 +511,55 @@ export function buildStatusSessionsRows(params: {
   }));
 }
 
+<<<<<<< HEAD
+=======
+/** Explains sessions pinned to a selected model different from the current configured default. */
+export function buildStatusModelSelectionLines(params: {
+  recent: SessionsRecentLike[];
+  limit?: number;
+  shortenText: (value: string, maxLen: number) => string;
+  warn: (value: string) => string;
+  muted: (value: string) => string;
+}) {
+  const mismatches = params.recent.filter((sess) => {
+    if (!sess.configuredModel || !sess.selectedModel || !sess.modelSelectionReason) {
+      return false;
+    }
+    return (
+      sess.configuredModel !== sess.selectedModel &&
+      // Runtime aliases such as provider-qualified model refs should not warn as real mismatches.
+      !areRuntimeModelRefsEquivalent(sess.configuredModel, sess.selectedModel)
+    );
+  });
+  if (mismatches.length === 0) {
+    return [];
+  }
+
+  const limit = params.limit ?? 3;
+  const lines: string[] = [];
+  for (const sess of mismatches.slice(0, limit)) {
+    const key = params.shortenText(sess.key, 48);
+    const configured = sess.configuredModel ?? "unknown";
+    const selected = sess.selectedModel ?? "unknown";
+    lines.push(
+      params.warn(
+        `Session ${key} is pinned to ${selected}; config primary ${configured} will apply to new/unpinned sessions.`,
+      ),
+      `  Configured default: ${configured}`,
+      `  Session selected: ${selected}`,
+      `  Reason: ${sess.modelSelectionReason ?? "session override"}`,
+      `  Clear with: /model ${configured} or /reset`,
+      "  Docs: https://docs.openclaw.ai/concepts/models#selection-source-and-fallback-behavior",
+    );
+  }
+  if (mismatches.length > limit) {
+    lines.push(params.muted(`  … +${mismatches.length - limit} more pinned session(s)`));
+  }
+  return lines;
+}
+
+/** Builds footer links and next-step commands for the current gateway state. */
+>>>>>>> upstream/main
 export function buildStatusFooterLines(params: {
   updateHint: string | null;
   warn: (value: string) => string;
@@ -363,6 +582,10 @@ export function buildStatusFooterLines(params: {
   ];
 }
 
+<<<<<<< HEAD
+=======
+/** Builds plugin compatibility lines, capped to keep status output readable. */
+>>>>>>> upstream/main
 export function buildStatusPluginCompatibilityLines<
   TNotice extends PluginCompatibilityNoticeLike,
 >(params: {
@@ -387,6 +610,10 @@ export function buildStatusPluginCompatibilityLines<
   ];
 }
 
+<<<<<<< HEAD
+=======
+/** Builds recovery guidance when the gateway reports device pairing is required. */
+>>>>>>> upstream/main
 export function buildStatusPairingRecoveryLines(params: {
   pairingRecovery: PairingRecoveryLike | null;
   warn: (value: string) => string;
@@ -397,7 +624,21 @@ export function buildStatusPairingRecoveryLines(params: {
     return [];
   }
   return [
+<<<<<<< HEAD
     params.warn("Gateway pairing approval required."),
+=======
+    params.warn(buildPairingConnectRecoveryTitle(params.pairingRecovery.reason ?? undefined)),
+    ...(params.pairingRecovery.reason
+      ? [
+          params.muted(
+            `Reason: ${describePairingConnectRequirement(params.pairingRecovery.reason)}.`,
+          ),
+        ]
+      : []),
+    ...(params.pairingRecovery.remediationHint
+      ? [params.muted(`Hint: ${params.pairingRecovery.remediationHint}`)]
+      : []),
+>>>>>>> upstream/main
     ...(params.pairingRecovery.requestId
       ? [
           params.muted(
@@ -410,6 +651,10 @@ export function buildStatusPairingRecoveryLines(params: {
   ];
 }
 
+<<<<<<< HEAD
+=======
+/** Builds the queued system-events table rows. */
+>>>>>>> upstream/main
 export function buildStatusSystemEventsRows(params: {
   queuedSystemEvents: string[];
   limit?: number;
@@ -421,6 +666,10 @@ export function buildStatusSystemEventsRows(params: {
   return params.queuedSystemEvents.slice(0, limit).map((event) => ({ Event: event }));
 }
 
+<<<<<<< HEAD
+=======
+/** Builds the overflow trailer for queued system events. */
+>>>>>>> upstream/main
 export function buildStatusSystemEventsTrailer(params: {
   queuedSystemEvents: string[];
   limit?: number;

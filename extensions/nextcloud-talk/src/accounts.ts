@@ -1,16 +1,27 @@
+<<<<<<< HEAD
 import { resolveMergedAccountConfig } from "openclaw/plugin-sdk/account-resolution";
 import { tryReadSecretFileSync } from "openclaw/plugin-sdk/channel-core";
+=======
+// Nextcloud Talk plugin module implements accounts behavior.
+>>>>>>> upstream/main
 import {
   createAccountListHelpers,
   DEFAULT_ACCOUNT_ID,
+  hasConfiguredAccountValue,
   normalizeAccountId,
   resolveAccountWithDefaultFallback,
-} from "../runtime-api.js";
+  resolveMergedAccountConfig,
+} from "openclaw/plugin-sdk/account-core";
+import { tryReadSecretFileSync } from "openclaw/plugin-sdk/secret-file-runtime";
+import {
+  normalizeLowercaseStringOrEmpty,
+  normalizeOptionalString,
+} from "openclaw/plugin-sdk/string-coerce-runtime";
 import { normalizeResolvedSecretInputString } from "./secret-input.js";
 import type { CoreConfig, NextcloudTalkAccountConfig } from "./types.js";
 
 function isTruthyEnvValue(value?: string): boolean {
-  const normalized = (value ?? "").trim().toLowerCase();
+  const normalized = normalizeLowercaseStringOrEmpty(value);
   return normalized === "true" || normalized === "1" || normalized === "yes" || normalized === "on";
 }
 
@@ -35,6 +46,15 @@ const {
   resolveDefaultAccountId: resolveDefaultNextcloudTalkAccountId,
 } = createAccountListHelpers("nextcloud-talk", {
   normalizeAccountId,
+  hasImplicitDefaultAccount: (cfg) => {
+    const channel = cfg.channels?.["nextcloud-talk"];
+    return Boolean(
+      channel?.baseUrl?.trim() &&
+      (hasConfiguredAccountValue(channel.botSecret) ||
+        channel.botSecretFile?.trim() ||
+        process.env.NEXTCLOUD_TALK_BOT_SECRET?.trim()),
+    );
+  },
 });
 export { resolveDefaultNextcloudTalkAccountId };
 
@@ -66,7 +86,11 @@ function resolveNextcloudTalkSecret(
   const resolvedAccountId = opts.accountId ?? resolveDefaultNextcloudTalkAccountId(cfg);
   const merged = mergeNextcloudTalkAccountConfig(cfg, resolvedAccountId);
 
+<<<<<<< HEAD
   const envSecret = process.env.NEXTCLOUD_TALK_BOT_SECRET?.trim();
+=======
+  const envSecret = normalizeOptionalString(process.env.NEXTCLOUD_TALK_BOT_SECRET);
+>>>>>>> upstream/main
   if (envSecret && resolvedAccountId === DEFAULT_ACCOUNT_ID) {
     return { secret: envSecret, source: "env" };
   }
@@ -117,7 +141,7 @@ export function resolveNextcloudTalkAccount(params: {
     return {
       accountId,
       enabled,
-      name: merged.name?.trim() || undefined,
+      name: normalizeOptionalString(merged.name),
       baseUrl,
       secret: secretResolution.secret,
       secretSource: secretResolution.source,
@@ -132,10 +156,4 @@ export function resolveNextcloudTalkAccount(params: {
     hasCredential: (account) => account.secretSource !== "none",
     resolveDefaultAccountId: () => resolveDefaultNextcloudTalkAccountId(params.cfg),
   });
-}
-
-export function listEnabledNextcloudTalkAccounts(cfg: CoreConfig): ResolvedNextcloudTalkAccount[] {
-  return listNextcloudTalkAccountIds(cfg)
-    .map((accountId) => resolveNextcloudTalkAccount({ cfg, accountId }))
-    .filter((account) => account.enabled);
 }

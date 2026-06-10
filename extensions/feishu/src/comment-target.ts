@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Feishu plugin module implements comment target behavior.
+>>>>>>> upstream/main
 export const FEISHU_COMMENT_FILE_TYPES = ["doc", "docx", "file", "sheet", "slides"] as const;
 
 export type CommentFileType = (typeof FEISHU_COMMENT_FILE_TYPES)[number];
@@ -9,7 +13,11 @@ export function normalizeCommentFileType(value: unknown): CommentFileType | unde
     : undefined;
 }
 
+<<<<<<< HEAD
 export type FeishuCommentTarget = {
+=======
+type FeishuCommentTarget = {
+>>>>>>> upstream/main
   fileType: CommentFileType;
   fileToken: string;
   commentId: string;

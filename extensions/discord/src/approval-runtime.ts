@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Discord plugin module implements approval runtime behavior.
+>>>>>>> upstream/main
 export {
   isChannelExecApprovalClientEnabledFromConfig,
   matchesApprovalRequestFilters,
@@ -11,5 +15,8 @@ export {
 export {
   createChannelApproverDmTargetResolver,
   createChannelNativeOriginTargetResolver,
+<<<<<<< HEAD
   doesApprovalRequestMatchChannelAccount,
+=======
+>>>>>>> upstream/main
 } from "openclaw/plugin-sdk/approval-native-runtime";

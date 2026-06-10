@@ -1,5 +1,6 @@
 {
   "name": "@openclaw/qa-lab",
+<<<<<<< HEAD
   "version": "2026.4.4",
   "private": true,
   "description": "OpenClaw QA lab plugin with private debugger UI and scenario runner",
@@ -9,6 +10,28 @@
   },
   "peerDependencies": {
     "openclaw": ">=2026.4.4"
+=======
+  "version": "2026.6.2",
+  "private": true,
+  "description": "OpenClaw QA lab plugin with private debugger UI and scenario runner",
+  "type": "module",
+  "dependencies": {
+    "@copilotkit/aimock": "1.27.3",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "playwright-core": "1.60.0",
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@openclaw/discord": "workspace:*",
+    "@openclaw/plugin-sdk": "workspace:*",
+    "@openclaw/slack": "workspace:*",
+    "@openclaw/whatsapp": "workspace:*",
+    "openclaw": "2026.5.28"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.2"
+>>>>>>> upstream/main
   },
   "peerDependenciesMeta": {
     "openclaw": {
@@ -19,6 +42,7 @@
     "extensions": [
       "./index.ts"
     ],
+<<<<<<< HEAD
     "install": {
       "npmSpec": "@openclaw/qa-lab",
       "defaultChoice": "npm",
@@ -26,6 +50,10 @@
     },
     "compat": {
       "pluginApi": ">=2026.4.4"
+=======
+    "compat": {
+      "pluginApi": ">=2026.6.2"
+>>>>>>> upstream/main
     }
   }
 }

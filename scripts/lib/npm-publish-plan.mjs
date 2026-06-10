@@ -1,13 +1,26 @@
+<<<<<<< HEAD
 const STABLE_VERSION_REGEX = /^(?<year>\d{4})\.(?<month>[1-9]\d?)\.(?<day>[1-9]\d?)$/;
 const BETA_VERSION_REGEX =
   /^(?<year>\d{4})\.(?<month>[1-9]\d?)\.(?<day>[1-9]\d?)-beta\.(?<beta>[1-9]\d*)$/;
 const CORRECTION_VERSION_REGEX =
   /^(?<year>\d{4})\.(?<month>[1-9]\d?)\.(?<day>[1-9]\d?)-(?<correction>[1-9]\d*)$/;
+=======
+// Parses OpenClaw monthly patch release versions and npm dist-tag publish plans.
+const STABLE_VERSION_REGEX = /^(?<year>\d{4})\.(?<month>[1-9]\d?)\.(?<patch>[1-9]\d*)$/;
+const ALPHA_VERSION_REGEX =
+  /^(?<year>\d{4})\.(?<month>[1-9]\d?)\.(?<patch>[1-9]\d*)-alpha\.(?<alpha>[1-9]\d*)$/;
+const BETA_VERSION_REGEX =
+  /^(?<year>\d{4})\.(?<month>[1-9]\d?)\.(?<patch>[1-9]\d*)-beta\.(?<beta>[1-9]\d*)$/;
+const CORRECTION_VERSION_REGEX =
+  /^(?<year>\d{4})\.(?<month>[1-9]\d?)\.(?<patch>[1-9]\d*)-(?<correction>[1-9]\d*)$/;
+export const JUNE_2026_PATCH_FLOOR = 5;
+>>>>>>> upstream/main
 
 /**
  * @typedef {object} ParsedReleaseVersion
  * @property {string} version
  * @property {string} baseVersion
+<<<<<<< HEAD
  * @property {"stable" | "beta"} channel
  * @property {number} year
  * @property {number} month
@@ -15,13 +28,28 @@ const CORRECTION_VERSION_REGEX =
  * @property {number | undefined} [betaNumber]
  * @property {number | undefined} [correctionNumber]
  * @property {Date} date
+=======
+ * @property {"stable" | "alpha" | "beta"} channel
+ * @property {number} year
+ * @property {number} month
+ * @property {number} patch
+ * @property {number | undefined} [alphaNumber]
+ * @property {number | undefined} [betaNumber]
+ * @property {number | undefined} [correctionNumber]
+>>>>>>> upstream/main
  */
 
 /**
  * @typedef {object} NpmPublishPlan
+<<<<<<< HEAD
  * @property {"stable" | "beta"} channel
  * @property {"latest" | "beta"} publishTag
  * @property {("latest" | "beta")[]} mirrorDistTags
+=======
+ * @property {"stable" | "alpha" | "beta"} channel
+ * @property {"latest" | "alpha" | "beta"} publishTag
+ * @property {("latest" | "alpha" | "beta")[]} mirrorDistTags
+>>>>>>> upstream/main
  */
 
 /**
@@ -37,6 +65,7 @@ const CORRECTION_VERSION_REGEX =
 /**
  * @param {string} version
  * @param {Record<string, string | undefined>} groups
+<<<<<<< HEAD
  * @param {"stable" | "beta"} channel
  * @returns {ParsedReleaseVersion | null}
  */
@@ -44,22 +73,40 @@ function parseDateParts(version, groups, channel) {
   const year = Number.parseInt(groups.year ?? "", 10);
   const month = Number.parseInt(groups.month ?? "", 10);
   const day = Number.parseInt(groups.day ?? "", 10);
+=======
+ * @param {"stable" | "alpha" | "beta"} channel
+ * @returns {ParsedReleaseVersion | null}
+ */
+function parseVersionParts(version, groups, channel) {
+  const year = Number.parseInt(groups.year ?? "", 10);
+  const month = Number.parseInt(groups.month ?? "", 10);
+  const patch = Number.parseInt(groups.patch ?? "", 10);
+  const alphaNumber = channel === "alpha" ? Number.parseInt(groups.alpha ?? "", 10) : undefined;
+>>>>>>> upstream/main
   const betaNumber = channel === "beta" ? Number.parseInt(groups.beta ?? "", 10) : undefined;
 
   if (
     !Number.isInteger(year) ||
     !Number.isInteger(month) ||
+<<<<<<< HEAD
     !Number.isInteger(day) ||
     month < 1 ||
     month > 12 ||
     day < 1 ||
     day > 31
+=======
+    !Number.isInteger(patch) ||
+    month < 1 ||
+    month > 12 ||
+    patch < 1
+>>>>>>> upstream/main
   ) {
     return null;
   }
   if (channel === "beta" && (!Number.isInteger(betaNumber) || (betaNumber ?? 0) < 1)) {
     return null;
   }
+<<<<<<< HEAD
 
   const date = new Date(Date.UTC(year, month - 1, day));
   if (
@@ -67,11 +114,15 @@ function parseDateParts(version, groups, channel) {
     date.getUTCMonth() !== month - 1 ||
     date.getUTCDate() !== day
   ) {
+=======
+  if (channel === "alpha" && (!Number.isInteger(alphaNumber) || (alphaNumber ?? 0) < 1)) {
+>>>>>>> upstream/main
     return null;
   }
 
   return {
     version,
+<<<<<<< HEAD
     baseVersion: `${year}.${month}.${day}`,
     channel,
     year,
@@ -79,6 +130,15 @@ function parseDateParts(version, groups, channel) {
     day,
     betaNumber,
     date,
+=======
+    baseVersion: `${year}.${month}.${patch}`,
+    channel,
+    year,
+    month,
+    patch,
+    alphaNumber,
+    betaNumber,
+>>>>>>> upstream/main
   };
 }
 
@@ -94,17 +154,34 @@ export function parseReleaseVersion(version) {
 
   const stableMatch = STABLE_VERSION_REGEX.exec(trimmed);
   if (stableMatch?.groups) {
+<<<<<<< HEAD
     return parseDateParts(trimmed, stableMatch.groups, "stable");
+=======
+    return parseVersionParts(trimmed, stableMatch.groups, "stable");
+  }
+
+  const alphaMatch = ALPHA_VERSION_REGEX.exec(trimmed);
+  if (alphaMatch?.groups) {
+    return parseVersionParts(trimmed, alphaMatch.groups, "alpha");
+>>>>>>> upstream/main
   }
 
   const betaMatch = BETA_VERSION_REGEX.exec(trimmed);
   if (betaMatch?.groups) {
+<<<<<<< HEAD
     return parseDateParts(trimmed, betaMatch.groups, "beta");
+=======
+    return parseVersionParts(trimmed, betaMatch.groups, "beta");
+>>>>>>> upstream/main
   }
 
   const correctionMatch = CORRECTION_VERSION_REGEX.exec(trimmed);
   if (correctionMatch?.groups) {
+<<<<<<< HEAD
     const parsedCorrection = parseDateParts(trimmed, correctionMatch.groups, "stable");
+=======
+    const parsedCorrection = parseVersionParts(trimmed, correctionMatch.groups, "stable");
+>>>>>>> upstream/main
     const correctionNumber = Number.parseInt(correctionMatch.groups.correction ?? "", 10);
     if (parsedCorrection === null || !Number.isInteger(correctionNumber) || correctionNumber < 1) {
       return null;
@@ -120,6 +197,32 @@ export function parseReleaseVersion(version) {
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * @param {string | ParsedReleaseVersion | null} version
+ * @returns {string[]}
+ */
+export function collectReleaseVersionFloorErrors(version) {
+  const parsedVersion =
+    typeof version === "string" ? parseReleaseVersion(version) : (version ?? null);
+  if (parsedVersion === null) {
+    return [];
+  }
+  if (
+    parsedVersion.year === 2026 &&
+    parsedVersion.month === 6 &&
+    parsedVersion.patch < JUNE_2026_PATCH_FLOOR &&
+    parsedVersion.channel !== "alpha"
+  ) {
+    return [
+      `June 2026 stable and beta release trains must use patch ${JUNE_2026_PATCH_FLOOR} or higher because 2026.6.5-beta.1 is already published; found "${parsedVersion.version}".`,
+    ];
+  }
+  return [];
+}
+
+/**
+>>>>>>> upstream/main
  * @param {string} left
  * @param {string} right
  * @returns {number | null}
@@ -131,6 +234,7 @@ export function compareReleaseVersions(left, right) {
     return null;
   }
 
+<<<<<<< HEAD
   const dateDelta = parsedLeft.date.getTime() - parsedRight.date.getTime();
   if (dateDelta !== 0) {
     return Math.sign(dateDelta);
@@ -138,6 +242,25 @@ export function compareReleaseVersions(left, right) {
 
   if (parsedLeft.channel !== parsedRight.channel) {
     return parsedLeft.channel === "stable" ? 1 : -1;
+=======
+  if (parsedLeft.year !== parsedRight.year) {
+    return Math.sign(parsedLeft.year - parsedRight.year);
+  }
+  if (parsedLeft.month !== parsedRight.month) {
+    return Math.sign(parsedLeft.month - parsedRight.month);
+  }
+  if (parsedLeft.patch !== parsedRight.patch) {
+    return Math.sign(parsedLeft.patch - parsedRight.patch);
+  }
+
+  if (parsedLeft.channel !== parsedRight.channel) {
+    const rank = { alpha: 0, beta: 1, stable: 2 };
+    return Math.sign(rank[parsedLeft.channel] - rank[parsedRight.channel]);
+  }
+
+  if (parsedLeft.channel === "alpha" && parsedRight.channel === "alpha") {
+    return Math.sign((parsedLeft.alphaNumber ?? 0) - (parsedRight.alphaNumber ?? 0));
+>>>>>>> upstream/main
   }
 
   if (parsedLeft.channel === "beta" && parsedRight.channel === "beta") {
@@ -165,6 +288,16 @@ export function resolveNpmPublishPlan(version, currentBetaVersion) {
       mirrorDistTags: [],
     };
   }
+<<<<<<< HEAD
+=======
+  if (parsedVersion.channel === "alpha") {
+    return {
+      channel: "alpha",
+      publishTag: "alpha",
+      mirrorDistTags: [],
+    };
+  }
+>>>>>>> upstream/main
 
   const normalizedCurrentBeta = currentBetaVersion?.trim();
   if (normalizedCurrentBeta) {

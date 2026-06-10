@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 import { normalizeConversationText } from "../../../acp/conversation-id.js";
+=======
+// Implements ACP context commands for session metadata and prompt state.
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
+import { normalizeConversationText } from "../../../acp/conversation-id.js";
+import { normalizeConversationTargetRef } from "../../../infra/outbound/session-binding-normalization.js";
+>>>>>>> upstream/main
 import type { HandleCommandsParams } from "../commands-types.js";
 import {
   resolveConversationBindingAccountIdFromMessage,
@@ -9,7 +16,11 @@ import {
 
 export function resolveAcpCommandChannel(params: HandleCommandsParams): string {
   const resolved = resolveConversationBindingChannelFromMessage(params.ctx, params.command.channel);
+<<<<<<< HEAD
   return normalizeConversationText(resolved).toLowerCase();
+=======
+  return normalizeLowercaseStringOrEmpty(normalizeConversationText(resolved));
+>>>>>>> upstream/main
 }
 
 export function resolveAcpCommandAccountId(params: HandleCommandsParams): string {
@@ -32,12 +43,19 @@ function resolveAcpCommandConversationRef(params: HandleCommandsParams): {
   if (!resolved) {
     return null;
   }
+<<<<<<< HEAD
   return {
     conversationId: resolved.conversationId,
     ...(resolved.parentConversationId && resolved.parentConversationId !== resolved.conversationId
       ? { parentConversationId: resolved.parentConversationId }
       : {}),
   };
+=======
+  return normalizeConversationTargetRef({
+    conversationId: resolved.conversationId,
+    parentConversationId: resolved.parentConversationId,
+  });
+>>>>>>> upstream/main
 }
 
 export function resolveAcpCommandConversationId(params: HandleCommandsParams): string | undefined {

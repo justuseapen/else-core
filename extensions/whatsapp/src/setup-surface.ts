@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   DEFAULT_ACCOUNT_ID,
   setSetupChannelEnabled,
@@ -10,18 +11,49 @@ import { detectWhatsAppLinked, finalizeWhatsAppSetup } from "./setup-finalize.js
 
 const channel = "whatsapp" as const;
 
+=======
+// Whatsapp plugin module implements setup surface behavior.
+import type { ChannelSetupWizard } from "openclaw/plugin-sdk/setup";
+import {
+  DEFAULT_ACCOUNT_ID,
+  setSetupChannelEnabled,
+  createSetupTranslator,
+  type OpenClawConfig,
+} from "openclaw/plugin-sdk/setup";
+import { listWhatsAppAccountIds, resolveWhatsAppAuthDir } from "./accounts.js";
+import { formatWhatsAppWebAuthStatusState, readWebAuthState } from "./auth-store.js";
+
+const t = createSetupTranslator();
+
+const channel = "whatsapp" as const;
+
+type WhatsAppSetupLinkState = "linked" | "not-linked" | "unstable";
+
+async function readWhatsAppSetupLinkState(
+  cfg: OpenClawConfig,
+  accountId: string,
+): Promise<WhatsAppSetupLinkState> {
+  const { authDir } = resolveWhatsAppAuthDir({ cfg, accountId });
+  return await readWebAuthState(authDir);
+}
+
+>>>>>>> upstream/main
 export const whatsappSetupWizard: ChannelSetupWizard = {
   channel,
   status: {
-    configuredLabel: "linked",
-    unconfiguredLabel: "not linked",
-    configuredHint: "linked",
-    unconfiguredHint: "not linked",
+    configuredLabel: t("wizard.channels.statusLinked"),
+    unconfiguredLabel: t("wizard.channels.statusNotLinked"),
+    configuredHint: t("wizard.channels.statusLinked"),
+    unconfiguredHint: t("wizard.channels.statusNotLinked"),
     configuredScore: 5,
     unconfiguredScore: 4,
     resolveConfigured: async ({ cfg, accountId }) => {
       for (const resolvedAccountId of accountId ? [accountId] : listWhatsAppAccountIds(cfg)) {
+<<<<<<< HEAD
         if (await detectWhatsAppLinked(cfg, resolvedAccountId)) {
+=======
+        if ((await readWhatsAppSetupLinkState(cfg, resolvedAccountId)) === "linked") {
+>>>>>>> upstream/main
           return true;
         }
       }
@@ -33,22 +65,41 @@ export const whatsappSetupWizard: ChannelSetupWizard = {
           (accountId ? [accountId] : listWhatsAppAccountIds(cfg)).map(
             async (resolvedAccountId) => ({
               accountId: resolvedAccountId,
+<<<<<<< HEAD
               linked: await detectWhatsAppLinked(cfg, resolvedAccountId),
             }),
           ),
         )
       ).find((entry) => entry.linked)?.accountId;
       const labelAccountId = accountId ?? linkedAccountId;
+=======
+              state: await readWhatsAppSetupLinkState(cfg, resolvedAccountId),
+            }),
+          ),
+        )
+      ).find((entry) => entry.state === "linked" || entry.state === "unstable");
+      const labelAccountId = accountId ?? linkedAccountId?.accountId;
+>>>>>>> upstream/main
       const label = labelAccountId
         ? `WhatsApp (${labelAccountId === DEFAULT_ACCOUNT_ID ? "default" : labelAccountId})`
         : "WhatsApp";
-      return [`${label}: ${configured ? "linked" : "not linked"}`];
+      const stateLabel = configured
+        ? formatWhatsAppWebAuthStatusState("linked")
+        : formatWhatsAppWebAuthStatusState(linkedAccountId?.state ?? "not-linked");
+      return [`${label}: ${stateLabel}`];
     },
   },
+<<<<<<< HEAD
   resolveShouldPromptAccountIds: ({ shouldPromptAccountIds }) => Boolean(shouldPromptAccountIds),
   credentials: [],
   finalize: async ({ cfg, accountId, forceAllowFrom, prompter, runtime }) =>
     await finalizeWhatsAppSetup({ cfg, accountId, forceAllowFrom, prompter, runtime }),
+=======
+  resolveShouldPromptAccountIds: ({ shouldPromptAccountIds }) => shouldPromptAccountIds,
+  credentials: [],
+  finalize: async (params) =>
+    await (await import("./setup-finalize.js")).finalizeWhatsAppSetup(params),
+>>>>>>> upstream/main
   disable: (cfg) => setSetupChannelEnabled(cfg, channel, false),
   onAccountRecorded: (accountId, options) => {
     options?.onAccountId?.(channel, accountId);

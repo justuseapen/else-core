@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -15,6 +16,18 @@ async function makeTempDir(prefix: string) {
 afterEach(async () => {
   await Promise.all(tempDirs.splice(0).map((dir) => fs.rm(dir, { recursive: true, force: true })));
 });
+=======
+// Qa Lab tests cover qa agent workspace plugin behavior.
+import fs from "node:fs/promises";
+import path from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { seedQaAgentWorkspace } from "./qa-agent-workspace.js";
+import { createTempDirHarness } from "./temp-dir.test-helper.js";
+
+const { cleanup, makeTempDir } = createTempDirHarness();
+
+afterEach(cleanup);
+>>>>>>> upstream/main
 
 describe("seedQaAgentWorkspace", () => {
   it("creates a repo symlink when a repo root is provided", async () => {
@@ -27,8 +40,12 @@ describe("seedQaAgentWorkspace", () => {
     const repoLinkPath = path.join(workspaceDir, "repo");
     const stat = await fs.lstat(repoLinkPath);
     expect(stat.isSymbolicLink()).toBe(true);
+<<<<<<< HEAD
     expect(await fs.readFile(path.join(repoLinkPath, "README.md"), "utf8")).toContain(
       "repo marker",
     );
+=======
+    expect(await fs.readFile(path.join(repoLinkPath, "README.md"), "utf8")).toBe("repo marker\n");
+>>>>>>> upstream/main
   });
 });

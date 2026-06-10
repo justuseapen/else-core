@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { type ResolvedIMessageAccount } from "./accounts.js";
 import { type ChannelPlugin } from "./channel-api.js";
+=======
+// Imessage plugin module implements channel.setup behavior.
+import type { ResolvedIMessageAccount } from "./accounts.js";
+import type { ChannelPlugin } from "./channel-api.js";
+>>>>>>> upstream/main
 import { imessageSetupAdapter } from "./setup-core.js";
 import { createIMessagePluginBase, imessageSetupWizard } from "./shared.js";
 

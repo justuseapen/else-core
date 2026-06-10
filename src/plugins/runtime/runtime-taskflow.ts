@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import type { OpenClawConfig } from "../../config/config.js";
+=======
+// Runtime task-flow helpers adapt plugin task descriptors into executable task flows.
+>>>>>>> upstream/main
 import {
   cancelFlowByIdForOwner,
   getFlowTaskSummary,
@@ -10,7 +14,11 @@ import {
   listTaskFlowsForOwner,
   resolveTaskFlowForLookupTokenForOwner,
 } from "../../tasks/task-flow-owner-access.js";
+<<<<<<< HEAD
 import type { TaskFlowRecord, JsonValue } from "../../tasks/task-flow-registry.types.js";
+=======
+import type { TaskFlowRecord } from "../../tasks/task-flow-registry.types.js";
+>>>>>>> upstream/main
 import {
   createManagedTaskFlow,
   failFlow,
@@ -20,6 +28,7 @@ import {
   resumeFlow,
   setFlowWaiting,
 } from "../../tasks/task-flow-runtime-internal.js";
+<<<<<<< HEAD
 import type {
   TaskDeliveryStatus,
   TaskDeliveryState,
@@ -154,6 +163,16 @@ export type PluginRuntimeTaskFlow = {
     ctx: Pick<OpenClawPluginToolContext, "sessionKey" | "deliveryContext">,
   ) => BoundTaskFlowRuntime;
 };
+=======
+import type { TaskDeliveryState } from "../../tasks/task-registry.types.js";
+import { normalizeDeliveryContext } from "../../utils/delivery-context.shared.js";
+import type {
+  BoundTaskFlowRuntime,
+  ManagedTaskFlowMutationResult,
+  ManagedTaskFlowRecord,
+  PluginRuntimeTaskFlow,
+} from "./runtime-taskflow.types.js";
+>>>>>>> upstream/main
 
 function assertSessionKey(sessionKey: string | undefined, errorMessage: string): string {
   const normalized = sessionKey?.trim();
@@ -225,10 +244,32 @@ function createBoundTaskFlowRuntime(params: {
   const requesterOrigin = params.requesterOrigin
     ? normalizeDeliveryContext(params.requesterOrigin)
     : undefined;
+<<<<<<< HEAD
+=======
+  const tryCreateManaged: BoundTaskFlowRuntime["tryCreateManaged"] = (input) => {
+    const flow = createManagedTaskFlow({
+      ownerKey,
+      controllerId: input.controllerId,
+      requesterOrigin,
+      status: input.status,
+      notifyPolicy: input.notifyPolicy,
+      goal: input.goal,
+      currentStep: input.currentStep,
+      stateJson: input.stateJson,
+      waitJson: input.waitJson,
+      cancelRequestedAt: input.cancelRequestedAt,
+      createdAt: input.createdAt,
+      updatedAt: input.updatedAt,
+      endedAt: input.endedAt,
+    });
+    return asManagedTaskFlowRecord(flow ?? undefined) ?? null;
+  };
+>>>>>>> upstream/main
 
   return {
     sessionKey: ownerKey,
     ...(requesterOrigin ? { requesterOrigin } : {}),
+<<<<<<< HEAD
     createManaged: (input) =>
       createManagedTaskFlow({
         ownerKey,
@@ -245,6 +286,16 @@ function createBoundTaskFlowRuntime(params: {
         updatedAt: input.updatedAt,
         endedAt: input.endedAt,
       }) as ManagedTaskFlowRecord,
+=======
+    createManaged: (input) => {
+      const flow = tryCreateManaged(input);
+      if (!flow) {
+        throw new Error("TaskFlow persistence failed.");
+      }
+      return flow;
+    },
+    tryCreateManaged,
+>>>>>>> upstream/main
     get: (flowId) =>
       getTaskFlowByIdForOwner({
         flowId,

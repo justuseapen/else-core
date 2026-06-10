@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Browser subpath tests cover plugin SDK browser subpath exports and lazy boundaries.
+>>>>>>> upstream/main
 import { describe, expect, it } from "vitest";
 import { parseBrowserHttpUrl, redactCdpUrl } from "./browser-cdp.js";
 import { resolveBrowserControlAuth } from "./browser-control-auth.js";
@@ -9,10 +13,16 @@ import {
 
 describe("plugin-sdk browser subpaths", () => {
   it("keeps browser profile helpers available on the narrow subpath", () => {
+<<<<<<< HEAD
     const resolved = resolveBrowserConfig(undefined, { gateway: { port: 18789 } });
     expect(DEFAULT_OPENCLAW_BROWSER_ENABLED).toBe(true);
     expect(DEFAULT_BROWSER_DEFAULT_PROFILE_NAME).toBe("openclaw");
     expect(resolved.controlPort).toBeTypeOf("number");
+=======
+    expect(DEFAULT_OPENCLAW_BROWSER_ENABLED).toBe(true);
+    expect(DEFAULT_BROWSER_DEFAULT_PROFILE_NAME).toBe("openclaw");
+    expect(resolveBrowserConfig).toBeTypeOf("function");
+>>>>>>> upstream/main
   });
 
   it("parses and redacts CDP urls on the dedicated CDP subpath", () => {
@@ -21,6 +31,7 @@ describe("plugin-sdk browser subpaths", () => {
     expect(redactCdpUrl(parsed.normalized)).toBe("http://127.0.0.1:9222");
   });
 
+<<<<<<< HEAD
   it("resolves browser control auth on the dedicated auth subpath", () => {
     expect(
       resolveBrowserControlAuth(
@@ -34,5 +45,18 @@ describe("plugin-sdk browser subpaths", () => {
         {},
       ),
     ).toEqual({ token: "token-1", password: undefined });
+=======
+  it("preserves explicit default ports and rejects explicit port zero", () => {
+    const parsed = parseBrowserHttpUrl("http://127.0.0.1:80/json/version", "browser.cdpUrl");
+    expect(parsed.hasExplicitPort).toBe(true);
+    expect(parsed.normalizedWithPort).toBe("http://127.0.0.1:80/json/version");
+    expect(() => parseBrowserHttpUrl("http://127.0.0.1:0", "browser.cdpUrl")).toThrow(
+      /invalid port/,
+    );
+  });
+
+  it("resolves browser control auth on the dedicated auth subpath", () => {
+    expect(resolveBrowserControlAuth).toBeTypeOf("function");
+>>>>>>> upstream/main
   });
 });

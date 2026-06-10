@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Matrix tests cover resolve targets plugin behavior.
+>>>>>>> upstream/main
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChannelDirectoryEntry } from "../runtime-api.js";
 

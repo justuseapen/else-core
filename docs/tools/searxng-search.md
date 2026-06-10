@@ -4,11 +4,17 @@ read_when:
   - You want a self-hosted web search provider
   - You want to use SearXNG for web_search
   - You need a privacy-focused or air-gapped search option
+<<<<<<< HEAD
 title: "SearXNG Search"
 ---
 
 # SearXNG Search
 
+=======
+title: "SearXNG search"
+---
+
+>>>>>>> upstream/main
 OpenClaw supports [SearXNG](https://docs.searxng.org/) as a **self-hosted,
 key-free** `web_search` provider. SearXNG is an open-source meta-search engine
 that aggregates results from Google, Bing, DuckDuckGo, and other sources.
@@ -87,6 +93,12 @@ Transport rules:
 - `https://` works for public or private SearXNG hosts
 - `http://` is only accepted for trusted private-network or loopback hosts
 - public SearXNG hosts must use `https://`
+<<<<<<< HEAD
+=======
+- private/internal hosts use the self-hosted network guard; public `https://`
+  hosts stay on the strict web-search guard and cannot redirect to private
+  addresses
+>>>>>>> upstream/main
 
 ## Environment variable
 
@@ -111,14 +123,31 @@ key wins first).
 ## Notes
 
 - **JSON API** -- uses SearXNG's native `format=json` endpoint, not HTML scraping
+<<<<<<< HEAD
 - **No API key** -- works with any SearXNG instance out of the box
 - **Base URL validation** -- `baseUrl` must be a valid `http://` or `https://`
   URL; public hosts must use `https://`
+=======
+- **Image result URLs** -- image-category results include `img_src` when SearXNG
+  returns a direct image URL
+- **No API key** -- works with any SearXNG instance out of the box
+- **Base URL validation** -- `baseUrl` must be a valid `http://` or `https://`
+  URL; public hosts must use `https://`
+- **Network guard** -- private/internal SearXNG endpoints opt in to
+  private-network access; public `https://` SearXNG endpoints keep strict SSRF
+  protection
+>>>>>>> upstream/main
 - **Auto-detection order** -- SearXNG is checked last (order 200) in
   auto-detection. API-backed providers with configured keys run first, then
   DuckDuckGo (order 100), then Ollama Web Search (order 110)
 - **Self-hosted** -- you control the instance, queries, and upstream search engines
 - **Categories** default to `general` when not configured
+<<<<<<< HEAD
+=======
+- **Category fallback** -- if a non-`general` category request succeeds but
+  returns zero results, OpenClaw retries the same query once with `general`
+  before returning an empty result set
+>>>>>>> upstream/main
 
 <Tip>
   For SearXNG JSON API to work, make sure your SearXNG instance has the `json`

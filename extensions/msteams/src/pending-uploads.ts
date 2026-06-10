@@ -14,11 +14,18 @@ export interface PendingUpload {
   filename: string;
   contentType?: string;
   conversationId: string;
+  /** Activity ID of the original FileConsentCard, used to replace it after upload */
+  consentCardActivityId?: string;
   createdAt: number;
 }
 
 const pendingUploads = new Map<string, PendingUpload>();
+<<<<<<< HEAD
 const pendingTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+=======
+/** Timer handles keyed by upload ID, cleared on explicit removal to prevent ghost cleanup */
+const pendingUploadTimers = new Map<string, ReturnType<typeof setTimeout>>();
+>>>>>>> upstream/main
 
 /** TTL for pending uploads: 5 minutes */
 const PENDING_UPLOAD_TTL_MS = 5 * 60 * 1000;
@@ -36,12 +43,21 @@ export function storePendingUpload(upload: Omit<PendingUpload, "id" | "createdAt
   };
   pendingUploads.set(id, entry);
 
+<<<<<<< HEAD
   // Auto-cleanup after TTL
   const timeout = setTimeout(() => {
     pendingUploads.delete(id);
     pendingTimeouts.delete(id);
   }, PENDING_UPLOAD_TTL_MS);
   pendingTimeouts.set(id, timeout);
+=======
+  // Auto-cleanup after TTL; timer ref stored so removePendingUpload can cancel it
+  const timer = setTimeout(() => {
+    pendingUploads.delete(id);
+    pendingUploadTimers.delete(id);
+  }, PENDING_UPLOAD_TTL_MS);
+  pendingUploadTimers.set(id, timer);
+>>>>>>> upstream/main
 
   return id;
 }
@@ -62,6 +78,11 @@ export function getPendingUpload(id?: string): PendingUpload | undefined {
   // Check if expired (in case timeout hasn't fired yet)
   if (Date.now() - entry.createdAt > PENDING_UPLOAD_TTL_MS) {
     pendingUploads.delete(id);
+    const timer = pendingUploadTimers.get(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      pendingUploadTimers.delete(id);
+    }
     return undefined;
   }
 
@@ -70,6 +91,7 @@ export function getPendingUpload(id?: string): PendingUpload | undefined {
 
 /**
  * Remove a pending upload (after successful upload or user decline).
+ * Also clears the TTL timer to prevent ghost Map deletions.
  */
 export function removePendingUpload(id?: string): void {
   if (id) {
@@ -79,6 +101,22 @@ export function removePendingUpload(id?: string): void {
       pendingTimeouts.delete(id);
     }
     pendingUploads.delete(id);
+    const timer = pendingUploadTimers.get(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      pendingUploadTimers.delete(id);
+    }
+  }
+}
+
+/**
+ * Set the consent card activity ID on an existing pending upload.
+ * Called after the FileConsentCard is sent and we know its activity ID.
+ */
+export function setPendingUploadActivityId(uploadId: string, activityId: string): void {
+  const entry = pendingUploads.get(uploadId);
+  if (entry) {
+    entry.consentCardActivityId = activityId;
   }
 }
 
@@ -93,9 +131,16 @@ export function getPendingUploadCount(): number {
  * Clear all pending uploads (for testing).
  */
 export function clearPendingUploads(): void {
+<<<<<<< HEAD
   for (const timeout of pendingTimeouts.values()) {
     clearTimeout(timeout);
   }
   pendingTimeouts.clear();
+=======
+  for (const timer of pendingUploadTimers.values()) {
+    clearTimeout(timer);
+  }
+  pendingUploadTimers.clear();
+>>>>>>> upstream/main
   pendingUploads.clear();
 }

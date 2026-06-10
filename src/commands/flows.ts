@@ -1,6 +1,19 @@
+<<<<<<< HEAD
 import { loadConfig } from "../config/config.js";
 import { info } from "../globals.js";
 import type { RuntimeEnv } from "../runtime.js";
+=======
+/** CLI commands for listing, inspecting, and cancelling TaskFlow records. */
+import { timestampMsToIsoString } from "@openclaw/normalization-core/number-coercion";
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { sanitizeTerminalText } from "../../packages/terminal-core/src/safe-text.js";
+import { isRich, theme } from "../../packages/terminal-core/src/theme.js";
+import { formatCliCommand } from "../cli/command-format.js";
+import { getRuntimeConfig } from "../config/config.js";
+import { info } from "../globals.js";
+import type { RuntimeEnv } from "../runtime.js";
+import { writeRuntimeJson } from "../runtime.js";
+>>>>>>> upstream/main
 import { listTasksForFlowId } from "../tasks/runtime-internal.js";
 import { cancelFlowById, getFlowTaskSummary } from "../tasks/task-executor.js";
 import type { TaskFlowRecord, TaskFlowStatus } from "../tasks/task-flow-registry.types.js";
@@ -9,8 +22,11 @@ import {
   listTaskFlowRecords,
   resolveTaskFlowForLookupToken,
 } from "../tasks/task-flow-runtime-internal.js";
+<<<<<<< HEAD
 import { sanitizeTerminalText } from "../terminal/safe-text.js";
 import { isRich, theme } from "../terminal/theme.js";
+=======
+>>>>>>> upstream/main
 
 const ID_PAD = 10;
 const STATUS_PAD = 10;
@@ -18,6 +34,13 @@ const MODE_PAD = 14;
 const REV_PAD = 6;
 const CTRL_PAD = 20;
 
+<<<<<<< HEAD
+=======
+function formatFlowLookupMiss(lookup: string): string {
+  return `TaskFlow not found: ${lookup}. Run ${formatCliCommand("openclaw tasks flow list")} to see recent flow ids.`;
+}
+
+>>>>>>> upstream/main
 function truncate(value: string, maxChars: number) {
   if (value.length <= maxChars) {
     return value;
@@ -37,13 +60,24 @@ function safeFlowDisplayText(value: string | undefined, maxChars?: number): stri
 }
 
 function shortToken(value: string | undefined, maxChars = ID_PAD): string {
+<<<<<<< HEAD
   const trimmed = value?.trim();
+=======
+  const trimmed = normalizeOptionalString(value);
+>>>>>>> upstream/main
   if (!trimmed) {
     return "n/a";
   }
   return truncate(trimmed, maxChars);
 }
 
+<<<<<<< HEAD
+=======
+function formatFlowTimestamp(value: number | undefined | null): string {
+  return timestampMsToIsoString(value) ?? "n/a";
+}
+
+>>>>>>> upstream/main
 function formatFlowStatusCell(status: TaskFlowStatus, rich: boolean) {
   const padded = status.padEnd(STATUS_PAD);
   if (!rich) {
@@ -135,6 +169,10 @@ function summarizeFlowState(flow: TaskFlowRecord): string | null {
   return null;
 }
 
+<<<<<<< HEAD
+=======
+/** Lists TaskFlows with optional status filtering and JSON output. */
+>>>>>>> upstream/main
 export async function flowsListCommand(
   opts: { json?: boolean; status?: string },
   runtime: RuntimeEnv,
@@ -148,6 +186,7 @@ export async function flowsListCommand(
   });
 
   if (opts.json) {
+<<<<<<< HEAD
     runtime.log(
       JSON.stringify(
         {
@@ -163,6 +202,17 @@ export async function flowsListCommand(
         2,
       ),
     );
+=======
+    writeRuntimeJson(runtime, {
+      count: flows.length,
+      status: statusFilter ?? null,
+      flows: flows.map((flow) => ({
+        ...flow,
+        tasks: listTasksForFlowId(flow.flowId),
+        taskSummary: getFlowTaskSummary(flow.flowId),
+      })),
+    });
+>>>>>>> upstream/main
     return;
   }
 
@@ -172,7 +222,13 @@ export async function flowsListCommand(
     runtime.log(info(`Status filter: ${statusFilter}`));
   }
   if (flows.length === 0) {
+<<<<<<< HEAD
     runtime.log("No TaskFlows found.");
+=======
+    runtime.log(
+      `No TaskFlows found. Run ${formatCliCommand("openclaw tasks list")} to inspect standalone background tasks.`,
+    );
+>>>>>>> upstream/main
     return;
   }
   const rich = isRich();
@@ -181,13 +237,21 @@ export async function flowsListCommand(
   }
 }
 
+<<<<<<< HEAD
+=======
+/** Shows one TaskFlow and its linked task summary. */
+>>>>>>> upstream/main
 export async function flowsShowCommand(
   opts: { json?: boolean; lookup: string },
   runtime: RuntimeEnv,
 ) {
   const flow = resolveTaskFlowForLookupToken(opts.lookup);
   if (!flow) {
+<<<<<<< HEAD
     runtime.error(`TaskFlow not found: ${opts.lookup}`);
+=======
+    runtime.error(formatFlowLookupMiss(opts.lookup));
+>>>>>>> upstream/main
     runtime.exit(1);
     return;
   }
@@ -196,6 +260,7 @@ export async function flowsShowCommand(
   const stateSummary = summarizeFlowState(flow);
 
   if (opts.json) {
+<<<<<<< HEAD
     runtime.log(
       JSON.stringify(
         {
@@ -207,6 +272,13 @@ export async function flowsShowCommand(
         2,
       ),
     );
+=======
+    writeRuntimeJson(runtime, {
+      ...flow,
+      tasks,
+      taskSummary,
+    });
+>>>>>>> upstream/main
     return;
   }
 
@@ -220,11 +292,19 @@ export async function flowsShowCommand(
     `notify: ${flow.notifyPolicy}`,
     ...(stateSummary ? [`state: ${safeFlowDisplayText(stateSummary)}`] : []),
     ...(flow.cancelRequestedAt
+<<<<<<< HEAD
       ? [`cancelRequestedAt: ${new Date(flow.cancelRequestedAt).toISOString()}`]
       : []),
     `createdAt: ${new Date(flow.createdAt).toISOString()}`,
     `updatedAt: ${new Date(flow.updatedAt).toISOString()}`,
     `endedAt: ${flow.endedAt ? new Date(flow.endedAt).toISOString() : "n/a"}`,
+=======
+      ? [`cancelRequestedAt: ${formatFlowTimestamp(flow.cancelRequestedAt)}`]
+      : []),
+    `createdAt: ${formatFlowTimestamp(flow.createdAt)}`,
+    `updatedAt: ${formatFlowTimestamp(flow.updatedAt)}`,
+    `endedAt: ${formatFlowTimestamp(flow.endedAt)}`,
+>>>>>>> upstream/main
     `tasks: ${taskSummary.total} total · ${taskSummary.active} active · ${taskSummary.failures} issues`,
   ];
   for (const line of lines) {
@@ -241,19 +321,35 @@ export async function flowsShowCommand(
   }
 }
 
+<<<<<<< HEAD
 export async function flowsCancelCommand(opts: { lookup: string }, runtime: RuntimeEnv) {
   const flow = resolveTaskFlowForLookupToken(opts.lookup);
   if (!flow) {
     runtime.error(`Flow not found: ${opts.lookup}`);
+=======
+/** Requests cancellation for one TaskFlow selected by id or lookup token. */
+export async function flowsCancelCommand(opts: { lookup: string }, runtime: RuntimeEnv) {
+  const flow = resolveTaskFlowForLookupToken(opts.lookup);
+  if (!flow) {
+    runtime.error(formatFlowLookupMiss(opts.lookup));
+>>>>>>> upstream/main
     runtime.exit(1);
     return;
   }
   const result = await cancelFlowById({
+<<<<<<< HEAD
     cfg: loadConfig(),
     flowId: flow.flowId,
   });
   if (!result.found) {
     runtime.error(result.reason ?? `Flow not found: ${opts.lookup}`);
+=======
+    cfg: getRuntimeConfig(),
+    flowId: flow.flowId,
+  });
+  if (!result.found) {
+    runtime.error(result.reason ?? formatFlowLookupMiss(opts.lookup));
+>>>>>>> upstream/main
     runtime.exit(1);
     return;
   }

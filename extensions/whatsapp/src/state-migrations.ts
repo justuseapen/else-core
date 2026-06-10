@@ -1,11 +1,23 @@
+<<<<<<< HEAD
+=======
+// Whatsapp plugin module implements state migrations behavior.
+>>>>>>> upstream/main
 import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
 import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+<<<<<<< HEAD
 
 function fileExists(pathValue: string): boolean {
   try {
     return fs.existsSync(pathValue) && fs.statSync(pathValue).isFile();
+=======
+import { statRegularFileSync } from "openclaw/plugin-sdk/security-runtime";
+
+function fileExists(pathValue: string): boolean {
+  try {
+    return !statRegularFileSync(pathValue).missing;
+>>>>>>> upstream/main
   } catch {
     return false;
   }

@@ -1,8 +1,17 @@
+<<<<<<< HEAD
 import { vi } from "vitest";
 import type { OpenClawPluginApi } from "../runtime-api.js";
 
 export type BoundTaskFlow = ReturnType<
   NonNullable<OpenClawPluginApi["runtime"]>["taskFlow"]["bindSession"]
+=======
+// Lobster helper module supports taskflow test helpers behavior.
+import { vi } from "vitest";
+import type { OpenClawPluginApi } from "../runtime-api.js";
+
+type BoundTaskFlow = ReturnType<
+  NonNullable<OpenClawPluginApi["runtime"]>["tasks"]["managedFlows"]["bindSession"]
+>>>>>>> upstream/main
 >;
 
 export function createFakeTaskFlow(overrides?: Partial<BoundTaskFlow>): BoundTaskFlow {
@@ -15,10 +24,19 @@ export function createFakeTaskFlow(overrides?: Partial<BoundTaskFlow>): BoundTas
     status: "running" as const,
     goal: "Run Lobster workflow",
   };
+<<<<<<< HEAD
 
   return {
     sessionKey: "agent:main:main",
     createManaged: vi.fn().mockReturnValue(baseFlow),
+=======
+  const createManaged = vi.fn().mockReturnValue(baseFlow);
+
+  return {
+    sessionKey: "agent:main:main",
+    createManaged,
+    tryCreateManaged: vi.fn((params) => createManaged(params)),
+>>>>>>> upstream/main
     get: vi.fn(),
     list: vi.fn().mockReturnValue([]),
     findLatest: vi.fn(),

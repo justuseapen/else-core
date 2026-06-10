@@ -1,6 +1,14 @@
+<<<<<<< HEAD
 import { normalizeConversationText } from "../../acp/conversation-id.js";
 import { resolveConversationBindingContext } from "../../channels/conversation-binding-context.js";
 import type { OpenClawConfig } from "../../config/config.js";
+=======
+// Builds normalized conversation binding inputs from channel and routing facts.
+import { normalizeLowercaseStringOrEmpty } from "@openclaw/normalization-core/string-coerce";
+import { normalizeConversationText } from "../../acp/conversation-id.js";
+import { resolveConversationBindingContext } from "../../channels/conversation-binding-context.js";
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
+>>>>>>> upstream/main
 import { getActivePluginChannelRegistry } from "../../plugins/runtime.js";
 import type { MsgContext } from "../templating.js";
 import type { HandleCommandsParams } from "./commands-types.js";
@@ -25,7 +33,11 @@ type BindingMsgContext = Pick<
 
 function resolveBindingChannel(ctx: BindingMsgContext, commandChannel?: string | null): string {
   const raw = ctx.OriginatingChannel ?? commandChannel ?? ctx.Surface ?? ctx.Provider;
+<<<<<<< HEAD
   return normalizeConversationText(raw).toLowerCase();
+=======
+  return normalizeLowercaseStringOrEmpty(normalizeConversationText(raw));
+>>>>>>> upstream/main
 }
 
 function resolveBindingAccountId(params: {
@@ -73,10 +85,17 @@ export function resolveConversationBindingContextFromMessage(params: {
     senderId: params.senderId ?? params.ctx.SenderId,
     sessionKey: params.sessionKey ?? params.ctx.SessionKey,
     parentSessionKey: params.parentSessionKey ?? params.ctx.ParentSessionKey,
+<<<<<<< HEAD
     originatingTo: params.ctx.OriginatingTo,
     commandTo: params.commandTo,
     fallbackTo: params.ctx.To,
     from: params.ctx.From,
+=======
+    from: params.ctx.From,
+    originatingTo: params.ctx.OriginatingTo,
+    commandTo: params.commandTo,
+    fallbackTo: params.ctx.To,
+>>>>>>> upstream/main
     nativeChannelId: params.ctx.NativeChannelId,
   });
 }

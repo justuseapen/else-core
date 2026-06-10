@@ -1,4 +1,10 @@
+// Renders `openclaw status --all` report data into terminal lines.
+// Styling is applied here so data builders remain color/theme agnostic.
+
+import { getTerminalTableWidth, renderTable } from "../../../packages/terminal-core/src/table.js";
+import { isRich, theme } from "../../../packages/terminal-core/src/theme.js";
 import type { ProgressReporter } from "../../cli/progress.js";
+<<<<<<< HEAD
 import { getTerminalTableWidth, renderTable } from "../../terminal/table.js";
 import { isRich, theme } from "../../terminal/theme.js";
 import { buildStatusChannelsTableRows, statusChannelsTableColumns } from "./channels-table.js";
@@ -9,6 +15,16 @@ import {
   appendStatusSectionHeading,
   appendStatusTableSection,
 } from "./text-report.js";
+=======
+import { appendStatusAllDiagnosis } from "./diagnosis.js";
+import {
+  buildStatusAgentsSection,
+  buildStatusChannelDetailsSections,
+  buildStatusChannelsSection,
+  buildStatusOverviewSection,
+} from "./report-sections.js";
+import { appendStatusReportSections, appendStatusSectionHeading } from "./text-report.js";
+>>>>>>> upstream/main
 
 type OverviewRow = { Item: string; Value: string };
 
@@ -43,6 +59,7 @@ type AgentStatusLike = {
   }>;
 };
 
+/** Builds the complete status-all text report, including overview tables and diagnosis lines. */
 export async function buildStatusAllReportLines(params: {
   progress: ProgressReporter;
   overviewRows: OverviewRow[];
@@ -64,6 +81,7 @@ export async function buildStatusAllReportLines(params: {
 
   const tableWidth = getTerminalTableWidth();
 
+<<<<<<< HEAD
   const overview = renderTable({
     width: tableWidth,
     columns: [
@@ -156,6 +174,45 @@ export async function buildStatusAllReportLines(params: {
     heading,
     title: "Agents",
     body: [agentsTable.trimEnd()],
+=======
+  const lines: string[] = [];
+  lines.push(heading("OpenClaw status --all"));
+  appendStatusReportSections({
+    lines,
+    heading,
+    sections: [
+      buildStatusOverviewSection({
+        width: tableWidth,
+        renderTable,
+        rows: params.overviewRows,
+      }),
+      buildStatusChannelsSection({
+        width: tableWidth,
+        renderTable,
+        rows: params.channels.rows,
+        channelIssues: params.channelIssues,
+        ok,
+        warn,
+        muted,
+        accentDim: theme.accentDim,
+        formatIssueMessage: (message) => message.slice(0, 90),
+      }),
+      ...buildStatusChannelDetailsSections({
+        details: params.channels.details,
+        width: tableWidth,
+        renderTable,
+        ok,
+        warn,
+      }),
+      buildStatusAgentsSection({
+        width: tableWidth,
+        renderTable,
+        agentStatus: params.agentStatus,
+        ok,
+        warn,
+      }),
+    ],
+>>>>>>> upstream/main
   });
   appendStatusSectionHeading({
     lines,

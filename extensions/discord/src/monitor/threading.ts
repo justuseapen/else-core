@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { ChannelType, type Client } from "@buape/carbon";
 import { Routes, type APIAttachment, type APIStickerItem } from "discord-api-types/v10";
 import {
@@ -700,3 +701,26 @@ function resolveStarterForwardedText(
   }
   return blocks.join("\n\n");
 }
+=======
+// Discord plugin module implements threading behavior.
+export {
+  maybeCreateDiscordAutoThread,
+  resolveDiscordAutoThreadContext,
+  resolveDiscordAutoThreadReplyPlan,
+} from "./threading.auto-thread.js";
+export { resetDiscordThreadStarterCacheForTest } from "./threading.cache.js";
+export {
+  resolveDiscordReplyDeliveryPlan,
+  resolveDiscordReplyTarget,
+  resolveDiscordThreadChannel,
+  resolveDiscordThreadParentInfo,
+  resolveDiscordThreadStarter,
+  sanitizeDiscordThreadName,
+} from "./threading.starter.js";
+export type {
+  DiscordAutoThreadContext,
+  DiscordAutoThreadReplyPlan,
+  DiscordThreadChannel,
+  DiscordThreadStarter,
+} from "./threading.types.js";
+>>>>>>> upstream/main

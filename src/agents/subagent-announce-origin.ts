@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export type DeliveryContext = {
   channel?: string;
   to?: string;
@@ -125,6 +126,47 @@ function normalizeTelegramAnnounceTarget(target: string | undefined): string | u
   const raw = trimmed.slice("telegram:".length);
   const topicMatch = /^(.*):topic:[^:]+$/u.exec(raw);
   return `telegram:${topicMatch?.[1] ?? raw}`;
+=======
+/**
+ * Subagent announcement origin resolver.
+ *
+ * Merges requester and session delivery context while avoiding stale thread ids after retargeting.
+ */
+import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
+import { getLoadedChannelPluginForRead } from "../channels/plugins/registry-loaded-read.js";
+import type { ChannelId } from "../channels/plugins/types.public.js";
+import {
+  stripTargetKindPrefix,
+  stripTargetProviderPrefix,
+  stripTargetTopicSuffix,
+} from "../infra/outbound/channel-target-prefix.js";
+import {
+  deliveryContextFromSession,
+  mergeDeliveryContext,
+  normalizeDeliveryContext,
+} from "../utils/delivery-context.shared.js";
+import type {
+  DeliveryContext,
+  DeliveryContextSessionSource,
+} from "../utils/delivery-context.types.js";
+import { isInternalMessageChannel } from "../utils/message-channel.js";
+export type { DeliveryContext } from "../utils/delivery-context.types.js";
+
+function normalizeAnnounceRouteTarget(context?: DeliveryContext): string | undefined {
+  const rawTo = normalizeOptionalString(context?.to);
+  if (!rawTo) {
+    return undefined;
+  }
+  const channel = normalizeOptionalString(context?.channel);
+  const messaging = channel
+    ? getLoadedChannelPluginForRead(channel as ChannelId)?.messaging
+    : undefined;
+  const route = stripTargetTopicSuffix(
+    stripTargetKindPrefix(stripTargetProviderPrefix(rawTo, channel ?? ""), ["group", "channel"]),
+  );
+  const normalized = messaging?.normalizeTarget?.(route) ?? route;
+  return normalized || undefined;
+>>>>>>> upstream/main
 }
 
 function shouldStripThreadFromAnnounceEntry(
@@ -138,6 +180,7 @@ function shouldStripThreadFromAnnounceEntry(
   ) {
     return false;
   }
+<<<<<<< HEAD
   const requesterChannel = normalizeChannel(normalizedRequester.channel);
   if (requesterChannel === "telegram") {
     const requesterTarget = normalizeTelegramAnnounceTarget(normalizedRequester.to);
@@ -145,12 +188,24 @@ function shouldStripThreadFromAnnounceEntry(
     if (requesterTarget && entryTarget) {
       return requesterTarget !== entryTarget;
     }
+=======
+  const requesterTarget = normalizeAnnounceRouteTarget(normalizedRequester);
+  const entryTarget = normalizeAnnounceRouteTarget(normalizedEntry);
+  if (requesterTarget && entryTarget) {
+    return requesterTarget !== entryTarget;
+>>>>>>> upstream/main
   }
   return false;
 }
 
+<<<<<<< HEAD
 export function resolveAnnounceOrigin(
   entry?: DeliveryContextSource,
+=======
+/** Resolve the delivery origin for a subagent completion announcement. */
+export function resolveAnnounceOrigin(
+  entry?: DeliveryContextSessionSource,
+>>>>>>> upstream/main
   requesterOrigin?: DeliveryContext,
 ): DeliveryContext | undefined {
   const normalizedRequester = normalizeDeliveryContext(requesterOrigin);
@@ -167,6 +222,10 @@ export function resolveAnnounceOrigin(
   const entryForMerge =
     normalizedEntry && shouldStripThreadFromAnnounceEntry(normalizedRequester, normalizedEntry)
       ? (() => {
+<<<<<<< HEAD
+=======
+          // A stored thread only applies to the same normalized route target.
+>>>>>>> upstream/main
           const { threadId: _ignore, ...rest } = normalizedEntry;
           return rest;
         })()

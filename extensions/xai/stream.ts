@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 import type { StreamFn } from "@mariozechner/pi-agent-core";
 import { streamSimple } from "@mariozechner/pi-ai";
 import type { ProviderWrapStreamFnContext } from "openclaw/plugin-sdk/plugin-entry";
 import {
   composeProviderStreamWrappers,
+=======
+// Xai plugin module implements stream behavior.
+import type { StreamFn } from "openclaw/plugin-sdk/agent-core";
+import { streamSimple } from "openclaw/plugin-sdk/llm";
+import type { ProviderWrapStreamFnContext } from "openclaw/plugin-sdk/plugin-entry";
+import {
+  composeProviderStreamWrappers,
+  createPlainTextToolCallCompatWrapper,
+>>>>>>> upstream/main
   createToolStreamWrapper,
 } from "openclaw/plugin-sdk/provider-stream-shared";
 
@@ -42,6 +52,17 @@ function supportsExplicitImageInput(model: { input?: unknown }): boolean {
   return Array.isArray(model.input) && model.input.includes("image");
 }
 
+<<<<<<< HEAD
+=======
+function supportsReasoningControls(model: { compat?: unknown; reasoning?: unknown }): boolean {
+  const compat =
+    model.compat && typeof model.compat === "object"
+      ? (model.compat as { supportsReasoningEffort?: unknown })
+      : undefined;
+  return model.reasoning === true && compat?.supportsReasoningEffort !== false;
+}
+
+>>>>>>> upstream/main
 const TOOL_RESULT_IMAGE_REPLAY_TEXT = "Attached image(s) from tool result:";
 
 type ReplayableInputImagePart =
@@ -169,9 +190,17 @@ export function createXaiToolPayloadCompatibilityWrapper(
             payloadObj.tools = payloadObj.tools.map((tool) => stripUnsupportedStrictFlag(tool));
           }
           normalizeXaiResponsesToolResultPayload(payloadObj, model);
+<<<<<<< HEAD
           delete payloadObj.reasoning;
           delete payloadObj.reasoningEffort;
           delete payloadObj.reasoning_effort;
+=======
+          if (!supportsReasoningControls(model)) {
+            delete payloadObj.reasoning;
+            delete payloadObj.reasoningEffort;
+            delete payloadObj.reasoning_effort;
+          }
+>>>>>>> upstream/main
         }
         return originalOnPayload?.(payload, model);
       },
@@ -184,6 +213,7 @@ export function createXaiFastModeWrapper(
   fastMode: boolean,
 ): StreamFn {
   const underlying = baseStreamFn ?? streamSimple;
+<<<<<<< HEAD
   return (model, context, options) => {
     const supportsFastAliasTransport =
       model.api === "openai-completions" || model.api === "openai-responses";
@@ -289,14 +319,21 @@ function wrapStreamDecodeXaiToolCallArguments(
 }
 
 export function createXaiToolCallArgumentDecodingWrapper(baseStreamFn: StreamFn): StreamFn {
+=======
+>>>>>>> upstream/main
   return (model, context, options) => {
-    const maybeStream = baseStreamFn(model, context, options);
-    if (maybeStream && typeof maybeStream === "object" && "then" in maybeStream) {
-      return Promise.resolve(maybeStream).then((stream) =>
-        wrapStreamDecodeXaiToolCallArguments(stream),
-      );
+    const supportsFastAliasTransport =
+      model.api === "openai-completions" || model.api === "openai-responses";
+    if (!fastMode || !supportsFastAliasTransport || model.provider !== "xai") {
+      return underlying(model, context, options);
     }
-    return wrapStreamDecodeXaiToolCallArguments(maybeStream);
+
+    const fastModelId = resolveXaiFastModelId(model.id);
+    if (!fastModelId) {
+      return underlying(model, context, options);
+    }
+
+    return underlying({ ...model, id: fastModelId }, context, options);
   };
 }
 
@@ -309,7 +346,11 @@ export function wrapXaiProviderStream(ctx: ProviderWrapStreamFnContext): StreamF
     if (typeof fastMode === "boolean") {
       wrappedStreamFn = createXaiFastModeWrapper(wrappedStreamFn, fastMode);
     }
+<<<<<<< HEAD
     wrappedStreamFn = createXaiToolCallArgumentDecodingWrapper(wrappedStreamFn);
+=======
+    wrappedStreamFn = createPlainTextToolCallCompatWrapper(wrappedStreamFn);
+>>>>>>> upstream/main
     return createToolStreamWrapper(wrappedStreamFn, toolStreamEnabled);
   });
 }

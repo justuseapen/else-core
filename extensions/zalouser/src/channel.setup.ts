@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// Zalouser plugin module implements channel.setup behavior.
+>>>>>>> upstream/main
 import type { ResolvedZalouserAccount } from "./accounts.js";
 import type { ChannelPlugin } from "./channel-api.js";
 import { zalouserSetupAdapter } from "./setup-core.js";
